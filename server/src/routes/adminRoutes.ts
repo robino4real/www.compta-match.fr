@@ -9,6 +9,10 @@ import {
   getDownloadableProductById,
   updateDownloadableProduct,
 } from "../controllers/adminDownloadController";
+import {
+  getStripeSettings,
+  updateStripeSettings,
+} from "../controllers/stripeSettingsController";
 
 const router = Router();
 
@@ -50,6 +54,21 @@ router.put(
   attachUserToRequest,
   requireAdmin,
   updateDownloadableProduct
+);
+
+// Paramétrages Stripe (réservés à l'administrateur)
+router.get(
+  "/stripe-settings",
+  attachUserToRequest,
+  requireAdmin,
+  getStripeSettings
+);
+
+router.put(
+  "/stripe-settings",
+  attachUserToRequest,
+  requireAdmin,
+  updateStripeSettings
 );
 
 export default router;
