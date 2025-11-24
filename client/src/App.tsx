@@ -18,6 +18,8 @@ import AuthLoginPage from "./pages/AuthLoginPage";
 import AuthRegisterPage from "./pages/AuthRegisterPage";
 import AccountPage from "./pages/AccountPage";
 import { useAuth } from "./context/AuthContext";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import AdminDownloadsPage from "./pages/admin/AdminDownloadsPage";
 
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading } = useAuth();
@@ -33,6 +35,29 @@ const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   if (!user) {
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+};
+
+const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, isLoading } = useAuth();
+  const location = useLocation();
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-10 text-xs text-slate-600">
+        Vérification de votre session en cours...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth/login" state={{ from: location }} replace />;
+  }
+
+  if (user.role !== "admin") {
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
@@ -61,6 +86,22 @@ const App: React.FC = () => {
             <RequireAuth>
               <AccountPage />
             </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <RequireAdmin>
+              <AdminDashboardPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="/admin/telechargements"
+          element={
+            <RequireAdmin>
+              <AdminDownloadsPage />
+            </RequireAdmin>
           }
         />
         <Route path="*" element={<NotFoundPage />} />
