@@ -1,9 +1,121 @@
 import React from "react";
 import { useAuth } from "../context/AuthContext";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
+
+interface UserDownload {
+  id: string;
+  token: string;
+  productId: string;
+  productName: string;
+  productDescription?: string | null;
+  priceCents: number;
+  orderCreatedAt: string;
+  downloadFirstAt: string | null;
+  downloadExpiresAt: string | null;
+  downloadCount: number;
+  remainingMs?: number | null;
+  isExpired?: boolean;
+}
+
 const AccountPage: React.FC = () => {
   const { user } = useAuth();
   const hasActiveSubscription = false; // TODO: sera remplacé par une vraie info API plus tard
+
+  const [downloads, setDownloads] = React.useState<UserDownload[]>([]);
+  const [isLoadingDownloads, setIsLoadingDownloads] = React.useState(false);
+  const [downloadsError, setDownloadsError] = React.useState<string | null>(
+    null
+  );
+  const [now, setNow] = React.useState<number>(Date.now());
+
+  React.useEffect(() => {
+    const timerId = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timerId);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const fetchDownloads = async () => {
+      try {
+        setIsLoadingDownloads(true);
+        setDownloadsError(null);
+
+        const response = await fetch(`${API_BASE_URL}/downloads/me`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+              "Impossible de récupérer vos logiciels téléchargeables."
+          );
+        }
+
+        const list: UserDownload[] = Array.isArray(data.downloads)
+          ? data.downloads
+          : [];
+
+        setDownloads(list);
+      } catch (err: any) {
+        console.error("Erreur /downloads/me :", err);
+        setDownloadsError(
+          err?.message ||
+            "Une erreur est survenue lors du chargement de vos téléchargements."
+        );
+      } finally {
+        setIsLoadingDownloads(false);
+      }
+    };
+
+    fetchDownloads();
+  }, []);
+
+  const formatRemaining = (download: UserDownload): string => {
+    if (!download.downloadExpiresAt) {
+      // Jamais téléchargé
+      return "Jamais téléchargé — la première utilisation activera une fenêtre de 1h.";
+    }
+
+    const expiresAt = new Date(download.downloadExpiresAt).getTime();
+    const diff = expiresAt - now;
+
+    if (diff <= 0) {
+      return "Lien expiré.";
+    }
+
+    const totalSeconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return `Lien actif — expire dans ${minutes} min ${seconds
+      .toString()
+      .padStart(2, "0")} s.`;
+  };
+
+  const isDownloadExpired = (download: UserDownload): boolean => {
+    if (!download.downloadExpiresAt) {
+      return false;
+    }
+    const expiresAt = new Date(download.downloadExpiresAt).getTime();
+    return expiresAt <= now;
+  };
+
+  const handleDownloadClick = (download: UserDownload) => {
+    if (!download.token) return;
+    if (isDownloadExpired(download)) return;
+
+    const url = `${API_BASE_URL}/downloads/${download.token}`;
+    window.open(url, "_blank");
+  };
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.6fr,0.9fr]">
@@ -87,6 +199,110 @@ const AccountPage: React.FC = () => {
             {/* TODO: afficher un bloc d'accès direct à l'application quand l'abonnement est actif */}
           </div>
         )}
+
+        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-black">
+                Mes logiciels téléchargeables
+              </h2>
+              <p className="text-[11px] text-slate-600">
+                Retrouvez ici les logiciels achetés en téléchargement. Les liens de
+                téléchargement sont valables pendant une heure après le premier
+                téléchargement.
+              </p>
+            </div>
+          </div>
+
+          {isLoadingDownloads && (
+            <p className="text-xs text-slate-500">
+              Chargement de vos logiciels téléchargeables...
+            </p>
+          )}
+
+          {downloadsError && (
+            <p className="text-xs text-red-600">{downloadsError}</p>
+          )}
+
+          {!isLoadingDownloads && !downloadsError && downloads.length === 0 && (
+            <p className="text-xs text-slate-500">
+              Vous n&apos;avez pas encore de logiciels téléchargeables associés à ce
+              compte.
+            </p>
+          )}
+
+          {!isLoadingDownloads && !downloadsError && downloads.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-xs">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                      Produit
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                      Commandé le
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                      Téléchargements
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                      Statut
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {downloads.map((download) => {
+                    const priceEuros = (download.priceCents ?? 0) / 100;
+                    const orderedAt = download.orderCreatedAt
+                      ? new Date(download.orderCreatedAt).toISOString().slice(0, 10)
+                      : "—";
+                    const expired = isDownloadExpired(download);
+
+                    return (
+                      <tr key={download.id} className="odd:bg-white even:bg-slate-50">
+                        <td className="px-3 py-2 align-top text-slate-800">
+                          <div className="space-y-1">
+                            <div className="font-semibold">{download.productName}</div>
+                            {download.productDescription && (
+                              <div className="text-[11px] text-slate-600">
+                                {download.productDescription}
+                              </div>
+                            )}
+                            <div className="text-[11px] text-slate-500">
+                              {priceEuros.toFixed(2)} € TTC
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 align-top text-slate-700">{orderedAt}</td>
+                        <td className="px-3 py-2 align-top text-slate-700">
+                          {download.downloadCount}
+                        </td>
+                        <td className="px-3 py-2 align-top text-slate-700">
+                          <span className="block text-[11px]">
+                            {formatRemaining(download)}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 align-top text-slate-700">
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadClick(download)}
+                            disabled={expired}
+                            className="rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:border-black hover:text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Télécharger
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       </section>
 
       <aside className="space-y-4">
