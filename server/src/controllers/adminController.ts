@@ -1,10 +1,10 @@
-import { Request, Response } from 'express';
-import { prisma } from '../config/prisma';
+import { Request, Response } from "express";
+import { prisma } from "../config/prisma";
 
-export async function listUsers(_req: Request, res: Response) {
+export async function listUsers(req: Request, res: Response) {
   try {
     const users = await prisma.user.findMany({
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       select: {
         id: true,
         email: true,
@@ -16,9 +16,9 @@ export async function listUsers(_req: Request, res: Response) {
 
     return res.json({ users });
   } catch (error) {
-    console.error('Erreur lors de la récupération des utilisateurs', error);
+    console.error("Erreur lors de la récupération des utilisateurs", error);
     return res
       .status(500)
-      .json({ message: 'Erreur lors de la récupération des utilisateurs.' });
+      .json({ message: "Erreur lors de la récupération des utilisateurs." });
   }
 }
