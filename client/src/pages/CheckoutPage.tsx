@@ -8,22 +8,20 @@ const API_BASE_URL =
 
 const CheckoutPage: React.FC = () => {
   const { user } = useAuth();
-  const { items, totalCents, clearCart } = useCart();
+  const { items, totalCents } = useCart();
   const navigate = useNavigate();
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [success, setSuccess] = React.useState<string | null>(null);
 
   const hasItems = items.length > 0;
   const totalEuros = totalCents / 100;
 
-  const handleConfirmPayment = async () => {
-    if (!hasItems || !user) return;
+  const handleStartStripeCheckout = async () => {
+    if (!user || !hasItems) return;
 
     setIsSubmitting(true);
     setError(null);
-    setSuccess(null);
 
     try {
       const payload = {
@@ -33,37 +31,34 @@ const CheckoutPage: React.FC = () => {
         })),
       };
 
-      const response = await fetch(`${API_BASE_URL}/orders/downloads`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/payments/downloads/checkout-session`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        }
+      );
 
       const data = await response.json().catch(() => ({}));
 
-      if (!response.ok) {
+      if (!response.ok || !data.url) {
         throw new Error(
           data.message ||
-            "Impossible de créer la commande de logiciels téléchargeables."
+            "Impossible de créer la session de paiement Stripe."
         );
       }
 
-      clearCart();
-      setSuccess(
-        "Commande créée. Les liens de téléchargement seront affichés dans votre espace client plus tard."
-      );
-
-      window.setTimeout(() => {
-        navigate("/mon-compte");
-      }, 1200);
+      // Redirection vers la page de paiement Stripe
+      window.location.href = data.url as string;
     } catch (err: any) {
-      console.error("Erreur lors de la création de la commande :", err);
+      console.error("Erreur lors de la création de la session Stripe :", err);
       setError(
         err?.message ||
-          "Une erreur est survenue lors de la création de la commande."
+          "Une erreur est survenue lors de la préparation du paiement."
       );
     } finally {
       setIsSubmitting(false);
@@ -130,15 +125,16 @@ const CheckoutPage: React.FC = () => {
           Paiement des logiciels téléchargeables
         </h1>
         <p className="text-xs text-slate-600">
-          Vérifiez le contenu de votre commande avant de finaliser le paiement.
-          Cette étape crée une commande dans le système ; la mise en place
-          d&apos;un vrai paiement et des liens de téléchargement viendra plus tard.
+          Vérifiez le contenu de votre commande puis lancez le paiement sécurisé avec Stripe. Une fois le paiement validé, vous serez redirigé vers le site.
         </p>
       </section>
 
       <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
-        {error && <p className="text-[11px] text-red-600">{error}</p>}
-        {success && <p className="text-[11px] text-emerald-600">{success}</p>}
+        {error && (
+          <p className="text-[11px] text-red-600">
+            {error}
+          </p>
+        )}
 
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-xs">
@@ -159,8 +155,13 @@ const CheckoutPage: React.FC = () => {
               {items.map((item) => {
                 const priceEuros = item.priceCents / 100;
                 return (
-                  <tr key={item.id} className="odd:bg-white even:bg-slate-50">
-                    <td className="px-3 py-2 align-top text-slate-800">{item.name}</td>
+                  <tr
+                    key={item.id}
+                    className="odd:bg-white even:bg-slate-50"
+                  >
+                    <td className="px-3 py-2 align-top text-slate-800">
+                      {item.name}
+                    </td>
                     <td className="px-3 py-2 align-top text-slate-700">
                       Logiciel téléchargeable
                     </td>
@@ -180,13 +181,13 @@ const CheckoutPage: React.FC = () => {
           </p>
           <button
             type="button"
-            onClick={handleConfirmPayment}
+            onClick={handleStartStripeCheckout}
             disabled={isSubmitting}
             className="rounded-full bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-white hover:text-black hover:border hover:border-black transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting
-              ? "Création de la commande..."
-              : "Confirmer le paiement (simulé)"}
+              ? "Création de la session de paiement..."
+              : "Payer avec Stripe"}
           </button>
         </div>
       </section>
