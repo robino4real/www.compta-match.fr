@@ -1,6 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
@@ -18,8 +17,7 @@ interface DownloadableProduct {
 }
 
 const DownloadsPage: React.FC = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
+  const { addDownloadableProduct } = useCart();
 
   const [products, setProducts] = React.useState<DownloadableProduct[]>([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
@@ -62,17 +60,18 @@ const DownloadsPage: React.FC = () => {
   }, []);
 
   const handleAddToCart = (product: DownloadableProduct) => {
-    if (!user) {
-      // Non connecté : on envoie vers la page de connexion
-      navigate("/auth/login");
+    if (!product.id || product.priceCents == null) {
+      alert("Ce produit ne peut pas être ajouté au panier pour le moment.");
       return;
     }
 
-    // TODO: plus tard, appeler une API ou un contexte panier
-    // Pour l'instant, on se contente d'un message
-    alert(
-      `TODO: ajouter "${product.name}" au panier et lancer le processus de paiement.`
-    );
+    addDownloadableProduct({
+      id: product.id,
+      name: product.name,
+      priceCents: product.priceCents,
+    });
+
+    alert(`"${product.name}" a été ajouté à votre panier.`);
   };
 
   const hasProducts = !isLoading && !error && products.length > 0;
