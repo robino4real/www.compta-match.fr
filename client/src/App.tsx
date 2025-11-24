@@ -23,6 +23,7 @@ import AccountPage from "./pages/AccountPage";
 import { useAuth } from "./context/AuthContext";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminDownloadsPage from "./pages/admin/AdminDownloadsPage";
+import AdminDownloadEditPage from "./pages/admin/AdminDownloadEditPage";
 
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading } = useAuth();
@@ -107,6 +108,14 @@ const App: React.FC = () => {
           element={
             <RequireAdmin>
               <AdminDownloadsPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="/admin/telechargements/:id"
+          element={
+            <RequireAdmin>
+              <AdminDownloadEditPage />
             </RequireAdmin>
           }
         />
