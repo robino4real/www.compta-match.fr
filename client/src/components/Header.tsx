@@ -19,7 +19,7 @@ const Header: React.FC = () => {
           </div>
         </div>
 
-        <nav className="flex flex-1 items-center justify-center gap-4 flex-wrap">
+        <nav className="flex flex-1 items-center justify-center gap-4 flex-wrap" aria-label="Navigation principale">
           <NavLink to="/" end className={navLinkClass}>
             Accueil
           </NavLink>
