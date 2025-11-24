@@ -15,13 +15,8 @@ const AuthRegisterPage: React.FC = () => {
     setError(null);
     setSuccess(null);
 
-    if (!email.trim()) {
-      setError("Veuillez renseigner votre email.");
-      return;
-    }
-
-    if (!password) {
-      setError("Veuillez renseigner un mot de passe.");
+    if (!email.trim() || !password.trim() || !confirmPassword.trim()) {
+      setError("Tous les champs sont obligatoires.");
       return;
     }
 
@@ -44,15 +39,15 @@ const AuthRegisterPage: React.FC = () => {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json().catch(() => ({}));
+      const data = await response.json().catch(() => null);
 
       if (response.ok) {
         setSuccess("Compte créé. Un email de confirmation vous a été envoyé.");
       } else {
-        setError(data?.message ?? "Une erreur est survenue. Veuillez réessayer.");
+        setError(data?.message ?? "Une erreur est survenue. Merci de réessayer.");
       }
     } catch (err) {
-      setError("Impossible de contacter le serveur. Veuillez réessayer plus tard.");
+      setError("Impossible de traiter la requête. Merci de réessayer.");
     } finally {
       setIsSubmitting(false);
     }
@@ -62,53 +57,64 @@ const AuthRegisterPage: React.FC = () => {
     <div className="flex justify-center">
       <div className="w-full max-w-md space-y-6">
         <div className="space-y-2">
-          <h1 className="text-xl font-semibold text-black">Créer un compte COMPTAMATCH</h1>
+          <h1 className="text-xl font-semibold text-black">
+            Créer un compte COMPTAMATCH
+          </h1>
           <p className="text-xs text-slate-600">
-            Renseignez votre email et un mot de passe pour créer votre espace client. Vous recevrez un email de
-            confirmation.
+            Renseignez votre email et un mot de passe pour créer votre espace client.
+            Vous recevrez un email de confirmation.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4"
+        >
           <div className="space-y-1">
-            <label htmlFor="email" className="text-sm font-medium text-black">
+            <label className="text-sm font-medium text-black" htmlFor="email">
               Email
             </label>
             <input
               id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(event) => setEmail(event.target.value)}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-              placeholder="vous@example.com"
+              placeholder="votre@email.com"
+              required
             />
           </div>
 
           <div className="space-y-1">
-            <label htmlFor="password" className="text-sm font-medium text-black">
+            <label className="text-sm font-medium text-black" htmlFor="password">
               Mot de passe
             </label>
             <input
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(event) => setPassword(event.target.value)}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-              placeholder="********"
+              placeholder="Minimum 8 caractères"
+              required
             />
           </div>
 
           <div className="space-y-1">
-            <label htmlFor="confirmPassword" className="text-sm font-medium text-black">
+            <label
+              className="text-sm font-medium text-black"
+              htmlFor="confirmPassword"
+            >
               Confirmation du mot de passe
             </label>
             <input
               id="confirmPassword"
               type="password"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={(event) => setConfirmPassword(event.target.value)}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-              placeholder="********"
+              placeholder="Répétez votre mot de passe"
+              required
             />
           </div>
 
@@ -122,14 +128,14 @@ const AuthRegisterPage: React.FC = () => {
           >
             {isSubmitting ? "Création du compte..." : "Créer mon compte"}
           </button>
-        </form>
 
-        <p className="text-[11px] text-slate-600">
-          Vous avez déjà un compte ?{" "}
-          <a href="/auth/login" className="font-semibold text-black hover:underline">
-            Se connecter
-          </a>
-        </p>
+          <p className="text-[11px] text-slate-600">
+            Vous avez déjà un compte ?{" "}
+            <a href="/auth/login" className="font-semibold text-black hover:underline">
+              Se connecter
+            </a>
+          </p>
+        </form>
       </div>
     </div>
   );
