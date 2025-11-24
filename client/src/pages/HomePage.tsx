@@ -1,88 +1,54 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-
-const features = [
-  {
-    title: 'Automatisation comptable',
-    description: 'Synchronisez vos écritures, factures et paiements pour rester conforme sans effort.'
-  },
-  {
-    title: 'Tableaux de bord clairs',
-    description: 'Visualisez vos indicateurs financiers clés et prenez des décisions sereinement.'
-  },
-  {
-    title: 'Support dédié',
-    description: 'Bénéficiez d\'une équipe disponible pour vous accompagner au quotidien.'
-  }
-];
 
 const HomePage: React.FC = () => {
   return (
-    <div className="space-y-10">
-      <section className="grid gap-8 rounded-xl bg-white p-8 shadow-sm md:grid-cols-2">
-        <div className="space-y-5">
-          <p className="inline-flex rounded-full border border-slate-200 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700">
-            Logiciel comptable pour TPE
+    <div className="space-y-8 text-slate-900">
+      <section className="bg-white border border-slate-200 rounded-xl p-6 md:p-8 shadow-sm space-y-4">
+        <h1 className="text-2xl font-semibold text-black">Bienvenue chez COMPTAMATCH</h1>
+        <p className="text-sm leading-relaxed text-slate-700">
+          COMPTAMATCH accompagne les TPE, micro-entreprises et indépendants dans la gestion quotidienne de leur
+          comptabilité. Notre équipe conçoit des outils sobres et efficaces pour vous aider à suivre vos flux, vos
+          justificatifs et vos obligations en toute simplicité.
+        </p>
+        <p className="text-sm leading-relaxed text-slate-700">
+          Nous pensons que la comptabilité ne doit pas être un obstacle mais un appui fiable. C&apos;est pourquoi nous
+          proposons une application web en abonnement SaaS qui centralise vos données, vos justificatifs et vos
+          déclarations afin de rester organisé jour après jour.
+        </p>
+        <p className="text-sm leading-relaxed text-slate-700">
+          Pour les utilisateurs qui préfèrent travailler hors ligne, COMPTAMATCH distribue également des logiciels
+          téléchargeables. Vous choisissez le format qui vous convient tout en bénéficiant du même niveau de clarté et
+          d&apos;accompagnement.
+        </p>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2">
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-2">
+          <h2 className="text-lg font-semibold text-black">Application web de comptabilité (SaaS)</h2>
+          <p className="text-sm leading-relaxed text-slate-700">
+            Une interface en ligne, accessible sur abonnement, avec un espace client dédié pour suivre vos écritures,
+            vos factures et vos documents. Les mises à jour sont automatiques et vos données restent disponibles à tout
+            moment depuis votre navigateur.
           </p>
-          <h1 className="text-3xl font-bold text-black md:text-4xl">Logiciel de gestion comptable pour TPE</h1>
-          <p className="text-lg text-slate-700">
-            Centralisez votre facturation, vos abonnements et vos téléchargements dans une interface sobre et moderne.
-            COMPTAMATCH vous aide à garder le contrôle sur votre comptabilité et vos produits numériques.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <Link
-              to="/auth/register"
-              className="rounded-full bg-black px-5 py-3 text-sm font-semibold text-white transition hover:bg-white hover:text-black hover:border hover:border-black"
-            >
-              Essayer gratuitement
-            </Link>
-            <Link
-              to="/offres"
-              className="rounded-full border border-black px-5 py-3 text-sm font-semibold text-black transition hover:bg-black hover:text-white"
-            >
-              Voir les offres
-            </Link>
-          </div>
         </div>
-        <div className="space-y-4">
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-slate-700">Situation comptable</p>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-800">Mise à jour</span>
-            </div>
-            <p className="mt-3 text-3xl font-bold text-black">+ 4 200 €</p>
-            <p className="text-sm text-slate-600">Résultat net estimé ce mois-ci</p>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-sm text-slate-600">Factures réglées</p>
-              <p className="text-2xl font-semibold text-black">92 %</p>
-            </div>
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-sm text-slate-600">Téléchargements livrés</p>
-              <p className="text-2xl font-semibold text-black">1 540</p>
-            </div>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-sm text-slate-600">Clients actifs</p>
-            <p className="text-2xl font-semibold text-black">1 280</p>
-          </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-2">
+          <h2 className="text-lg font-semibold text-black">Logiciels téléchargeables</h2>
+          <p className="text-sm leading-relaxed text-slate-700">
+            Des outils à installer sur votre poste, tels que ComptaMini, proposés en achat unique. Une fois votre
+            paiement confirmé, vous recevez le lien de téléchargement et pouvez travailler dans un environnement sobre,
+            sans dépendre d&apos;une connexion continue.
+          </p>
         </div>
       </section>
 
-      <section className="space-y-6">
-        <div className="flex flex-col gap-2">
-          <h2 className="text-2xl font-semibold text-black">Fonctionnalités principales</h2>
-          <p className="text-slate-700">Tout ce dont vous avez besoin pour une comptabilité simple et rigoureuse.</p>
-        </div>
-        <div className="grid gap-6 md:grid-cols-3">
-          {features.map((feature) => (
-            <div key={feature.title} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="text-lg font-semibold text-black">{feature.title}</h3>
-              <p className="mt-2 text-sm text-slate-700">{feature.description}</p>
-            </div>
-          ))}
-        </div>
+      <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-3">
+        <h3 className="text-lg font-semibold text-black">Pourquoi choisir COMPTAMATCH ?</h3>
+        <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-slate-700">
+          <li>Simplicité d&apos;utilisation pensée pour les TPE et les indépendants.</li>
+          <li>Tarifs ajustés pour respecter les budgets des petites structures.</li>
+          <li>Données regroupées dans un espace client clair et accessible.</li>
+          <li>Complémentarité entre l&apos;application web et les logiciels téléchargeables.</li>
+        </ul>
       </section>
     </div>
   );
