@@ -29,7 +29,7 @@ export const useAuth = (): AuthContextValue => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = React.useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = React.useState<boolean>(true);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   const refreshUser = React.useCallback(async () => {
     try {
@@ -37,14 +37,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         method: "GET",
         credentials: "include",
       });
-      if (!response.ok) {
+
+      if (response.ok) {
+        setUser(await response.json());
+      } else {
         setUser(null);
-        return;
       }
-      const data = await response.json();
-      setUser(data);
     } catch (error) {
-      console.error("Erreur lors du rafraîchissement de l'utilisateur", error);
+      console.error("Error refreshing user", error);
       setUser(null);
     }
   }, []);
@@ -63,21 +63,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         credentials: "include",
       });
     } catch (error) {
-      console.error("Erreur lors de la déconnexion", error);
+      console.error("Error logging out", error);
     } finally {
       setUser(null);
     }
   }, []);
 
   const value: AuthContextValue = React.useMemo(
-    () => ({
-      user,
-      isLoading,
-      refreshUser,
-      logout,
-    }),
+    () => ({ user, isLoading, refreshUser, logout }),
     [user, isLoading, refreshUser, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
+
+export { AuthContext };
