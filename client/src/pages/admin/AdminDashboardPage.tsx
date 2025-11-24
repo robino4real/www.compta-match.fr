@@ -37,12 +37,13 @@ const AdminDashboardPage: React.FC = () => {
         }
 
         setUsers(Array.isArray(data.users) ? data.users : []);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Erreur admin /users :", err);
-        setError(
-          err?.message ||
-            "Une erreur est survenue lors du chargement des utilisateurs."
-        );
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "Une erreur est survenue lors du chargement des utilisateurs.";
+        setError(errorMessage);
       } finally {
         setIsLoading(false);
       }
