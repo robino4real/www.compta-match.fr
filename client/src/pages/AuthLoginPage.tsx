@@ -1,10 +1,8 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
 
 const AuthLoginPage: React.FC = () => {
-  const navigate = useNavigate();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -35,10 +33,14 @@ const AuthLoginPage: React.FC = () => {
 
       if (response.ok) {
         setSuccess("Connexion réussie. Redirection en cours...");
-        setTimeout(() => navigate("/"), 800);
-      } else {
-        setError(data?.message ?? "Email ou mot de passe incorrect.");
+        // Force un rechargement complet pour que l'état connecté soit pris en compte partout
+        window.setTimeout(() => {
+          window.location.href = "/";
+        }, 600);
+        return;
       }
+
+      setError(data?.message ?? "Email ou mot de passe incorrect.");
     } catch (err) {
       setError("Impossible de traiter la requête. Merci de réessayer.");
     } finally {
