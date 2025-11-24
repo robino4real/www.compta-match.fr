@@ -15,3 +15,28 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model DownloadableProduct {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  name             String
+  shortDescription String?
+  longDescription  String?
+  priceCents       Int
+  currency         String   @default("EUR")
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  /// Nom original du fichier lors de l'upload (ex: ComptaMini-1.0.0.exe)
+  fileName     String
+
+  /// Taille du fichier en octets
+  fileSize     Int
+
+  /// Type MIME du fichier (ex: application/x-msdownload, application/zip)
+  fileMimeType String?
+
+  /// Chemin de stockage interne sur le serveur (ex: "downloads/uuid-xxx.exe")
+  storagePath  String
+}
