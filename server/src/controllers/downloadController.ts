@@ -127,3 +127,72 @@ export async function handleDownloadByToken(req: Request, res: Response) {
     });
   }
 }
+
+export async function listUserDownloads(req: Request, res: Response) {
+  const request = req as AuthenticatedRequest;
+
+  try {
+    const userId = request.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "Utilisateur non authentifié." });
+    }
+
+    // On récupère tous les OrderItem des commandes payées de cet utilisateur
+    const items = await prisma.orderItem.findMany({
+      where: {
+        order: {
+          userId,
+          status: "PAID",
+        },
+      },
+      include: {
+        order: true,
+        product: true,
+      },
+      orderBy: {
+        order: {
+          createdAt: "desc",
+        },
+      },
+    });
+
+    const now = new Date();
+
+    const downloads = items.map((item) => {
+      let remainingMs: number | null = null;
+      let isExpired = false;
+
+      if (item.downloadExpiresAt) {
+        const diff = item.downloadExpiresAt.getTime() - now.getTime();
+        remainingMs = diff > 0 ? diff : 0;
+        isExpired = diff <= 0;
+      }
+
+      return {
+        id: item.id,
+        token: item.downloadToken,
+        productId: item.productId,
+        productName: item.product.name,
+        productDescription: item.product.shortDescription,
+        priceCents: item.priceCents,
+        orderCreatedAt: item.order.createdAt,
+        downloadFirstAt: item.downloadFirstAt,
+        downloadExpiresAt: item.downloadExpiresAt,
+        downloadCount: item.downloadCount,
+        remainingMs,
+        isExpired,
+      };
+    });
+
+    return res.status(200).json({ downloads });
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des téléchargements utilisateur :",
+      error
+    );
+    return res.status(500).json({
+      message:
+        "Erreur lors de la récupération des téléchargements utilisateur.",
+    });
+  }
+}

@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { handleDownloadByToken } from "../controllers/downloadController";
+import {
+  handleDownloadByToken,
+  listUserDownloads,
+} from "../controllers/downloadController";
 import {
   attachUserToRequest,
   requireAuth,
@@ -8,8 +11,19 @@ import {
 const router = Router();
 
 /**
+ * Liste des logiciels téléchargeables de l'utilisateur connecté.
+ *
+ * GET /downloads/me
+ */
+router.get(
+  "/me",
+  attachUserToRequest,
+  requireAuth,
+  listUserDownloads
+);
+
+/**
  * Téléchargement d'un logiciel via un token.
- * Utilisateur authentifié obligatoire.
  *
  * GET /downloads/:token
  */
