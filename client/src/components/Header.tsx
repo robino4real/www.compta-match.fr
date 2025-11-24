@@ -32,6 +32,9 @@ const Header: React.FC = () => {
           <NavLink to="/telechargements" className={navLinkClass}>
             Logiciels téléchargeables
           </NavLink>
+          <NavLink to="/panier" className={navLinkClass}>
+            Panier
+          </NavLink>
           <NavLink to="/contact" className={navLinkClass}>
             Contact
           </NavLink>

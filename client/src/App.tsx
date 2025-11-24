@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import OffersPage from './pages/OffersPage';
 import PricingPage from './pages/PricingPage';
 import DownloadsPage from './pages/DownloadsPage';
+import CartPage from './pages/CartPage';
 import ContactPage from './pages/ContactPage';
 import CgvPage from './pages/CgvPage';
 import MentionsLegalesPage from './pages/MentionsLegalesPage';
@@ -21,6 +22,7 @@ const App: React.FC = () => {
         <Route path="/offres" element={<OffersPage />} />
         <Route path="/tarifs" element={<PricingPage />} />
         <Route path="/telechargements" element={<DownloadsPage />} />
+        <Route path="/panier" element={<CartPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/cgv" element={<CgvPage />} />
         <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
