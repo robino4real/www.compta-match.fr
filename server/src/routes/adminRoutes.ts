@@ -2,7 +2,13 @@ import { Router } from "express";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
-import { listUsers, createDownloadableProduct } from "../controllers/adminController";
+import { attachUserToRequest, requireAdmin } from "../middleware/authMiddleware";
+import { listUsers } from "../controllers/adminController";
+import {
+  createDownloadableProduct,
+  getDownloadableProductById,
+  updateDownloadableProduct,
+} from "../controllers/adminDownloadController";
 
 const router = Router();
 
@@ -22,12 +28,28 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // GET /admin/users
-router.get("/users", listUsers);
+router.get("/users", attachUserToRequest, requireAdmin, listUsers);
 
 router.post(
   "/downloads",
+  attachUserToRequest,
+  requireAdmin,
   upload.single("file"),
   createDownloadableProduct
+);
+
+router.get(
+  "/downloads/:id",
+  attachUserToRequest,
+  requireAdmin,
+  getDownloadableProductById
+);
+
+router.put(
+  "/downloads/:id",
+  attachUserToRequest,
+  requireAdmin,
+  updateDownloadableProduct
 );
 
 export default router;
