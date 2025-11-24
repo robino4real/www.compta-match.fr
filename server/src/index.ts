@@ -4,8 +4,9 @@ import cookieParser from 'cookie-parser';
 import { env } from './config/env';
 import healthRoutes from './routes/healthRoutes';
 import adminRoutes from './routes/adminRoutes';
-import { attachUserToRequest, requireAdmin } from './middleware/authMiddleware';
+import { attachUserToRequest, requireAdmin, requireAuth } from './middleware/authMiddleware';
 import { errorHandler } from './middleware/errorHandler';
+import orderRoutes from './routes/orderRoutes';
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 
 app.use('/api', healthRoutes);
 app.use('/admin', attachUserToRequest, requireAdmin, adminRoutes);
+app.use('/orders', attachUserToRequest, requireAuth, orderRoutes);
 app.use(errorHandler);
 
 app.listen(env.port, () => {

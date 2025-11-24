@@ -16,6 +16,35 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
+enum OrderStatus {
+  PAID
+  CANCELLED
+}
+
+model Order {
+  id         String      @id @default(cuid())
+  userId     String
+  user       User        @relation(fields: [userId], references: [id])
+  createdAt  DateTime    @default(now())
+  status     OrderStatus @default(PAID)
+  totalCents Int
+  currency   String      @default("EUR")
+
+  items      OrderItem[]
+}
+
+model OrderItem {
+  id               String             @id @default(cuid())
+  orderId          String
+  order            Order              @relation(fields: [orderId], references: [id])
+
+  productId        String
+  product          DownloadableProduct @relation(fields: [productId], references: [id])
+
+  priceCents       Int
+  quantity         Int                @default(1)
+}
+
 model DownloadableProduct {
   id               String   @id @default(cuid())
   slug             String   @unique
@@ -39,4 +68,6 @@ model DownloadableProduct {
 
   /// Chemin de stockage interne sur le serveur (ex: "downloads/uuid-xxx.exe")
   storagePath  String
+
+  items OrderItem[]
 }
