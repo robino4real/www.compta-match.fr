@@ -1,16 +1,19 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 
 const CartPage: React.FC = () => {
+  const navigate = useNavigate();
   const { items, totalCents, removeItem, clearCart } = useCart();
 
   const hasItems = items.length > 0;
   const totalEuros = totalCents / 100;
 
   const handleCheckout = () => {
-    alert(
-      "TODO: mise en place du processus de paiement pour ces logiciels téléchargeables."
-    );
+    if (!hasItems) {
+      return;
+    }
+    navigate("/paiement");
   };
 
   return (
