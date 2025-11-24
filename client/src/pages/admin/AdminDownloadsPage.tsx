@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
@@ -15,6 +16,7 @@ interface DownloadableProduct {
 }
 
 const AdminDownloadsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [name, setName] = React.useState("");
   const [slug, setSlug] = React.useState("");
   const [priceEuros, setPriceEuros] = React.useState("");
@@ -339,6 +341,9 @@ const AdminDownloadsPage: React.FC = () => {
                   <th className="px-3 py-2 text-left font-semibold text-slate-500">
                     Créé le
                   </th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -375,6 +380,17 @@ const AdminDownloadsPage: React.FC = () => {
                       </td>
                       <td className="px-3 py-2 align-top text-slate-700">
                         {created}
+                      </td>
+                      <td className="px-3 py-2 align-top text-slate-700">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            navigate(`/admin/telechargements/${product.id}`)
+                          }
+                          className="rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:border-black hover:text-black transition"
+                        >
+                          Modifier
+                        </button>
                       </td>
                     </tr>
                   );
