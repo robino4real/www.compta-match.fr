@@ -1,5 +1,5 @@
-import { NextFunction, Request, Response } from 'express';
-import { prisma } from '../config/prisma';
+import { NextFunction, Request, Response } from "express";
+import { prisma } from "../config/prisma";
 
 declare global {
   namespace Express {
@@ -20,10 +20,10 @@ type AuthenticatedRequest = Request & {
 
 function decodeToken(token: string): { userId?: string } | null {
   try {
-    const decoded = Buffer.from(token, 'base64').toString('utf-8');
+    const decoded = Buffer.from(token, "base64").toString("utf-8");
     return JSON.parse(decoded);
   } catch (error) {
-    console.error('Token invalide', error);
+    console.error("Token invalide", error);
     return null;
   }
 }
@@ -48,7 +48,7 @@ export async function attachUserToRequest(req: AuthenticatedRequest, _res: Respo
       req.user = user;
     }
   } catch (error) {
-    console.error('Erreur lors de la vérification du token', error);
+    console.error("Erreur lors de la vérification du token", error);
   }
 
   return next();
@@ -56,7 +56,7 @@ export async function attachUserToRequest(req: AuthenticatedRequest, _res: Respo
 
 export function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   if (!req.user) {
-    return res.status(401).json({ message: 'Non authentifié.' });
+    return res.status(401).json({ message: "Non authentifié." });
   }
 
   return next();
@@ -64,11 +64,11 @@ export function requireAuth(req: AuthenticatedRequest, res: Response, next: Next
 
 export function requireAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   if (!req.user) {
-    return res.status(401).json({ message: 'Non authentifié.' });
+    return res.status(401).json({ message: "Non authentifié." });
   }
 
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ message: 'Accès réservé à l\'administrateur.' });
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Accès réservé à l'administrateur." });
   }
 
   return next();
