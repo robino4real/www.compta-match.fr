@@ -9,6 +9,8 @@ import DownloadsPage from "./pages/DownloadsPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import ContactPage from "./pages/ContactPage";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
+import PaymentCancelPage from "./pages/PaymentCancelPage";
 
 import CgvPage from "./pages/CgvPage";
 import MentionsLegalesPage from "./pages/MentionsLegalesPage";
@@ -74,6 +76,8 @@ const App: React.FC = () => {
         <Route path="/telechargements" element={<DownloadsPage />} />
         <Route path="/panier" element={<CartPage />} />
         <Route path="/paiement" element={<CheckoutPage />} />
+        <Route path="/paiement/success" element={<PaymentSuccessPage />} />
+        <Route path="/paiement/cancel" element={<PaymentCancelPage />} />
         <Route path="/contact" element={<ContactPage />} />
 
         <Route path="/cgv" element={<CgvPage />} />
