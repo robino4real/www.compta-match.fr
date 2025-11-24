@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
 import { stripe } from "../config/stripeClient";
@@ -259,6 +260,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
               productId: it.productId,
               priceCents: productMap[it.productId].priceCents,
               quantity: it.quantity,
+              downloadToken: crypto.randomBytes(24).toString("hex"),
             })),
         },
       },
