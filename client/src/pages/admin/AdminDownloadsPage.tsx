@@ -3,6 +3,17 @@ import React from "react";
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
 
+interface DownloadableProduct {
+  id: string;
+  name: string;
+  slug: string;
+  priceCents: number;
+  fileName: string;
+  fileSize: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
 const AdminDownloadsPage: React.FC = () => {
   const [name, setName] = React.useState("");
   const [slug, setSlug] = React.useState("");
@@ -14,6 +25,47 @@ const AdminDownloadsPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
+  const [products, setProducts] = React.useState<DownloadableProduct[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = React.useState<boolean>(false);
+  const [errorProducts, setErrorProducts] = React.useState<string | null>(null);
+
+  const fetchProducts = React.useCallback(async () => {
+    try {
+      setIsLoadingProducts(true);
+      setErrorProducts(null);
+
+      const response = await fetch(`${API_BASE_URL}/catalog/downloads`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          (data as { message?: string }).message ||
+            "Impossible de récupérer la liste des produits."
+        );
+      }
+
+      const list = Array.isArray((data as { products?: unknown }).products)
+        ? ((data as { products?: DownloadableProduct[] }).products as DownloadableProduct[])
+        : [];
+      setProducts(list);
+    } catch (err: any) {
+      console.error("Erreur lors du chargement des produits téléchargeables :", err);
+      setErrorProducts(
+        err?.message ||
+          "Une erreur est survenue lors du chargement des produits téléchargeables."
+      );
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selected = event.target.files?.[0] ?? null;
@@ -86,6 +138,7 @@ const AdminDownloadsPage: React.FC = () => {
         setLongDescription("");
         setFile(null);
         event.currentTarget.reset();
+        await fetchProducts();
       } else {
         setError(
           (data as { message?: string }).message ||
@@ -234,6 +287,102 @@ const AdminDownloadsPage: React.FC = () => {
           serveur dans un dossier interne. Plus tard, une logique de droits d&apos;accès et
           de lien de téléchargement client sera mise en place.
         </p>
+      </section>
+
+      <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-black">
+            Liste des logiciels téléchargeables
+          </h2>
+          {isLoadingProducts && (
+            <span className="text-[11px] text-slate-500">
+              Chargement en cours...
+            </span>
+          )}
+        </div>
+
+        {errorProducts && (
+          <p className="text-[11px] text-red-600">
+            {errorProducts}
+          </p>
+        )}
+
+        {!isLoadingProducts && !errorProducts && products.length === 0 && (
+          <p className="text-[11px] text-slate-500">
+            Aucun produit téléchargeable n&apos;a encore été créé.
+          </p>
+        )}
+
+        {!isLoadingProducts && !errorProducts && products.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-xs">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                    Nom
+                  </th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                    Slug
+                  </th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                    Prix
+                  </th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                    Fichier
+                  </th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                    Taille
+                  </th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                    Actif
+                  </th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                    Créé le
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map((product) => {
+                  const priceEuros = (product.priceCents ?? 0) / 100;
+                  const sizeMb = product.fileSize
+                    ? product.fileSize / (1024 * 1024)
+                    : 0;
+                  const sizeLabel =
+                    product.fileSize ? `${sizeMb.toFixed(2)} Mo` : "—";
+                  const created = product.createdAt
+                    ? new Date(product.createdAt).toISOString().slice(0, 10)
+                    : "—";
+
+                  return (
+                    <tr key={product.id} className="odd:bg-white even:bg-slate-50">
+                      <td className="px-3 py-2 align-top text-slate-800">
+                        {product.name}
+                      </td>
+                      <td className="px-3 py-2 align-top text-slate-700">
+                        {product.slug}
+                      </td>
+                      <td className="px-3 py-2 align-top text-slate-700">
+                        {priceEuros.toFixed(2)} €
+                      </td>
+                      <td className="px-3 py-2 align-top text-slate-700">
+                        {product.fileName}
+                      </td>
+                      <td className="px-3 py-2 align-top text-slate-700">
+                        {sizeLabel}
+                      </td>
+                      <td className="px-3 py-2 align-top text-slate-700">
+                        {product.isActive ? "Oui" : "Non"}
+                      </td>
+                      <td className="px-3 py-2 align-top text-slate-700">
+                        {created}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </div>
   );
