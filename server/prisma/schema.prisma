@@ -43,6 +43,12 @@ model OrderItem {
 
   priceCents       Int
   quantity         Int                @default(1)
+
+  // --- Nouveau : gestion du téléchargement ---
+  downloadToken     String   @unique
+  downloadFirstAt   DateTime?
+  downloadExpiresAt DateTime?
+  downloadCount     Int      @default(0)
 }
 
 model DownloadableProduct {

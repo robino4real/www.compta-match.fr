@@ -8,6 +8,7 @@ import { attachUserToRequest, requireAdmin, requireAuth } from './middleware/aut
 import { errorHandler } from './middleware/errorHandler';
 import orderRoutes from './routes/orderRoutes';
 import paymentRoutes from './routes/paymentRoutes';
+import downloadRoutes from './routes/downloadRoutes';
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use('/api', healthRoutes);
 app.use('/admin', attachUserToRequest, requireAdmin, adminRoutes);
 app.use('/orders', attachUserToRequest, requireAuth, orderRoutes);
 app.use('/payments', paymentRoutes);
+app.use('/downloads', downloadRoutes);
 app.use(errorHandler);
 
 app.listen(env.port, () => {
