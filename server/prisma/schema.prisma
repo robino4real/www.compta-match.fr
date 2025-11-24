@@ -77,3 +77,14 @@ model DownloadableProduct {
 
   items OrderItem[]
 }
+
+model StripeSettings {
+  id                 Int      @id @default(1)
+  useLiveMode        Boolean  @default(false)
+  defaultCurrency    String   @default("EUR")
+  testPublishableKey String?
+  livePublishableKey String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
