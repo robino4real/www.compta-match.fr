@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { Request, Response } from "express";
+import { PromoCode } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { stripe } from "../config/stripeClient";
 
@@ -14,6 +15,65 @@ interface AuthenticatedRequest extends Request {
 interface CheckoutItemInput {
   productId: string;
   quantity?: number;
+}
+
+async function validatePromoCodeForTotal(
+  rawCode: string,
+  totalCents: number
+): Promise<{ promo: PromoCode; discountCents: number } | null> {
+  if (!rawCode || !rawCode.trim() || totalCents <= 0) {
+    return null;
+  }
+
+  const normalizedCode = rawCode.trim().toUpperCase();
+
+  const promo = await prisma.promoCode.findUnique({
+    where: { code: normalizedCode },
+  });
+
+  if (!promo) {
+    return null;
+  }
+
+  if (!promo.isActive) {
+    return null;
+  }
+
+  const now = new Date();
+
+  if (promo.startsAt && promo.startsAt > now) {
+    return null;
+  }
+
+  if (promo.endsAt && promo.endsAt < now) {
+    return null;
+  }
+
+  if (
+    typeof promo.maxUses === "number" &&
+    promo.maxUses > 0 &&
+    promo.currentUses >= promo.maxUses
+  ) {
+    return null;
+  }
+
+  let discountCents = 0;
+
+  if (promo.discountType === "PERCENT") {
+    discountCents = Math.floor((totalCents * promo.discountValue) / 100);
+  } else if (promo.discountType === "AMOUNT") {
+    discountCents = promo.discountValue;
+  }
+
+  if (discountCents <= 0) {
+    return null;
+  }
+
+  if (discountCents > totalCents) {
+    discountCents = totalCents;
+  }
+
+  return { promo, discountCents };
 }
 
 /**
@@ -34,7 +94,10 @@ export async function createDownloadCheckoutSession(
       return res.status(401).json({ message: "Utilisateur non authentifié." });
     }
 
-    const { items } = req.body as { items?: CheckoutItemInput[] };
+    const { items, promoCode } = req.body as {
+      items?: CheckoutItemInput[];
+      promoCode?: string;
+    };
 
     if (!Array.isArray(items) || items.length === 0) {
       return res
@@ -73,6 +136,43 @@ export async function createDownloadCheckoutSession(
       return acc;
     }, {});
 
+    const totalCents = normalizedItems.reduce((sum, it) => {
+      const product = productMap[it.productId];
+      if (!product) return sum;
+      return sum + product.priceCents * it.quantity;
+    }, 0);
+
+    if (totalCents <= 0) {
+      return res.status(400).json({
+        message: "Le montant de la commande doit être supérieur à 0.",
+      });
+    }
+
+    let appliedPromo: PromoCode | null = null;
+    let promoDiscountCents = 0;
+
+    if (promoCode && promoCode.trim()) {
+      const result = await validatePromoCodeForTotal(promoCode, totalCents);
+
+      if (!result) {
+        return res.status(400).json({
+          message:
+            "Ce code promo est invalide, expiré ou n'est plus disponible.",
+        });
+      }
+
+      appliedPromo = result.promo;
+      promoDiscountCents = result.discountCents;
+    }
+
+    const payableCents = totalCents - promoDiscountCents;
+
+    if (payableCents <= 0) {
+      return res.status(400).json({
+        message: "Le montant après réduction doit être strictement supérieur à 0.",
+      });
+    }
+
     const successUrl =
       process.env.STRIPE_SUCCESS_URL ||
       "http://localhost:5173/paiement/success";
@@ -89,25 +189,29 @@ export async function createDownloadCheckoutSession(
           quantity: it.quantity,
         }))
       ),
+      promoCodeId: appliedPromo ? appliedPromo.id : "",
+      promoCode: appliedPromo ? appliedPromo.code : "",
+      promoDiscountCents: promoDiscountCents.toString(),
     };
+
+    const currency =
+      products[0]?.currency?.toLowerCase() || process.env.CURRENCY || "eur";
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
-      line_items: normalizedItems.map((it) => {
-        const product = productMap[it.productId];
-        return {
-          quantity: it.quantity,
+      line_items: [
+        {
+          quantity: 1,
           price_data: {
-            currency: (product.currency || "EUR").toLowerCase(),
-            unit_amount: product.priceCents,
+            currency,
+            unit_amount: payableCents,
             product_data: {
-              name: product.name,
-              description: product.shortDescription || undefined,
+              name: "Commande de logiciels téléchargeables",
             },
           },
-        };
-      }),
+        },
+      ],
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata,
@@ -159,6 +263,10 @@ export async function handleStripeWebhook(req: Request, res: Response) {
     const metadata = session.metadata || {};
     const userId = metadata.userId as string | undefined;
     const itemsJson = metadata.items as string | undefined;
+    const promoCodeId = metadata.promoCodeId || "";
+    const promoDiscountCentsRaw = metadata.promoDiscountCents || "0";
+    const promoDiscountCents = Number(promoDiscountCentsRaw) || 0;
+    const promoCodeUsed = metadata.promoCode || "";
 
     if (!userId || !itemsJson) {
       console.error(
@@ -246,13 +354,26 @@ export async function handleStripeWebhook(req: Request, res: Response) {
       return res.status(200).json({ received: true });
     }
 
+    const payableCents = Math.max(totalCents - promoDiscountCents, 0);
+
+    if (payableCents <= 0) {
+      console.error(
+        "[Stripe webhook] Montant à payer non positif après remise pour userId :",
+        userId
+      );
+      return res.status(200).json({ received: true });
+    }
+
     // Création de la commande (status PAID car Stripe a confirmé le paiement)
     const order = await prisma.order.create({
       data: {
         userId,
-        totalCents,
+        totalCents: payableCents,
         currency: "EUR",
         status: "PAID",
+        promoCodeId: promoCodeId || null,
+        promoDiscountCents:
+          promoDiscountCents > 0 ? promoDiscountCents : null,
         items: {
           create: parsedItems
             .filter((it) => !!productMap[it.productId])
@@ -272,6 +393,24 @@ export async function handleStripeWebhook(req: Request, res: Response) {
         },
       },
     });
+
+    if (promoCodeId && promoDiscountCents > 0) {
+      await prisma.promoCode.update({
+        where: { id: promoCodeId },
+        data: {
+          currentUses: {
+            increment: 1,
+          },
+        },
+      });
+
+      if (promoCodeUsed) {
+        console.log(
+          "[Stripe webhook] Code promo appliqué et incrémenté :",
+          promoCodeUsed
+        );
+      }
+    }
 
     console.log(
       "[Stripe webhook] Commande créée avec succès pour userId :",
