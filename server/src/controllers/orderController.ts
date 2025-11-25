@@ -76,14 +76,19 @@ export async function createDownloadableOrder(req: Request, res: Response) {
     const order = await prisma.order.create({
       data: {
         userId,
-        totalCents,
+        totalBeforeDiscount: totalCents,
+        discountAmount: 0,
+        totalPaid: totalCents,
         currency: "EUR",
+        paidAt: new Date(),
         status: "PAID", // paiement simulé pour le moment
         items: {
           create: normalizedItems.map((it) => ({
             productId: it.productId,
+            productNameSnapshot: productMap[it.productId].name,
             priceCents: productMap[it.productId].priceCents,
             quantity: it.quantity,
+            lineTotal: productMap[it.productId].priceCents * it.quantity,
             downloadToken: crypto.randomBytes(24).toString("hex"),
           })),
         },
@@ -105,6 +110,37 @@ export async function createDownloadableOrder(req: Request, res: Response) {
     );
     return res.status(500).json({
       message: "Erreur lors de la création de la commande de produits téléchargeables.",
+    });
+  }
+}
+
+export async function listUserOrders(req: Request, res: Response) {
+  const request = req as AuthenticatedRequest;
+
+  try {
+    const userId = request.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "Non authentifié." });
+    }
+
+    const orders = await prisma.order.findMany({
+      where: { userId },
+      include: {
+        items: true,
+        invoice: true,
+        promoCode: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return res.status(200).json({ orders });
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des commandes utilisateur :",
+      error
+    );
+    return res.status(500).json({
+      message: "Erreur lors de la récupération de vos commandes.",
     });
   }
 }

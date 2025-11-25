@@ -19,6 +19,27 @@ interface UserDownload {
   isExpired?: boolean;
 }
 
+interface OrderItemDto {
+  id: string;
+  productNameSnapshot: string;
+  quantity: number;
+  lineTotal: number;
+  downloadToken?: string;
+}
+
+interface OrderDto {
+  id: string;
+  createdAt: string;
+  paidAt?: string | null;
+  totalPaid: number;
+  totalBeforeDiscount: number;
+  discountAmount: number;
+  currency: string;
+  promoCode?: { code: string } | null;
+  invoice?: { invoiceNumber: string; pdfPath?: string | null } | null;
+  items: OrderItemDto[];
+}
+
 const AccountPage: React.FC = () => {
   const { user } = useAuth();
   const hasActiveSubscription = false; // TODO: sera remplacé par une vraie info API plus tard
@@ -28,6 +49,9 @@ const AccountPage: React.FC = () => {
   const [downloadsError, setDownloadsError] = React.useState<string | null>(
     null
   );
+  const [orders, setOrders] = React.useState<OrderDto[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = React.useState(false);
+  const [ordersError, setOrdersError] = React.useState<string | null>(null);
   const [now, setNow] = React.useState<number>(Date.now());
 
   React.useEffect(() => {
@@ -79,6 +103,44 @@ const AccountPage: React.FC = () => {
     fetchDownloads();
   }, []);
 
+  React.useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setIsLoadingOrders(true);
+        setOrdersError(null);
+
+        const response = await fetch(`${API_BASE_URL}/orders/me`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(
+            data.message || "Impossible de récupérer votre historique."
+          );
+        }
+
+        const list: OrderDto[] = Array.isArray(data.orders)
+          ? data.orders
+          : [];
+
+        setOrders(list);
+      } catch (error: any) {
+        console.error("Erreur /orders/me :", error);
+        setOrdersError(
+          error?.message ||
+            "Une erreur est survenue lors du chargement de vos commandes."
+        );
+      } finally {
+        setIsLoadingOrders(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
   const formatRemaining = (download: UserDownload): string => {
     if (!download.downloadExpiresAt) {
       // Jamais téléchargé
@@ -115,6 +177,21 @@ const AccountPage: React.FC = () => {
 
     const url = `${API_BASE_URL}/downloads/${download.token}`;
     window.open(url, "_blank");
+  };
+
+  const handleInvoiceDownload = (pdfPath?: string | null) => {
+    if (!pdfPath) return;
+    window.open(pdfPath, "_blank");
+  };
+
+  const handleOrderDownload = (token?: string) => {
+    if (!token) return;
+    const url = `${API_BASE_URL}/downloads/${token}`;
+    window.open(url, "_blank");
+  };
+
+  const formatCurrency = (amount: number, currency: string) => {
+    return `${(amount / 100).toFixed(2)} ${currency}`;
   };
 
   return (
@@ -199,6 +276,119 @@ const AccountPage: React.FC = () => {
             {/* TODO: afficher un bloc d'accès direct à l'application quand l'abonnement est actif */}
           </div>
         )}
+
+        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-black">
+                Mes commandes & factures
+              </h2>
+              <p className="text-[11px] text-slate-600">
+                Historique de vos achats de logiciels téléchargeables. Téléchargez
+                vos factures et vos logiciels directement depuis cet espace.
+              </p>
+            </div>
+          </div>
+
+          {isLoadingOrders && (
+            <p className="text-xs text-slate-500">
+              Chargement de vos commandes...
+            </p>
+          )}
+
+          {ordersError && <p className="text-xs text-red-600">{ordersError}</p>}
+
+          {!isLoadingOrders && !ordersError && orders.length === 0 && (
+            <p className="text-xs text-slate-500">
+              Vous n&apos;avez pas encore passé de commande.
+            </p>
+          )}
+
+          {!isLoadingOrders && !ordersError && orders.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-xs">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                      Date
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                      Produits
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                      Montant TTC
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                      Code promo
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                      Facture
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                      Téléchargement
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((order) => {
+                    const firstItem = order.items[0];
+                    const extraCount = Math.max(order.items.length - 1, 0);
+                    const productsLabel = `${firstItem?.productNameSnapshot || "Produit"}${
+                      extraCount > 0 ? ` + ${extraCount} autre(s)` : ""
+                    }`;
+                    const invoiceLabel = order.invoice?.invoiceNumber || "—";
+                    const downloadToken = order.items.find((i) => i.downloadToken)?.downloadToken;
+
+                    return (
+                      <tr key={order.id} className="odd:bg-white even:bg-slate-50">
+                        <td className="px-3 py-2 align-top text-slate-700">
+                          {new Date(order.paidAt || order.createdAt)
+                            .toISOString()
+                            .slice(0, 10)}
+                        </td>
+                        <td className="px-3 py-2 align-top text-slate-800">{productsLabel}</td>
+                        <td className="px-3 py-2 align-top text-slate-800">
+                          {formatCurrency(order.totalPaid, order.currency)}
+                        </td>
+                        <td className="px-3 py-2 align-top text-slate-700">
+                          {order.promoCode?.code || "—"}
+                        </td>
+                        <td className="px-3 py-2 align-top text-slate-700">
+                          {order.invoice?.pdfPath ? (
+                            <button
+                              type="button"
+                              onClick={() => handleInvoiceDownload(order.invoice?.pdfPath)}
+                              className="rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:border-black hover:text-black transition"
+                            >
+                              Télécharger ({invoiceLabel})
+                            </button>
+                          ) : (
+                            <span className="text-[11px] text-slate-500">{invoiceLabel}</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 align-top text-slate-700">
+                          {downloadToken ? (
+                            <button
+                              type="button"
+                              onClick={() => handleOrderDownload(downloadToken)}
+                              className="rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:border-black hover:text-black transition"
+                            >
+                              Télécharger
+                            </button>
+                          ) : (
+                            <span className="text-[11px] text-slate-500">
+                              Lien non disponible
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
 
         <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">

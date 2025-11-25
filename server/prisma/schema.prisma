@@ -14,27 +14,39 @@ model User {
   lastName  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  orders Order[]
 }
 
 enum OrderStatus {
   PAID
+  PENDING
+  FAILED
+  REFUNDED
   CANCELLED
 }
 
 model Order {
-  id         String      @id @default(cuid())
-  userId     String
-  user       User        @relation(fields: [userId], references: [id])
-  createdAt  DateTime    @default(now())
-  status     OrderStatus @default(PAID)
-  totalCents Int
-  currency   String      @default("EUR")
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  createdAt DateTime    @default(now())
+  paidAt    DateTime?
+  status    OrderStatus @default(PAID)
 
-  promoCodeId        String?
-  promoCode          PromoCode? @relation(fields: [promoCodeId], references: [id])
-  promoDiscountCents Int?
+  totalBeforeDiscount Int
+  discountAmount      Int @default(0)
+  totalPaid           Int
+  currency            String      @default("EUR")
 
-  items      OrderItem[]
+  promoCodeId String?
+  promoCode   PromoCode? @relation(fields: [promoCodeId], references: [id])
+
+  stripeSessionId       String? @unique
+  stripePaymentIntentId String? @unique
+
+  items   OrderItem[]
+  invoice Invoice?
 }
 
 model OrderItem {
@@ -45,8 +57,10 @@ model OrderItem {
   productId        String
   product          DownloadableProduct @relation(fields: [productId], references: [id])
 
-  priceCents       Int
-  quantity         Int                @default(1)
+  productNameSnapshot String
+  priceCents          Int
+  quantity            Int                @default(1)
+  lineTotal           Int
 
   // --- Nouveau : gestion du téléchargement ---
   downloadToken     String   @unique
@@ -110,4 +124,26 @@ model PromoCode {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  orders Order[]
+}
+
+model Invoice {
+  id            String   @id @default(cuid())
+  orderId       String   @unique
+  order         Order    @relation(fields: [orderId], references: [id])
+  invoiceNumber String   @unique
+  issueDate     DateTime
+
+  billingName    String
+  billingEmail   String
+  billingAddress String?
+
+  totalHT  Int
+  totalTVA Int
+  totalTTC Int
+  currency String @default("EUR")
+
+  pdfPath   String?
+  createdAt DateTime @default(now())
 }
