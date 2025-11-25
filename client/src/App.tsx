@@ -29,6 +29,8 @@ import AdminPromoCodesPage from "./pages/admin/AdminPromoCodesPage";
 import AdminCompanySettingsPage from "./pages/admin/AdminCompanySettingsPage";
 import AdminInvoicesPage from "./pages/admin/AdminInvoicesPage";
 import AdminInvoiceDetailPage from "./pages/admin/AdminInvoiceDetailPage";
+import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
+import AdminOrderDetailPage from "./pages/admin/AdminOrderDetailPage";
 
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading } = useAuth();
@@ -161,6 +163,22 @@ const App: React.FC = () => {
           element={
             <RequireAdmin>
               <AdminInvoiceDetailPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="/admin/orders"
+          element={
+            <RequireAdmin>
+              <AdminOrdersPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="/admin/orders/:id"
+          element={
+            <RequireAdmin>
+              <AdminOrderDetailPage />
             </RequireAdmin>
           }
         />

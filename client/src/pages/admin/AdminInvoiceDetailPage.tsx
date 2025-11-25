@@ -1,5 +1,5 @@
 import React from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
@@ -33,6 +33,7 @@ interface InvoiceDetail {
   sellerInvoiceFooterText?: string | null;
   pdfPath?: string | null;
   order: {
+    id: string;
     status: string;
     discountAmount: number;
     promoCode?: { code: string } | null;
@@ -126,6 +127,12 @@ const AdminInvoiceDetailPage: React.FC = () => {
           </p>
         </div>
         <div className="space-x-2">
+          <Link
+            to={`/admin/orders/${invoice.order.id}`}
+            className="rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-black hover:text-black"
+          >
+            Voir la commande
+          </Link>
           <button
             type="button"
             onClick={handleDownload}

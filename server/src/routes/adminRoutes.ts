@@ -24,6 +24,12 @@ import {
   downloadInvoice,
 } from "../controllers/invoiceController";
 import {
+  adminGetOrder,
+  adminListOrders,
+  adminMarkOrderRefunded,
+  adminRegenerateDownloadLink,
+} from "../controllers/adminOrderController";
+import {
   listPromoCodes,
   createPromoCode,
   getPromoCodeById,
@@ -166,6 +172,27 @@ router.get(
   attachUserToRequest,
   requireAdmin,
   downloadInvoice
+);
+
+// Commandes
+router.get("/orders", attachUserToRequest, requireAdmin, adminListOrders);
+router.get(
+  "/orders/:id",
+  attachUserToRequest,
+  requireAdmin,
+  adminGetOrder
+);
+router.post(
+  "/orders/:id/refund",
+  attachUserToRequest,
+  requireAdmin,
+  adminMarkOrderRefunded
+);
+router.post(
+  "/orders/:orderItemId/regenerate-link",
+  attachUserToRequest,
+  requireAdmin,
+  adminRegenerateDownloadLink
 );
 
 export default router;
