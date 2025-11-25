@@ -51,6 +51,12 @@ import {
   adminListLegalPages,
   adminUpdateLegalPage,
 } from "../controllers/legalPageController";
+import {
+  adminCreateArticle,
+  adminGetArticle,
+  adminListArticles,
+  adminUpdateArticle,
+} from "../controllers/articleController";
 
 const router = Router();
 
@@ -202,6 +208,34 @@ router.get(
   attachUserToRequest,
   requireAdmin,
   adminListLegalPages
+);
+
+router.get(
+  "/articles",
+  attachUserToRequest,
+  requireAdmin,
+  adminListArticles
+);
+
+router.get(
+  "/articles/:id",
+  attachUserToRequest,
+  requireAdmin,
+  adminGetArticle
+);
+
+router.post(
+  "/articles",
+  attachUserToRequest,
+  requireAdmin,
+  adminCreateArticle
+);
+
+router.put(
+  "/articles/:id",
+  attachUserToRequest,
+  requireAdmin,
+  adminUpdateArticle
 );
 
 router.post(

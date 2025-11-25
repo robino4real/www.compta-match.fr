@@ -9,6 +9,8 @@ import DownloadsPage from "./pages/DownloadsPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import ContactPage from "./pages/ContactPage";
+import ArticlesPage from "./pages/ArticlesPage";
+import ArticleDetailPage from "./pages/ArticleDetailPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import PaymentCancelPage from "./pages/PaymentCancelPage";
 
@@ -35,6 +37,8 @@ import AdminOrderDetailPage from "./pages/admin/AdminOrderDetailPage";
 import AdminEmailsPage from "./pages/admin/AdminEmailsPage";
 import AdminLegalPagesPage from "./pages/admin/AdminLegalPagesPage";
 import AdminLegalPageEditPage from "./pages/admin/AdminLegalPageEditPage";
+import AdminArticlesPage from "./pages/admin/AdminArticlesPage";
+import AdminArticleEditPage from "./pages/admin/AdminArticleEditPage";
 
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading } = useAuth();
@@ -91,6 +95,8 @@ const App: React.FC = () => {
         <Route path="/paiement/success" element={<PaymentSuccessPage />} />
         <Route path="/paiement/cancel" element={<PaymentCancelPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/articles" element={<ArticlesPage />} />
+        <Route path="/articles/:slug" element={<ArticleDetailPage />} />
 
         <Route path="/cgv" element={<CgvPage />} />
         <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
@@ -208,6 +214,30 @@ const App: React.FC = () => {
           element={
             <RequireAdmin>
               <AdminLegalPageEditPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="/admin/articles"
+          element={
+            <RequireAdmin>
+              <AdminArticlesPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="/admin/articles/new"
+          element={
+            <RequireAdmin>
+              <AdminArticleEditPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="/admin/articles/:id"
+          element={
+            <RequireAdmin>
+              <AdminArticleEditPage />
             </RequireAdmin>
           }
         />
