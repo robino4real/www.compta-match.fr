@@ -13,6 +13,13 @@ import {
   getStripeSettings,
   updateStripeSettings,
 } from "../controllers/stripeSettingsController";
+import {
+  listPromoCodes,
+  createPromoCode,
+  getPromoCodeById,
+  updatePromoCode,
+  archivePromoCode,
+} from "../controllers/promoCodeAdminController";
 
 const router = Router();
 
@@ -69,6 +76,42 @@ router.put(
   attachUserToRequest,
   requireAdmin,
   updateStripeSettings
+);
+
+// Gestion des codes promo
+router.get(
+  "/promo-codes",
+  attachUserToRequest,
+  requireAdmin,
+  listPromoCodes
+);
+
+router.post(
+  "/promo-codes",
+  attachUserToRequest,
+  requireAdmin,
+  createPromoCode
+);
+
+router.get(
+  "/promo-codes/:id",
+  attachUserToRequest,
+  requireAdmin,
+  getPromoCodeById
+);
+
+router.put(
+  "/promo-codes/:id",
+  attachUserToRequest,
+  requireAdmin,
+  updatePromoCode
+);
+
+router.delete(
+  "/promo-codes/:id",
+  attachUserToRequest,
+  requireAdmin,
+  archivePromoCode
 );
 
 export default router;
