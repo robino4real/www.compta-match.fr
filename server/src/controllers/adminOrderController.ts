@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
 import { regenerateDownloadLinkForOrderItem } from "../services/downloadLinkService";
+import { sendDownloadLinkRegeneratedEmail } from "../services/transactionalEmailService";
 
 export async function adminListOrders(req: Request, res: Response) {
   const { email, status, promoCode } = req.query as Record<string, string>;
@@ -81,6 +82,7 @@ export async function adminRegenerateDownloadLink(
 
   try {
     const link = await regenerateDownloadLinkForOrderItem(orderItemId);
+    await sendDownloadLinkRegeneratedEmail(link.id);
     return res.json({
       link,
       message: "Nouveau lien de téléchargement généré pour cet article.",

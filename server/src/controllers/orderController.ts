@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
 import { generateDownloadLinksForOrder } from "../services/downloadLinkService";
+import { sendOrderConfirmationEmail } from "../services/transactionalEmailService";
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -111,6 +112,8 @@ export async function createDownloadableOrder(req: Request, res: Response) {
         promoCode: true,
       },
     });
+
+    await sendOrderConfirmationEmail(order.id);
 
     return res.status(201).json({ order: orderWithLinks });
   } catch (error) {
