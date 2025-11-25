@@ -3,6 +3,8 @@ import { Request, Response } from "express";
 import { PromoCode } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { stripe } from "../config/stripeClient";
+import { createInvoiceForOrder } from "../services/invoiceService";
+import { validatePromoCodeForTotal } from "../services/promoService";
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -15,65 +17,6 @@ interface AuthenticatedRequest extends Request {
 interface CheckoutItemInput {
   productId: string;
   quantity?: number;
-}
-
-async function validatePromoCodeForTotal(
-  rawCode: string,
-  totalCents: number
-): Promise<{ promo: PromoCode; discountCents: number } | null> {
-  if (!rawCode || !rawCode.trim() || totalCents <= 0) {
-    return null;
-  }
-
-  const normalizedCode = rawCode.trim().toUpperCase();
-
-  const promo = await prisma.promoCode.findUnique({
-    where: { code: normalizedCode },
-  });
-
-  if (!promo) {
-    return null;
-  }
-
-  if (!promo.isActive) {
-    return null;
-  }
-
-  const now = new Date();
-
-  if (promo.startsAt && promo.startsAt > now) {
-    return null;
-  }
-
-  if (promo.endsAt && promo.endsAt < now) {
-    return null;
-  }
-
-  if (
-    typeof promo.maxUses === "number" &&
-    promo.maxUses > 0 &&
-    promo.currentUses >= promo.maxUses
-  ) {
-    return null;
-  }
-
-  let discountCents = 0;
-
-  if (promo.discountType === "PERCENT") {
-    discountCents = Math.floor((totalCents * promo.discountValue) / 100);
-  } else if (promo.discountType === "AMOUNT") {
-    discountCents = promo.discountValue;
-  }
-
-  if (discountCents <= 0) {
-    return null;
-  }
-
-  if (discountCents > totalCents) {
-    discountCents = totalCents;
-  }
-
-  return { promo, discountCents };
 }
 
 /**
@@ -333,6 +276,8 @@ export async function handleStripeWebhook(req: Request, res: Response) {
       return res.status(200).json({ received: true });
     }
 
+    const webhookCurrency = products[0]?.currency || "EUR";
+
     const productMap = products.reduce<
       Record<string, (typeof products)[number]>
     >((acc, p) => {
@@ -368,19 +313,24 @@ export async function handleStripeWebhook(req: Request, res: Response) {
     const order = await prisma.order.create({
       data: {
         userId,
-        totalCents: payableCents,
-        currency: "EUR",
+        totalBeforeDiscount: totalCents,
+        discountAmount: promoDiscountCents > 0 ? promoDiscountCents : 0,
+        totalPaid: payableCents,
+        currency: webhookCurrency,
         status: "PAID",
+        paidAt: new Date(),
         promoCodeId: promoCodeId || null,
-        promoDiscountCents:
-          promoDiscountCents > 0 ? promoDiscountCents : null,
+        stripeSessionId: session.id,
+        stripePaymentIntentId: (session as any).payment_intent || null,
         items: {
           create: parsedItems
             .filter((it) => !!productMap[it.productId])
             .map((it) => ({
               productId: it.productId,
+              productNameSnapshot: productMap[it.productId].name,
               priceCents: productMap[it.productId].priceCents,
               quantity: it.quantity,
+              lineTotal: productMap[it.productId].priceCents * it.quantity,
               downloadToken: crypto.randomBytes(24).toString("hex"),
             })),
         },
@@ -392,6 +342,14 @@ export async function handleStripeWebhook(req: Request, res: Response) {
           },
         },
       },
+    });
+
+    await createInvoiceForOrder({
+      order,
+      user,
+      billingEmail: session.customer_details?.email || user.email,
+      billingName:
+        session.customer_details?.name || `${user.firstName || ""} ${user.lastName || ""}`.trim(),
     });
 
     if (promoCodeId && promoDiscountCents > 0) {

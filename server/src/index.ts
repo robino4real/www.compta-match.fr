@@ -9,6 +9,7 @@ import { errorHandler } from './middleware/errorHandler';
 import orderRoutes from './routes/orderRoutes';
 import paymentRoutes from './routes/paymentRoutes';
 import downloadRoutes from './routes/downloadRoutes';
+import cartRoutes from './routes/cartRoutes';
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use('/admin', attachUserToRequest, requireAdmin, adminRoutes);
 app.use('/orders', attachUserToRequest, requireAuth, orderRoutes);
 app.use('/payments', paymentRoutes);
 app.use('/downloads', downloadRoutes);
+app.use('/cart', cartRoutes);
 app.use(errorHandler);
 
 app.listen(env.port, () => {

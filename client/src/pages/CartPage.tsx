@@ -9,15 +9,35 @@ const CartPage: React.FC = () => {
 
   const [promoCode, setPromoCode] = React.useState("");
   const [promoError, setPromoError] = React.useState<string | null>(null);
+  const [promoSuccess, setPromoSuccess] = React.useState<string | null>(null);
+  const [appliedPromo, setAppliedPromo] = React.useState<
+    { code: string; discountCents: number } | null
+  >(null);
+  const [promoStatus, setPromoStatus] = React.useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
   const [isProcessing, setIsProcessing] = React.useState(false);
 
   const hasItems = items.length > 0;
-  const totalEuros = totalCents / 100;
+  const discountCents = appliedPromo?.discountCents ?? 0;
+  const totalAfterDiscountCents = Math.max(totalCents - discountCents, 0);
+  const totalEuros = totalAfterDiscountCents / 100;
+
+  React.useEffect(() => {
+    if (!hasItems) {
+      setAppliedPromo(null);
+      setPromoCode("");
+      setPromoStatus("idle");
+      setPromoSuccess(null);
+      setPromoError(null);
+    }
+  }, [hasItems]);
 
   const handleCheckout = async () => {
     try {
       setIsProcessing(true);
       setPromoError(null);
+      setPromoSuccess(null);
 
       if (!hasItems) {
         setPromoError("Votre panier est vide.");
@@ -31,7 +51,9 @@ const CartPage: React.FC = () => {
         })),
       };
 
-      if (promoCode.trim()) {
+      if (appliedPromo?.code) {
+        payload.promoCode = appliedPromo.code;
+      } else if (promoCode.trim()) {
         payload.promoCode = promoCode.trim();
       }
 
@@ -71,6 +93,87 @@ const CartPage: React.FC = () => {
       );
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim() || !hasItems) {
+      setPromoError("Ajoutez un code promo et des produits avant de continuer.");
+      return;
+    }
+
+    try {
+      setPromoStatus("loading");
+      setPromoError(null);
+      setPromoSuccess(null);
+
+      const response = await fetch(`${API_BASE_URL}/cart/apply-promo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          code: promoCode.trim(),
+          items: items.map((item) => ({
+            productId: item.id,
+            quantity: item.quantity,
+          })),
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.ok) {
+        setPromoStatus("error");
+        setAppliedPromo(null);
+        setPromoError(
+          data.message ||
+            "Impossible d'appliquer ce code. Vérifiez sa validité puis réessayez."
+        );
+        return;
+      }
+
+      setAppliedPromo({
+        code: data.code,
+        discountCents: data.discountAmount,
+      });
+      setPromoStatus("success");
+      setPromoSuccess(data.message || "Réduction appliquée.");
+    } catch (error) {
+      console.error("Erreur lors de l'application du code promo", error);
+      setPromoStatus("error");
+      setPromoError(
+        "Une erreur est survenue lors de la validation du code promo."
+      );
+    }
+  };
+
+  const handleRemovePromo = async () => {
+    try {
+      setPromoStatus("loading");
+
+      const response = await fetch(`${API_BASE_URL}/cart/remove-promo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          items: items.map((item) => ({
+            productId: item.id,
+            quantity: item.quantity,
+          })),
+        }),
+      });
+
+      await response.json().catch(() => ({}));
+
+      setAppliedPromo(null);
+      setPromoStatus("idle");
+      setPromoCode("");
+      setPromoError(null);
+      setPromoSuccess("Code promo retiré.");
+    } catch (error) {
+      console.error("Erreur lors du retrait du code promo", error);
+      setPromoStatus("error");
+      setPromoError("Impossible de retirer le code promo pour le moment.");
     }
   };
 
@@ -157,32 +260,76 @@ const CartPage: React.FC = () => {
                     type="text"
                     value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value)}
-                    className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                    disabled={promoStatus === "loading" || !!appliedPromo}
+                    className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black disabled:bg-slate-50 disabled:text-slate-500"
                     placeholder="COMPTA10"
                   />
-                  {promoCode && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPromoCode("");
-                        setPromoError(null);
-                      }}
-                      className="rounded-full border border-slate-300 px-3 py-2 text-[11px] font-semibold text-slate-700 hover:border-black hover:text-black transition"
-                    >
-                      Effacer
-                    </button>
-                  )}
+                  <div className="flex gap-2">
+                    {appliedPromo ? (
+                      <button
+                        type="button"
+                        onClick={handleRemovePromo}
+                        className="rounded-full border border-slate-300 px-3 py-2 text-[11px] font-semibold text-slate-700 hover:border-black hover:text-black transition disabled:opacity-50"
+                        disabled={promoStatus === "loading"}
+                      >
+                        Supprimer le code
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleApplyPromo}
+                        className="rounded-full bg-black px-3 py-2 text-[11px] font-semibold text-white hover:bg-white hover:text-black hover:border hover:border-black transition disabled:opacity-50"
+                        disabled={promoStatus === "loading" || !promoCode.trim()}
+                      >
+                        {promoStatus === "loading" ? "Validation..." : "Appliquer"}
+                      </button>
+                    )}
+                    {promoCode && !appliedPromo && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPromoCode("");
+                          setPromoError(null);
+                          setPromoSuccess(null);
+                        }}
+                        className="rounded-full border border-slate-300 px-3 py-2 text-[11px] font-semibold text-slate-700 hover:border-black hover:text-black transition"
+                      >
+                        Effacer
+                      </button>
+                    )}
+                  </div>
                 </div>
 
+                {appliedPromo && (
+                  <p className="text-[11px] text-green-600">
+                    Code appliqué : {appliedPromo.code}
+                  </p>
+                )}
+                {promoSuccess && !appliedPromo && (
+                  <p className="text-[11px] text-green-600">{promoSuccess}</p>
+                )}
                 {promoError && (
                   <p className="text-[11px] text-red-600">{promoError}</p>
                 )}
               </section>
 
               <div className="flex flex-col justify-between gap-3 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-                <p className="text-sm font-semibold text-black">
-                  Total : {totalEuros.toFixed(2)} € TTC
-                </p>
+                <div className="space-y-1 text-sm text-black">
+                  <div className="flex justify-between text-slate-700">
+                    <span>Sous-total</span>
+                    <span>{(totalCents / 100).toFixed(2)} €</span>
+                  </div>
+                  {appliedPromo && (
+                    <div className="flex justify-between text-green-700">
+                      <span>Code promo ({appliedPromo.code})</span>
+                      <span>-{(discountCents / 100).toFixed(2)} €</span>
+                    </div>
+                  )}
+                  <p className="flex justify-between font-semibold">
+                    <span>Total TTC</span>
+                    <span>{totalEuros.toFixed(2)} €</span>
+                  </p>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
