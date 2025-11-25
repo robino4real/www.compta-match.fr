@@ -36,7 +36,7 @@ interface OrderDto {
   discountAmount: number;
   currency: string;
   promoCode?: { code: string } | null;
-  invoice?: { invoiceNumber: string; pdfPath?: string | null } | null;
+  invoice?: { id: string; invoiceNumber: string; pdfPath?: string | null } | null;
   items: OrderItemDto[];
 }
 
@@ -179,9 +179,10 @@ const AccountPage: React.FC = () => {
     window.open(url, "_blank");
   };
 
-  const handleInvoiceDownload = (pdfPath?: string | null) => {
-    if (!pdfPath) return;
-    window.open(pdfPath, "_blank");
+  const handleInvoiceDownload = (invoiceId?: string) => {
+    if (!invoiceId) return;
+    const url = `${API_BASE_URL}/invoices/${invoiceId}/download`;
+    window.open(url, "_blank");
   };
 
   const handleOrderDownload = (token?: string) => {
@@ -354,10 +355,10 @@ const AccountPage: React.FC = () => {
                           {order.promoCode?.code || "—"}
                         </td>
                         <td className="px-3 py-2 align-top text-slate-700">
-                          {order.invoice?.pdfPath ? (
+                          {order.invoice?.id ? (
                             <button
                               type="button"
-                              onClick={() => handleInvoiceDownload(order.invoice?.pdfPath)}
+                              onClick={() => handleInvoiceDownload(order.invoice?.id)}
                               className="rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:border-black hover:text-black transition"
                             >
                               Télécharger ({invoiceLabel})

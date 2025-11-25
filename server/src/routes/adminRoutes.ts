@@ -14,6 +14,16 @@ import {
   updateStripeSettings,
 } from "../controllers/stripeSettingsController";
 import {
+  getCompanySettings,
+  saveCompanySettings,
+} from "../controllers/companySettingsController";
+import {
+  adminGetInvoice,
+  adminListInvoices,
+  adminRegenerateInvoice,
+  downloadInvoice,
+} from "../controllers/invoiceController";
+import {
   listPromoCodes,
   createPromoCode,
   getPromoCodeById,
@@ -112,6 +122,50 @@ router.delete(
   attachUserToRequest,
   requireAdmin,
   archivePromoCode
+);
+
+// Paramètres entreprise / facturation
+router.get(
+  "/company-settings",
+  attachUserToRequest,
+  requireAdmin,
+  getCompanySettings
+);
+
+router.put(
+  "/company-settings",
+  attachUserToRequest,
+  requireAdmin,
+  saveCompanySettings
+);
+
+// Factures
+router.get(
+  "/invoices",
+  attachUserToRequest,
+  requireAdmin,
+  adminListInvoices
+);
+
+router.get(
+  "/invoices/:id",
+  attachUserToRequest,
+  requireAdmin,
+  adminGetInvoice
+);
+
+router.post(
+  "/invoices/:id/regenerate",
+  attachUserToRequest,
+  requireAdmin,
+  adminRegenerateInvoice
+);
+
+router.get(
+  "/invoices/:id/download",
+  attachUserToRequest,
+  requireAdmin,
+  downloadInvoice
 );
 
 export default router;

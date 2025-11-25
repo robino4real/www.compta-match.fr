@@ -10,6 +10,7 @@ import orderRoutes from './routes/orderRoutes';
 import paymentRoutes from './routes/paymentRoutes';
 import downloadRoutes from './routes/downloadRoutes';
 import cartRoutes from './routes/cartRoutes';
+import invoiceRoutes from './routes/invoiceRoutes';
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use('/orders', attachUserToRequest, requireAuth, orderRoutes);
 app.use('/payments', paymentRoutes);
 app.use('/downloads', downloadRoutes);
 app.use('/cart', cartRoutes);
+app.use('/invoices', attachUserToRequest, requireAuth, invoiceRoutes);
 app.use(errorHandler);
 
 app.listen(env.port, () => {

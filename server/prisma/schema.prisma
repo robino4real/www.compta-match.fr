@@ -26,6 +26,12 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum VatRegime {
+  NO_VAT_293B
+  STANDARD_VAT
+  OTHER
+}
+
 model Order {
   id        String      @id @default(cuid())
   userId    String
@@ -128,6 +134,33 @@ model PromoCode {
   orders Order[]
 }
 
+model CompanySettings {
+  id               Int      @id @default(1)
+  companyName      String
+  legalForm        String
+  tradeName        String?
+  addressLine1     String
+  addressLine2     String?
+  postalCode       String
+  city             String
+  country          String
+  siren            String?
+  siret            String?
+  rcsCity          String?
+  vatNumber        String?
+  vatRegime        VatRegime @default(NO_VAT_293B)
+  vatCustomMention String?
+  capital          String?
+  contactEmail     String
+  supportEmail     String?
+  websiteUrl       String?
+  invoiceFooterText String?
+  logoUrl          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Invoice {
   id            String   @id @default(cuid())
   orderId       String   @unique
@@ -143,6 +176,24 @@ model Invoice {
   totalTVA Int
   totalTTC Int
   currency String @default("EUR")
+
+  sellerName           String?
+  sellerLegalForm      String?
+  sellerAddress        String?
+  sellerPostalCode     String?
+  sellerCity           String?
+  sellerCountry        String?
+  sellerSiren          String?
+  sellerSiret          String?
+  sellerRcsCity        String?
+  sellerVatNumber      String?
+  sellerVatRegime      String?
+  sellerVatMention     String?
+  sellerCapital        String?
+  sellerWebsiteUrl     String?
+  sellerContactEmail   String?
+  sellerInvoiceFooterText String?
+  sellerLogoUrl        String?
 
   pdfPath   String?
   createdAt DateTime @default(now())

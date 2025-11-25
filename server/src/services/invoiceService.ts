@@ -1,5 +1,13 @@
 import { Order, User } from "@prisma/client";
+import path from "path";
+import fs from "fs";
 import { prisma } from "../config/prisma";
+import {
+  buildSellerAddress,
+  buildVatMention,
+  getOrCreateCompanySettings,
+} from "./companySettingsService";
+import { generateInvoicePdf } from "./pdfService";
 
 function buildBillingName(user: User): string {
   const parts = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
@@ -39,20 +47,31 @@ export async function createInvoiceForOrder({
   billingName,
   billingAddress,
 }: InvoiceCreationInput) {
+  const companySettings = await getOrCreateCompanySettings();
   const invoiceNumber = await generateInvoiceNumber();
   const resolvedName = billingName || buildBillingName(user);
   const resolvedEmail = billingEmail || user.email;
   const issueDate = order.paidAt || new Date();
 
+  const sellerVatMention = buildVatMention(companySettings);
+  const sellerAddress = buildSellerAddress(companySettings);
+
   const totals = {
     totalTTC: order.totalPaid,
-    totalHT: order.totalPaid,
-    totalTVA: 0,
+    totalHT:
+      companySettings.vatRegime === "NO_VAT_293B"
+        ? order.totalPaid
+        : order.totalPaid,
+    totalTVA: companySettings.vatRegime === "NO_VAT_293B" ? 0 : 0,
   };
 
-  const pdfPath = `/invoices/${invoiceNumber}.pdf`;
+  const pdfRelativePath = path.join(
+    "uploads",
+    "invoices",
+    `${invoiceNumber}.pdf`
+  );
 
-  return prisma.invoice.create({
+  const invoice = await prisma.invoice.create({
     data: {
       orderId: order.id,
       invoiceNumber,
@@ -64,7 +83,30 @@ export async function createInvoiceForOrder({
       totalTVA: totals.totalTVA,
       totalTTC: totals.totalTTC,
       currency: order.currency,
-      pdfPath,
+      pdfPath: pdfRelativePath,
+      sellerName: companySettings.companyName,
+      sellerLegalForm: companySettings.legalForm,
+      sellerAddress,
+      sellerPostalCode: companySettings.postalCode,
+      sellerCity: companySettings.city,
+      sellerCountry: companySettings.country,
+      sellerSiren: companySettings.siren,
+      sellerSiret: companySettings.siret,
+      sellerRcsCity: companySettings.rcsCity,
+      sellerVatNumber: companySettings.vatNumber,
+      sellerVatRegime: companySettings.vatRegime,
+      sellerVatMention,
+      sellerCapital: companySettings.capital,
+      sellerWebsiteUrl: companySettings.websiteUrl,
+      sellerContactEmail: companySettings.contactEmail,
+      sellerInvoiceFooterText: companySettings.invoiceFooterText,
+      sellerLogoUrl: companySettings.logoUrl,
     },
   });
+
+  const invoiceDir = path.join(__dirname, "../../", "uploads", "invoices");
+  fs.mkdirSync(invoiceDir, { recursive: true });
+  await generateInvoicePdf(invoice.id);
+
+  return invoice;
 }
