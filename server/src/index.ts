@@ -11,6 +11,7 @@ import paymentRoutes from './routes/paymentRoutes';
 import downloadRoutes from './routes/downloadRoutes';
 import cartRoutes from './routes/cartRoutes';
 import invoiceRoutes from './routes/invoiceRoutes';
+import legalPageRoutes from './routes/legalPageRoutes';
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use('/payments', paymentRoutes);
 app.use('/downloads', downloadRoutes);
 app.use('/cart', cartRoutes);
 app.use('/invoices', attachUserToRequest, requireAuth, invoiceRoutes);
+app.use('/legal-pages', legalPageRoutes);
 app.use(errorHandler);
 
 app.listen(env.port, () => {

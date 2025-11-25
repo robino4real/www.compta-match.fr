@@ -15,6 +15,7 @@ import PaymentCancelPage from "./pages/PaymentCancelPage";
 import CgvPage from "./pages/CgvPage";
 import MentionsLegalesPage from "./pages/MentionsLegalesPage";
 import ConfidentialitePage from "./pages/ConfidentialitePage";
+import CookiesPage from "./pages/CookiesPage";
 
 import NotFoundPage from "./pages/NotFoundPage";
 import AuthLoginPage from "./pages/AuthLoginPage";
@@ -32,6 +33,8 @@ import AdminInvoiceDetailPage from "./pages/admin/AdminInvoiceDetailPage";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
 import AdminOrderDetailPage from "./pages/admin/AdminOrderDetailPage";
 import AdminEmailsPage from "./pages/admin/AdminEmailsPage";
+import AdminLegalPagesPage from "./pages/admin/AdminLegalPagesPage";
+import AdminLegalPageEditPage from "./pages/admin/AdminLegalPageEditPage";
 
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading } = useAuth();
@@ -92,6 +95,7 @@ const App: React.FC = () => {
         <Route path="/cgv" element={<CgvPage />} />
         <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
         <Route path="/confidentialite" element={<ConfidentialitePage />} />
+        <Route path="/cookies" element={<CookiesPage />} />
 
         <Route path="/auth/login" element={<AuthLoginPage />} />
         <Route path="/auth/register" element={<AuthRegisterPage />} />
@@ -188,6 +192,22 @@ const App: React.FC = () => {
           element={
             <RequireAdmin>
               <AdminOrderDetailPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="/admin/legal-pages"
+          element={
+            <RequireAdmin>
+              <AdminLegalPagesPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="/admin/legal-pages/:id"
+          element={
+            <RequireAdmin>
+              <AdminLegalPageEditPage />
             </RequireAdmin>
           }
         />
