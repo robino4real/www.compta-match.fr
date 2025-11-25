@@ -106,6 +106,12 @@ enum DownloadLinkStatus {
   EXPIRED
 }
 
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 model DownloadLink {
   id               String             @id @default(cuid())
   orderItemId      String
@@ -268,4 +274,22 @@ model LegalPage {
   isPublished Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Article {
+  id              String        @id @default(cuid())
+  title           String
+  slug            String        @unique
+  authorName      String?
+  excerpt         String?
+  content         String
+  status          ArticleStatus @default(DRAFT)
+  publishedAt     DateTime?
+  coverImageUrl   String?
+  readTimeMinutes Int?
+  seoTitle        String?
+  seoDescription  String?
+  category        String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }
