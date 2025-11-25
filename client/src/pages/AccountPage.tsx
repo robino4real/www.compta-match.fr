@@ -15,8 +15,18 @@ interface UserDownload {
   downloadFirstAt: string | null;
   downloadExpiresAt: string | null;
   downloadCount: number;
+  maxDownloads?: number;
+  status?: string;
   remainingMs?: number | null;
   isExpired?: boolean;
+}
+
+interface OrderDownloadLinkDto {
+  id: string;
+  token: string;
+  status: string;
+  downloadCount: number;
+  maxDownloads: number;
 }
 
 interface OrderItemDto {
@@ -24,7 +34,7 @@ interface OrderItemDto {
   productNameSnapshot: string;
   quantity: number;
   lineTotal: number;
-  downloadToken?: string;
+  downloadLinks?: OrderDownloadLinkDto[];
 }
 
 interface OrderDto {
@@ -142,8 +152,22 @@ const AccountPage: React.FC = () => {
   }, []);
 
   const formatRemaining = (download: UserDownload): string => {
+    if (download.status === "USED") {
+      return "Lien déjà utilisé.";
+    }
+
+    if (download.status === "EXPIRED") {
+      return "Lien expiré.";
+    }
+
+    if (
+      download.maxDownloads != null &&
+      download.downloadCount >= download.maxDownloads
+    ) {
+      return "Lien déjà utilisé.";
+    }
+
     if (!download.downloadExpiresAt) {
-      // Jamais téléchargé
       return "Jamais téléchargé — la première utilisation activera une fenêtre de 1h.";
     }
 
@@ -164,6 +188,10 @@ const AccountPage: React.FC = () => {
   };
 
   const isDownloadExpired = (download: UserDownload): boolean => {
+    if (download.status === "USED" || download.status === "EXPIRED") {
+      return true;
+    }
+
     if (!download.downloadExpiresAt) {
       return false;
     }
@@ -177,6 +205,14 @@ const AccountPage: React.FC = () => {
 
     const url = `${API_BASE_URL}/downloads/${download.token}`;
     window.open(url, "_blank");
+  };
+
+  const findFirstActiveDownloadToken = (order: OrderDto) => {
+    const link = order.items
+      .flatMap((item) => item.downloadLinks || [])
+      .find((l) => l.status === "ACTIVE");
+
+    return link?.token;
   };
 
   const handleInvoiceDownload = (invoiceId?: string) => {
@@ -338,7 +374,7 @@ const AccountPage: React.FC = () => {
                       extraCount > 0 ? ` + ${extraCount} autre(s)` : ""
                     }`;
                     const invoiceLabel = order.invoice?.invoiceNumber || "—";
-                    const downloadToken = order.items.find((i) => i.downloadToken)?.downloadToken;
+                    const downloadToken = findFirstActiveDownloadToken(order);
 
                     return (
                       <tr key={order.id} className="odd:bg-white even:bg-slate-50">
@@ -469,9 +505,12 @@ const AccountPage: React.FC = () => {
                         </td>
                         <td className="px-3 py-2 align-top text-slate-700">{orderedAt}</td>
                         <td className="px-3 py-2 align-top text-slate-700">
-                          {download.downloadCount}
+                          {download.downloadCount}/{download.maxDownloads ?? 1}
                         </td>
                         <td className="px-3 py-2 align-top text-slate-700">
+                          <span className="block text-[11px]">
+                            Statut : {download.status || (download.isExpired ? "EXPIRED" : "ACTIVE")}
+                          </span>
                           <span className="block text-[11px]">
                             {formatRemaining(download)}
                           </span>

@@ -1,6 +1,6 @@
-import crypto from "crypto";
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
+import { generateDownloadLinksForOrder } from "../services/downloadLinkService";
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -89,7 +89,6 @@ export async function createDownloadableOrder(req: Request, res: Response) {
             priceCents: productMap[it.productId].priceCents,
             quantity: it.quantity,
             lineTotal: productMap[it.productId].priceCents * it.quantity,
-            downloadToken: crypto.randomBytes(24).toString("hex"),
           })),
         },
       },
@@ -102,7 +101,18 @@ export async function createDownloadableOrder(req: Request, res: Response) {
       },
     });
 
-    return res.status(201).json({ order });
+    await generateDownloadLinksForOrder(order.id, userId);
+
+    const orderWithLinks = await prisma.order.findUnique({
+      where: { id: order.id },
+      include: {
+        items: { include: { downloadLinks: true, product: true } },
+        invoice: true,
+        promoCode: true,
+      },
+    });
+
+    return res.status(201).json({ order: orderWithLinks });
   } catch (error) {
     console.error(
       "Erreur lors de la création d'une commande de produits téléchargeables :",
@@ -126,7 +136,7 @@ export async function listUserOrders(req: Request, res: Response) {
     const orders = await prisma.order.findMany({
       where: { userId },
       include: {
-        items: true,
+        items: { include: { downloadLinks: true } },
         invoice: true,
         promoCode: true,
       },

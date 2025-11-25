@@ -1,9 +1,9 @@
-import crypto from "crypto";
 import { Request, Response } from "express";
 import { PromoCode } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { stripe } from "../config/stripeClient";
 import { createInvoiceForOrder } from "../services/invoiceService";
+import { generateDownloadLinksForOrder } from "../services/downloadLinkService";
 import { validatePromoCodeForTotal } from "../services/promoService";
 
 interface AuthenticatedRequest extends Request {
@@ -331,7 +331,6 @@ export async function handleStripeWebhook(req: Request, res: Response) {
               priceCents: productMap[it.productId].priceCents,
               quantity: it.quantity,
               lineTotal: productMap[it.productId].priceCents * it.quantity,
-              downloadToken: crypto.randomBytes(24).toString("hex"),
             })),
         },
       },
@@ -343,6 +342,8 @@ export async function handleStripeWebhook(req: Request, res: Response) {
         },
       },
     });
+
+    await generateDownloadLinksForOrder(order.id, userId);
 
     await createInvoiceForOrder({
       order,

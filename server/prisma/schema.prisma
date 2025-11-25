@@ -68,11 +68,7 @@ model OrderItem {
   quantity            Int                @default(1)
   lineTotal           Int
 
-  // --- Nouveau : gestion du téléchargement ---
-  downloadToken     String   @unique
-  downloadFirstAt   DateTime?
-  downloadExpiresAt DateTime?
-  downloadCount     Int      @default(0)
+  downloadLinks DownloadLink[]
 }
 
 model DownloadableProduct {
@@ -100,6 +96,33 @@ model DownloadableProduct {
   storagePath  String
 
   items OrderItem[]
+  downloadLinks DownloadLink[]
+}
+
+enum DownloadLinkStatus {
+  ACTIVE
+  USED
+  EXPIRED
+}
+
+model DownloadLink {
+  id               String             @id @default(cuid())
+  orderItemId      String
+  orderItem        OrderItem          @relation(fields: [orderItemId], references: [id])
+
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  productId String?
+  product   DownloadableProduct? @relation(fields: [productId], references: [id])
+
+  token            String             @unique
+  status           DownloadLinkStatus @default(ACTIVE)
+  maxDownloads     Int                @default(1)
+  downloadCount    Int                @default(0)
+  createdAt        DateTime           @default(now())
+  firstDownloadedAt DateTime?
+  expiresAt        DateTime?
+  lastDownloadedAt DateTime?
 }
 
 model StripeSettings {

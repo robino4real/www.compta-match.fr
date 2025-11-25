@@ -29,70 +29,82 @@ export async function handleDownloadByToken(req: Request, res: Response) {
 
   try {
     const userId = request.user?.id;
+    const { token } = req.params;
+
     if (!userId) {
       return res.status(401).json({ message: "Utilisateur non authentifié." });
     }
 
-    const { token } = req.params;
     if (!token) {
       return res.status(400).json({ message: "Token de téléchargement manquant." });
     }
 
-    const orderItem = await prisma.orderItem.findUnique({
-      where: {
-        downloadToken: token,
-      },
+    const link = await prisma.downloadLink.findUnique({
+      where: { token },
       include: {
-        order: true,
-        product: true,
+        orderItem: {
+          include: {
+            order: true,
+            product: true,
+          },
+        },
       },
     });
 
-    if (!orderItem) {
+    if (!link || !link.orderItem) {
       return res.status(404).json({ message: "Lien de téléchargement introuvable." });
     }
 
-    if (orderItem.order.userId !== userId) {
+    if (link.orderItem.order.userId !== userId) {
       return res.status(403).json({ message: "Vous n'avez pas accès à ce téléchargement." });
     }
 
-    if (orderItem.order.status !== "PAID") {
+    if (link.orderItem.order.status !== "PAID") {
       return res.status(403).json({ message: "La commande n'est pas finalisée." });
+    }
+
+    if (link.status !== "ACTIVE") {
+      return res.status(410).json({ message: "Ce lien n'est plus actif." });
     }
 
     const now = new Date();
 
-    if (orderItem.downloadFirstAt && orderItem.downloadExpiresAt) {
-      // Téléchargement déjà démarré : on vérifie la fenêtre d'une heure
-      if (now > orderItem.downloadExpiresAt) {
-        return res.status(410).json({
-          message:
-            "Le lien de téléchargement a expiré. La fenêtre de téléchargement d'une heure est dépassée.",
-        });
-      }
-
-      // Fenêtre encore valide : on autorise un nouveau téléchargement
-      await prisma.orderItem.update({
-        where: { id: orderItem.id },
-        data: {
-          downloadCount: orderItem.downloadCount + 1,
-        },
+    if (link.expiresAt && now > link.expiresAt) {
+      await prisma.downloadLink.update({
+        where: { id: link.id },
+        data: { status: "EXPIRED" },
       });
-    } else {
-      // Premier téléchargement : on initialise la fenêtre d'une heure
-      const expiresAt = new Date(now.getTime() + 60 * 60 * 1000);
-
-      await prisma.orderItem.update({
-        where: { id: orderItem.id },
-        data: {
-          downloadFirstAt: now,
-          downloadExpiresAt: expiresAt,
-          downloadCount: 1,
-        },
+      return res.status(410).json({
+        message: "Le lien de téléchargement a expiré.",
       });
     }
 
-    const product = orderItem.product;
+    if (link.downloadCount >= link.maxDownloads) {
+      await prisma.downloadLink.update({
+        where: { id: link.id },
+        data: { status: "USED" },
+      });
+      return res.status(410).json({
+        message: "Le lien de téléchargement a déjà été utilisé.",
+      });
+    }
+
+    const expiresAt = link.expiresAt || new Date(now.getTime() + 60 * 60 * 1000);
+    const newCount = link.downloadCount + 1;
+    const newStatus = newCount >= link.maxDownloads ? "USED" : "ACTIVE";
+
+    await prisma.downloadLink.update({
+      where: { id: link.id },
+      data: {
+        downloadCount: newCount,
+        firstDownloadedAt: link.firstDownloadedAt || now,
+        lastDownloadedAt: now,
+        expiresAt,
+        status: newStatus,
+      },
+    });
+
+    const product = link.orderItem.product;
 
     if (!product.storagePath || !product.fileName) {
       return res.status(500).json({
@@ -101,8 +113,6 @@ export async function handleDownloadByToken(req: Request, res: Response) {
       });
     }
 
-    // Si storagePath est déjà un chemin absolu, on peut l'utiliser tel quel.
-    // Sinon, on le résout depuis la racine du projet serveur.
     const filePath = path.isAbsolute(product.storagePath)
       ? product.storagePath
       : path.join(__dirname, "../../", product.storagePath);
@@ -114,7 +124,6 @@ export async function handleDownloadByToken(req: Request, res: Response) {
       });
     }
 
-    // Envoi du fichier au client
     return res.download(filePath, product.fileName);
   } catch (error) {
     console.error(
@@ -137,52 +146,44 @@ export async function listUserDownloads(req: Request, res: Response) {
       return res.status(401).json({ message: "Utilisateur non authentifié." });
     }
 
-    // On récupère tous les OrderItem des commandes payées de cet utilisateur
-    const items = await prisma.orderItem.findMany({
+    const links = await prisma.downloadLink.findMany({
       where: {
-        order: {
-          userId,
-          status: "PAID",
+        userId,
+        orderItem: {
+          order: { status: "PAID" },
         },
       },
       include: {
-        order: true,
-        product: true,
+        orderItem: { include: { order: true, product: true } },
       },
-      orderBy: {
-        order: {
-          createdAt: "desc",
-        },
-      },
+      orderBy: { createdAt: "desc" },
     });
 
     const now = new Date();
 
-    const downloads = items.map((item) => {
-      let remainingMs: number | null = null;
-      let isExpired = false;
+    const downloads = links
+      .filter((link) => !!link.orderItem)
+      .map((link) => {
+        const expiresAt = link.expiresAt;
+        const diff = expiresAt ? expiresAt.getTime() - now.getTime() : null;
 
-      if (item.downloadExpiresAt) {
-        const diff = item.downloadExpiresAt.getTime() - now.getTime();
-        remainingMs = diff > 0 ? diff : 0;
-        isExpired = diff <= 0;
-      }
-
-      return {
-        id: item.id,
-        token: item.downloadToken,
-        productId: item.productId,
-        productName: item.product.name,
-        productDescription: item.product.shortDescription,
-        priceCents: item.priceCents,
-        orderCreatedAt: item.order.createdAt,
-        downloadFirstAt: item.downloadFirstAt,
-        downloadExpiresAt: item.downloadExpiresAt,
-        downloadCount: item.downloadCount,
-        remainingMs,
-        isExpired,
-      };
-    });
+        return {
+          id: link.id,
+          token: link.token,
+          productId: link.orderItem.productId,
+          productName: link.orderItem.product.name,
+          productDescription: link.orderItem.product.shortDescription,
+          priceCents: link.orderItem.priceCents,
+          orderCreatedAt: link.orderItem.order.createdAt,
+          downloadFirstAt: link.firstDownloadedAt,
+          downloadExpiresAt: link.expiresAt,
+          downloadCount: link.downloadCount,
+          maxDownloads: link.maxDownloads,
+          status: link.status,
+          remainingMs: diff != null ? Math.max(diff, 0) : null,
+          isExpired: expiresAt ? expiresAt.getTime() <= now.getTime() : false,
+        };
+      });
 
     return res.status(200).json({ downloads });
   } catch (error) {
