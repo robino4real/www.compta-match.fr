@@ -30,6 +30,10 @@ model Order {
   totalCents Int
   currency   String      @default("EUR")
 
+  promoCodeId        String?
+  promoCode          PromoCode? @relation(fields: [promoCodeId], references: [id])
+  promoDiscountCents Int?
+
   items      OrderItem[]
 }
 
