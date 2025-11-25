@@ -36,6 +36,15 @@ import {
   updatePromoCode,
   archivePromoCode,
 } from "../controllers/promoCodeAdminController";
+import {
+  getEmailSettings,
+  saveEmailSettings,
+} from "../controllers/emailSettingsController";
+import {
+  adminGetEmailTemplate,
+  adminListEmailTemplates,
+  adminUpdateEmailTemplate,
+} from "../controllers/emailTemplateController";
 
 const router = Router();
 
@@ -143,6 +152,42 @@ router.put(
   attachUserToRequest,
   requireAdmin,
   saveCompanySettings
+);
+
+// Paramètres emails & notifications
+router.get(
+  "/email-settings",
+  attachUserToRequest,
+  requireAdmin,
+  getEmailSettings
+);
+
+router.put(
+  "/email-settings",
+  attachUserToRequest,
+  requireAdmin,
+  saveEmailSettings
+);
+
+router.get(
+  "/email-templates",
+  attachUserToRequest,
+  requireAdmin,
+  adminListEmailTemplates
+);
+
+router.get(
+  "/email-templates/:id",
+  attachUserToRequest,
+  requireAdmin,
+  adminGetEmailTemplate
+);
+
+router.put(
+  "/email-templates/:id",
+  attachUserToRequest,
+  requireAdmin,
+  adminUpdateEmailTemplate
 );
 
 // Factures

@@ -5,6 +5,10 @@ import { stripe } from "../config/stripeClient";
 import { createInvoiceForOrder } from "../services/invoiceService";
 import { generateDownloadLinksForOrder } from "../services/downloadLinkService";
 import { validatePromoCodeForTotal } from "../services/promoService";
+import {
+  sendInvoiceAvailableEmail,
+  sendOrderConfirmationEmail,
+} from "../services/transactionalEmailService";
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -345,7 +349,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
 
     await generateDownloadLinksForOrder(order.id, userId);
 
-    await createInvoiceForOrder({
+    const invoice = await createInvoiceForOrder({
       order,
       user,
       billingEmail: session.customer_details?.email || user.email,
@@ -377,6 +381,11 @@ export async function handleStripeWebhook(req: Request, res: Response) {
       "orderId :",
       order.id
     );
+
+    await sendOrderConfirmationEmail(order.id);
+    if (invoice) {
+      await sendInvoiceAvailableEmail(invoice.id);
+    }
 
     // Stripe attend toujours un 2xx pour considérer le webhook comme reçu
     return res.status(200).json({ received: true });

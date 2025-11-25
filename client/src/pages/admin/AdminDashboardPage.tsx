@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
@@ -56,6 +57,12 @@ const AdminDashboardPage: React.FC = () => {
   const totalAdmins = users.filter((u) => u.role === "admin").length;
   const totalVerified = users.filter((u) => u.isEmailVerified).length;
 
+  const quickLinks = [
+    { to: "/admin/stripe-settings", label: "Stripe" },
+    { to: "/admin/company-settings", label: "Entreprise" },
+    { to: "/admin/emails", label: "Emails & notifications" },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Bloc présentation */}
@@ -69,6 +76,24 @@ const AdminDashboardPage: React.FC = () => {
           statistiques d&apos;usage. Les données ci-dessous sont en cours de
           mise en place et évolueront au fur et à mesure.
         </p>
+      </section>
+
+      <section className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-black">Navigation rapide</h2>
+          <p className="text-[11px] text-slate-500">Accès aux paramètres clés.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {quickLinks.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:border-black hover:text-black"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
       </section>
 
       {/* Cartes résumé */}

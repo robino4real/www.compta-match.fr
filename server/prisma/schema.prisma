@@ -16,6 +16,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   orders Order[]
+  downloadLinks DownloadLink[]
 }
 
 enum OrderStatus {
@@ -220,4 +221,40 @@ model Invoice {
 
   pdfPath   String?
   createdAt DateTime @default(now())
+}
+
+model EmailSettings {
+  id                   Int      @id @default(1)
+  providerType         String   @default("OTHER")
+  fromNameDefault      String
+  fromEmailDefault     String
+  replyToEmailDefault  String?
+
+  ordersFromEmail      String?
+  billingEmail         String?
+  supportEmail         String?
+  technicalContactEmail String?
+
+  smtpHost     String?
+  smtpPort     Int?
+  smtpUsername String?
+  smtpPassword String?
+
+  apiKey String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EmailTemplate {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String?
+  subject     String
+  bodyHtml    String
+  bodyText    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
