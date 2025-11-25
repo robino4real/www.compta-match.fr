@@ -20,6 +20,9 @@ const Footer: React.FC = () => {
           <Link to="/confidentialite" className="hover:text-black underline-offset-2 hover:underline">
             Politique de confidentialité
           </Link>
+          <Link to="/cookies" className="hover:text-black underline-offset-2 hover:underline">
+            Cookies
+          </Link>
         </div>
       </div>
     </footer>

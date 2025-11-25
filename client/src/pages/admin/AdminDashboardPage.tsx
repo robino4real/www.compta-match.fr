@@ -61,6 +61,7 @@ const AdminDashboardPage: React.FC = () => {
     { to: "/admin/stripe-settings", label: "Stripe" },
     { to: "/admin/company-settings", label: "Entreprise" },
     { to: "/admin/emails", label: "Emails & notifications" },
+    { to: "/admin/legal-pages", label: "Pages légales" },
   ];
 
   return (

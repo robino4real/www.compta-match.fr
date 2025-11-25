@@ -45,6 +45,12 @@ import {
   adminListEmailTemplates,
   adminUpdateEmailTemplate,
 } from "../controllers/emailTemplateController";
+import {
+  adminCreateDefaultLegalPages,
+  adminGetLegalPage,
+  adminListLegalPages,
+  adminUpdateLegalPage,
+} from "../controllers/legalPageController";
 
 const router = Router();
 
@@ -188,6 +194,35 @@ router.put(
   attachUserToRequest,
   requireAdmin,
   adminUpdateEmailTemplate
+);
+
+// Pages légales
+router.get(
+  "/legal-pages",
+  attachUserToRequest,
+  requireAdmin,
+  adminListLegalPages
+);
+
+router.post(
+  "/legal-pages/seed-defaults",
+  attachUserToRequest,
+  requireAdmin,
+  adminCreateDefaultLegalPages
+);
+
+router.get(
+  "/legal-pages/:id",
+  attachUserToRequest,
+  requireAdmin,
+  adminGetLegalPage
+);
+
+router.put(
+  "/legal-pages/:id",
+  attachUserToRequest,
+  requireAdmin,
+  adminUpdateLegalPage
 );
 
 // Factures
