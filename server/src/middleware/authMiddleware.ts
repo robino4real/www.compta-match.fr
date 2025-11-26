@@ -18,6 +18,24 @@ type AuthenticatedRequest = Request & {
   cookies?: Record<string, string>;
 };
 
+function parseCookies(header?: string): Record<string, string> {
+  if (!header) {
+    return {};
+  }
+
+  return header.split(";").reduce<Record<string, string>>((acc, cookie) => {
+    const [rawKey, ...rest] = cookie.split("=");
+    if (!rawKey) return acc;
+
+    const key = rawKey.trim();
+    const value = rest.join("=").trim();
+    if (key) {
+      acc[key] = decodeURIComponent(value);
+    }
+    return acc;
+  }, {});
+}
+
 function decodeToken(token: string): { userId?: string } | null {
   try {
     const decoded = Buffer.from(token, "base64").toString("utf-8");
@@ -29,6 +47,10 @@ function decodeToken(token: string): { userId?: string } | null {
 }
 
 export async function attachUserToRequest(req: AuthenticatedRequest, _res: Response, next: NextFunction) {
+  if (!req.cookies) {
+    req.cookies = parseCookies(req.headers.cookie);
+  }
+
   const token = req.cookies?.token;
 
   if (!token) {

@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Request } from "express";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
@@ -61,12 +61,12 @@ import {
 const router = Router();
 
 const storage = multer.diskStorage({
-  destination(req, file, cb) {
+  destination(req: Request, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) {
     const uploadDir = path.join(__dirname, "../../uploads/downloads");
     fs.mkdirSync(uploadDir, { recursive: true });
     cb(null, uploadDir);
   },
-  filename(req, file, cb) {
+  filename(req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) {
     const timestamp = Date.now();
     const sanitized = file.originalname.replace(/\s+/g, "_");
     cb(null, `${timestamp}-${sanitized}`);
