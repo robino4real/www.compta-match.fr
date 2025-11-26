@@ -128,7 +128,7 @@ export async function generateInvoicePdf(invoiceId: string) {
 
   doc.end();
 
-  await new Promise((resolve) => writeStream.on("finish", resolve));
+  await new Promise<void>((resolve) => writeStream.on("finish", () => resolve()));
 
   if (invoice.pdfPath !== pdfPath) {
     await prisma.invoice.update({
