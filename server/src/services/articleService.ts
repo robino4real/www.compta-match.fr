@@ -21,6 +21,13 @@ function sanitizeString(value?: string | null) {
   return null;
 }
 
+function sanitizeBoolean(value: unknown, fallback: boolean) {
+  if (typeof value === "boolean") return value;
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return fallback;
+}
+
 function normalizeReadTime(value: unknown) {
   if (value === null || typeof value === "undefined") return null;
   const parsed = typeof value === "number" ? value : Number(value);
@@ -90,6 +97,9 @@ export async function createArticle(data: Prisma.ArticleUncheckedCreateInput) {
     coverImageUrl: sanitizeString(data.coverImageUrl),
     seoTitle: sanitizeString(data.seoTitle),
     seoDescription: sanitizeString(data.seoDescription),
+    index: sanitizeBoolean((data as any).index, true),
+    follow: sanitizeBoolean((data as any).follow, true),
+    ogImageUrl: sanitizeString((data as any).ogImageUrl),
     category: sanitizeString(data.category),
     readTimeMinutes: normalizeReadTime(data.readTimeMinutes),
     publishedAt:
@@ -135,6 +145,18 @@ export async function updateArticle(
       typeof data.seoDescription === "undefined"
         ? existing.seoDescription
         : sanitizeString(String(data.seoDescription)),
+    index:
+      typeof (data as any).index === "undefined"
+        ? existing.index
+        : sanitizeBoolean((data as any).index, existing.index),
+    follow:
+      typeof (data as any).follow === "undefined"
+        ? existing.follow
+        : sanitizeBoolean((data as any).follow, existing.follow),
+    ogImageUrl:
+      typeof (data as any).ogImageUrl === "undefined"
+        ? existing.ogImageUrl
+        : sanitizeString((data as any).ogImageUrl),
     category:
       typeof data.category === "undefined"
         ? existing.category

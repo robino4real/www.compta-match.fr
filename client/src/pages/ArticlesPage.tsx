@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import StructuredDataScript from "../components/StructuredDataScript";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
@@ -37,6 +38,7 @@ const ArticlesPage: React.FC = () => {
   const [articles, setArticles] = React.useState<ArticleItem[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [structuredData, setStructuredData] = React.useState<any[] | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -84,6 +86,9 @@ const ArticlesPage: React.FC = () => {
         : [];
 
       setArticles(list);
+      setStructuredData(
+        Array.isArray((data as any)?.structuredData) ? (data as any).structuredData : null
+      );
     } catch (err: any) {
       console.error("Erreur lors du chargement des articles", err);
       setError(
@@ -110,6 +115,7 @@ const ArticlesPage: React.FC = () => {
 
   return (
     <div className="space-y-8">
+      <StructuredDataScript data={structuredData} />
       <div className="space-y-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
           Ressources & blog

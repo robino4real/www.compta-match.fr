@@ -4,6 +4,10 @@ import {
   getOrCreateHomepageSettings,
   updateHomepageSettings,
 } from "../services/homepageSettingsService";
+import { getOrCreateSeoSettings } from "../services/seoSettingsService";
+import { getOrCreateCompanySettings } from "../services/companySettingsService";
+import { getOrCreateEmailSettings } from "../services/emailSettingsService";
+import { getStructuredDataForPage } from "../utils/structuredData";
 
 function orderByIds<T extends { id: string }>(items: T[], ids: string[]): T[] {
   const orderMap = ids.reduce<Record<string, number>>((acc, id, index) => {
@@ -64,7 +68,22 @@ export async function publicGetHomepageSettings(_req: Request, res: Response) {
       highlightedProducts = orderByIds(products, highlightedIds);
     }
 
-    return res.json({ settings, highlightedProducts });
+    const [seoSettings, companySettings, emailSettings] = await Promise.all([
+      getOrCreateSeoSettings(),
+      getOrCreateCompanySettings(),
+      getOrCreateEmailSettings(),
+    ]);
+
+    const structuredData = await getStructuredDataForPage({
+      type: "home",
+      seoSettings,
+      companySettings,
+      emailSettings,
+      canonicalPath: "/",
+      breadcrumbItems: [{ name: "Accueil", path: "/" }],
+    });
+
+    return res.json({ settings, highlightedProducts, structuredData });
   } catch (error) {
     console.error("Erreur lors du chargement public de la home", error);
     return res

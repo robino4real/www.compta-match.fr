@@ -1,5 +1,6 @@
 import React from "react";
 import { useCart } from "../context/CartContext";
+import StructuredDataScript from "../components/StructuredDataScript";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
@@ -22,6 +23,7 @@ const DownloadsPage: React.FC = () => {
   const [products, setProducts] = React.useState<DownloadableProduct[]>([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [structuredData, setStructuredData] = React.useState<any[] | null>(null);
 
   React.useEffect(() => {
     const fetchProducts = async () => {
@@ -45,6 +47,7 @@ const DownloadsPage: React.FC = () => {
 
         const list = Array.isArray(data.products) ? data.products : [];
         setProducts(list);
+        setStructuredData(Array.isArray((data as any)?.structuredData) ? (data as any).structuredData : null);
       } catch (err: any) {
         console.error("Erreur /catalog/downloads :", err);
         setError(
@@ -78,6 +81,7 @@ const DownloadsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <StructuredDataScript data={structuredData} />
       <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
         <h1 className="text-xl font-semibold text-black">
           Logiciels téléchargeables COMPTAMATCH

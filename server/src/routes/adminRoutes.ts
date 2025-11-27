@@ -62,6 +62,13 @@ import {
   adminGetHomepageSettings,
   adminSaveHomepageSettings,
 } from "../controllers/homepageSettingsController";
+import {
+  adminGetSeoSettings,
+  adminListSeoStaticPages,
+  adminSaveSeoSettings,
+  adminSeedSeoStaticPages,
+  adminUpdateSeoStaticPage,
+} from "../controllers/seoController";
 
 const router = Router();
 
@@ -269,6 +276,41 @@ router.put(
   attachUserToRequest,
   requireAdmin,
   adminSaveHomepageSettings
+);
+
+router.get(
+  "/seo/settings",
+  attachUserToRequest,
+  requireAdmin,
+  adminGetSeoSettings
+);
+
+router.put(
+  "/seo/settings",
+  attachUserToRequest,
+  requireAdmin,
+  adminSaveSeoSettings
+);
+
+router.get(
+  "/seo/static-pages",
+  attachUserToRequest,
+  requireAdmin,
+  adminListSeoStaticPages
+);
+
+router.post(
+  "/seo/static-pages/seed",
+  attachUserToRequest,
+  requireAdmin,
+  adminSeedSeoStaticPages
+);
+
+router.put(
+  "/seo/static-pages/:id",
+  attachUserToRequest,
+  requireAdmin,
+  adminUpdateSeoStaticPage
 );
 
 router.get(
