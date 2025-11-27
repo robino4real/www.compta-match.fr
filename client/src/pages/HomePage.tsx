@@ -1,4 +1,5 @@
 import React from "react";
+import StructuredDataScript from "../components/StructuredDataScript";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
@@ -73,6 +74,7 @@ const HomePage: React.FC = () => {
   >([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [structuredData, setStructuredData] = React.useState<any[] | null>(null);
 
   const parseFeatures = (value: unknown): Feature[] => {
     if (!Array.isArray(value)) return [];
@@ -120,6 +122,9 @@ const HomePage: React.FC = () => {
           ? ((data as any).highlightedProducts as HighlightedProduct[])
           : [];
         setHighlightedProducts(products);
+        setStructuredData(
+          Array.isArray((data as any)?.structuredData) ? (data as any).structuredData : null
+        );
       } catch (err: any) {
         console.error("Erreur home", err);
         setError(err?.message || "Impossible de charger la page d'accueil.");
@@ -166,6 +171,7 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="space-y-8 text-slate-900">
+      <StructuredDataScript data={structuredData} />
       <section
         className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm"
         style={heroStyle}

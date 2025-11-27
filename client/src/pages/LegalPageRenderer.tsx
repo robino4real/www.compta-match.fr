@@ -1,4 +1,5 @@
 import React from "react";
+import StructuredDataScript from "../components/StructuredDataScript";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
@@ -34,6 +35,7 @@ const LegalPageRenderer: React.FC<LegalPageRendererProps> = ({
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [isUnavailable, setIsUnavailable] = React.useState(false);
+  const [structuredData, setStructuredData] = React.useState<any[] | null>(null);
 
   const effectiveTitle = page?.title || defaultTitle;
   const effectiveDescription =
@@ -64,6 +66,9 @@ const LegalPageRenderer: React.FC<LegalPageRendererProps> = ({
         }
 
         setPage(data.page as LegalPageResponse);
+        setStructuredData(
+          Array.isArray((data as any)?.structuredData) ? (data as any).structuredData : null
+        );
       } catch (err: any) {
         console.error("Erreur lors du chargement d'une page légale", err);
         setError(
@@ -91,6 +96,7 @@ const LegalPageRenderer: React.FC<LegalPageRendererProps> = ({
 
   return (
     <div className="space-y-4">
+      <StructuredDataScript data={structuredData} />
       <h1 className="text-3xl font-semibold text-black">{effectiveTitle}</h1>
 
       <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-6 shadow-sm text-slate-700">

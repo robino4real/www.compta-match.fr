@@ -6,6 +6,10 @@ import {
   listLegalPages,
   updateLegalPage,
 } from "../services/legalPageService";
+import { getOrCreateSeoSettings } from "../services/seoSettingsService";
+import { getOrCreateCompanySettings } from "../services/companySettingsService";
+import { getOrCreateEmailSettings } from "../services/emailSettingsService";
+import { getStructuredDataForPage } from "../utils/structuredData";
 
 export async function adminListLegalPages(_req: Request, res: Response) {
   try {
@@ -89,7 +93,26 @@ export async function publicGetLegalPage(req: Request, res: Response) {
         .json({ message: "Le contenu n'est pas encore disponible." });
     }
 
-    return res.json({ page });
+    const [seoSettings, companySettings, emailSettings] = await Promise.all([
+      getOrCreateSeoSettings(),
+      getOrCreateCompanySettings(),
+      getOrCreateEmailSettings(),
+    ]);
+
+    const structuredData = await getStructuredDataForPage({
+      type: "legal",
+      seoSettings,
+      companySettings,
+      emailSettings,
+      legalPage: page,
+      canonicalPath: `/${page.slug}`,
+      breadcrumbItems: [
+        { name: "Accueil", path: "/" },
+        { name: page.title, path: `/${page.slug}` },
+      ],
+    });
+
+    return res.json({ page, structuredData });
   } catch (error) {
     console.error("Erreur lors du chargement public d'une page légale", error);
     return res

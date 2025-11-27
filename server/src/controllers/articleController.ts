@@ -8,6 +8,10 @@ import {
   listRecentPublishedArticles,
   updateArticle,
 } from "../services/articleService";
+import { getStructuredDataForPage } from "../utils/structuredData";
+import { getOrCreateSeoSettings } from "../services/seoSettingsService";
+import { getOrCreateCompanySettings } from "../services/companySettingsService";
+import { getOrCreateEmailSettings } from "../services/emailSettingsService";
 
 function parseStatus(value?: string | null) {
   if (!value) return undefined;
@@ -80,6 +84,19 @@ function normalizeIncomingPayload(body: any) {
     content: body?.content ?? "",
     seoTitle: body?.seoTitle?.trim?.() || null,
     seoDescription: body?.seoDescription?.trim?.() || null,
+    index:
+      typeof body?.index === "boolean"
+        ? body.index
+        : body?.index === "false"
+        ? false
+        : true,
+    follow:
+      typeof body?.follow === "boolean"
+        ? body.follow
+        : body?.follow === "false"
+        ? false
+        : true,
+    ogImageUrl: body?.ogImageUrl?.trim?.() || null,
     status,
   };
 }
@@ -172,7 +189,25 @@ export async function publicListArticles(req: Request, res: Response) {
       search: search?.trim() || undefined,
     });
 
-    return res.json({ articles });
+    const [seoSettings, companySettings, emailSettings] = await Promise.all([
+      getOrCreateSeoSettings(),
+      getOrCreateCompanySettings(),
+      getOrCreateEmailSettings(),
+    ]);
+
+    const structuredData = await getStructuredDataForPage({
+      type: "articles-list",
+      seoSettings,
+      companySettings,
+      emailSettings,
+      canonicalPath: "/articles",
+      breadcrumbItems: [
+        { name: "Accueil", path: "/" },
+        { name: "Articles", path: "/articles" },
+      ],
+    });
+
+    return res.json({ articles, structuredData });
   } catch (error) {
     console.error("Erreur lors du chargement public des articles", error);
     return res
@@ -192,7 +227,27 @@ export async function publicGetArticle(req: Request, res: Response) {
 
     const recent = await listRecentPublishedArticles(3, article.id);
 
-    return res.json({ article, recent });
+    const [seoSettings, companySettings, emailSettings] = await Promise.all([
+      getOrCreateSeoSettings(),
+      getOrCreateCompanySettings(),
+      getOrCreateEmailSettings(),
+    ]);
+
+    const structuredData = await getStructuredDataForPage({
+      type: "article",
+      seoSettings,
+      companySettings,
+      emailSettings,
+      article,
+      canonicalPath: `/articles/${article.slug}`,
+      breadcrumbItems: [
+        { name: "Accueil", path: "/" },
+        { name: "Articles", path: "/articles" },
+        { name: article.title, path: `/articles/${article.slug}` },
+      ],
+    });
+
+    return res.json({ article, recent, structuredData });
   } catch (error) {
     console.error("Erreur lors du chargement d'un article", error);
     return res

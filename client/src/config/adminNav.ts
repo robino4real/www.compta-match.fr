@@ -35,6 +35,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
     items: [
       { label: "Paramètres entreprise", href: "/admin/company-settings" },
       { label: "Paramètres e-mails", href: "/admin/emails" },
+      { label: "SEO", href: "/admin/seo" },
     ],
   },
 ];

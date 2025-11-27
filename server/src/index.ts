@@ -16,6 +16,7 @@ import analyticsRoutes from './routes/analyticsRoutes';
 import publicRoutes from './routes/publicRoutes';
 import catalogRoutes from './routes/catalogRoutes';
 import { ensureAdminAccount } from './services/adminAccountService';
+import { robotsTxtHandler, sitemapHandler } from './controllers/seoController';
 
 const app = express();
 
@@ -34,6 +35,8 @@ app.use('/cart', cartRoutes);
 app.use('/invoices', attachUserToRequest, requireAuth, invoiceRoutes);
 app.use('/legal-pages', legalPageRoutes);
 app.use('/articles', articleRoutes);
+app.get('/robots.txt', robotsTxtHandler);
+app.get('/sitemap.xml', sitemapHandler);
 app.use(errorHandler);
 
 ensureAdminAccount().catch((error) => {

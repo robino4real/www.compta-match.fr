@@ -50,12 +50,22 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
       longDescription,
       priceCents,
       isActive,
+      seoTitle,
+      seoDescription,
+      index,
+      follow,
+      ogImageUrl,
     } = req.body as {
       name?: string;
       shortDescription?: string | null;
       longDescription?: string | null;
       priceCents?: number;
       isActive?: boolean;
+      seoTitle?: string | null;
+      seoDescription?: string | null;
+      index?: boolean;
+      follow?: boolean;
+      ogImageUrl?: string | null;
     };
 
     const existing = await prisma.downloadableProduct.findUnique({
@@ -97,6 +107,27 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
 
     if (typeof isActive !== "undefined") {
       updateData.isActive = Boolean(isActive);
+    }
+
+    if (typeof seoTitle !== "undefined") {
+      updateData.seoTitle = seoTitle === null ? null : String(seoTitle).trim();
+    }
+
+    if (typeof seoDescription !== "undefined") {
+      updateData.seoDescription =
+        seoDescription === null ? null : String(seoDescription).trim();
+    }
+
+    if (typeof index !== "undefined") {
+      updateData.index = Boolean(index);
+    }
+
+    if (typeof follow !== "undefined") {
+      updateData.follow = Boolean(follow);
+    }
+
+    if (typeof ogImageUrl !== "undefined") {
+      updateData.ogImageUrl = ogImageUrl === null ? null : String(ogImageUrl).trim();
     }
 
     if (Object.keys(updateData).length === 0) {
