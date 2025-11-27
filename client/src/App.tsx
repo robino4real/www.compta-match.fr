@@ -39,6 +39,7 @@ import AdminLegalPagesPage from "./pages/admin/AdminLegalPagesPage";
 import AdminLegalPageEditPage from "./pages/admin/AdminLegalPageEditPage";
 import AdminArticlesPage from "./pages/admin/AdminArticlesPage";
 import AdminArticleEditPage from "./pages/admin/AdminArticleEditPage";
+import AnalyticsTracker from "./components/AnalyticsTracker";
 
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading } = useAuth();
@@ -85,6 +86,7 @@ const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 const App: React.FC = () => {
   return (
     <MainLayout>
+      <AnalyticsTracker />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/offres" element={<OffersPage />} />

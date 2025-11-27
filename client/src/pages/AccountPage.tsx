@@ -1,5 +1,6 @@
 import React from "react";
 import { useAuth } from "../context/AuthContext";
+import { trackEvent } from "../lib/analytics";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
@@ -203,6 +204,15 @@ const AccountPage: React.FC = () => {
     if (!download.token) return;
     if (isDownloadExpired(download)) return;
 
+    trackEvent({
+      type: "DOWNLOAD_CLICK",
+      url: window.location.pathname + window.location.search,
+      meta: {
+        productId: download.productId,
+        downloadLinkId: download.id,
+      },
+    });
+
     const url = `${API_BASE_URL}/downloads/${download.token}`;
     window.open(url, "_blank");
   };
@@ -223,6 +233,11 @@ const AccountPage: React.FC = () => {
 
   const handleOrderDownload = (token?: string) => {
     if (!token) return;
+    trackEvent({
+      type: "DOWNLOAD_CLICK",
+      url: window.location.pathname + window.location.search,
+      meta: { downloadLinkId: token },
+    });
     const url = `${API_BASE_URL}/downloads/${token}`;
     window.open(url, "_blank");
   };
