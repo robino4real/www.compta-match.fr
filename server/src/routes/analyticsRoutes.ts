@@ -1,10 +1,10 @@
 import { Router } from "express";
 import { prisma } from "../config/prisma";
-import { attachUserToRequest } from "../middleware/authMiddleware";
+import { attachUserToRequest, AuthenticatedRequest } from "../middleware/authMiddleware";
 
 const router = Router();
 
-router.post("/track", attachUserToRequest, async (req, res) => {
+router.post("/track", attachUserToRequest, async (req: AuthenticatedRequest, res) => {
   try {
     const { type, url, referrer, meta } = req.body || {};
 
