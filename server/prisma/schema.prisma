@@ -391,3 +391,42 @@ model HomepageSettings {
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 }
+
+model CustomPage {
+  id        String        @id @default(cuid())
+  key       String        @unique
+  route     String        @unique
+  name      String
+  status    String        @default("ACTIVE")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  sections  PageSection[]
+}
+
+model PageSection {
+  id                 String     @id @default(cuid())
+  pageId             String
+  page               CustomPage @relation(fields: [pageId], references: [id])
+  order              Int
+  label              String?
+  type               String
+  backgroundColor    String?
+  backgroundImageUrl String?
+  settings           Json?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  blocks PageBlock[]
+}
+
+model PageBlock {
+  id        String       @id @default(cuid())
+  sectionId String
+  section   PageSection  @relation(fields: [sectionId], references: [id])
+  order     Int
+  type      String
+  data      Json
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}

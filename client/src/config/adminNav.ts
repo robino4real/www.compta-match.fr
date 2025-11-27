@@ -27,6 +27,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
     items: [
       { label: "Articles / blog", href: "/admin/articles" },
       { label: "Page d'accueil", href: "/admin/homepage" },
+      { label: "Pages", href: "/admin/pages" },
       { label: "Pages légales", href: "/admin/legal-pages" },
     ],
   },

@@ -69,6 +69,21 @@ import {
   adminSeedSeoStaticPages,
   adminUpdateSeoStaticPage,
 } from "../controllers/seoController";
+import {
+  adminCreateCustomPage,
+  adminCreatePageBlock,
+  adminCreatePageSection,
+  adminDeleteCustomPage,
+  adminDeletePageBlock,
+  adminDeletePageSection,
+  adminGetCustomPage,
+  adminListCustomPages,
+  adminReorderPageBlocks,
+  adminReorderPageSections,
+  adminUpdateCustomPage,
+  adminUpdatePageBlock,
+  adminUpdatePageSection,
+} from "../controllers/pageBuilderController";
 
 const router = Router();
 
@@ -276,6 +291,100 @@ router.put(
   attachUserToRequest,
   requireAdmin,
   adminSaveHomepageSettings
+);
+
+// Page Builder - pages
+router.get(
+  "/pages",
+  attachUserToRequest,
+  requireAdmin,
+  adminListCustomPages
+);
+
+router.get(
+  "/pages/:id",
+  attachUserToRequest,
+  requireAdmin,
+  adminGetCustomPage
+);
+
+router.post(
+  "/pages",
+  attachUserToRequest,
+  requireAdmin,
+  adminCreateCustomPage
+);
+
+router.put(
+  "/pages/:id",
+  attachUserToRequest,
+  requireAdmin,
+  adminUpdateCustomPage
+);
+
+router.delete(
+  "/pages/:id",
+  attachUserToRequest,
+  requireAdmin,
+  adminDeleteCustomPage
+);
+
+// Page Builder - sections
+router.post(
+  "/pages/:pageId/sections",
+  attachUserToRequest,
+  requireAdmin,
+  adminCreatePageSection
+);
+
+router.post(
+  "/pages/:pageId/sections/reorder",
+  attachUserToRequest,
+  requireAdmin,
+  adminReorderPageSections
+);
+
+router.put(
+  "/sections/:sectionId",
+  attachUserToRequest,
+  requireAdmin,
+  adminUpdatePageSection
+);
+
+router.delete(
+  "/sections/:sectionId",
+  attachUserToRequest,
+  requireAdmin,
+  adminDeletePageSection
+);
+
+// Page Builder - blocks
+router.post(
+  "/sections/:sectionId/blocks",
+  attachUserToRequest,
+  requireAdmin,
+  adminCreatePageBlock
+);
+
+router.post(
+  "/sections/:sectionId/blocks/reorder",
+  attachUserToRequest,
+  requireAdmin,
+  adminReorderPageBlocks
+);
+
+router.put(
+  "/blocks/:blockId",
+  attachUserToRequest,
+  requireAdmin,
+  adminUpdatePageBlock
+);
+
+router.delete(
+  "/blocks/:blockId",
+  attachUserToRequest,
+  requireAdmin,
+  adminDeletePageBlock
 );
 
 router.get(
