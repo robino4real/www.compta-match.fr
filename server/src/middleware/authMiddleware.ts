@@ -13,7 +13,7 @@ declare global {
   }
 }
 
-type AuthenticatedRequest = Request & {
+export type AuthenticatedRequest = Request & {
   user?: Express.User;
   cookies?: Record<string, string>;
 };
