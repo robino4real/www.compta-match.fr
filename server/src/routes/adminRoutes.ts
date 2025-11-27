@@ -58,6 +58,10 @@ import {
   adminUpdateArticle,
 } from "../controllers/articleController";
 import { getDashboard } from "../controllers/dashboardController";
+import {
+  adminGetHomepageSettings,
+  adminSaveHomepageSettings,
+} from "../controllers/homepageSettingsController";
 
 const router = Router();
 
@@ -251,6 +255,20 @@ router.post(
   attachUserToRequest,
   requireAdmin,
   adminCreateDefaultLegalPages
+);
+
+router.get(
+  "/homepage-settings",
+  attachUserToRequest,
+  requireAdmin,
+  adminGetHomepageSettings
+);
+
+router.put(
+  "/homepage-settings",
+  attachUserToRequest,
+  requireAdmin,
+  adminSaveHomepageSettings
 );
 
 router.get(
