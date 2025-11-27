@@ -31,6 +31,7 @@ export const TEMPLATE_PLACEHOLDERS: Record<string, string[]> = {
     "{{invoiceDownloadUrl}}",
     "{{orderNumber}}",
   ],
+  ADMIN_LOGIN_OTP: ["{{code}}", "{{expiresAt}}"],
 };
 
 const DEFAULT_TEMPLATES: Omit<EmailTemplate, "id" | "createdAt" | "updatedAt">[]
@@ -105,6 +106,24 @@ const DEFAULT_TEMPLATES: Omit<EmailTemplate, "id" | "createdAt" | "updatedAt">[]
         "Votre facture {{invoiceNumber}} ({{invoiceDate}}) est disponible.\n" +
         "Téléchargement : {{invoiceDownloadUrl}}\n" +
         "Commande : {{orderNumber}}",
+      isActive: true,
+    },
+    {
+      key: "ADMIN_LOGIN_OTP",
+      name: "Code de connexion administrateur (2FA)",
+      description:
+        "Envoyé après un login admin pour valider la double authentification.",
+      subject: "Code de connexion administrateur ComptaMatch : {{code}}",
+      bodyHtml:
+        "<p>Bonjour,</p>" +
+        "<p>Voici votre code de connexion administrateur ComptaMatch : <strong>{{code}}</strong>.</p>" +
+        "<p>Ce code est valable pendant 10 minutes.</p>" +
+        "<p>Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail.</p>",
+      bodyText:
+        "Bonjour,\n" +
+        "Votre code de connexion administrateur ComptaMatch est : {{code}}.\n" +
+        "Ce code est valable pendant 10 minutes.\n" +
+        "Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail.",
       isActive: true,
     },
   ];

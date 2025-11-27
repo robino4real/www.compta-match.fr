@@ -53,17 +53,21 @@ Projet de démonstration pour une plateforme SaaS avec vente de produits numéri
    ```
    Le front est accessible sur http://localhost:5173 (ou le port configuré dans Vite).
 
-3. **Créer un compte administrateur**
-   - Créer un utilisateur normalement via le front (`/auth/register`).
-   - Aller dans la base de données (via Prisma Studio ou un client SQL) et passer le champ `role` de cet utilisateur à `"admin"`.
-   - Exemple avec Prisma Studio :
-     ```bash
-     cd server
-     npx prisma studio
-     ```
-     Ouvrir ensuite la table des utilisateurs et éditer le champ `role`.
+3. **Créer le compte administrateur principal**
+   - Le compte back-office principal est `admin-user@compta-match.fr`.
+   - Définir les variables d'environnement suivantes dans `server/.env` :
+     - `ADMIN_BACKOFFICE_PASSWORD` : mot de passe initial (8 caractères minimum) pour créer automatiquement le compte admin s'il n'existe pas.
+     - `ADMIN_PERSONAL_EMAIL` : adresse personnelle où le code 2FA sera envoyé.
+   - Au démarrage du serveur, si le compte n'existe pas et que `ADMIN_BACKOFFICE_PASSWORD` est renseigné, il est créé avec le rôle `admin`.
 
-4. **Accéder à la page admin en local**
+4. **Connexion admin avec 2FA e-mail**
+   - Connexion en deux étapes pour `admin-user@compta-match.fr` :
+     1. Saisie de l'email/mot de passe.
+     2. Réception d'un code à 6 chiffres (envoyé depuis `admin-user@compta-match.fr` vers `ADMIN_PERSONAL_EMAIL`).
+     3. Validation du code sur l'écran 2FA pour finaliser la session.
+   - Les autres utilisateurs continuent à se connecter sans 2FA.
+
+5. **Accéder à la page admin en local**
    - Ouvrir le navigateur sur : http://localhost:5173/admin
    - Si l’utilisateur n’est pas connecté ou n’est pas admin, il est redirigé vers la page de connexion.
    - Si l’utilisateur est connecté et a `role = "admin"`, il voit le tableau de bord admin.

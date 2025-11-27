@@ -21,6 +21,7 @@ model User {
   orders Order[]
   downloadLinks DownloadLink[]
   analyticsEvents AnalyticsEvent[]
+  adminTwoFactorCodes AdminTwoFactorCode[]
 }
 
 enum OrderStatus {
@@ -310,4 +311,17 @@ model AnalyticsEvent {
   createdAt DateTime @default(now())
 
   @@index([type, createdAt])
+}
+
+model AdminTwoFactorCode {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  code      String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  consumed  Boolean  @default(false)
+  attempts  Int      @default(0)
+
+  @@index([userId])
 }
