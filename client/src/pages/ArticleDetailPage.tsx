@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useParams } from "react-router-dom";
+import { trackEvent } from "../lib/analytics";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
@@ -77,6 +78,16 @@ const ArticleDetailPage: React.FC = () => {
       document.title = `${article.title} | ComptaMatch`;
     }
   }, [article?.title]);
+
+  React.useEffect(() => {
+    if (!article?.id) return;
+    const url = window.location.pathname + window.location.search;
+    trackEvent({
+      type: "ARTICLE_VIEW",
+      url,
+      meta: { articleId: article.id, articleTitle: article.title },
+    });
+  }, [article?.id, article?.title]);
 
   if (isLoading) {
     return <p className="text-sm text-slate-600">Chargement de l&apos;article...</p>;

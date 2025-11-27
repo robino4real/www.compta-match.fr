@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import { trackEvent } from "../lib/analytics";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
@@ -30,6 +31,14 @@ const CheckoutPage: React.FC = () => {
           quantity: it.quantity ?? 1,
         })),
       };
+
+      trackEvent({
+        type: "CHECKOUT_STARTED",
+        meta: {
+          cartValue: totalCents,
+          productIds: items.map((it) => it.id),
+        },
+      });
 
       const response = await fetch(
         `${API_BASE_URL}/payments/downloads/checkout-session`,

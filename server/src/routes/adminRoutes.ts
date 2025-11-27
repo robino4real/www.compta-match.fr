@@ -57,6 +57,7 @@ import {
   adminListArticles,
   adminUpdateArticle,
 } from "../controllers/articleController";
+import { getDashboard } from "../controllers/dashboardController";
 
 const router = Router();
 
@@ -84,6 +85,13 @@ router.post(
   requireAdmin,
   upload.single("file"),
   createDownloadableProduct
+);
+
+router.get(
+  "/dashboard",
+  attachUserToRequest,
+  requireAdmin,
+  getDashboard
 );
 
 router.get(

@@ -11,12 +11,14 @@ import cartRoutes from './routes/cartRoutes';
 import invoiceRoutes from './routes/invoiceRoutes';
 import legalPageRoutes from './routes/legalPageRoutes';
 import articleRoutes from './routes/articleRoutes';
+import analyticsRoutes from './routes/analyticsRoutes';
 
 const app = express();
 
 app.use(express.json());
 
 app.use('/api', healthRoutes);
+app.use('/api/analytics', analyticsRoutes);
 app.use('/admin', attachUserToRequest, requireAdmin, adminRoutes);
 app.use('/orders', attachUserToRequest, requireAuth, orderRoutes);
 app.use('/payments', paymentRoutes);
