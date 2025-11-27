@@ -1,5 +1,7 @@
 import React from "react";
 import StructuredDataScript from "../components/StructuredDataScript";
+import PageRenderer from "../components/pageBuilder/PageRenderer";
+import { useCustomPage } from "../hooks/useCustomPage";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
@@ -75,6 +77,11 @@ const HomePage: React.FC = () => {
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [structuredData, setStructuredData] = React.useState<any[] | null>(null);
+  const {
+    data: builderData,
+    isLoading: isBuilderLoading,
+    error: builderError,
+  } = useCustomPage("/");
 
   const parseFeatures = (value: unknown): Feature[] => {
     if (!Array.isArray(value)) return [];
@@ -169,47 +176,64 @@ const HomePage: React.FC = () => {
       }
     : undefined;
 
+  const shouldRenderBuilder =
+    builderData && Array.isArray(builderData.sections) && builderData.sections.length > 0;
+
+  if (isBuilderLoading && !shouldRenderBuilder && isLoading) {
+    return (
+      <div className="py-12 text-center text-sm text-slate-600">Chargement de la page...</div>
+    );
+  }
+
+  if (builderError) {
+    console.warn("Page builder indisponible", builderError);
+  }
+
   return (
     <div className="space-y-8 text-slate-900">
       <StructuredDataScript data={structuredData} />
-      <section
-        className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm"
-        style={heroStyle}
-      >
-        <div className="md:flex md:items-center md:gap-8">
-          <div className="space-y-4 md:w-1/2">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-              Accueil ComptaMatch
-            </p>
-            <h1 className="text-3xl font-semibold text-black">
-              {settings.heroTitle}
-            </h1>
-            <p className="text-sm leading-relaxed text-slate-700">
-              {settings.heroSubtitle}
-            </p>
-            <div className="flex items-center gap-3">
-              <a
-                href={settings.heroButtonUrl}
-                className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-xs font-semibold text-white hover:opacity-90"
-              >
-                {settings.heroButtonLabel}
-              </a>
+      {shouldRenderBuilder ? (
+        <PageRenderer page={builderData!.page} sections={builderData!.sections} />
+      ) : (
+        <section
+          className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm"
+          style={heroStyle}
+        >
+          <div className="md:flex md:items-center md:gap-8">
+            <div className="space-y-4 md:w-1/2">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                Accueil ComptaMatch
+              </p>
+              <h1 className="text-3xl font-semibold text-black">
+                {settings.heroTitle}
+              </h1>
+              <p className="text-sm leading-relaxed text-slate-700">
+                {settings.heroSubtitle}
+              </p>
+              <div className="flex items-center gap-3">
+                <a
+                  href={settings.heroButtonUrl}
+                  className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-xs font-semibold text-white hover:opacity-90"
+                >
+                  {settings.heroButtonLabel}
+                </a>
+              </div>
             </div>
+
+            {settings.heroImageUrl && (
+              <div className="mt-6 md:mt-0 md:w-1/2">
+                <img
+                  src={settings.heroImageUrl}
+                  alt="Visuel principal ComptaMatch"
+                  className="w-full rounded-xl border border-slate-200 bg-white object-cover shadow-sm"
+                />
+              </div>
+            )}
           </div>
+        </section>
+      )}
 
-          {settings.heroImageUrl && (
-            <div className="mt-6 md:mt-0 md:w-1/2">
-              <img
-                src={settings.heroImageUrl}
-                alt="Visuel principal ComptaMatch"
-                className="w-full rounded-xl border border-slate-200 bg-white object-cover shadow-sm"
-              />
-            </div>
-          )}
-        </div>
-      </section>
-
-      {features.length > 0 && (
+      {!shouldRenderBuilder && features.length > 0 && (
         <section className="grid gap-4 md:grid-cols-3">
           {features.map((feature, index) => (
             <div
@@ -225,7 +249,7 @@ const HomePage: React.FC = () => {
         </section>
       )}
 
-      {highlightedProducts.length > 0 && (
+      {!shouldRenderBuilder && highlightedProducts.length > 0 && (
         <section className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-black">Produits mis en avant</h3>
@@ -273,7 +297,7 @@ const HomePage: React.FC = () => {
         </section>
       )}
 
-      {testimonials.length > 0 && (
+      {!shouldRenderBuilder && testimonials.length > 0 && (
         <section className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-3">
           <h3 className="text-lg font-semibold text-black">Ils utilisent ComptaMatch</h3>
           <div className="grid gap-4 md:grid-cols-3">
@@ -295,7 +319,7 @@ const HomePage: React.FC = () => {
         </section>
       )}
 
-      {(settings.contentBlockTitle || settings.contentBlockBody) && (
+      {!shouldRenderBuilder && (settings.contentBlockTitle || settings.contentBlockBody) && (
         <section className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-2">
           {settings.contentBlockTitle && (
             <h3 className="text-lg font-semibold text-black">

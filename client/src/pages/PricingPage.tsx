@@ -1,8 +1,14 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import PageRenderer from "../components/pageBuilder/PageRenderer";
+import { useCustomPage } from "../hooks/useCustomPage";
 
 const PricingPage: React.FC = () => {
   const navigate = useNavigate();
+  const { data: builderData, isLoading } = useCustomPage("/tarifs");
+
+  const shouldRenderBuilder =
+    builderData && Array.isArray(builderData.sections) && builderData.sections.length > 0;
 
   const handleTryOffer = (planId: "decouverte" | "essentielle" | "avancee") => {
     // TODO: plus tard,
@@ -10,6 +16,16 @@ const PricingPage: React.FC = () => {
     // - sinon : rediriger vers une page de connexion / création de compte puis revenir sur le plan choisi
     navigate("/auth/login");
   };
+
+  if (isLoading && !shouldRenderBuilder) {
+    return (
+      <div className="py-12 text-center text-sm text-slate-600">Chargement de la page...</div>
+    );
+  }
+
+  if (shouldRenderBuilder) {
+    return <PageRenderer page={builderData!.page} sections={builderData!.sections} />;
+  }
 
   return (
     <div className="space-y-8">

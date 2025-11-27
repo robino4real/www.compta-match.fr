@@ -42,6 +42,8 @@ import AdminArticlesPage from "./pages/admin/AdminArticlesPage";
 import AdminArticleEditPage from "./pages/admin/AdminArticleEditPage";
 import AdminHomepagePage from "./pages/admin/AdminHomepagePage";
 import AdminSeoPage from "./pages/admin/AdminSeoPage";
+import AdminPagesPage from "./pages/admin/AdminPagesPage";
+import AdminPageDetailPage from "./pages/admin/AdminPageDetailPage";
 import AnalyticsTracker from "./components/AnalyticsTracker";
 
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -154,6 +156,8 @@ const App: React.FC = () => {
           <Route path="articles" element={<AdminArticlesPage />} />
           <Route path="articles/new" element={<AdminArticleEditPage />} />
           <Route path="articles/:id" element={<AdminArticleEditPage />} />
+          <Route path="pages" element={<AdminPagesPage />} />
+          <Route path="pages/:id" element={<AdminPageDetailPage />} />
           <Route path="homepage" element={<AdminHomepagePage />} />
           <Route path="seo" element={<AdminSeoPage />} />
           <Route path="*" element={<NotFoundPage />} />

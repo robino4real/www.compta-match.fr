@@ -1,11 +1,17 @@
-import React from 'react';
+import React from "react";
+import PageRenderer from "../components/pageBuilder/PageRenderer";
+import { useCustomPage } from "../hooks/useCustomPage";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
 
 const ContactPage: React.FC = () => {
+  const { data: builderData, isLoading: isBuilderLoading } = useCustomPage("/contact");
   const [contactEmail, setContactEmail] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+
+  const shouldRenderBuilder =
+    builderData && Array.isArray(builderData.sections) && builderData.sections.length > 0;
 
   React.useEffect(() => {
     const fetchContact = async () => {
@@ -24,8 +30,20 @@ const ContactPage: React.FC = () => {
       }
     };
 
-    fetchContact();
-  }, []);
+    if (!shouldRenderBuilder) {
+      fetchContact();
+    }
+  }, [shouldRenderBuilder]);
+
+  if (isBuilderLoading && !shouldRenderBuilder) {
+    return (
+      <div className="py-12 text-center text-sm text-slate-600">Chargement de la page...</div>
+    );
+  }
+
+  if (shouldRenderBuilder) {
+    return <PageRenderer page={builderData!.page} sections={builderData!.sections} />;
+  }
 
   return (
     <div className="space-y-6">
