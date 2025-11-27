@@ -1,6 +1,7 @@
 import React from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, Outlet } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
+import AdminLayout from "./layouts/AdminLayout";
 
 import HomePage from "./pages/HomePage";
 import OffersPage from "./pages/OffersPage";
@@ -39,6 +40,7 @@ import AdminLegalPagesPage from "./pages/admin/AdminLegalPagesPage";
 import AdminLegalPageEditPage from "./pages/admin/AdminLegalPageEditPage";
 import AdminArticlesPage from "./pages/admin/AdminArticlesPage";
 import AdminArticleEditPage from "./pages/admin/AdminArticleEditPage";
+import AdminHomepagePage from "./pages/admin/AdminHomepagePage";
 import AnalyticsTracker from "./components/AnalyticsTracker";
 
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -84,168 +86,78 @@ const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 };
 
 const App: React.FC = () => {
-  return (
+  const MainLayoutWrapper: React.FC = () => (
     <MainLayout>
+      <Outlet />
+    </MainLayout>
+  );
+
+  const AdminLayoutWrapper: React.FC = () => (
+    <RequireAdmin>
+      <AdminLayout>
+        <Outlet />
+      </AdminLayout>
+    </RequireAdmin>
+  );
+
+  return (
+    <>
       <AnalyticsTracker />
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/offres" element={<OffersPage />} />
-        <Route path="/tarifs" element={<PricingPage />} />
-        <Route path="/telechargements" element={<DownloadsPage />} />
-        <Route path="/panier" element={<CartPage />} />
-        <Route path="/paiement" element={<CheckoutPage />} />
-        <Route path="/paiement/success" element={<PaymentSuccessPage />} />
-        <Route path="/paiement/cancel" element={<PaymentCancelPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/articles" element={<ArticlesPage />} />
-        <Route path="/articles/:slug" element={<ArticleDetailPage />} />
+        <Route element={<MainLayoutWrapper />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/offres" element={<OffersPage />} />
+          <Route path="/tarifs" element={<PricingPage />} />
+          <Route path="/telechargements" element={<DownloadsPage />} />
+          <Route path="/panier" element={<CartPage />} />
+          <Route path="/paiement" element={<CheckoutPage />} />
+          <Route path="/paiement/success" element={<PaymentSuccessPage />} />
+          <Route path="/paiement/cancel" element={<PaymentCancelPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/articles" element={<ArticlesPage />} />
+          <Route path="/articles/:slug" element={<ArticleDetailPage />} />
 
-        <Route path="/cgv" element={<CgvPage />} />
-        <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
-        <Route path="/confidentialite" element={<ConfidentialitePage />} />
-        <Route path="/cookies" element={<CookiesPage />} />
+          <Route path="/cgv" element={<CgvPage />} />
+          <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
+          <Route path="/confidentialite" element={<ConfidentialitePage />} />
+          <Route path="/cookies" element={<CookiesPage />} />
 
-        <Route path="/auth/login" element={<AuthLoginPage />} />
-        <Route path="/auth/register" element={<AuthRegisterPage />} />
-        <Route
-          path="/mon-compte"
-          element={
-            <RequireAuth>
-              <AccountPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <RequireAdmin>
-              <AdminDashboardPage />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/telechargements"
-          element={
-            <RequireAdmin>
-              <AdminDownloadsPage />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/telechargements/:id"
-          element={
-            <RequireAdmin>
-              <AdminDownloadEditPage />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/promo-codes"
-          element={
-            <RequireAdmin>
-              <AdminPromoCodesPage />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/stripe-settings"
-          element={
-            <RequireAdmin>
-              <AdminStripeSettingsPage />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/company-settings"
-          element={
-            <RequireAdmin>
-              <AdminCompanySettingsPage />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/emails"
-          element={
-            <RequireAdmin>
-              <AdminEmailsPage />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/invoices"
-          element={
-            <RequireAdmin>
-              <AdminInvoicesPage />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/invoices/:id"
-          element={
-            <RequireAdmin>
-              <AdminInvoiceDetailPage />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/orders"
-          element={
-            <RequireAdmin>
-              <AdminOrdersPage />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/orders/:id"
-          element={
-            <RequireAdmin>
-              <AdminOrderDetailPage />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/legal-pages"
-          element={
-            <RequireAdmin>
-              <AdminLegalPagesPage />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/legal-pages/:id"
-          element={
-            <RequireAdmin>
-              <AdminLegalPageEditPage />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/articles"
-          element={
-            <RequireAdmin>
-              <AdminArticlesPage />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/articles/new"
-          element={
-            <RequireAdmin>
-              <AdminArticleEditPage />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/articles/:id"
-          element={
-            <RequireAdmin>
-              <AdminArticleEditPage />
-            </RequireAdmin>
-          }
-        />
-        <Route path="*" element={<NotFoundPage />} />
+          <Route path="/auth/login" element={<AuthLoginPage />} />
+          <Route path="/auth/register" element={<AuthRegisterPage />} />
+          <Route
+            path="/mon-compte"
+            element={
+              <RequireAuth>
+                <AccountPage />
+              </RequireAuth>
+            }
+          />
+
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+
+        <Route path="/admin" element={<AdminLayoutWrapper />}>
+          <Route index element={<AdminDashboardPage />} />
+          <Route path="telechargements" element={<AdminDownloadsPage />} />
+          <Route path="telechargements/:id" element={<AdminDownloadEditPage />} />
+          <Route path="promo-codes" element={<AdminPromoCodesPage />} />
+          <Route path="stripe-settings" element={<AdminStripeSettingsPage />} />
+          <Route path="company-settings" element={<AdminCompanySettingsPage />} />
+          <Route path="emails" element={<AdminEmailsPage />} />
+          <Route path="invoices" element={<AdminInvoicesPage />} />
+          <Route path="invoices/:id" element={<AdminInvoiceDetailPage />} />
+          <Route path="orders" element={<AdminOrdersPage />} />
+          <Route path="orders/:id" element={<AdminOrderDetailPage />} />
+          <Route path="legal-pages" element={<AdminLegalPagesPage />} />
+          <Route path="legal-pages/:id" element={<AdminLegalPageEditPage />} />
+          <Route path="articles" element={<AdminArticlesPage />} />
+          <Route path="articles/new" element={<AdminArticleEditPage />} />
+          <Route path="articles/:id" element={<AdminArticleEditPage />} />
+          <Route path="homepage" element={<AdminHomepagePage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
       </Routes>
-    </MainLayout>
+    </>
   );
 };
 

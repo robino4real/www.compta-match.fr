@@ -14,6 +14,7 @@ import articleRoutes from './routes/articleRoutes';
 import authRoutes from './routes/authRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import publicRoutes from './routes/publicRoutes';
+import catalogRoutes from './routes/catalogRoutes';
 import { ensureAdminAccount } from './services/adminAccountService';
 
 const app = express();
@@ -28,6 +29,7 @@ app.use('/admin', attachUserToRequest, requireAdmin, adminRoutes);
 app.use('/orders', attachUserToRequest, requireAuth, orderRoutes);
 app.use('/payments', paymentRoutes);
 app.use('/downloads', downloadRoutes);
+app.use('/catalog', catalogRoutes);
 app.use('/cart', cartRoutes);
 app.use('/invoices', attachUserToRequest, requireAuth, invoiceRoutes);
 app.use('/legal-pages', legalPageRoutes);
