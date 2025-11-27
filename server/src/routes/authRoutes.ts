@@ -1,11 +1,18 @@
 import { Router } from "express";
 import { attachUserToRequest } from "../middleware/authMiddleware";
-import { login, logout, me, register } from "../controllers/authController";
+import {
+  login,
+  logout,
+  me,
+  register,
+  verifyAdminTwoFactorCode,
+} from "../controllers/authController";
 
 const router = Router();
 
 router.post("/register", register);
 router.post("/login", login);
+router.post("/admin-2fa-verify", verifyAdminTwoFactorCode);
 router.post("/logout", logout);
 router.get("/me", attachUserToRequest, me);
 

@@ -233,6 +233,25 @@ export async function sendDownloadLinkRegeneratedEmail(
   });
 }
 
+export async function sendAdminLoginOtpEmail(
+  code: string,
+  toEmail: string,
+  expiresAt?: Date
+): Promise<boolean> {
+  const settings = await getOrCreateEmailSettings();
+
+  return sendTransactionalEmail({
+    to: toEmail,
+    templateKey: "ADMIN_LOGIN_OTP",
+    context: {
+      code,
+      expiresAt: expiresAt ? expiresAt.toISOString() : "",
+    },
+    fromEmail: settings.technicalContactEmail || "admin-user@compta-match.fr",
+    replyTo: settings.replyToEmailDefault || settings.supportEmail || null,
+  });
+}
+
 export async function sendInvoiceAvailableEmail(
   invoiceId: string
 ): Promise<boolean> {
