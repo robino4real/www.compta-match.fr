@@ -1,4 +1,5 @@
 import React from "react";
+import { API_BASE_URL } from "../config/api";
 
 export interface AuthUser {
   id: string;
@@ -15,9 +16,6 @@ interface AuthContextValue {
 }
 
 const AuthContext = React.createContext<AuthContextValue | undefined>(undefined);
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
 
 interface AuthProviderProps {
   children: React.ReactNode;
