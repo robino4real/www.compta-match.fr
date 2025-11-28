@@ -1,6 +1,5 @@
 import React from "react";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
+import { API_BASE_URL } from "../config/api";
 
 const AuthRegisterPage: React.FC = () => {
   const [email, setEmail] = React.useState("");
@@ -36,13 +35,14 @@ const AuthRegisterPage: React.FC = () => {
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json().catch(() => null);
 
       if (response.ok) {
-        setSuccess("Compte créé. Un email de confirmation vous a été envoyé.");
+        setSuccess("Compte créé avec succès. Vous pouvez vous connecter.");
       } else {
         setError(data?.message ?? "Une erreur est survenue. Merci de réessayer.");
       }
