@@ -1,7 +1,12 @@
 import React from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { API_BASE_URL } from "../config/api";
 import logoComptaMatch from "../assets/logo-car-match.svg";
+
+type HomepageSettings = {
+  navbarLogoUrl?: string | null;
+};
 
 const Header: React.FC = () => {
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -10,12 +15,30 @@ const Header: React.FC = () => {
     }`;
 
   const { user, isLoading } = useAuth();
+  const [branding, setBranding] = React.useState<HomepageSettings | null>(null);
+
+  React.useEffect(() => {
+    const loadBranding = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/public/homepage-settings`);
+        const data = await response.json().catch(() => ({}));
+        const settings = (data as { settings?: HomepageSettings }).settings;
+        setBranding(settings || null);
+      } catch (error) {
+        console.warn("Logo navigation indisponible", error);
+      }
+    };
+
+    loadBranding();
+  }, []);
+
+  const navbarLogo = branding?.navbarLogoUrl?.trim() || logoComptaMatch;
 
   return (
     <header className="border-b bg-white shadow-sm">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3 min-w-[220px]">
-          <img src={logoComptaMatch} alt="Logo COMPTAMATCH" className="h-8 w-auto" />
+          <img src={navbarLogo} alt="Logo COMPTAMATCH" className="h-8 w-auto" />
           <div className="leading-tight">
             <div className="text-sm font-semibold tracking-wide text-black">COMPTAMATCH</div>
             <div className="text-xs text-slate-500">L'aide à la comptabilité des TPE au meilleur prix.</div>
@@ -27,16 +50,13 @@ const Header: React.FC = () => {
             Accueil
           </NavLink>
           <NavLink to="/offres" className={navLinkClass}>
-            Offres & comparatif
+            Comparer les offres
           </NavLink>
           <NavLink to="/tarifs" className={navLinkClass}>
             Tarifs
           </NavLink>
-          <NavLink to="/articles" className={navLinkClass}>
-            Articles
-          </NavLink>
           <NavLink to="/telechargements" className={navLinkClass}>
-            Logiciels téléchargeables
+            Nos logiciels
           </NavLink>
           <NavLink to="/panier" className={navLinkClass}>
             Panier
@@ -48,14 +68,26 @@ const Header: React.FC = () => {
 
         <div className="flex flex-col items-end gap-1 min-w-[150px]">
           {!user || isLoading ? (
-            <>
-              <NavLink to="/auth/login" className="text-sm font-semibold text-black hover:underline">
-                Se connecter
-              </NavLink>
-              <NavLink to="/auth/register" className="text-xs text-slate-500 hover:text-black hover:underline">
-                Créer un compte
-              </NavLink>
-            </>
+            <Link
+              to="/auth/login"
+              className="flex items-center justify-center h-10 w-10 rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
+              aria-label="Se connecter"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                className="h-5 w-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.8}
+                  d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4 0-7 2-7 4.44A1.56 1.56 0 0 0 6.56 20h10.88A1.56 1.56 0 0 0 19 18.44C19 16 16 14 12 14Z"
+                />
+              </svg>
+            </Link>
           ) : (
             <div className="flex items-center gap-3">
               <Link

@@ -21,6 +21,8 @@ interface HomepageSettings {
   heroButtonUrl: string;
   heroImageUrl?: string | null;
   heroBackgroundImageUrl?: string | null;
+  navbarLogoUrl?: string | null;
+  faviconUrl?: string | null;
   features?: Feature[];
   highlightedProductIds?: string[];
   testimonials?: Testimonial[];
@@ -44,6 +46,8 @@ const EMPTY_SETTINGS: HomepageSettings = {
   heroButtonUrl: "",
   heroImageUrl: null,
   heroBackgroundImageUrl: null,
+  navbarLogoUrl: null,
+  faviconUrl: null,
   features: [],
   highlightedProductIds: [],
   testimonials: [],
@@ -277,6 +281,44 @@ const AdminHomepagePage: React.FC = () => {
       {success && <p className="text-[11px] text-emerald-600">{success}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="space-y-1">
+            <h2 className="text-sm font-semibold text-black">Identité visuelle</h2>
+            <p className="text-[11px] text-slate-600">
+              Logo dans la barre supérieure et icône affichée dans l&apos;onglet du
+              navigateur.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-1">
+              <label className="text-[11px] text-slate-600">Logo de la barre</label>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                value={settings.navbarLogoUrl || ""}
+                onChange={(e) => updateField("navbarLogoUrl", e.target.value)}
+                placeholder="https://...png"
+              />
+              <p className="text-[10px] text-slate-500">
+                Image affichée dans la barre de menus (format horizontal
+                recommandé).
+              </p>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] text-slate-600">Favicon (URL)</label>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                value={settings.faviconUrl || ""}
+                onChange={(e) => updateField("faviconUrl", e.target.value)}
+                placeholder="https://...ico"
+              />
+              <p className="text-[10px] text-slate-500">
+                Icône de l&apos;onglet navigateur (formats .ico, .png ou .svg).
+              </p>
+            </div>
+          </div>
+        </section>
+
         <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div>

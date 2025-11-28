@@ -16,6 +16,8 @@ type HomepageSettings = {
   heroButtonUrl: string;
   heroImageUrl?: string | null;
   heroBackgroundImageUrl?: string | null;
+  navbarLogoUrl?: string | null;
+  faviconUrl?: string | null;
   features?: Feature[];
   highlightedProductIds?: string[];
   testimonials?: Testimonial[];
@@ -43,6 +45,8 @@ const FALLBACK_SETTINGS: HomepageSettings = {
   heroButtonUrl: "/offres",
   heroImageUrl: null,
   heroBackgroundImageUrl: null,
+  navbarLogoUrl: null,
+  faviconUrl: null,
   features: [
     {
       title: "Simplicité",
@@ -162,6 +166,24 @@ const HomePage: React.FC = () => {
         settings.seoDescription ||
         "ComptaMatch simplifie la comptabilité des petites entreprises.";
       document.head.appendChild(meta);
+    }
+
+    const faviconUrl = settings.faviconUrl?.trim();
+    const existingFavicon = document.querySelector("link[rel='icon']") as
+      | HTMLLinkElement
+      | null;
+
+    if (faviconUrl) {
+      if (existingFavicon) {
+        existingFavicon.href = faviconUrl;
+      } else {
+        const link = document.createElement("link");
+        link.rel = "icon";
+        link.href = faviconUrl;
+        document.head.appendChild(link);
+      }
+    } else if (existingFavicon) {
+      existingFavicon.remove();
     }
   }, [settings]);
 
