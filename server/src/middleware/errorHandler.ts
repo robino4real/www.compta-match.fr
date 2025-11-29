@@ -1,7 +1,25 @@
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction, Request, Response } from "express";
+import { HttpError, isHttpError } from "../utils/errors";
 
-export function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction) {
-  // Basic error logging for development
-  console.error(err);
-  res.status(500).json({ message: 'Erreur interne du serveur', details: err.message });
+export function errorHandler(
+  err: Error,
+  _req: Request,
+  res: Response,
+  _next: NextFunction
+) {
+  const httpError = isHttpError(err)
+    ? err
+    : new HttpError(500, err.message || "Erreur interne du serveur");
+
+  console.error("[error]", {
+    code: httpError.code,
+    statusCode: httpError.statusCode,
+    message: httpError.message,
+    stack: err.stack,
+  });
+
+  res.status(httpError.statusCode).json({
+    error: httpError.code,
+    message: httpError.message,
+  });
 }

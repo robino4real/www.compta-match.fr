@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { prisma } from "../config/prisma";
+import { env } from "../config/env";
+import { verifyJwt } from "../utils/jwt";
 
 declare global {
   namespace Express {
@@ -36,35 +38,33 @@ function parseCookies(header?: string): Record<string, string> {
   }, {});
 }
 
-function decodeToken(token: string): { userId?: string } | null {
-  try {
-    const decoded = Buffer.from(token, "base64").toString("utf-8");
-    return JSON.parse(decoded);
-  } catch (error) {
-    console.error("Token invalide", error);
-    return null;
-  }
-}
-
-export async function attachUserToRequest(req: AuthenticatedRequest, _res: Response, next: NextFunction) {
+export async function attachUserToRequest(
+  req: AuthenticatedRequest,
+  _res: Response,
+  next: NextFunction
+) {
   if (!req.cookies) {
     req.cookies = parseCookies(req.headers.cookie);
   }
 
-  const token = req.cookies?.token;
+  const authorization = req.headers.authorization;
+  const bearerToken = authorization?.startsWith("Bearer ")
+    ? authorization.slice("Bearer ".length).trim()
+    : undefined;
+  const token = bearerToken || req.cookies?.token;
 
   if (!token) {
     return next();
   }
 
-  const payload = decodeToken(token);
+  const payload = verifyJwt(token, env.jwtSecret);
 
-  if (!payload?.userId) {
+  if (!payload?.sub) {
     return next();
   }
 
   try {
-    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+    const user = await prisma.user.findUnique({ where: { id: payload.sub } });
 
     if (user) {
       req.user = user;

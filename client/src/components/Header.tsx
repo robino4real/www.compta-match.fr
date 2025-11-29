@@ -20,7 +20,7 @@ const Header: React.FC = () => {
   React.useEffect(() => {
     const loadBranding = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/public/homepage-settings`);
+        const response = await fetch(`${API_BASE_URL}/public/homepage-settings`);
         const data = await response.json().catch(() => ({}));
         const settings = (data as { settings?: HomepageSettings }).settings;
         setBranding(settings || null);

@@ -9,55 +9,73 @@ import {
 import { sendAdminLoginOtpEmail } from "../services/transactionalEmailService";
 import { ADMIN_BACKOFFICE_EMAIL } from "../services/adminAccountService";
 import { hashPassword, verifyPassword } from "../utils/password";
+import { signJwt } from "../utils/jwt";
 
 const TOKEN_COOKIE_NAME = "token";
-const TOKEN_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 30; // 30 jours
-function createToken(userId: string): string {
-  return Buffer.from(JSON.stringify({ userId }), "utf-8").toString("base64");
+const TOKEN_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 jours
+const TOKEN_MAX_AGE_MS = TOKEN_MAX_AGE_SECONDS * 1000;
+
+interface AuthRequestBody {
+  email?: string;
+  password?: string;
 }
 
-function setAuthCookie(res: Response, userId: string) {
-  const token = createToken(userId);
+function sanitizeUser(user: {
+  id: string;
+  email: string;
+  role: string;
+  isEmailVerified: boolean;
+}) {
+  return {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    isEmailVerified: user.isEmailVerified,
+  };
+}
 
+function buildJwtForUser(userId: string) {
+  return signJwt(userId, env.jwtSecret, TOKEN_MAX_AGE_SECONDS);
+}
+
+function setAuthCookie(res: Response, token: string) {
   res.cookie(TOKEN_COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: env.nodeEnv === "production",
     maxAge: TOKEN_MAX_AGE_MS,
   });
 }
 
-export async function register(req: Request, res: Response) {
-  const { email, password } = (req.body ?? {}) as {
-    email?: string;
-    password?: string;
-  };
-
-  const normalizedEmail = email?.trim().toLowerCase();
-  console.info("[auth][register] incoming request", {
-    email: normalizedEmail ?? "undefined",
+function sendUnexpectedError(res: Response, error: unknown) {
+  const err = error as Error;
+  console.error("[auth] unexpected error", err);
+  return res.status(500).json({
+    error: "AUTH_UNEXPECTED_ERROR",
+    message: "Une erreur est survenue. Merci de réessayer ultérieurement.",
   });
+}
+
+export async function register(req: Request, res: Response) {
+  const { email, password } = (req.body ?? {}) as AuthRequestBody;
+  const normalizedEmail = email?.trim().toLowerCase();
+
+  if (!normalizedEmail || !password?.trim()) {
+    return res.status(400).json({
+      error: "INVALID_PAYLOAD",
+      message: "Email et mot de passe requis.",
+    });
+  }
+
+  if (password.length < 8) {
+    return res.status(400).json({
+      error: "PASSWORD_TOO_SHORT",
+      message: "Le mot de passe doit contenir au moins 8 caractères.",
+    });
+  }
 
   try {
-    if (!normalizedEmail || !password?.trim()) {
-      return res.status(400).json({ message: "Email et mot de passe requis." });
-    }
-
-    if (password.length < 8) {
-      return res
-        .status(400)
-        .json({ message: "Le mot de passe doit contenir au moins 8 caractères." });
-    }
-
-    const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-    if (existing) {
-      return res
-        .status(409)
-        .json({ message: "Un compte existe déjà avec cet email." });
-    }
-
     const passwordHash = hashPassword(password);
-
     const user = await prisma.user.create({
       data: {
         email: normalizedEmail,
@@ -66,81 +84,65 @@ export async function register(req: Request, res: Response) {
       },
     });
 
-    setAuthCookie(res, user.id);
+    const token = buildJwtForUser(user.id);
+    setAuthCookie(res, token);
 
     return res.status(201).json({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      isEmailVerified: user.isEmailVerified,
+      user: sanitizeUser(user),
+      token,
     });
   } catch (error) {
-    const err = error as Error;
-    console.error("[auth][register] error", {
-      email: normalizedEmail ?? "undefined",
-      name: err.name,
-      message: err.message,
-      stack: err.stack,
-    });
-
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      return res
-        .status(409)
-        .json({ message: "Un compte existe déjà avec cet email." });
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return res.status(409).json({
+        error: "EMAIL_ALREADY_USED",
+        message: "Un compte existe déjà avec cet email.",
+      });
     }
 
-    return res.status(500).json({
-      message: "Impossible de créer le compte. Merci de réessayer.",
-    });
+    return sendUnexpectedError(res, error);
   }
 }
 
 export async function login(req: Request, res: Response) {
-  const { email, password } = (req.body ?? {}) as {
-    email?: string;
-    password?: string;
-  };
+  const { email, password } = (req.body ?? {}) as AuthRequestBody;
+
+  if (!email?.trim() || !password?.trim()) {
+    return res.status(400).json({
+      error: "INVALID_PAYLOAD",
+      message: "Email et mot de passe requis.",
+    });
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
 
   try {
-    if (!email?.trim() || !password?.trim()) {
-      return res.status(400).json({ message: "Email et mot de passe requis." });
-    }
-
-    const normalizedEmail = email.trim().toLowerCase();
     const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
 
-    if (!user) {
-      return res.status(401).json({ message: "Email ou mot de passe incorrect." });
-    }
-
-    if (!user.passwordHash) {
-      return res
-        .status(400)
-        .json({ message: "Ce compte n'a pas encore de mot de passe. Contactez le support." });
-    }
-
-    const isValidPassword = verifyPassword(password, user.passwordHash);
-    if (!isValidPassword) {
-      return res.status(401).json({ message: "Email ou mot de passe incorrect." });
+    if (!user || !verifyPassword(password, user.passwordHash || "")) {
+      return res.status(401).json({
+        error: "INVALID_CREDENTIALS",
+        message: "Email ou mot de passe incorrect.",
+      });
     }
 
     if (user.email === ADMIN_BACKOFFICE_EMAIL) {
       if (!env.adminPersonalEmail) {
         return res.status(500).json({
+          error: "ADMIN_PERSONAL_EMAIL_MISSING",
           message:
             "Adresse email personnelle de l'administrateur manquante (ADMIN_PERSONAL_EMAIL)",
         });
       }
 
       const { code, token, expiresAt } = await createAdminTwoFactorCode(user.id);
-      const sent = await sendAdminLoginOtpEmail(
-        code,
-        env.adminPersonalEmail,
-        expiresAt
-      );
+      const sent = await sendAdminLoginOtpEmail(code, env.adminPersonalEmail, expiresAt);
 
       if (!sent) {
         return res.status(500).json({
+          error: "OTP_SEND_FAILED",
           message: "Impossible d'envoyer le code de vérification. Merci de réessayer.",
         });
       }
@@ -152,26 +154,12 @@ export async function login(req: Request, res: Response) {
       });
     }
 
-    setAuthCookie(res, user.id);
+    const jwt = buildJwtForUser(user.id);
+    setAuthCookie(res, jwt);
 
-    return res.json({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      isEmailVerified: user.isEmailVerified,
-    });
+    return res.json({ user: sanitizeUser(user), token: jwt });
   } catch (error) {
-    const err = error as Error;
-    console.error("[auth][login] error", {
-      email: email ?? "undefined",
-      name: err.name,
-      message: err.message,
-      stack: err.stack,
-    });
-
-    return res.status(500).json({
-      message: "Impossible de connecter cet utilisateur. Merci de réessayer.",
-    });
+    return sendUnexpectedError(res, error);
   }
 }
 
@@ -182,52 +170,58 @@ export async function verifyAdminTwoFactorCode(req: Request, res: Response) {
   };
 
   if (!twoFactorToken || !code) {
-    return res
-      .status(400)
-      .json({ message: "Token de vérification et code requis." });
-  }
-
-  const result = await verifyAdminTwoFactorCodeService(twoFactorToken, code);
-
-  if (result.status === "NOT_FOUND") {
-    return res.status(404).json({ message: "Requête de vérification introuvable." });
-  }
-
-  if (result.status === "EXPIRED") {
-    return res
-      .status(410)
-      .json({ message: "Code expiré, veuillez vous reconnecter." });
-  }
-
-  if (result.status === "INVALID_CODE") {
-    return res.status(401).json({ message: "Code invalide." });
-  }
-
-  if (result.status === "TOO_MANY_ATTEMPTS") {
-    return res.status(429).json({
-      message: "Nombre de tentatives dépassé. Veuillez vous reconnecter.",
+    return res.status(400).json({
+      error: "INVALID_PAYLOAD",
+      message: "Token de vérification et code requis.",
     });
   }
 
-  if (!result.user || result.user.email !== ADMIN_BACKOFFICE_EMAIL) {
-    return res.status(403).json({ message: "Accès refusé." });
+  try {
+    const result = await verifyAdminTwoFactorCodeService(twoFactorToken, code);
+
+    if (result.status === "NOT_FOUND") {
+      return res.status(404).json({
+        error: "OTP_REQUEST_NOT_FOUND",
+        message: "Requête de vérification introuvable.",
+      });
+    }
+
+    if (result.status === "EXPIRED") {
+      return res.status(410).json({
+        error: "OTP_EXPIRED",
+        message: "Code expiré, veuillez vous reconnecter.",
+      });
+    }
+
+    if (result.status === "INVALID_CODE") {
+      return res.status(401).json({ error: "OTP_INVALID", message: "Code invalide." });
+    }
+
+    if (result.status === "TOO_MANY_ATTEMPTS") {
+      return res.status(429).json({
+        error: "OTP_TOO_MANY_ATTEMPTS",
+        message: "Nombre de tentatives dépassé. Veuillez vous reconnecter.",
+      });
+    }
+
+    if (!result.user || result.user.email !== ADMIN_BACKOFFICE_EMAIL) {
+      return res.status(403).json({ error: "FORBIDDEN", message: "Accès refusé." });
+    }
+
+    const token = buildJwtForUser(result.user.id);
+    setAuthCookie(res, token);
+
+    return res.json({ user: sanitizeUser(result.user), token });
+  } catch (error) {
+    return sendUnexpectedError(res, error);
   }
-
-  setAuthCookie(res, result.user.id);
-
-  return res.json({
-    id: result.user.id,
-    email: result.user.email,
-    role: result.user.role,
-    isEmailVerified: result.user.isEmailVerified,
-  });
 }
 
 export async function logout(_req: Request, res: Response) {
   res.cookie(TOKEN_COOKIE_NAME, "", {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: env.nodeEnv === "production",
     maxAge: 0,
   });
 
@@ -238,13 +232,8 @@ export async function me(req: Request, res: Response) {
   const user = (req as Request & { user?: Express.User }).user;
 
   if (!user) {
-    return res.status(401).json({ message: "Non authentifié." });
+    return res.status(401).json({ error: "UNAUTHENTICATED", message: "Non authentifié." });
   }
 
-  return res.json({
-    id: user.id,
-    email: user.email,
-    role: user.role,
-    isEmailVerified: user.isEmailVerified,
-  });
+  return res.json(sanitizeUser(user));
 }

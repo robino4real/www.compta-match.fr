@@ -2,7 +2,7 @@ import React from "react";
 import PageRenderer from "../components/pageBuilder/PageRenderer";
 import { useCustomPage } from "../hooks/useCustomPage";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
+import { API_BASE_URL } from "../config/api";
 
 const ContactPage: React.FC = () => {
   const { data: builderData, isLoading: isBuilderLoading } = useCustomPage("/contact");
@@ -17,7 +17,7 @@ const ContactPage: React.FC = () => {
     const fetchContact = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`${API_BASE_URL}/api/public/contact`);
+        const response = await fetch(`${API_BASE_URL}/public/contact`);
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
           throw new Error(data.message || "Impossible de récupérer l'adresse de contact.");
