@@ -1,99 +1,84 @@
 # ComptaMatch SaaS
 
-Projet de démonstration pour une plateforme SaaS avec vente de produits numériques. La structure est séparée en deux dossiers :
-- `client/` : front-end React + TypeScript (Vite) avec Tailwind CSS.
-- `server/` : API Node.js + Express en TypeScript, prête pour PostgreSQL via Prisma.
+Plateforme SaaS avec front React/Vite et API Node.js/Express/Prisma.
 
-## Installation
-1. Installer les dépendances du front :
-   ```bash
-   cd client
-   npm install
-   ```
-2. Installer les dépendances du back :
-   ```bash
-   cd server
-   npm install
-   ```
+## Pré-requis
+- Node.js 20+
+- PostgreSQL 14+
+- `npm` (utilisé pour installer les dépendances uniquement sur la machine de build, **jamais en prod cPanel**)
 
-## Lancement
-- Démarrer le front en mode développement :
-  ```bash
-  cd client
-  npm run dev
-  ```
-- Démarrer le back en mode développement :
-  ```bash
-  cd server
-  npm run dev
-  ```
+## Configuration des variables d'environnement
+Un fichier d'exemple est disponible dans `server/.env.example`.
+Principales variables attendues en production :
+
+- `DATABASE_URL` : URL PostgreSQL.
+- `JWT_SECRET` : secret utilisé pour signer les JWT.
+- `ADMIN_BACKOFFICE_PASSWORD` : mot de passe initial pour le compte admin automatique.
+- `ADMIN_PERSONAL_EMAIL` : email personnel recevant les OTP 2FA admin.
+- `FRONTEND_BASE_URL` : URL publique du front (ex : `https://compta-match.fr`).
+- `API_BASE_URL` : URL publique de l'API (ex : `https://compta-match.fr/api`).
+- `STRIPE_SECRET_KEY`, `STRIPE_SUCCESS_URL`, `STRIPE_CANCEL_URL` : paramètres Stripe.
+- `PORT` : port d'écoute local (4000 par défaut).
 
 ## Base de données
-- Copier le fichier `.env.example` situé dans `server/` vers `.env` et ajuster `DATABASE_URL` si nécessaire.
-- Le schéma Prisma minimal est défini dans `server/prisma/schema.prisma`.
+- Le schéma Prisma est défini dans `server/prisma/schema.prisma`.
+- Les migrations ont été régénérées : une base neuve peut être créée via `prisma migrate deploy` ou directement avec le script SQL `docs/bootstrap.sql` (utile dans phpPgAdmin).
 
-## Accès à l'espace administrateur
-
-### En développement (local)
-
-1. **Lancer l’API (backend)**
+## Lancement en local
+1. Installer les dépendances :
+   ```bash
+   cd client && npm install
+   cd ../server && npm install
+   ```
+2. Générer Prisma côté serveur :
    ```bash
    cd server
-   npm install        # la première fois seulement
+   npm run prisma:generate
+   ```
+3. Démarrer l'API :
+   ```bash
+   cd server
    npm run dev
    ```
-   L’API tourne généralement sur http://localhost:4000.
-
-2. **Lancer le front (client)**
-   Dans un autre terminal :
+4. Démarrer le front :
    ```bash
    cd client
-   npm install        # la première fois seulement
    npm run dev
    ```
-   Le front est accessible sur http://localhost:5173 (ou le port configuré dans Vite).
 
-3. **Créer le compte administrateur principal**
-   - Le compte back-office principal est `admin-user@compta-match.fr`.
-   - Définir les variables d'environnement suivantes dans `server/.env` :
-     - `ADMIN_BACKOFFICE_PASSWORD` : mot de passe initial (8 caractères minimum) pour créer automatiquement le compte admin s'il n'existe pas.
-     - `ADMIN_PERSONAL_EMAIL` : adresse personnelle où le code 2FA sera envoyé.
-   - Au démarrage du serveur, si le compte n'existe pas et que `ADMIN_BACKOFFICE_PASSWORD` est renseigné, il est créé avec le rôle `admin`.
+## Authentification
+- `POST /api/auth/register` : crée un utilisateur, hash du mot de passe, retourne `{ user, token }` + cookie httpOnly.
+- `POST /api/auth/login` : vérifie email/mot de passe, retourne `{ user, token }` + cookie httpOnly. Si l'email correspond à l'admin, déclenche un OTP envoyé à `ADMIN_PERSONAL_EMAIL`.
+- `POST /api/auth/admin-2fa-verify` : valide l'OTP admin, renvoie `{ user, token }`.
+- `GET /api/auth/me` : renvoie l'utilisateur courant via le JWT stocké en cookie.
+- `POST /api/auth/logout` : supprime le cookie de session.
 
-4. **Connexion admin avec 2FA e-mail**
-   - Connexion en deux étapes pour `admin-user@compta-match.fr` :
-     1. Saisie de l'email/mot de passe.
-     2. Réception d'un code à 6 chiffres (envoyé depuis `admin-user@compta-match.fr` vers `ADMIN_PERSONAL_EMAIL`).
-     3. Validation du code sur l'écran 2FA pour finaliser la session.
-   - Les autres utilisateurs continuent à se connecter sans 2FA.
+Les erreurs retournent un JSON avec un champ `error` explicite et un status HTTP cohérent.
 
-5. **Accéder à la page admin en local**
-   - Ouvrir le navigateur sur : http://localhost:5173/admin
-   - Si l’utilisateur n’est pas connecté ou n’est pas admin, il est redirigé vers la page de connexion.
-   - Si l’utilisateur est connecté et a `role = "admin"`, il voit le tableau de bord admin.
+## Compte administrateur
+Au démarrage de l'API, `ensureAdminAccount` crée le compte `admin-user@compta-match.fr` si :
+- Le compte n'existe pas déjà ;
+- `ADMIN_BACKOFFICE_PASSWORD` est renseigné (8+ caractères).
 
-### En production (une fois le site hébergé)
+En production, pour changer le mot de passe admin :
+- Mettre à jour `ADMIN_BACKOFFICE_PASSWORD` dans le `.env` ;
+- Redéployer le serveur (le mot de passe sera régénéré si le compte existe déjà).
 
-Une fois le projet déployé :
-- Le front sera accessible via une URL de type : https://votre-domaine.com
-- L’API sera accessible derrière une URL d’API (ou sur le même domaine via un reverse proxy).
+## Routing front/back
+- L'API est servie sous `/api/...`.
+- Les assets statiques du front (copiés dans `server/frontend`) sont servis par Express ; toutes les routes non `/api` font un fallback SPA vers `index.html`.
 
-L’espace administrateur sera accessible via : https://votre-domaine.com/admin
+## Tests
+Tests unitaires basés sur le runner natif Node :
+```bash
+cd server
+npm test
+```
 
-Pour y accéder, l’utilisateur doit disposer d’un compte avec le rôle `admin` (créé via un seeding, une commande d’administration ou une modification directe en base) et être connecté.
-
-Lorsque le nom de domaine sera définitif (par ex. https://app.comptamatch.fr), l’URL d’accès administrateur deviendra : https://app.comptamatch.fr/admin.
-
-## Mises à jour blog / articles
-
-**Fichiers créés / modifiés :**
-- Prisma : `server/prisma/schema.prisma`, `server/prisma/migrations/20250115120000_articles/migration.sql`, `server/prisma/migrations/20250122120000_article_author/migration.sql`, `server/prisma/migrations/migration_lock.toml`
-- API : `server/src/index.ts`, `server/src/routes/adminRoutes.ts`, `server/src/routes/articleRoutes.ts`, `server/src/controllers/articleController.ts`, `server/src/services/articleService.ts`
-- Front public : `client/src/pages/ArticlesPage.tsx`, `client/src/pages/ArticleDetailPage.tsx`, `client/src/components/Header.tsx`, `client/src/components/Footer.tsx`, `client/src/App.tsx`
-- Back-office : `client/src/pages/admin/AdminArticlesPage.tsx`, `client/src/pages/admin/AdminArticleEditPage.tsx`
-
-**Résumé :**
-- Ajout du modèle Prisma `Article` (statuts brouillon/publié/archivé, SEO, image, catégorie, temps de lecture, auteur affiché) et migrations associées.
-- Mise en place des routes API publiques (`/articles`, `/articles/:slug`) et admin pour créer/lister/éditer les articles.
-- Nouvelles pages front : liste et détail des articles avec métadonnées, lien depuis le header/footer et affichage de l'auteur quand il est renseigné.
-- Nouvelles pages back-office : tableau de bord des articles avec filtres, colonne auteur et formulaire de création/édition inspiré de WordPress (titre large, slug sous le titre, panneau latéral de publication, carte SEO).
+## Build & déploiement
+Le workflow complet pour cPanel est détaillé dans `docs/DEPLOY_CPANEL.md`.
+En résumé :
+1. Builder le front (`client`) puis copier `client/dist` dans `server/frontend`.
+2. Builder le back (`server`), générer Prisma et conserver `node_modules` avec `@prisma/client` généré.
+3. Créer l'archive `server-build.zip` contenant tout le dossier `server/` (dist, node_modules, prisma, frontend...).
+4. Uploader et extraire l'archive sur le serveur cPanel sans jamais exécuter `npm install` ni `prisma generate` en production.

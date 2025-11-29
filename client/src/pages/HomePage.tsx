@@ -2,9 +2,7 @@ import React from "react";
 import StructuredDataScript from "../components/StructuredDataScript";
 import PageRenderer from "../components/pageBuilder/PageRenderer";
 import { useCustomPage } from "../hooks/useCustomPage";
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
+import { API_BASE_URL } from "../config/api";
 
 type Feature = { title: string; description: string };
 type Testimonial = { name: string; role: string; text: string };
@@ -114,7 +112,7 @@ const HomePage: React.FC = () => {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await fetch(`${API_BASE_URL}/api/public/homepage-settings`);
+        const response = await fetch(`${API_BASE_URL}/public/homepage-settings`);
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
           throw new Error(data?.message || "Impossible de charger la page d'accueil.");

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { CustomPageResponse } from "../types/pageBuilder";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
+import { API_BASE_URL } from "../config/api";
 
 export function useCustomPage(route: string) {
   const [data, setData] = useState<CustomPageResponse | null>(null);
@@ -16,7 +16,7 @@ export function useCustomPage(route: string) {
         setIsLoading(true);
         setError(null);
         const response = await fetch(
-          `${API_BASE_URL}/api/public/pages/by-route?route=${encodeURIComponent(route)}`
+          `${API_BASE_URL}/public/pages/by-route?route=${encodeURIComponent(route)}`
         );
 
         if (!isMounted) return;

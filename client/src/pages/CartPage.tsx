@@ -1,8 +1,6 @@
 import React from "react";
 import { useCart } from "../context/CartContext";
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
+import { API_BASE_URL } from "../config/api";
 
 const CartPage: React.FC = () => {
   const { items, totalCents, removeItem, clearCart } = useCart();

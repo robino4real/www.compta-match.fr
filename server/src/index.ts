@@ -1,46 +1,75 @@
-import express from 'express';
-import { env } from './config/env';
-import healthRoutes from './routes/healthRoutes';
-import adminRoutes from './routes/adminRoutes';
-import { attachUserToRequest, requireAdmin, requireAuth } from './middleware/authMiddleware';
-import { errorHandler } from './middleware/errorHandler';
-import orderRoutes from './routes/orderRoutes';
-import paymentRoutes from './routes/paymentRoutes';
-import downloadRoutes from './routes/downloadRoutes';
-import cartRoutes from './routes/cartRoutes';
-import invoiceRoutes from './routes/invoiceRoutes';
-import legalPageRoutes from './routes/legalPageRoutes';
-import articleRoutes from './routes/articleRoutes';
-import authRoutes from './routes/authRoutes';
-import analyticsRoutes from './routes/analyticsRoutes';
-import publicRoutes from './routes/publicRoutes';
-import catalogRoutes from './routes/catalogRoutes';
-import { ensureAdminAccount } from './services/adminAccountService';
-import { robotsTxtHandler, sitemapHandler } from './controllers/seoController';
+import express, { Router } from "express";
+import fs from "fs";
+import path from "path";
+import { env } from "./config/env";
+import healthRoutes from "./routes/healthRoutes";
+import adminRoutes from "./routes/adminRoutes";
+import {
+  attachUserToRequest,
+  requireAdmin,
+  requireAuth,
+} from "./middleware/authMiddleware";
+import { errorHandler } from "./middleware/errorHandler";
+import orderRoutes from "./routes/orderRoutes";
+import paymentRoutes from "./routes/paymentRoutes";
+import downloadRoutes from "./routes/downloadRoutes";
+import cartRoutes from "./routes/cartRoutes";
+import invoiceRoutes from "./routes/invoiceRoutes";
+import legalPageRoutes from "./routes/legalPageRoutes";
+import articleRoutes from "./routes/articleRoutes";
+import authRoutes from "./routes/authRoutes";
+import analyticsRoutes from "./routes/analyticsRoutes";
+import publicRoutes from "./routes/publicRoutes";
+import catalogRoutes from "./routes/catalogRoutes";
+import { ensureAdminAccount } from "./services/adminAccountService";
+import { robotsTxtHandler, sitemapHandler } from "./controllers/seoController";
 
 const app = express();
+const apiRouter = Router();
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
-app.use('/api', healthRoutes);
-app.use('/auth', authRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/public', publicRoutes);
-app.use('/admin', attachUserToRequest, requireAdmin, adminRoutes);
-app.use('/orders', attachUserToRequest, requireAuth, orderRoutes);
-app.use('/payments', paymentRoutes);
-app.use('/downloads', downloadRoutes);
-app.use('/catalog', catalogRoutes);
-app.use('/cart', cartRoutes);
-app.use('/invoices', attachUserToRequest, requireAuth, invoiceRoutes);
-app.use('/legal-pages', legalPageRoutes);
-app.use('/articles', articleRoutes);
-app.get('/robots.txt', robotsTxtHandler);
-app.get('/sitemap.xml', sitemapHandler);
+apiRouter.use("/health", healthRoutes);
+apiRouter.use("/auth", authRoutes);
+apiRouter.use("/analytics", analyticsRoutes);
+apiRouter.use("/public", publicRoutes);
+apiRouter.use(attachUserToRequest);
+apiRouter.use("/payments", paymentRoutes);
+apiRouter.use("/catalog", catalogRoutes);
+apiRouter.use("/cart", cartRoutes);
+apiRouter.use("/legal-pages", legalPageRoutes);
+apiRouter.use("/articles", articleRoutes);
+apiRouter.use("/downloads", downloadRoutes);
+apiRouter.use("/admin", requireAdmin, adminRoutes);
+apiRouter.use("/orders", requireAuth, orderRoutes);
+apiRouter.use("/invoices", requireAuth, invoiceRoutes);
+
+app.use("/api", apiRouter);
+app.get("/robots.txt", robotsTxtHandler);
+app.get("/sitemap.xml", sitemapHandler);
+
+const frontendDir = path.resolve(__dirname, "..", "frontend");
+app.use(express.static(frontendDir));
+
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api")) {
+    return next();
+  }
+
+  const indexPath = path.join(frontendDir, "index.html");
+
+  if (!fs.existsSync(indexPath)) {
+    return res.status(404).send("Interface front-end introuvable.");
+  }
+
+  return res.sendFile(indexPath);
+});
+
 app.use(errorHandler);
 
 ensureAdminAccount().catch((error) => {
-  console.error('[admin] Impossible de vérifier/créer le compte administrateur', error);
+  console.error("[admin] Impossible de vérifier/créer le compte administrateur", error);
 });
 
 app.listen(env.port, () => {
