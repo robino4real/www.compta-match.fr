@@ -23,6 +23,67 @@ interface CheckoutItemInput {
   quantity?: number;
 }
 
+interface BillingInfo {
+  firstName: string;
+  lastName: string;
+  company?: string;
+  address1: string;
+  address2?: string;
+  postalCode: string;
+  city: string;
+  country: string;
+  email: string;
+  vatNumber?: string;
+}
+
+function sanitizeString(value: unknown): string {
+  if (typeof value !== "string") return "";
+  return value.trim();
+}
+
+function normalizeBilling(raw: any): BillingInfo {
+  return {
+    firstName: sanitizeString(raw?.firstName),
+    lastName: sanitizeString(raw?.lastName),
+    company: sanitizeString(raw?.company),
+    address1: sanitizeString(raw?.address1),
+    address2: sanitizeString(raw?.address2),
+    postalCode: sanitizeString(raw?.postalCode),
+    city: sanitizeString(raw?.city),
+    country: sanitizeString(raw?.country) || "France",
+    email: sanitizeString(raw?.email),
+    vatNumber: sanitizeString(raw?.vatNumber),
+  };
+}
+
+function getBillingValidationError(billing: BillingInfo): string | null {
+  if (!billing.firstName || !billing.lastName) {
+    return "Le nom et le prénom sont requis.";
+  }
+  if (!billing.address1 || !billing.postalCode || !billing.city || !billing.country) {
+    return "L'adresse de facturation est incomplète.";
+  }
+  if (!billing.email) {
+    return "L'email de facturation est requis.";
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(billing.email)) {
+    return "L'email de facturation n'est pas valide.";
+  }
+  return null;
+}
+
+function buildBillingAddress(billing: BillingInfo): string {
+  const parts = [
+    billing.address1,
+    billing.address2,
+    `${billing.postalCode} ${billing.city}`.trim(),
+    billing.country,
+  ].filter(Boolean);
+
+  return parts.join(", ");
+}
+
 /**
  * Création d'une session Stripe Checkout pour les logiciels téléchargeables.
  * Nécessite un utilisateur connecté.
@@ -41,15 +102,33 @@ export async function createDownloadCheckoutSession(
       return res.status(401).json({ message: "Utilisateur non authentifié." });
     }
 
-    const { items, promoCode } = req.body as {
-      items?: CheckoutItemInput[];
-      promoCode?: string;
-    };
+    const { items, promoCode, billing, acceptedTerms, acceptedLicense } =
+      req.body as {
+        items?: CheckoutItemInput[];
+        promoCode?: string;
+        billing?: BillingInfo;
+        acceptedTerms?: boolean;
+        acceptedLicense?: boolean;
+      };
 
     if (!Array.isArray(items) || items.length === 0) {
       return res
         .status(400)
         .json({ message: "La liste des produits est vide ou invalide." });
+    }
+
+    const billingInfo = normalizeBilling(billing);
+    const billingError = getBillingValidationError(billingInfo);
+
+    if (billingError) {
+      return res.status(400).json({ message: billingError });
+    }
+
+    if (!acceptedTerms || !acceptedLicense) {
+      return res.status(400).json({
+        message:
+          "Merci d'accepter les conditions d'utilisation et le contrat de licence avant de payer.",
+      });
     }
 
     const normalizedItems = items.map((raw) => ({
@@ -120,6 +199,9 @@ export async function createDownloadCheckoutSession(
       });
     }
 
+    const billingName = `${billingInfo.firstName} ${billingInfo.lastName}`.trim();
+    const billingAddress = buildBillingAddress(billingInfo);
+
     const successUrl =
       process.env.STRIPE_SUCCESS_URL ||
       "http://localhost:5173/paiement/success";
@@ -139,6 +221,13 @@ export async function createDownloadCheckoutSession(
       promoCodeId: appliedPromo ? appliedPromo.id : "",
       promoCode: appliedPromo ? appliedPromo.code : "",
       promoDiscountCents: promoDiscountCents.toString(),
+      billingName,
+      billingEmail: billingInfo.email,
+      billingCompany: billingInfo.company || "",
+      billingAddress,
+      billingVatNumber: billingInfo.vatNumber || "",
+      acceptedTerms: acceptedTerms ? "true" : "false",
+      acceptedLicense: acceptedLicense ? "true" : "false",
     };
 
     const currency =
@@ -161,6 +250,7 @@ export async function createDownloadCheckoutSession(
       ],
       success_url: successUrl,
       cancel_url: cancelUrl,
+      customer_email: billingInfo.email,
       metadata,
     });
 
@@ -214,6 +304,14 @@ export async function handleStripeWebhook(req: Request, res: Response) {
     const promoDiscountCentsRaw = metadata.promoDiscountCents || "0";
     const promoDiscountCents = Number(promoDiscountCentsRaw) || 0;
     const promoCodeUsed = metadata.promoCode || "";
+    const billingNameFromMetadata =
+      (metadata.billingName as string | undefined)?.trim() || "";
+    const billingEmailFromMetadata =
+      (metadata.billingEmail as string | undefined)?.trim() || "";
+    const billingAddressFromMetadata =
+      (metadata.billingAddress as string | undefined)?.trim() || "";
+    const acceptedTerms = metadata.acceptedTerms === "true";
+    const acceptedLicense = metadata.acceptedLicense === "true";
 
     if (!userId || !itemsJson) {
       console.error(
@@ -313,6 +411,31 @@ export async function handleStripeWebhook(req: Request, res: Response) {
       return res.status(200).json({ received: true });
     }
 
+    const resolvedBillingName =
+      billingNameFromMetadata ||
+      session.customer_details?.name ||
+      `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+      user.email;
+
+    const resolvedBillingEmail =
+      billingEmailFromMetadata ||
+      session.customer_details?.email ||
+      user.email;
+
+    const resolvedBillingAddress =
+      billingAddressFromMetadata ||
+      (() => {
+        const addr = (session.customer_details as any)?.address;
+        if (!addr) return "";
+        const parts = [
+          addr.line1,
+          addr.line2,
+          `${addr.postal_code || ""} ${addr.city || ""}`.trim(),
+          addr.country,
+        ].filter(Boolean);
+        return parts.join(", ");
+      })();
+
     // Création de la commande (status PAID car Stripe a confirmé le paiement)
     const order = await prisma.order.create({
       data: {
@@ -326,6 +449,11 @@ export async function handleStripeWebhook(req: Request, res: Response) {
         promoCodeId: promoCodeId || null,
         stripeSessionId: session.id,
         stripePaymentIntentId: (session as any).payment_intent || null,
+        billingNameSnapshot: resolvedBillingName,
+        billingEmailSnapshot: resolvedBillingEmail,
+        billingAddressSnapshot: resolvedBillingAddress || null,
+        acceptedTerms,
+        acceptedLicense,
         items: {
           create: parsedItems
             .filter((it) => !!productMap[it.productId])
@@ -352,9 +480,9 @@ export async function handleStripeWebhook(req: Request, res: Response) {
     const invoice = await createInvoiceForOrder({
       order,
       user,
-      billingEmail: session.customer_details?.email || user.email,
-      billingName:
-        session.customer_details?.name || `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+      billingEmail: resolvedBillingEmail,
+      billingName: resolvedBillingName,
+      billingAddress: resolvedBillingAddress || null,
     });
 
     if (promoCodeId && promoDiscountCents > 0) {
