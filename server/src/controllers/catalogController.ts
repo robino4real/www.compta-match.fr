@@ -50,7 +50,12 @@ export async function listCatalogDownloads(req: Request, res: Response) {
     const includeInactive = req.query.includeInactive === "true";
 
     const products = await prisma.downloadableProduct.findMany({
-      where: includeInactive ? {} : { isActive: true },
+      where: includeInactive
+        ? {}
+        : {
+            isActive: true,
+            isArchived: false,
+          },
       orderBy: { createdAt: "desc" },
     });
 
@@ -79,7 +84,7 @@ export async function listCatalogDownloads(req: Request, res: Response) {
 export async function publicListDownloadableProducts(_req: Request, res: Response) {
   try {
     const products = await prisma.downloadableProduct.findMany({
-      where: { isActive: true },
+      where: { isActive: true, isArchived: false },
       orderBy: { createdAt: "desc" },
     });
 
@@ -96,7 +101,20 @@ export async function publicListDownloadableProducts(_req: Request, res: Respons
       emailSettings
     );
 
-    return res.json({ products, structuredData });
+    const publicProducts = products.map((product) => ({
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      thumbnailUrl: product.thumbnailUrl,
+      shortDescription: product.shortDescription,
+      featureBullets: Array.isArray(product.featureBullets)
+        ? (product.featureBullets as string[])
+        : [],
+      priceCents: product.priceCents,
+      detailHtml: product.detailHtml,
+    }));
+
+    return res.json({ products: publicProducts, structuredData });
   } catch (error) {
     console.error("Erreur lors du chargement public des téléchargements", error);
     return res
@@ -114,7 +132,7 @@ export async function publicGetDownloadableProduct(req: Request, res: Response) 
     }
 
     const product = await prisma.downloadableProduct.findFirst({
-      where: { slug, isActive: true },
+      where: { slug, isActive: true, isArchived: false },
     });
 
     if (!product) {

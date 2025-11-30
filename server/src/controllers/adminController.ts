@@ -26,8 +26,16 @@ export async function listUsers(req: Request, res: Response) {
 export async function createDownloadableProduct(req: Request, res: Response) {
   try {
     const file = (req as any).file as Express.Multer.File | undefined;
-    const { name, slug, priceCents, shortDescription, longDescription } =
-      req.body;
+    const {
+      name,
+      slug,
+      priceCents,
+      shortDescription,
+      longDescription,
+      thumbnailUrl,
+      featureBullets,
+      detailHtml,
+    } = req.body;
 
     if (!file) {
       return res.status(400).json({ message: "Aucun fichier reçu." });
@@ -56,12 +64,33 @@ export async function createDownloadableProduct(req: Request, res: Response) {
         .replace(/^-+|-+$/g, "");
     }
 
+    let parsedFeatureBullets: string[] | undefined;
+    if (Array.isArray(featureBullets)) {
+      parsedFeatureBullets = featureBullets.filter(
+        (entry: unknown) => typeof entry === "string" && entry.trim().length > 0
+      );
+    } else if (typeof featureBullets === "string") {
+      try {
+        const parsed = JSON.parse(featureBullets);
+        if (Array.isArray(parsed)) {
+          parsedFeatureBullets = parsed.filter(
+            (entry: unknown) => typeof entry === "string" && entry.trim().length > 0
+          ) as string[];
+        }
+      } catch (error) {
+        console.warn("Impossible de parser featureBullets", error);
+      }
+    }
+
     const product = await prisma.downloadableProduct.create({
       data: {
         slug: finalSlug,
         name,
         shortDescription: shortDescription || null,
         longDescription: longDescription || null,
+        thumbnailUrl: thumbnailUrl || null,
+        featureBullets: parsedFeatureBullets,
+        detailHtml: detailHtml || null,
         priceCents: Math.round(price),
         currency: "EUR",
         isActive: true,

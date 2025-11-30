@@ -2,6 +2,50 @@ import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
 import { createDownloadableProduct } from "./adminController";
 
+type StatusFilter = "active" | "archived" | "all";
+
+function parseFeatureBullets(raw: unknown) {
+  if (Array.isArray(raw)) {
+    return raw.filter((entry) => typeof entry === "string" && entry.trim().length > 0);
+  }
+
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((entry) => typeof entry === "string" && entry.trim().length > 0);
+      }
+    } catch (error) {
+      console.warn("Impossible de parser featureBullets", error);
+    }
+  }
+
+  return undefined;
+}
+
+export async function listAdminDownloadableProducts(req: Request, res: Response) {
+  try {
+    const status = (req.query.status as StatusFilter | undefined) ?? "active";
+
+    const where =
+      status === "archived"
+        ? { isArchived: true }
+        : status === "all"
+        ? {}
+        : { isArchived: false };
+
+    const products = await prisma.downloadableProduct.findMany({
+      where,
+      orderBy: [{ createdAt: "desc" }],
+    });
+
+    return res.status(200).json({ products });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des produits téléchargeables", error);
+    return res.status(500).json({ message: "Impossible de récupérer les produits." });
+  }
+}
+
 export async function getDownloadableProductById(req: Request, res: Response) {
   try {
     const { id } = req.params;
@@ -46,6 +90,7 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
 
     const {
       name,
+      slug,
       shortDescription,
       longDescription,
       priceCents,
@@ -55,8 +100,13 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
       index,
       follow,
       ogImageUrl,
+      thumbnailUrl,
+      featureBullets,
+      detailHtml,
+      isArchived,
     } = req.body as {
       name?: string;
+      slug?: string;
       shortDescription?: string | null;
       longDescription?: string | null;
       priceCents?: number;
@@ -66,6 +116,10 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
       index?: boolean;
       follow?: boolean;
       ogImageUrl?: string | null;
+      thumbnailUrl?: string | null;
+      featureBullets?: unknown;
+      detailHtml?: string | null;
+      isArchived?: boolean;
     };
 
     const existing = await prisma.downloadableProduct.findUnique({
@@ -82,6 +136,10 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
 
     if (typeof name === "string" && name.trim().length > 0) {
       updateData.name = name.trim();
+    }
+
+    if (typeof slug === "string" && slug.trim().length > 0) {
+      updateData.slug = slug.trim();
     }
 
     if (typeof shortDescription !== "undefined") {
@@ -130,6 +188,25 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
       updateData.ogImageUrl = ogImageUrl === null ? null : String(ogImageUrl).trim();
     }
 
+    if (typeof thumbnailUrl !== "undefined") {
+      updateData.thumbnailUrl =
+        thumbnailUrl === null ? null : String(thumbnailUrl).trim();
+    }
+
+    const parsedFeatureBullets = parseFeatureBullets(featureBullets);
+    if (parsedFeatureBullets) {
+      updateData.featureBullets = parsedFeatureBullets;
+    }
+
+    if (typeof detailHtml !== "undefined") {
+      updateData.detailHtml = detailHtml === null ? null : String(detailHtml);
+    }
+
+    if (typeof isArchived !== "undefined") {
+      updateData.isArchived = Boolean(isArchived);
+      updateData.archivedAt = Boolean(isArchived) ? new Date() : null;
+    }
+
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({
         message: "Aucune donnée valide à mettre à jour.",
@@ -150,6 +227,48 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
     return res.status(500).json({
       message: "Erreur lors de la mise à jour du produit téléchargeable.",
     });
+  }
+}
+
+export async function archiveDownloadableProduct(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ message: "Identifiant du produit manquant." });
+    }
+
+    const updated = await prisma.downloadableProduct.update({
+      where: { id },
+      data: { isArchived: true, archivedAt: new Date(), isActive: false },
+    });
+
+    return res.status(200).json({ product: updated });
+  } catch (error) {
+    console.error("Erreur lors de l'archivage d'un produit téléchargeable", error);
+    return res
+      .status(500)
+      .json({ message: "Impossible d'archiver ce produit téléchargeable." });
+  }
+}
+
+export async function restoreDownloadableProduct(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ message: "Identifiant du produit manquant." });
+    }
+
+    const updated = await prisma.downloadableProduct.update({
+      where: { id },
+      data: { isArchived: false, archivedAt: null, isActive: true },
+    });
+
+    return res.status(200).json({ product: updated });
+  } catch (error) {
+    console.error("Erreur lors de la restauration d'un produit téléchargeable", error);
+    return res
+      .status(500)
+      .json({ message: "Impossible de restaurer ce produit téléchargeable." });
   }
 }
 

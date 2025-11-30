@@ -8,6 +8,9 @@ import {
   createDownloadableProduct,
   getDownloadableProductById,
   updateDownloadableProduct,
+  listAdminDownloadableProducts,
+  archiveDownloadableProduct,
+  restoreDownloadableProduct,
 } from "../controllers/adminDownloadController";
 import {
   getStripeSettings,
@@ -114,6 +117,21 @@ router.post(
 );
 
 router.get(
+  "/downloadable-products",
+  attachUserToRequest,
+  requireAdmin,
+  listAdminDownloadableProducts
+);
+
+router.post(
+  "/downloadable-products",
+  attachUserToRequest,
+  requireAdmin,
+  upload.single("file"),
+  createDownloadableProduct
+);
+
+router.get(
   "/dashboard",
   attachUserToRequest,
   requireAdmin,
@@ -132,6 +150,27 @@ router.put(
   attachUserToRequest,
   requireAdmin,
   updateDownloadableProduct
+);
+
+router.put(
+  "/downloadable-products/:id",
+  attachUserToRequest,
+  requireAdmin,
+  updateDownloadableProduct
+);
+
+router.post(
+  "/downloadable-products/:id/archive",
+  attachUserToRequest,
+  requireAdmin,
+  archiveDownloadableProduct
+);
+
+router.post(
+  "/downloadable-products/:id/restore",
+  attachUserToRequest,
+  requireAdmin,
+  restoreDownloadableProduct
 );
 
 // Paramétrages Stripe (réservés à l'administrateur)

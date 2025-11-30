@@ -9,11 +9,10 @@ interface DownloadableProduct {
   name: string;
   slug: string;
   shortDescription?: string | null;
-  longDescription?: string | null;
+  thumbnailUrl?: string | null;
+  featureBullets?: string[];
+  detailHtml?: string | null;
   priceCents: number;
-  currency: string;
-  isActive: boolean;
-  createdAt?: string | null;
 }
 
 const DownloadsPage: React.FC = () => {
@@ -24,6 +23,7 @@ const DownloadsPage: React.FC = () => {
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
   const [structuredData, setStructuredData] = React.useState<any[] | null>(null);
+  const [selectedProductId, setSelectedProductId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const fetchProducts = async () => {
@@ -31,10 +31,13 @@ const DownloadsPage: React.FC = () => {
         setIsLoading(true);
         setError(null);
 
-        const response = await fetch(`${API_BASE_URL}/public/products`, {
+        const response = await fetch(
+          `${API_BASE_URL}/public/downloadable-products`,
+          {
           method: "GET",
           credentials: "include",
-        });
+          }
+        );
 
         const data = await response.json().catch(() => ({}));
 
@@ -48,6 +51,9 @@ const DownloadsPage: React.FC = () => {
         const list = Array.isArray(data.products) ? data.products : [];
         setProducts(list);
         setStructuredData(Array.isArray((data as any)?.structuredData) ? (data as any).structuredData : null);
+        if (list.length > 0) {
+          setSelectedProductId(list[0].id);
+        }
       } catch (err: any) {
         console.error("Erreur /catalog/downloads :", err);
         setError(
@@ -78,22 +84,35 @@ const DownloadsPage: React.FC = () => {
   };
 
   const hasProducts = !isLoading && !error && products.length > 0;
+  const selectedProduct = hasProducts
+    ? products.find((product) => product.id === selectedProductId) ?? products[0]
+    : null;
 
   return (
     <div className="space-y-6">
       <StructuredDataScript data={structuredData} />
       <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-        <h1 className="text-xl font-semibold text-black">
-          Logiciels téléchargeables COMPTAMATCH
-        </h1>
-        <p className="text-xs text-slate-600">
-          Retrouvez ici l&apos;ensemble des logiciels de comptabilité proposés au
-          téléchargement. Une fois l&apos;achat réalisé, vous pourrez récupérer
-          le fichier directement depuis votre espace client.
-        </p>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-black">
+              Logiciels téléchargeables COMPTAMATCH
+            </h1>
+            <p className="text-xs text-slate-600 max-w-2xl">
+              Pilotez vos outils comptables en toute simplicité : explorez nos logiciels,
+              découvrez leurs points forts et ajoutez-les en un clic à votre panier.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => selectedProduct && navigate(`/telechargements/${selectedProduct.slug}`)}
+            className="rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-black hover:border-black hover:bg-black hover:text-white transition"
+          >
+            Voir la fiche détaillée
+          </button>
+        </div>
       </section>
 
-      <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+      <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-5">
         {isLoading && (
           <p className="text-xs text-slate-500">
             Chargement des logiciels en cours...
@@ -113,56 +132,104 @@ const DownloadsPage: React.FC = () => {
         )}
 
         {hasProducts && (
-          <div className="grid gap-4 md:grid-cols-3">
-            {products.map((product) => {
-              const priceEuros = (product.priceCents ?? 0) / 100;
-              const description =
-                product.shortDescription ||
-                product.longDescription ||
-                "Logiciel de comptabilité téléchargeable proposé par COMPTAMATCH.";
+          <>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-black">Sélectionnez un logiciel</h2>
+              <span className="text-[11px] text-slate-500">Glissez horizontalement pour découvrir les logiciels</span>
+            </div>
+            <div className="relative">
+              <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory">
+                {products.map((product) => {
+                  const priceEuros = (product.priceCents ?? 0) / 100;
+                  const isSelected = selectedProduct?.id === product.id;
+                  return (
+                    <article
+                      key={product.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setSelectedProductId(product.id)}
+                      onKeyDown={(e) => e.key === "Enter" && setSelectedProductId(product.id)}
+                      className={`snap-start w-[260px] flex-shrink-0 rounded-2xl border bg-white transition duration-200 shadow-sm ${
+                        isSelected
+                          ? "border-black scale-[1.03] shadow-lg"
+                          : "border-slate-200 hover:scale-[1.02] hover:shadow-md"
+                      }`}
+                    >
+                      {product.thumbnailUrl && (
+                        <img
+                          src={product.thumbnailUrl}
+                          alt={`Visuel ${product.name}`}
+                          className="h-36 w-full rounded-t-2xl object-cover"
+                        />
+                      )}
+                      <div className="p-4 space-y-2">
+                        <h3 className="text-sm font-semibold text-black line-clamp-1">
+                          {product.name}
+                        </h3>
+                        <p className="text-[11px] text-slate-600 line-clamp-2 min-h-[32px]">
+                          {product.shortDescription || "Logiciel comptable COMPTAMATCH"}
+                        </p>
+                        {product.featureBullets && product.featureBullets.length > 0 && (
+                          <ul className="space-y-1 text-[11px] text-slate-700">
+                            {product.featureBullets.slice(0, 4).map((bullet, index) => (
+                              <li key={`${product.id}-bullet-${index}`} className="flex items-start gap-1">
+                                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-black" />
+                                <span className="leading-tight">{bullet}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        <div className="pt-2 space-y-2">
+                          <p className="text-sm font-semibold text-black">
+                            {priceEuros.toFixed(2)} €
+                            <span className="text-[11px] font-normal text-slate-500"> TTC</span>
+                          </p>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddToCart(product);
+                            }}
+                            className="w-full rounded-full bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-white hover:text-black hover:border hover:border-black transition"
+                          >
+                            Ajouter au panier
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
 
-              return (
-                <article
-                  key={product.id}
-                  className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-                >
-                  <div className="space-y-2">
-                    <h2 className="text-sm font-semibold text-black">
-                      {product.name}
-                    </h2>
-                    <p className="text-[11px] text-slate-600">
-                      {description}
-                    </p>
+            {selectedProduct && (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-inner space-y-4">
+                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="text-[11px] uppercase text-slate-500">Logiciel sélectionné</p>
+                    <h3 className="text-lg font-semibold text-black">{selectedProduct.name}</h3>
                   </div>
-
-                <div className="mt-4 space-y-2">
-                  <p className="text-sm font-semibold text-black">
-                    {priceEuros.toFixed(2)} €{" "}
-                    <span className="text-[11px] font-normal text-slate-500">
-                      TTC – paiement unique
-                    </span>
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={() => handleAddToCart(product)}
-                    className="mt-1 w-full rounded-full bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-white hover:text-black hover:border hover:border-black transition"
-                  >
-                    Ajouter au panier
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/telechargements/${product.slug}`)}
-                    className="w-full rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-black hover:border-black hover:bg-black hover:text-white transition"
-                  >
-                    Voir la fiche
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleAddToCart(selectedProduct)}
+                      className="rounded-full bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-white hover:text-black hover:border hover:border-black transition"
+                    >
+                      Ajouter au panier
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/telechargements/${selectedProduct.slug}`)}
+                      className="rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-black hover:border-black hover:bg-black hover:text-white transition"
+                    >
+                      Voir la fiche
+                    </button>
+                  </div>
                 </div>
-                </article>
-              );
-            })}
-          </div>
+                <div className="prose prose-sm max-w-none prose-slate" dangerouslySetInnerHTML={{ __html: selectedProduct.detailHtml || "<p>Retrouvez ici la description détaillée du logiciel.</p>" }} />
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>
