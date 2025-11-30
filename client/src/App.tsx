@@ -7,6 +7,7 @@ import HomePage from "./pages/HomePage";
 import OffersPage from "./pages/OffersPage";
 import PricingPage from "./pages/PricingPage";
 import DownloadsPage from "./pages/DownloadsPage";
+import DownloadDetailPage from "./pages/DownloadDetailPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import ContactPage from "./pages/ContactPage";
@@ -111,6 +112,7 @@ const App: React.FC = () => {
           <Route path="/offres" element={<OffersPage />} />
           <Route path="/tarifs" element={<PricingPage />} />
           <Route path="/telechargements" element={<DownloadsPage />} />
+          <Route path="/telechargements/:slug" element={<DownloadDetailPage />} />
           <Route path="/panier" element={<CartPage />} />
           <Route path="/paiement" element={<CheckoutPage />} />
           <Route path="/paiement/success" element={<PaymentSuccessPage />} />

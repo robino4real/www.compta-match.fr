@@ -34,7 +34,7 @@ const ProductListBlock: React.FC<ProductListBlockProps> = ({ data }) => {
 
     const fetchProducts = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/catalog/downloads`);
+        const response = await fetch(`${API_BASE_URL}/public/products`);
         const json = await response.json().catch(() => ({}));
         const incoming = Array.isArray(json?.products) ? json.products : [];
 

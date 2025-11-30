@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import StructuredDataScript from "../components/StructuredDataScript";
 import { API_BASE_URL } from "../config/api";
@@ -17,6 +18,7 @@ interface DownloadableProduct {
 
 const DownloadsPage: React.FC = () => {
   const { addDownloadableProduct } = useCart();
+  const navigate = useNavigate();
 
   const [products, setProducts] = React.useState<DownloadableProduct[]>([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
@@ -29,7 +31,7 @@ const DownloadsPage: React.FC = () => {
         setIsLoading(true);
         setError(null);
 
-        const response = await fetch(`${API_BASE_URL}/catalog/downloads`, {
+        const response = await fetch(`${API_BASE_URL}/public/products`, {
           method: "GET",
           credentials: "include",
         });
@@ -133,22 +135,30 @@ const DownloadsPage: React.FC = () => {
                     </p>
                   </div>
 
-                  <div className="mt-4 space-y-2">
-                    <p className="text-sm font-semibold text-black">
-                      {priceEuros.toFixed(2)} €{" "}
-                      <span className="text-[11px] font-normal text-slate-500">
-                        TTC – paiement unique
-                      </span>
-                    </p>
+                <div className="mt-4 space-y-2">
+                  <p className="text-sm font-semibold text-black">
+                    {priceEuros.toFixed(2)} €{" "}
+                    <span className="text-[11px] font-normal text-slate-500">
+                      TTC – paiement unique
+                    </span>
+                  </p>
 
-                    <button
-                      type="button"
-                      onClick={() => handleAddToCart(product)}
-                      className="mt-1 w-full rounded-full bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-white hover:text-black hover:border hover:border-black transition"
-                    >
-                      Ajouter au panier
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleAddToCart(product)}
+                    className="mt-1 w-full rounded-full bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-white hover:text-black hover:border hover:border-black transition"
+                  >
+                    Ajouter au panier
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/telechargements/${product.slug}`)}
+                    className="w-full rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-black hover:border-black hover:bg-black hover:text-white transition"
+                  >
+                    Voir la fiche
+                  </button>
+                </div>
                 </article>
               );
             })}

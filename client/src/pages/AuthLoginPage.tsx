@@ -1,12 +1,11 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { API_BASE_URL } from "../config/api";
 import { useClientAuth } from "../context/AuthContext";
 
 const AuthLoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useClientAuth();
+  const { user, login } = useClientAuth();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -32,24 +31,17 @@ const AuthLoginPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
+      const result = await login(email, password);
 
-      const data = await response.json().catch(() => null);
-
-      if (data?.status === "OTP_REQUIRED") {
-        setError("Connexion administrateur détectée. Merci d'utiliser l'espace /admin.");
+      if (result.status === "OTP_REQUIRED") {
+        setError(result.message ?? "Connexion administrateur détectée.");
         window.setTimeout(() => navigate("/admin/login", { replace: true }), 300);
         return;
       }
 
-      if (response.ok) {
+      if (result.success) {
         const searchParams = new URLSearchParams(location.search);
-        const redirectTo = searchParams.get("redirect") || "/";
+        const redirectTo = searchParams.get("redirect") || "/mon-compte";
         setSuccess("Connexion réussie. Redirection en cours...");
         window.setTimeout(() => {
           navigate(redirectTo, { replace: true });
@@ -57,7 +49,7 @@ const AuthLoginPage: React.FC = () => {
         return;
       }
 
-      setError(data?.message ?? "Email ou mot de passe incorrect.");
+      setError(result.message ?? "Email ou mot de passe incorrect.");
     } catch (err) {
       setError("Impossible de traiter la requête. Merci de réessayer.");
     } finally {
