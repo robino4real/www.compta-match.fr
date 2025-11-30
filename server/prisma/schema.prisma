@@ -84,9 +84,14 @@ model DownloadableProduct {
   name             String
   shortDescription String?
   longDescription  String?
+  thumbnailUrl     String?
+  featureBullets   Json?
+  detailHtml       String?
   priceCents       Int
   currency         String   @default("EUR")
   isActive         Boolean  @default(true)
+  isArchived       Boolean  @default(false)
+  archivedAt       DateTime?
   seoTitle         String?
   seoDescription   String?
   index            Boolean  @default(true)
