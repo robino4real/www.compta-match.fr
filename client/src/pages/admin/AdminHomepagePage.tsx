@@ -19,6 +19,7 @@ interface HomepageSettings {
   heroButtonUrl: string;
   heroImageUrl?: string | null;
   heroBackgroundImageUrl?: string | null;
+  siteLogoUrl?: string | null;
   navbarLogoUrl?: string | null;
   faviconUrl?: string | null;
   features?: Feature[];
@@ -44,6 +45,7 @@ const EMPTY_SETTINGS: HomepageSettings = {
   heroButtonUrl: "",
   heroImageUrl: null,
   heroBackgroundImageUrl: null,
+  siteLogoUrl: null,
   navbarLogoUrl: null,
   faviconUrl: null,
   features: [],
@@ -281,39 +283,80 @@ const AdminHomepagePage: React.FC = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
           <div className="space-y-1">
-            <h2 className="text-sm font-semibold text-black">Identité visuelle</h2>
+            <h2 className="text-sm font-semibold text-black">Logos du site</h2>
             <p className="text-[11px] text-slate-600">
-              Logo dans la barre supérieure et icône affichée dans l&apos;onglet du
-              navigateur.
+              Définissez les logos utilisés sur la page publique : logo principal
+              (SEO, hero) et logo de la barre de navigation.
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600">Logo de la barre</label>
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-[11px] font-semibold text-slate-700">
+                Logo du site (URL d&apos;image)
+              </label>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                value={settings.siteLogoUrl || ""}
+                onChange={(e) => updateField("siteLogoUrl", e.target.value)}
+                placeholder="https://...png"
+              />
+              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-center">
+                {settings.siteLogoUrl ? (
+                  <img
+                    src={settings.siteLogoUrl}
+                    alt="Aperçu du logo du site"
+                    className="mx-auto h-16 max-h-24 w-auto object-contain"
+                  />
+                ) : (
+                  <p className="text-[11px] text-slate-500">Aucun logo défini.</p>
+                )}
+              </div>
+              <p className="text-[10px] text-slate-500">
+                Utilisé comme logo principal (SEO, sections de la page
+                d&apos;accueil).
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[11px] font-semibold text-slate-700">
+                Logo de la barre principale (header)
+              </label>
               <input
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                 value={settings.navbarLogoUrl || ""}
                 onChange={(e) => updateField("navbarLogoUrl", e.target.value)}
                 placeholder="https://...png"
               />
+              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-center">
+                {settings.navbarLogoUrl ? (
+                  <img
+                    src={settings.navbarLogoUrl}
+                    alt="Aperçu du logo de la barre"
+                    className="mx-auto h-12 max-h-20 w-auto object-contain"
+                  />
+                ) : (
+                  <p className="text-[11px] text-slate-500">Aucun logo défini.</p>
+                )}
+              </div>
               <p className="text-[10px] text-slate-500">
-                Image affichée dans la barre de menus (format horizontal
-                recommandé).
+                Image affichée dans la barre de menus en haut du site (format
+                horizontal recommandé).
               </p>
             </div>
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600">Favicon (URL)</label>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                value={settings.faviconUrl || ""}
-                onChange={(e) => updateField("faviconUrl", e.target.value)}
-                placeholder="https://...ico"
-              />
-              <p className="text-[10px] text-slate-500">
-                Icône de l&apos;onglet navigateur (formats .ico, .png ou .svg).
-              </p>
-            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[11px] font-semibold text-slate-700">Favicon (URL)</label>
+            <input
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              value={settings.faviconUrl || ""}
+              onChange={(e) => updateField("faviconUrl", e.target.value)}
+              placeholder="https://...ico"
+            />
+            <p className="text-[10px] text-slate-500">
+              Icône de l&apos;onglet navigateur (formats .ico, .png ou .svg).
+            </p>
           </div>
         </section>
 
