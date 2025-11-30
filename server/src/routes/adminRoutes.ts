@@ -1,7 +1,7 @@
 import { Router, type Request } from "express";
 import multer from "multer";
 import fs from "fs";
-import path from "path";
+import { env } from "../config/env";
 import { attachUserToRequest, requireAdmin } from "../middleware/authMiddleware";
 import { listUsers } from "../controllers/adminController";
 import {
@@ -89,7 +89,7 @@ const router = Router();
 
 const storage = multer.diskStorage({
   destination(req: Request, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) {
-    const uploadDir = path.join(__dirname, "../../uploads/downloads");
+    const uploadDir = env.downloadsStorageDir;
     fs.mkdirSync(uploadDir, { recursive: true });
     cb(null, uploadDir);
   },

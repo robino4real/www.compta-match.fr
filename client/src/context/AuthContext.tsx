@@ -12,6 +12,10 @@ interface ClientAuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   refreshUser: () => Promise<void>;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{ success: boolean; message?: string; status?: string }>;
   logout: (redirectTo?: string) => Promise<void>;
 }
 
@@ -53,6 +57,53 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({
     }
   }, []);
 
+  const login = React.useCallback(
+    async (
+      email: string,
+      password: string
+    ): Promise<{ success: boolean; message?: string; status?: string }> => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (data?.status === "OTP_REQUIRED") {
+          return {
+            success: false,
+            status: data.status,
+            message:
+              "Connexion administrateur détectée. Merci d'utiliser l'espace /admin.",
+          };
+        }
+
+        if (response.ok && data?.user) {
+          setUser(data.user as AuthUser);
+          return { success: true };
+        }
+
+        return {
+          success: false,
+          message: data?.message || "Email ou mot de passe incorrect.",
+        };
+      } catch (error) {
+        console.error("Error during login", error);
+        return {
+          success: false,
+          message: "Impossible de traiter la requête. Merci de réessayer.",
+        };
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
   React.useEffect(() => {
     (async () => {
       await refreshUser();
@@ -85,8 +136,8 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({
   }, []);
 
   const value: ClientAuthContextValue = React.useMemo(
-    () => ({ user, isLoading, refreshUser, logout }),
-    [user, isLoading, refreshUser, logout]
+    () => ({ user, isLoading, refreshUser, login, logout }),
+    [user, isLoading, refreshUser, login, logout]
   );
 
   return (

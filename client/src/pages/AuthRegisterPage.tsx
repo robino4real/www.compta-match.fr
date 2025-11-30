@@ -1,7 +1,11 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
+import { useClientAuth } from "../context/AuthContext";
 
 const AuthRegisterPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { refreshUser } = useClientAuth();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
@@ -42,7 +46,9 @@ const AuthRegisterPage: React.FC = () => {
       const data = await response.json().catch(() => null);
 
       if (response.ok) {
-        setSuccess("Compte créé avec succès. Vous pouvez vous connecter.");
+        await refreshUser();
+        setSuccess("Compte créé avec succès. Redirection en cours...");
+        window.setTimeout(() => navigate("/mon-compte", { replace: true }), 500);
       } else {
         setError(data?.message ?? "Une erreur est survenue. Merci de réessayer.");
       }

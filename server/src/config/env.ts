@@ -16,6 +16,9 @@ export const env = {
   apiBaseUrl: process.env.API_BASE_URL
     ? appendApiSuffix(process.env.API_BASE_URL)
     : "http://localhost:4000/api",
+  downloadsStorageDir:
+    process.env.DOWNLOADS_STORAGE_DIR ||
+    `/home/${process.env.USER || "node"}/comptamatch_uploads`,
   adminPersonalEmail: process.env.ADMIN_PERSONAL_EMAIL,
   adminBackofficePassword: process.env.ADMIN_BACKOFFICE_PASSWORD,
   jwtSecret: process.env.JWT_SECRET || "dev-secret-change-me",
