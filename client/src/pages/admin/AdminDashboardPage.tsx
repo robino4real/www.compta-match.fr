@@ -1,86 +1,100 @@
 import React from "react";
-import { Link } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
+import {
+  DashboardRange,
+  DashboardStatsResponse,
+  RevenuePoint,
+} from "../../types/dashboard";
 
-type RangePreset = "7d" | "30d" | "90d" | "ytd" | "all";
-
-type DashboardStats = {
-  range: { from: string; to: string };
-  sales: {
-    totalRevenue: number;
-    totalOrders: number;
-    averageOrderValue: number;
-    newCustomers: number;
-    totalCustomers: number;
-    ordersByDay: { date: string; revenue: number; ordersCount: number }[];
-  };
-  products: {
-    topProductsByRevenue: {
-      productId: string;
-      productName: string;
-      revenue: number;
-      ordersCount: number;
-    }[];
-    topProductsByDownloads: {
-      productId: string;
-      productName: string;
-      downloadsCount: number;
-    }[];
-    totalDownloads: number;
-  };
-  promos: {
-    promoUsageRate: number;
-    topPromoCodes: {
-      code: string;
-      usageCount: number;
-      totalDiscountAmount: number;
-      revenueGenerated: number;
-    }[];
-  };
-  users: {
-    totalUsers: number;
-    newUsers: number;
-    payingCustomers: number;
-    customersByCountry: { country: string; count: number }[];
-  };
-  subscriptions: {
-    available: boolean;
-    totalSubscriptions: number;
-    activeSubscriptions: number;
-    canceledSubscriptions: number;
-    mrr: number;
-  };
-  articles: {
-    totalArticlesPublished: number;
-    articleViewsTotal: number;
-    articleViewsByArticle: {
-      articleId: string;
-      articleTitle: string;
-      viewsCount: number;
-    }[];
-  };
-  interactions: {
-    pageViewsTotal: number;
-    pageViewsByUrl: { url: string; viewsCount: number }[];
-    checkoutsStarted: number;
-    checkoutsCompleted: number;
-    conversionRateCheckout: number;
-  };
-};
-
-const formatCurrency = (value: number) => `${(value / 100).toFixed(2)} €`;
-
-const rangeOptions: { value: RangePreset; label: string }[] = [
-  { value: "7d", label: "7 derniers jours" },
-  { value: "30d", label: "30 derniers jours" },
-  { value: "90d", label: "90 derniers jours" },
-  { value: "ytd", label: "Année en cours" },
-  { value: "all", label: "Depuis le début" },
+const rangeOptions: { value: DashboardRange; label: string }[] = [
+  { value: "all", label: "Au total" },
+  { value: "year", label: "Année en cours" },
+  { value: "month", label: "Mois en cours" },
+  { value: "week", label: "Semaine en cours" },
+  { value: "day", label: "Aujourd'hui" },
 ];
 
+const currencyFormatter = new Intl.NumberFormat("fr-FR", {
+  style: "currency",
+  currency: "EUR",
+});
+
+const formatCurrency = (value: number) => currencyFormatter.format(value / 100);
+
+const SalesTimelineChart: React.FC<{ data: RevenuePoint[]; loading: boolean }> = ({
+  data,
+  loading,
+}) => {
+  if (loading) {
+    return <div className="h-52 animate-pulse rounded-xl bg-slate-100" />;
+  }
+
+  if (!data.length) {
+    return <p className="text-sm text-slate-500">Aucune commande sur cette période.</p>;
+  }
+
+  const maxRevenue = Math.max(...data.map((point) => point.revenue), 1);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex h-56 items-end gap-3 overflow-x-auto pb-2">
+        {data.map((point) => {
+          const height = Math.max(8, Math.round((point.revenue / maxRevenue) * 200));
+          return (
+            <div key={point.date} className="flex flex-col items-center gap-2 text-xs">
+              <div className="flex h-48 w-10 items-end justify-center rounded-md bg-slate-100 p-1">
+                <div
+                  className="w-full rounded-sm bg-emerald-500 transition hover:bg-emerald-600"
+                  style={{ height }}
+                  title={`${point.label} — ${formatCurrency(point.revenue)} • ${point.ordersCount} commande(s)`}
+                />
+              </div>
+              <span className="whitespace-nowrap text-[11px] font-medium text-slate-600">
+                {point.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <p className="text-[11px] text-slate-500">
+        Survolez les barres pour consulter le chiffre d'affaires et le nombre de commandes par
+        période.
+      </p>
+    </div>
+  );
+};
+
+const KpiCard: React.FC<{
+  label: string;
+  value: React.ReactNode;
+  helper?: React.ReactNode;
+}> = ({ label, value, helper }) => (
+  <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+    <p className="mt-1 text-2xl font-semibold text-black">{value}</p>
+    {helper && <p className="mt-1 text-xs text-slate-500">{helper}</p>}
+  </div>
+);
+
+const TableCell: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+  colSpan?: number;
+}> = ({ children, className = "", colSpan }) => (
+  <td className={`px-3 py-2 text-sm text-slate-800 ${className}`} colSpan={colSpan}>
+    {children}
+  </td>
+);
+
+const TableHead: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+    {children}
+  </th>
+);
+
 const AdminDashboardPage: React.FC = () => {
-  const [range, setRange] = React.useState<RangePreset>("30d");
-  const [stats, setStats] = React.useState<DashboardStats | null>(null);
+  const [range, setRange] = React.useState<DashboardRange>("month");
+  const [stats, setStats] = React.useState<DashboardStatsResponse | null>(null);
   const [loading, setLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -94,18 +108,13 @@ const AdminDashboardPage: React.FC = () => {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(
-          (data as { message?: string }).message ||
-            "Impossible de charger les statistiques du dashboard."
-        );
+        throw new Error((data as { message?: string }).message || "Impossible de charger le dashboard.");
       }
-      setStats((data as { stats?: DashboardStats }).stats ?? null);
+      setStats((data as { stats?: DashboardStatsResponse }).stats ?? null);
     } catch (err: unknown) {
       console.error("Erreur dashboard admin", err);
       setError(
-        err instanceof Error
-          ? err.message
-          : "Impossible de récupérer les statistiques du dashboard."
+        err instanceof Error ? err.message : "Impossible de récupérer les statistiques du dashboard."
       );
     } finally {
       setLoading(false);
@@ -118,102 +127,141 @@ const AdminDashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-semibold text-black">Dashboard admin</h1>
-            <p className="text-xs text-slate-600">
-              Synthèse des ventes, interactions et contenus pour la période sélectionnée.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
+      <section className="flex flex-wrap items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold text-black">Dashboard admin</h1>
+          <p className="text-sm text-slate-600">
+            Synthèse des ventes, de la clientèle et des interactions produits.
+          </p>
+          {stats && (
+            <p className="text-xs text-slate-500">Mise à jour : {new Date(stats.generatedAt).toLocaleString("fr-FR")}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <label htmlFor="dashboard-range" className="text-sm font-medium text-slate-700">
+            Période
+          </label>
+          <select
+            id="dashboard-range"
+            value={range}
+            onChange={(event) => setRange(event.target.value as DashboardRange)}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm focus:border-emerald-500 focus:outline-none"
+          >
             {rangeOptions.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => setRange(option.value)}
-                className={`rounded-full px-3 py-1 text-xs font-semibold border transition ${
-                  range === option.value
-                    ? "bg-black text-white border-black"
-                    : "border-slate-300 text-slate-700 hover:border-black hover:text-black"
-                }`}
-              >
+              <option key={option.value} value={option.value}>
                 {option.label}
-              </button>
+              </option>
             ))}
+          </select>
+        </div>
+      </section>
+
+      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-black">Chiffres réalisés</h2>
+            <p className="text-sm text-slate-600">Chiffre d'affaires, frais et commandes.</p>
+          </div>
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+            {rangeOptions.find((o) => o.value === range)?.label}
+          </span>
+        </div>
+        <div className="grid gap-3 md:grid-cols-3">
+          <KpiCard label="Chiffre d'affaires" value={loading ? "—" : formatCurrency(stats?.sales.totalRevenue ?? 0)} />
+          <KpiCard
+            label="Résultat net"
+            value={loading ? "—" : formatCurrency(stats?.sales.netResult ?? 0)}
+            helper={loading ? null : `Frais Stripe : ${formatCurrency(stats?.sales.totalStripeFees ?? 0)}`}
+          />
+          <KpiCard
+            label="Commandes"
+            value={loading ? "—" : stats?.sales.ordersCount ?? 0}
+            helper={loading ? null : `${stats?.sales.timeline.length ?? 0} points sur la période`}
+          />
+        </div>
+        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <p className="mb-3 text-sm font-semibold text-slate-800">Évolution du CA</p>
+          <SalesTimelineChart data={stats?.sales.timeline ?? []} loading={loading} />
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-black">Chiffres clientèle</h2>
+            <p className="text-sm text-slate-600">Inscriptions, acheteurs et abonnés.</p>
           </div>
         </div>
-        {error && <p className="text-xs text-red-600">{error}</p>}
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-3">
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            Chiffre d'affaires (période)
-          </p>
-          <p className="text-2xl font-semibold text-black">
-            {loading ? "—" : formatCurrency(stats?.sales.totalRevenue ?? 0)}
-          </p>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            Commandes
-          </p>
-          <p className="text-2xl font-semibold text-black">
-            {loading ? "—" : stats?.sales.totalOrders ?? 0}
-          </p>
-          <p className="text-[11px] text-slate-500">
-            Panier moyen : {loading ? "—" : formatCurrency(stats?.sales.averageOrderValue ?? 0)}
-          </p>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            Nouveaux clients
-          </p>
-          <p className="text-2xl font-semibold text-black">
-            {loading ? "—" : stats?.sales.newCustomers ?? 0}
-          </p>
-          <p className="text-[11px] text-slate-500">
-            Clients payants totaux : {loading ? "—" : stats?.sales.totalCustomers ?? 0}
-          </p>
+        <div className="mt-4 grid gap-3 md:grid-cols-4">
+          <KpiCard label="Utilisateurs inscrits" value={loading ? "—" : stats?.customers.totalRegisteredUsers ?? 0} />
+          <KpiCard
+            label="Inscriptions sur la période"
+            value={loading ? "—" : stats?.customers.newUsersInRange ?? 0}
+          />
+          <KpiCard
+            label="Clients acheteurs (total)"
+            value={loading ? "—" : stats?.customers.customersWithOrdersAllTime ?? 0}
+          />
+          <KpiCard
+            label="Clients acheteurs (période)"
+            value={loading ? "—" : stats?.customers.customersWithOrdersInRange ?? 0}
+            helper={
+              loading
+                ? null
+                : `Abonnés : ${stats?.customers.customersWithSubscriptionAllTime ?? 0}`
+            }
+          />
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
+      <section className="grid gap-5 lg:grid-cols-2">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-black">Top produits (CA)</h2>
-            <p className="text-[11px] text-slate-500">Sur la période</p>
+            <div>
+              <h2 className="text-lg font-semibold text-black">Ventes par produit / abonnement</h2>
+              <p className="text-sm text-slate-600">Classement décroissant par ventes sur la période.</p>
+            </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs">
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full border-collapse">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">Produit</th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">CA</th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">Commandes</th>
+                  <TableHead>Produit</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Ventes période</TableHead>
+                  <TableHead>Ventes totales</TableHead>
+                  <TableHead>Abonnés</TableHead>
                 </tr>
               </thead>
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan={3} className="px-3 py-2 text-slate-500">
-                      Chargement des données…
-                    </td>
+                    <TableCell colSpan={5} className="text-slate-500">
+                      Chargement…
+                    </TableCell>
                   </tr>
                 )}
-                {!loading && stats?.products.topProductsByRevenue.length === 0 && (
+                {!loading && (stats?.products.sales.length ?? 0) === 0 && (
                   <tr>
-                    <td colSpan={3} className="px-3 py-2 text-slate-500">
-                      Aucun produit vendu sur la période.
-                    </td>
+                    <TableCell colSpan={5} className="text-slate-500">
+                      Aucun produit vendu pour cette période.
+                    </TableCell>
                   </tr>
                 )}
                 {!loading &&
-                  stats?.products.topProductsByRevenue.map((product) => (
+                  stats?.products.sales.map((product) => (
                     <tr key={product.productId} className="odd:bg-white even:bg-slate-50">
-                      <td className="px-3 py-2 text-slate-800">{product.productName}</td>
-                      <td className="px-3 py-2 text-slate-800">{formatCurrency(product.revenue)}</td>
-                      <td className="px-3 py-2 text-slate-800">{product.ordersCount}</td>
+                      <TableCell>{product.name}</TableCell>
+                      <TableCell className="capitalize">{product.type}</TableCell>
+                      <TableCell>{product.salesCountInRange}</TableCell>
+                      <TableCell>{product.salesCountAllTime}</TableCell>
+                      <TableCell>
+                        {product.type === "subscription"
+                          ? product.subscribersAllTime ?? 0
+                          : "—"}
+                      </TableCell>
                     </tr>
                   ))}
               </tbody>
@@ -221,214 +269,64 @@ const AdminDashboardPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-black">Codes promo</h2>
-            <p className="text-[11px] text-slate-500">
-              Taux d'utilisation :
-              {" "}
-              {loading
-                ? "—"
-                : `${Math.round((stats?.promos.promoUsageRate ?? 0) * 100)}%`}
-            </p>
+            <div>
+              <h2 className="text-lg font-semibold text-black">Interactions avec les produits</h2>
+              <p className="text-sm text-slate-600">Vues et ajouts au panier sur la période.</p>
+            </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs">
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full border-collapse">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">Code</th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">Utilisations</th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">Remise</th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">CA généré</th>
+                  <TableHead>Produit</TableHead>
+                  <TableHead>Vues</TableHead>
+                  <TableHead>Ajouts au panier</TableHead>
+                  <TableHead>Engagement</TableHead>
                 </tr>
               </thead>
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan={4} className="px-3 py-2 text-slate-500">
-                      Chargement des données…
-                    </td>
+                    <TableCell colSpan={4} className="text-slate-500">
+                      Chargement…
+                    </TableCell>
                   </tr>
                 )}
-                {!loading && stats?.promos.topPromoCodes.length === 0 && (
+                {!loading && (stats?.products.interactions.length ?? 0) === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-3 py-2 text-slate-500">
-                      Aucun code promo utilisé sur la période.
-                    </td>
+                    <TableCell colSpan={4} className="text-slate-500">
+                      Aucune interaction trouvée sur la période.
+                    </TableCell>
                   </tr>
                 )}
                 {!loading &&
-                  stats?.promos.topPromoCodes.map((promo) => (
-                    <tr key={promo.code} className="odd:bg-white even:bg-slate-50">
-                      <td className="px-3 py-2 text-slate-800">{promo.code}</td>
-                      <td className="px-3 py-2 text-slate-800">{promo.usageCount}</td>
-                      <td className="px-3 py-2 text-slate-800">
-                        {formatCurrency(promo.totalDiscountAmount)}
-                      </td>
-                      <td className="px-3 py-2 text-slate-800">
-                        {formatCurrency(promo.revenueGenerated)}
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-3">
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            Utilisateurs totaux
-          </p>
-          <p className="text-2xl font-semibold text-black">
-            {loading ? "—" : stats?.users.totalUsers ?? 0}
-          </p>
-          <p className="text-[11px] text-slate-500">
-            Nouveaux : {loading ? "—" : stats?.users.newUsers ?? 0}
-          </p>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            Clients payants
-          </p>
-          <p className="text-2xl font-semibold text-black">
-            {loading ? "—" : stats?.users.payingCustomers ?? 0}
-          </p>
-          <p className="text-[11px] text-slate-500">Tous comptes ayant une commande payée.</p>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            Téléchargements
-          </p>
-          <p className="text-2xl font-semibold text-black">
-            {loading ? "—" : stats?.products.totalDownloads ?? 0}
-          </p>
-          <p className="text-[11px] text-slate-500">Basé sur les liens de téléchargement utilisés.</p>
-        </div>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2">
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-black">Articles</h2>
-            <Link
-              to="/admin/articles"
-              className="text-[11px] font-semibold text-emerald-700 underline-offset-2 hover:underline"
-            >
-              Gérer les articles
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] text-slate-500">Articles publiés</p>
-              <p className="text-lg font-semibold text-black">
-                {loading ? "—" : stats?.articles.totalArticlesPublished ?? 0}
-              </p>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] text-slate-500">Vues sur la période</p>
-              <p className="text-lg font-semibold text-black">
-                {loading ? "—" : stats?.articles.articleViewsTotal ?? 0}
-              </p>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">Titre</th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">Vues</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading && (
-                  <tr>
-                    <td colSpan={2} className="px-3 py-2 text-slate-500">
-                      Chargement des données…
-                    </td>
-                  </tr>
-                )}
-                {!loading && stats?.articles.articleViewsByArticle.length === 0 && (
-                  <tr>
-                    <td colSpan={2} className="px-3 py-2 text-slate-500">
-                      Aucune vue d'article sur la période.
-                    </td>
-                  </tr>
-                )}
-                {!loading &&
-                  stats?.articles.articleViewsByArticle.map((article) => (
-                    <tr key={article.articleId} className="odd:bg-white even:bg-slate-50">
-                      <td className="px-3 py-2 text-slate-800">{article.articleTitle}</td>
-                      <td className="px-3 py-2 text-slate-800">{article.viewsCount}</td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-black">Interactions</h2>
-            <p className="text-[11px] text-slate-500">
-              Conversion checkout :
-              {" "}
-              {loading
-                ? "—"
-                : `${Math.round((stats?.interactions.conversionRateCheckout ?? 0) * 100)}%`}
-            </p>
-          </div>
-          <div className="grid grid-cols-3 gap-3 text-xs">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] text-slate-500">Pages vues</p>
-              <p className="text-lg font-semibold text-black">
-                {loading ? "—" : stats?.interactions.pageViewsTotal ?? 0}
-              </p>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] text-slate-500">Checkouts démarrés</p>
-              <p className="text-lg font-semibold text-black">
-                {loading ? "—" : stats?.interactions.checkoutsStarted ?? 0}
-              </p>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] text-slate-500">Checkouts complétés</p>
-              <p className="text-lg font-semibold text-black">
-                {loading ? "—" : stats?.interactions.checkoutsCompleted ?? 0}
-              </p>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">URL</th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">Vues</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading && (
-                  <tr>
-                    <td colSpan={2} className="px-3 py-2 text-slate-500">
-                      Chargement des données…
-                    </td>
-                  </tr>
-                )}
-                {!loading && stats?.interactions.pageViewsByUrl.length === 0 && (
-                  <tr>
-                    <td colSpan={2} className="px-3 py-2 text-slate-500">
-                      Aucune page vue enregistrée sur la période.
-                    </td>
-                  </tr>
-                )}
-                {!loading &&
-                  stats?.interactions.pageViewsByUrl.map((page) => (
-                    <tr key={page.url} className="odd:bg-white even:bg-slate-50">
-                      <td className="px-3 py-2 text-slate-800">{page.url}</td>
-                      <td className="px-3 py-2 text-slate-800">{page.viewsCount}</td>
-                    </tr>
-                  ))}
+                  stats?.products.interactions.map((interaction) => {
+                    const total = interaction.viewsInRange + interaction.addToCartInRange;
+                    const engagement = total > 0
+                      ? Math.round((interaction.addToCartInRange / total) * 100)
+                      : 0;
+                    return (
+                      <tr key={interaction.productId} className="odd:bg-white even:bg-slate-50">
+                        <TableCell>{interaction.name}</TableCell>
+                        <TableCell>{interaction.viewsInRange}</TableCell>
+                        <TableCell>{interaction.addToCartInRange}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="h-2 w-full rounded-full bg-slate-200">
+                              <div
+                                className="h-2 rounded-full bg-emerald-500"
+                                style={{ width: `${Math.min(100, engagement)}%` }}
+                                aria-label={`Taux d'ajout au panier ${engagement}%`}
+                              />
+                            </div>
+                            <span className="text-xs font-medium text-slate-700">{engagement}%</span>
+                          </div>
+                        </TableCell>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
