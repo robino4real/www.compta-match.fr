@@ -25,7 +25,8 @@ import NotFoundPage from "./pages/NotFoundPage";
 import AuthLoginPage from "./pages/AuthLoginPage";
 import AuthRegisterPage from "./pages/AuthRegisterPage";
 import AccountPage from "./pages/AccountPage";
-import { useAuth } from "./context/AuthContext";
+import { useClientAuth } from "./context/AuthContext";
+import { useAdminAuth } from "./context/AdminAuthContext";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminDownloadsPage from "./pages/admin/AdminDownloadsPage";
 import AdminDownloadEditPage from "./pages/admin/AdminDownloadEditPage";
@@ -46,9 +47,10 @@ import AdminSeoPage from "./pages/admin/AdminSeoPage";
 import AdminPagesPage from "./pages/admin/AdminPagesPage";
 import AdminPageDetailPage from "./pages/admin/AdminPageDetailPage";
 import AnalyticsTracker from "./components/AnalyticsTracker";
+import AdminLoginPage from "./pages/admin/AdminLoginPage";
 
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading } = useClientAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -67,7 +69,7 @@ const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isLoading } = useAuth();
+  const { admin, isLoading } = useAdminAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -78,12 +80,8 @@ const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     );
   }
 
-  if (!user) {
-    return <Navigate to="/auth/login" state={{ from: location }} replace />;
-  }
-
-  if (user.role !== "admin") {
-    return <Navigate to="/" replace />;
+  if (!admin) {
+    return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;
@@ -129,6 +127,7 @@ const App: React.FC = () => {
 
           <Route path="/auth/login" element={<AuthLoginPage />} />
           <Route path="/auth/register" element={<AuthRegisterPage />} />
+          <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route
             path="/mon-compte"
             element={

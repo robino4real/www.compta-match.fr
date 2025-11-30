@@ -1,14 +1,23 @@
 import React from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
+import { useClientAuth } from "../context/AuthContext";
 
 const AuthLoginPage: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useClientAuth();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
-  const [otpToken, setOtpToken] = React.useState<string | null>(null);
-  const [otpCode, setOtpCode] = React.useState("");
+
+  React.useEffect(() => {
+    if (user) {
+      navigate("/mon-compte", { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -32,17 +41,18 @@ const AuthLoginPage: React.FC = () => {
 
       const data = await response.json().catch(() => null);
 
-      if (data?.status === "OTP_REQUIRED" && data.twoFactorToken) {
-        setOtpToken(data.twoFactorToken);
-        setSuccess(null);
-        setError(null);
+      if (data?.status === "OTP_REQUIRED") {
+        setError("Connexion administrateur détectée. Merci d'utiliser l'espace /admin.");
+        window.setTimeout(() => navigate("/admin/login", { replace: true }), 300);
         return;
       }
 
       if (response.ok) {
+        const searchParams = new URLSearchParams(location.search);
+        const redirectTo = searchParams.get("redirect") || "/";
         setSuccess("Connexion réussie. Redirection en cours...");
         window.setTimeout(() => {
-          window.location.href = "/";
+          navigate(redirectTo, { replace: true });
         }, 600);
         return;
       }
@@ -54,90 +64,6 @@ const AuthLoginPage: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-
-  const handleOtpSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!otpToken || !otpCode.trim()) {
-      setError("Veuillez saisir le code reçu par email.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/admin-2fa-verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ twoFactorToken: otpToken, code: otpCode.trim() }),
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (response.ok) {
-        setSuccess("Connexion réussie. Redirection en cours...");
-        window.setTimeout(() => {
-          window.location.href = "/";
-        }, 600);
-        return;
-      }
-
-      setError(data?.message ?? "Code invalide.");
-    } catch (err) {
-      setError("Impossible de traiter la requête. Merci de réessayer.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (otpToken) {
-    return (
-      <div className="flex justify-center">
-        <div className="w-full max-w-md space-y-6">
-          <div className="space-y-2">
-            <h1 className="text-xl font-semibold text-black">Vérification requise</h1>
-            <p className="text-xs text-slate-600">
-              Un code de vérification vient d'être envoyé sur votre email personnel.
-              Saisissez-le ci-dessous pour finaliser la connexion.
-            </p>
-          </div>
-
-          <form
-            onSubmit={handleOtpSubmit}
-            className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4"
-          >
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-black" htmlFor="otpCode">
-                Code reçu
-              </label>
-              <input
-                id="otpCode"
-                type="text"
-                value={otpCode}
-                onChange={(event) => setOtpCode(event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                placeholder="123456"
-                required
-              />
-            </div>
-
-            {error && <p className="text-xs text-red-600">{error}</p>}
-            {success && <p className="text-xs text-emerald-600">{success}</p>}
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full rounded-full bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-white hover:text-black hover:border hover:border-black transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? "Vérification en cours..." : "Valider"}
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex justify-center">

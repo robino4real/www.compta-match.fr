@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, NavLink } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useClientAuth } from "../context/AuthContext";
 import { API_BASE_URL } from "../config/api";
 import logoComptaMatch from "../assets/logo-car-match.svg";
 
@@ -14,7 +14,7 @@ const Header: React.FC = () => {
       isActive ? "text-black border-black font-semibold" : "text-slate-700 hover:text-black"
     }`;
 
-  const { user, isLoading, logout } = useAuth();
+  const { user, isLoading, logout } = useClientAuth();
   const [branding, setBranding] = React.useState<HomepageSettings | null>(null);
   const [isNavOpen, setIsNavOpen] = React.useState(false);
 

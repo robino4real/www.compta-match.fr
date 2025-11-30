@@ -8,20 +8,24 @@ export interface AuthUser {
   isEmailVerified?: boolean;
 }
 
-interface AuthContextValue {
+interface ClientAuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   refreshUser: () => Promise<void>;
   logout: (redirectTo?: string) => Promise<void>;
 }
 
-const AuthContext = React.createContext<AuthContextValue | undefined>(undefined);
+const ClientAuthContext = React.createContext<ClientAuthContextValue | undefined>(
+  undefined
+);
 
-interface AuthProviderProps {
+interface ClientAuthProviderProps {
   children: React.ReactNode;
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({
+  children,
+}) => {
   const [user, setUser] = React.useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
 
@@ -33,7 +37,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       if (response.ok) {
-        setUser(await response.json());
+        const fetchedUser = (await response.json()) as AuthUser;
+        if (fetchedUser.role === "admin") {
+          setUser(null);
+          return;
+        }
+
+        setUser(fetchedUser);
       } else {
         setUser(null);
       }
@@ -74,18 +84,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
-  const value: AuthContextValue = React.useMemo(
+  const value: ClientAuthContextValue = React.useMemo(
     () => ({ user, isLoading, refreshUser, logout }),
     [user, isLoading, refreshUser, logout]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <ClientAuthContext.Provider value={value}>
+      {children}
+    </ClientAuthContext.Provider>
+  );
 };
 
-export const useAuth = (): AuthContextValue => {
-  const context = React.useContext(AuthContext);
+export const useClientAuth = (): ClientAuthContextValue => {
+  const context = React.useContext(ClientAuthContext);
   if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error("useClientAuth must be used within a ClientAuthProvider");
   }
   return context;
 };
+
+// Backward compatibility exports
+export const AuthProvider = ClientAuthProvider;
+export const useAuth = useClientAuth;

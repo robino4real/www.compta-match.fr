@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ADMIN_NAV_SECTIONS } from "../config/adminNav";
-import { useAuth } from "../context/AuthContext";
+import { useAdminAuth } from "../context/AdminAuthContext";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -17,11 +17,11 @@ const isActivePath = (pathname: string, href: string) => {
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { admin, logoutAdmin } = useAdminAuth();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
   const handleLogout = async () => {
-    await logout("/auth/login");
+    await logoutAdmin("/admin/login");
   };
 
   return (
@@ -109,7 +109,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
             <div className="flex items-center gap-3">
               <div className="hidden flex-col text-right leading-tight sm:flex">
-                <span className="text-xs font-semibold text-black">{user?.email || "Administrateur"}</span>
+                <span className="text-xs font-semibold text-black">{admin?.email || "Administrateur"}</span>
                 <span className="text-[11px] text-slate-500">Session sécurisée</span>
               </div>
               <button
