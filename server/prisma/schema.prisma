@@ -404,6 +404,7 @@ model HomepageSettings {
   heroButtonUrl          String
   heroImageUrl           String?
   heroBackgroundImageUrl String?
+  siteLogoUrl            String?
   navbarLogoUrl          String?
   faviconUrl             String?
   features               Json?
