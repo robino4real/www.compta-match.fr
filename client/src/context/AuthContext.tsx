@@ -12,7 +12,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   refreshUser: () => Promise<void>;
-  logout: () => Promise<void>;
+  logout: (redirectTo?: string) => Promise<void>;
 }
 
 const AuthContext = React.createContext<AuthContextValue | undefined>(undefined);
@@ -50,16 +50,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     })();
   }, [refreshUser]);
 
-  const logout = React.useCallback(async () => {
+  const logout = React.useCallback(async (redirectTo?: string) => {
     try {
-      await fetch(`${API_BASE_URL}/auth/logout`, {
+      const response = await fetch(`${API_BASE_URL}/auth/logout`, {
         method: "POST",
         credentials: "include",
       });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || data?.success === false) {
+        console.warn("Logout response not successful", data);
+      }
     } catch (error) {
       console.error("Error during logout", error);
     } finally {
       setUser(null);
+      if (redirectTo) {
+        window.location.href = redirectTo;
+      } else {
+        window.location.href = "/";
+      }
     }
   }, []);
 

@@ -14,8 +14,9 @@ const Header: React.FC = () => {
       isActive ? "text-black border-black font-semibold" : "text-slate-700 hover:text-black"
     }`;
 
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const [branding, setBranding] = React.useState<HomepageSettings | null>(null);
+  const [isNavOpen, setIsNavOpen] = React.useState(false);
 
   React.useEffect(() => {
     const loadBranding = async () => {
@@ -34,73 +35,116 @@ const Header: React.FC = () => {
 
   const navbarLogo = branding?.navbarLogoUrl?.trim() || logoComptaMatch;
 
+  const handleLogout = async () => {
+    await logout("/");
+    setIsNavOpen(false);
+  };
+
   return (
     <header className="border-b bg-white shadow-sm">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3 min-w-[220px]">
-          <img src={navbarLogo} alt="Logo COMPTAMATCH" className="h-8 w-auto" />
-          <div className="leading-tight">
-            <div className="text-sm font-semibold tracking-wide text-black">COMPTAMATCH</div>
-            <div className="text-xs text-slate-500">L'aide à la comptabilité des TPE au meilleur prix.</div>
+      <div className="max-w-6xl mx-auto px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <Link to="/" className="flex items-center gap-3 min-w-0">
+            <img src={navbarLogo} alt="Logo COMPTAMATCH" className="h-8 w-auto flex-shrink-0" />
+            <div className="leading-tight min-w-0">
+              <div className="text-sm font-semibold tracking-wide text-black truncate">COMPTAMATCH</div>
+              <div className="text-xs text-slate-500 truncate">
+                L'aide à la comptabilité des TPE au meilleur prix.
+              </div>
+            </div>
+          </Link>
+
+          <div className="flex items-center gap-2 md:hidden">
+            {user && !isLoading && (
+              <Link
+                to="/mon-compte"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
+                aria-label="Espace client"
+              >
+                {user.email?.charAt(0).toUpperCase() || "A"}
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => setIsNavOpen((prev) => !prev)}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
+              aria-label="Ouvrir le menu"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-5 w-5">
+                <path strokeLinecap="round" strokeWidth={1.8} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
           </div>
         </div>
 
-        <nav className="flex flex-1 items-center justify-center gap-4 flex-wrap" aria-label="Navigation principale">
-          <NavLink to="/" end className={navLinkClass}>
-            Accueil
-          </NavLink>
-          <NavLink to="/offres" className={navLinkClass}>
-            Comparer les offres
-          </NavLink>
-          <NavLink to="/tarifs" className={navLinkClass}>
-            Tarifs
-          </NavLink>
-          <NavLink to="/telechargements" className={navLinkClass}>
-            Nos logiciels
-          </NavLink>
-          <NavLink to="/panier" className={navLinkClass}>
-            Panier
-          </NavLink>
-          <NavLink to="/contact" className={navLinkClass}>
-            Contact
-          </NavLink>
-        </nav>
+        <div
+          className={`mt-4 flex-col gap-4 md:mt-3 md:flex md:flex-row md:items-center md:justify-between ${
+            isNavOpen ? "flex" : "hidden md:flex"
+          }`}
+        >
+          <nav
+            className="flex flex-col gap-2 md:flex-row md:items-center md:justify-center md:gap-4"
+            aria-label="Navigation principale"
+          >
+            <NavLink to="/" end className={navLinkClass}>
+              Accueil
+            </NavLink>
+            <NavLink to="/offres" className={navLinkClass}>
+              Comparer les offres
+            </NavLink>
+            <NavLink to="/tarifs" className={navLinkClass}>
+              Tarifs
+            </NavLink>
+            <NavLink to="/telechargements" className={navLinkClass}>
+              Nos logiciels
+            </NavLink>
+            <NavLink to="/panier" className={navLinkClass}>
+              Panier
+            </NavLink>
+            <NavLink to="/contact" className={navLinkClass}>
+              Contact
+            </NavLink>
+          </nav>
 
-        <div className="flex flex-col items-end gap-1 min-w-[150px]">
-          {!user || isLoading ? (
-            <Link
-              to="/auth/login"
-              className="flex items-center justify-center h-10 w-10 rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
-              aria-label="Se connecter"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                className="h-5 w-5"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.8}
-                  d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4 0-7 2-7 4.44A1.56 1.56 0 0 0 6.56 20h10.88A1.56 1.56 0 0 0 19 18.44C19 16 16 14 12 14Z"
-                />
-              </svg>
-            </Link>
-          ) : (
-            <div className="flex items-center gap-3">
-              <Link
-                to="/mon-compte"
-                className="flex items-center gap-2 rounded-full border border-slate-300 px-3 py-1 text-xs text-slate-700 hover:border-black hover:text-black transition"
-              >
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-[11px] font-semibold text-white">
-                  {user.email?.charAt(0).toUpperCase()}
-                </div>
-                <span className="hidden sm:inline">Mon compte</span>
-              </Link>
-            </div>
-          )}
+          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
+            {!user || isLoading ? (
+              <>
+                <Link
+                  to="/auth/login"
+                  className="flex items-center justify-center rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-black hover:text-black"
+                  aria-label="Se connecter"
+                >
+                  Se connecter
+                </Link>
+                <Link
+                  to="/auth/register"
+                  className="flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-white hover:text-black hover:border hover:border-black"
+                >
+                  Créer un compte
+                </Link>
+              </>
+            ) : (
+              <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-3">
+                <Link
+                  to="/mon-compte"
+                  className="flex items-center gap-2 rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-black hover:text-black transition"
+                  onClick={() => setIsNavOpen(false)}
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-[12px] font-semibold text-white">
+                    {user.email?.charAt(0).toUpperCase()}
+                  </div>
+                  <span>Mon compte</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex items-center justify-center rounded-full bg-white px-3 py-2 text-xs font-semibold text-slate-700 border border-slate-300 hover:border-black hover:text-black"
+                >
+                  Se déconnecter
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>
