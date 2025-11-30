@@ -7,15 +7,46 @@ const appendApiSuffix = (value: string) => {
   return normalized.endsWith("/api") ? normalized : `${normalized}/api`;
 };
 
+const safeParseOrigin = (value?: string | null) => {
+  if (!value) return null;
+
+  try {
+    const url = new URL(value);
+    return url.origin;
+  } catch (error) {
+    console.warn(`[env] Impossible de parser l'URL fournie: ${value}`, error);
+    return null;
+  }
+};
+
+const rawFrontendBaseUrl = process.env.FRONTEND_BASE_URL || "http://localhost:5173";
+const rawApiBaseUrl = process.env.API_BASE_URL
+  ? appendApiSuffix(process.env.API_BASE_URL)
+  : "http://localhost:4000/api";
+
+const frontendOrigin = safeParseOrigin(rawFrontendBaseUrl);
+const apiOrigin = safeParseOrigin(rawApiBaseUrl.replace(/\/api$/, ""));
+const allowCorsOrigins = [frontendOrigin, apiOrigin].filter(
+  (value): value is string => Boolean(value)
+);
+
+const isCrossSite = frontendOrigin && apiOrigin && frontendOrigin !== apiOrigin;
+const frontendUsesHttps = frontendOrigin?.startsWith("https://");
+const cookieSameSite: "lax" | "none" = isCrossSite ? "none" : "lax";
+const cookieSecure = process.env.NODE_ENV === "production" || Boolean(frontendUsesHttps);
+
 export const env = {
   port: Number(process.env.PORT) || 4000,
   databaseUrl:
     process.env.DATABASE_URL ||
     "postgresql://USER:PASSWORD@localhost:5432/comptamatch_saas?schema=public",
-  frontendBaseUrl: process.env.FRONTEND_BASE_URL || "http://localhost:5173",
-  apiBaseUrl: process.env.API_BASE_URL
-    ? appendApiSuffix(process.env.API_BASE_URL)
-    : "http://localhost:4000/api",
+  frontendBaseUrl: rawFrontendBaseUrl,
+  apiBaseUrl: rawApiBaseUrl,
+  frontendOrigin,
+  apiOrigin,
+  allowCorsOrigins,
+  cookieSameSite,
+  cookieSecure,
   downloadsStorageDir:
     process.env.DOWNLOADS_STORAGE_DIR ||
     `/home/${process.env.USER || "node"}/comptamatch_uploads`,

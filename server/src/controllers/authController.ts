@@ -41,9 +41,10 @@ function buildJwtForUser(userId: string) {
 function setAuthCookie(res: Response, token: string) {
   res.cookie(TOKEN_COOKIE_NAME, token, {
     httpOnly: true,
-    sameSite: "lax",
-    secure: env.nodeEnv === "production",
+    sameSite: env.cookieSameSite,
+    secure: env.cookieSecure,
     maxAge: TOKEN_MAX_AGE_MS,
+    path: "/",
   });
 }
 
@@ -220,8 +221,8 @@ export async function verifyAdminTwoFactorCode(req: Request, res: Response) {
 export async function logout(_req: Request, res: Response) {
   res.cookie(TOKEN_COOKIE_NAME, "", {
     httpOnly: true,
-    sameSite: "lax",
-    secure: env.nodeEnv === "production",
+    sameSite: env.cookieSameSite,
+    secure: env.cookieSecure,
     maxAge: 0,
     expires: new Date(0),
     path: "/",
