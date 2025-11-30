@@ -58,6 +58,12 @@ model Order {
   stripeSessionId       String? @unique
   stripePaymentIntentId String? @unique
 
+  billingNameSnapshot   String?
+  billingEmailSnapshot  String?
+  billingAddressSnapshot String?
+  acceptedTerms         Boolean   @default(false)
+  acceptedLicense       Boolean   @default(false)
+
   items   OrderItem[]
   invoice Invoice?
 }

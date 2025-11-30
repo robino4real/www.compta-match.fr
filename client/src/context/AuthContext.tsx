@@ -4,6 +4,8 @@ import { API_BASE_URL } from "../config/api";
 export interface AuthUser {
   id: string;
   email: string;
+  firstName?: string | null;
+  lastName?: string | null;
   role?: string;
   isEmailVerified?: boolean;
 }
