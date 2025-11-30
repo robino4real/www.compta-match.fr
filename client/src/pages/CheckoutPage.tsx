@@ -1,12 +1,12 @@
 import React from "react";
 import { API_BASE_URL } from "../config/api";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useClientAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { trackEvent } from "../lib/analytics";
 
 const CheckoutPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useClientAuth();
   const { items, totalCents } = useCart();
   const navigate = useNavigate();
 

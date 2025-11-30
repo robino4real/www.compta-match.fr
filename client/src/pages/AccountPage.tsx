@@ -1,5 +1,5 @@
 import React from "react";
-import { useAuth } from "../context/AuthContext";
+import { useClientAuth } from "../context/AuthContext";
 import { trackEvent } from "../lib/analytics";
 import { API_BASE_URL } from "../config/api";
 
@@ -50,7 +50,7 @@ interface OrderDto {
 }
 
 const AccountPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useClientAuth();
   const hasActiveSubscription = false; // TODO: sera remplacé par une vraie info API plus tard
 
   const [downloads, setDownloads] = React.useState<UserDownload[]>([]);
