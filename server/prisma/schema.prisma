@@ -49,6 +49,7 @@ model Order {
   totalBeforeDiscount Int
   discountAmount      Int @default(0)
   totalPaid           Int
+  stripeFeeAmount     Int @default(0)
   currency            String      @default("EUR")
 
   promoCodeId String?
@@ -108,6 +109,7 @@ model DownloadableProduct {
 
   items OrderItem[]
   downloadLinks DownloadLink[]
+  productAnalyticsEvents ProductAnalyticsEvent[]
 }
 
 enum DownloadLinkStatus {
@@ -358,6 +360,16 @@ model AnalyticsEvent {
   createdAt DateTime @default(now())
 
   @@index([type, createdAt])
+}
+
+model ProductAnalyticsEvent {
+  id        String   @id @default(cuid())
+  productId String
+  product   DownloadableProduct @relation(fields: [productId], references: [id])
+  type      String   // 'view' | 'add_to_cart'
+  createdAt DateTime @default(now())
+
+  @@index([productId, type, createdAt])
 }
 
 model AdminTwoFactorCode {
