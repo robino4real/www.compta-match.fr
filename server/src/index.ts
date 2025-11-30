@@ -27,6 +27,27 @@ import { robotsTxtHandler, sitemapHandler } from "./controllers/seoController";
 const app = express();
 const apiRouter = Router();
 
+app.set("trust proxy", 1);
+
+app.use((req, res, next) => {
+  const requestOrigin = req.headers.origin as string | undefined;
+
+  if (requestOrigin && env.allowCorsOrigins.includes(requestOrigin)) {
+    res.header("Access-Control-Allow-Origin", requestOrigin);
+    res.header("Vary", "Origin");
+  }
+
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
