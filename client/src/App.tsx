@@ -30,6 +30,12 @@ import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import DownloadableProductsPage from "./pages/DownloadableProductsPage";
 import ComptaProSubscriptionPage from "./pages/ComptaProSubscriptionPage";
 import AdminPaidServicesPage from "./pages/admin/AdminPaidServicesPage";
+import ProtectedRoute from "./components/ProtectedRoute";
+import MonProfilPage from "./pages/account/MonProfilPage";
+import AccountSubscriptionsPage from "./pages/account/AccountSubscriptionsPage";
+import AccountOrdersPage from "./pages/account/AccountOrdersPage";
+import AccountSettingsPage from "./pages/account/AccountSettingsPage";
+import AccountProfilePage from "./pages/account/AccountProfilePage";
 
 const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { admin, isLoading } = useAdminAuth();
@@ -74,6 +80,13 @@ const App: React.FC = () => {
           <Route path="/tarifs" element={<DownloadableProductsPage />} />
           <Route path="/comptapro" element={<ComptaProSubscriptionPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/compte" element={<MonProfilPage />} />
+            <Route path="/compte/abonnements" element={<AccountSubscriptionsPage />} />
+            <Route path="/compte/commandes" element={<AccountOrdersPage />} />
+            <Route path="/compte/parametres" element={<AccountSettingsPage />} />
+            <Route path="/compte/informations" element={<AccountProfilePage />} />
+          </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
 
