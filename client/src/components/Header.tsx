@@ -72,7 +72,7 @@ const Header: React.FC = () => {
             </Link>
             {user && !isLoading && (
               <Link
-                to="/mon-compte"
+                to="/compte"
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
                 aria-label="Espace client"
               >
@@ -161,7 +161,7 @@ const Header: React.FC = () => {
             ) : (
               <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-3">
                 <Link
-                  to="/mon-compte"
+                  to="/compte"
                   className="flex items-center gap-2 rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-black hover:text-black transition"
                   onClick={() => setIsNavOpen(false)}
                 >

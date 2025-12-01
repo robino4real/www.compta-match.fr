@@ -22,6 +22,7 @@ import analyticsRoutes from "./routes/analyticsRoutes";
 import publicRoutes from "./routes/publicRoutes";
 import catalogRoutes from "./routes/catalogRoutes";
 import downloadableProductRoutes from "./routes/downloadableProductRoutes";
+import accountRoutes from "./routes/accountRoutes";
 import { ensureAdminAccount } from "./services/adminAccountService";
 import { robotsTxtHandler, sitemapHandler } from "./controllers/seoController";
 import paidServicesRoutes from "./routes/paidServicesRoutes";
@@ -73,6 +74,7 @@ apiRouter.use("/downloads", downloadRoutes);
 apiRouter.use("/admin", requireAdmin, adminRoutes);
 apiRouter.use("/orders", requireAuth, orderRoutes);
 apiRouter.use("/invoices", requireAuth, invoiceRoutes);
+apiRouter.use("/account", requireAuth, accountRoutes);
 
 app.use("/api", apiRouter);
 app.get("/robots.txt", robotsTxtHandler);
