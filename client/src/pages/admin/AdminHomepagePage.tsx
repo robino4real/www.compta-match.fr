@@ -1,197 +1,72 @@
 import React from "react";
 import { API_BASE_URL } from "../../config/api";
 
-interface Feature {
-  title: string;
-  description: string;
-}
-
-interface Testimonial {
-  name: string;
-  role: string;
-  text: string;
-}
-
-interface NavLinkItem {
-  label: string;
-  href: string;
-}
-
-interface FeatureCard {
-  iconKey: string;
-  title: string;
-  description: string;
-}
-
 interface HomepageSettings {
   heroTitle: string;
   heroSubtitle: string;
   heroButtonLabel: string;
-  heroButtonUrl: string;
-  heroPrimaryCtaLabel?: string;
-  heroPrimaryCtaHref?: string;
-  heroIllustrationUrl?: string | null;
-  heroImageUrl?: string | null;
-  heroBackgroundImageUrl?: string | null;
-  siteLogoUrl?: string | null;
-  navbarLogoUrl?: string | null;
-  faviconUrl?: string | null;
-  logoText?: string | null;
-  logoSquareText?: string | null;
-  navLinks?: NavLinkItem[];
-  primaryNavButton?: NavLinkItem | null;
-  featureCards?: FeatureCard[];
-  features?: Feature[];
-  highlightedProductIds?: string[];
-  testimonials?: Testimonial[];
-  contentBlockTitle?: string | null;
-  contentBlockBody?: string | null;
-  seoTitle?: string | null;
-  seoDescription?: string | null;
+  heroButtonLink: string;
+  heroIllustrationUrl: string;
+  feature1Icon: string;
+  feature1Title: string;
+  feature1Text: string;
+  feature2Icon: string;
+  feature2Title: string;
+  feature2Text: string;
+  feature3Icon: string;
+  feature3Title: string;
+  feature3Text: string;
+  heroTitleTag: string;
+  heroSubtitleTag: string;
+  heroButtonStyle: string;
 }
 
-interface DownloadableProductOption {
-  id: string;
-  name: string;
-  shortDescription?: string | null;
-  priceCents: number;
-}
-
-const EMPTY_SETTINGS: HomepageSettings = {
-  heroTitle: "",
-  heroSubtitle: "",
-  heroButtonLabel: "",
-  heroButtonUrl: "",
-  heroPrimaryCtaLabel: "",
-  heroPrimaryCtaHref: "",
-  heroIllustrationUrl: "",
-  heroImageUrl: null,
-  heroBackgroundImageUrl: null,
-  siteLogoUrl: null,
-  navbarLogoUrl: null,
-  faviconUrl: null,
-  logoText: "",
-  logoSquareText: "",
-  navLinks: [],
-  primaryNavButton: { label: "", href: "" },
-  featureCards: [],
-  features: [],
-  highlightedProductIds: [],
-  testimonials: [],
-  contentBlockTitle: "",
-  contentBlockBody: "",
-  seoTitle: "",
-  seoDescription: "",
+const DEFAULT_SETTINGS: HomepageSettings = {
+  heroTitle: "L’aide à la comptabilité des TPE au meilleur prix.",
+  heroSubtitle:
+    "Centralisez votre gestion comptable simplement, soyez toujours à jour, et concentrez-vous sur l’essentiel : votre activité.",
+  heroButtonLabel: "Découvrir nos logiciels",
+  heroButtonLink: "#",
+  heroIllustrationUrl:
+    "https://images.unsplash.com/photo-1521791055366-0d553872125f?auto=format&fit=crop&w=1200&q=80",
+  feature1Icon: "✓",
+  feature1Title: "Outils simples & complets",
+  feature1Text: "Des outils intuitifs pour suivre votre comptabilité au quotidien.",
+  feature2Icon: "◎",
+  feature2Title: "Tarifs transparents",
+  feature2Text: "Des offres claires et sans surprise, adaptées aux TPE.",
+  feature3Icon: "☎",
+  feature3Title: "Support dédié & réactif",
+  feature3Text: "Une équipe qui répond vite pour vous accompagner.",
+  heroTitleTag: "h1",
+  heroSubtitleTag: "p",
+  heroButtonStyle: "primary",
 };
 
 const AdminHomepagePage: React.FC = () => {
-  const [settings, setSettings] = React.useState<HomepageSettings | null>(null);
-  const [availableProducts, setAvailableProducts] = React.useState<
-    DownloadableProductOption[]
-  >([]);
+  const [settings, setSettings] = React.useState<HomepageSettings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
-
-  const parseFeatures = (value: unknown): Feature[] => {
-    if (!Array.isArray(value)) return [];
-    return value
-      .map((item) => ({
-        title: typeof item?.title === "string" ? item.title : "",
-        description:
-          typeof item?.description === "string" ? item.description : "",
-      }))
-      .filter((item) => item.title || item.description);
-  };
-
-  const parseTestimonials = (value: unknown): Testimonial[] => {
-    if (!Array.isArray(value)) return [];
-    return value
-      .map((item) => ({
-        name: typeof item?.name === "string" ? item.name : "",
-        role: typeof item?.role === "string" ? item.role : "",
-        text: typeof item?.text === "string" ? item.text : "",
-      }))
-      .filter((item) => item.name || item.role || item.text);
-  };
-
-  const parseNavLinks = (value: unknown): NavLinkItem[] => {
-    if (!Array.isArray(value)) return [];
-    return value
-      .map((item) => ({
-        label: typeof item?.label === "string" ? item.label : "",
-        href: typeof item?.href === "string" ? item.href : "",
-      }))
-      .filter((link) => link.label && link.href);
-  };
-
-  const parseFeatureCards = (value: unknown): FeatureCard[] => {
-    if (!Array.isArray(value)) return [];
-    return value
-      .map((item) => ({
-        iconKey: typeof item?.iconKey === "string" ? item.iconKey : "",
-        title: typeof item?.title === "string" ? item.title : "",
-        description: typeof item?.description === "string" ? item.description : "",
-      }))
-      .filter((card) => card.iconKey || card.title || card.description);
-  };
 
   React.useEffect(() => {
     const load = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await fetch(`${API_BASE_URL}/admin/homepage-settings`, {
+        const response = await fetch(`${API_BASE_URL}/admin/homepage`, {
           credentials: "include",
         });
-        const data = await response.json().catch(() => ({}));
+        const data = await response.json().catch(() => DEFAULT_SETTINGS);
         if (!response.ok) {
-          throw new Error(
-            data?.message || "Impossible de charger la page d'accueil."
-          );
+          throw new Error(data?.message || "Impossible de charger la page d'accueil.");
         }
-
-        const incomingSettings = (data as { settings?: HomepageSettings })
-          .settings;
-        const normalized: HomepageSettings = {
-          ...EMPTY_SETTINGS,
-          ...(incomingSettings || {}),
-          features: parseFeatures(incomingSettings?.features),
-          testimonials: parseTestimonials(incomingSettings?.testimonials),
-          navLinks: parseNavLinks(incomingSettings?.navLinks),
-          primaryNavButton:
-            incomingSettings?.primaryNavButton &&
-            typeof incomingSettings?.primaryNavButton === "object"
-              ? {
-                  label:
-                    typeof (incomingSettings.primaryNavButton as any).label === "string"
-                      ? (incomingSettings.primaryNavButton as any).label
-                      : "",
-                  href:
-                    typeof (incomingSettings.primaryNavButton as any).href === "string"
-                      ? (incomingSettings.primaryNavButton as any).href
-                      : "",
-                }
-              : { label: "", href: "" },
-          featureCards: parseFeatureCards(incomingSettings?.featureCards),
-          highlightedProductIds: Array.isArray(
-            incomingSettings?.highlightedProductIds
-          )
-            ? (incomingSettings?.highlightedProductIds as unknown[])
-                .map((id) => (id == null ? null : String(id)))
-                .filter((id): id is string => Boolean(id))
-            : [],
-        };
-
-        setSettings(normalized);
-        const list = Array.isArray((data as any)?.availableProducts)
-          ? ((data as any).availableProducts as DownloadableProductOption[])
-          : [];
-        setAvailableProducts(list);
+        setSettings({ ...DEFAULT_SETTINGS, ...(data as HomepageSettings) });
       } catch (err: any) {
         console.error("Erreur chargement homepage settings", err);
         setError(err?.message || "Erreur lors du chargement.");
+        setSettings(DEFAULT_SETTINGS);
       } finally {
         setIsLoading(false);
       }
@@ -200,806 +75,200 @@ const AdminHomepagePage: React.FC = () => {
     load();
   }, []);
 
-  const updateField = (field: keyof HomepageSettings, value: any) => {
-    setSettings((prev) => (prev ? { ...prev, [field]: value } : prev));
+  const updateField = (field: keyof HomepageSettings, value: string) => {
+    setSettings((prev) => ({ ...prev, [field]: value }));
   };
 
-  const updateFeature = (
-    index: number,
-    field: keyof Feature,
-    value: string
-  ) => {
-    setSettings((prev) => {
-      if (!prev) return prev;
-      const features = prev.features ? [...prev.features] : [];
-      features[index] = { ...features[index], [field]: value } as Feature;
-      return { ...prev, features };
-    });
-  };
-
-  const addFeature = () => {
-    setSettings((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        features: [...(prev.features || []), { title: "", description: "" }],
-      };
-    });
-  };
-
-  const removeFeature = (index: number) => {
-    setSettings((prev) => {
-      if (!prev) return prev;
-      const features = [...(prev.features || [])];
-      features.splice(index, 1);
-      return { ...prev, features };
-    });
-  };
-
-  const updateNavLink = (index: number, field: keyof NavLinkItem, value: string) => {
-    setSettings((prev) => {
-      if (!prev) return prev;
-      const navLinks = prev.navLinks ? [...prev.navLinks] : [];
-      navLinks[index] = { ...navLinks[index], [field]: value } as NavLinkItem;
-      return { ...prev, navLinks };
-    });
-  };
-
-  const addNavLink = () => {
-    setSettings((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        navLinks: [...(prev.navLinks || []), { label: "", href: "" }],
-      };
-    });
-  };
-
-  const removeNavLink = (index: number) => {
-    setSettings((prev) => {
-      if (!prev) return prev;
-      const navLinks = [...(prev.navLinks || [])];
-      navLinks.splice(index, 1);
-      return { ...prev, navLinks };
-    });
-  };
-
-  const updateFeatureCard = (index: number, field: keyof FeatureCard, value: string) => {
-    setSettings((prev) => {
-      if (!prev) return prev;
-      const featureCards = prev.featureCards ? [...prev.featureCards] : [];
-      featureCards[index] = { ...featureCards[index], [field]: value } as FeatureCard;
-      return { ...prev, featureCards };
-    });
-  };
-
-  const addFeatureCard = () => {
-    setSettings((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        featureCards: [...(prev.featureCards || []), { iconKey: "", title: "", description: "" }],
-      };
-    });
-  };
-
-  const removeFeatureCard = (index: number) => {
-    setSettings((prev) => {
-      if (!prev) return prev;
-      const featureCards = [...(prev.featureCards || [])];
-      featureCards.splice(index, 1);
-      return { ...prev, featureCards };
-    });
-  };
-
-  const updateTestimonial = (
-    index: number,
-    field: keyof Testimonial,
-    value: string
-  ) => {
-    setSettings((prev) => {
-      if (!prev) return prev;
-      const testimonials = prev.testimonials ? [...prev.testimonials] : [];
-      testimonials[index] = {
-        ...testimonials[index],
-        [field]: value,
-      } as Testimonial;
-      return { ...prev, testimonials };
-    });
-  };
-
-  const addTestimonial = () => {
-    setSettings((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        testimonials: [
-          ...(prev.testimonials || []),
-          { name: "", role: "", text: "" },
-        ],
-      };
-    });
-  };
-
-  const removeTestimonial = (index: number) => {
-    setSettings((prev) => {
-      if (!prev) return prev;
-      const testimonials = [...(prev.testimonials || [])];
-      testimonials.splice(index, 1);
-      return { ...prev, testimonials };
-    });
-  };
-
-  const handleHighlightedChange = (
-    event: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    const values = Array.from(event.target.selectedOptions).map((opt) => opt.value);
-    updateField("highlightedProductIds", values);
-  };
-
-  const handleSubmit = async (event: React.FormEvent) => {
+  const save = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!settings) return;
     try {
       setIsSaving(true);
-      setError(null);
       setSuccess(null);
-      const response = await fetch(`${API_BASE_URL}/admin/homepage-settings`, {
+      setError(null);
+      const response = await fetch(`${API_BASE_URL}/admin/homepage`, {
         method: "PUT",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(settings),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(
-          data?.message || "Impossible d'enregistrer la page d'accueil."
-        );
+        throw new Error(data?.message || "Impossible d'enregistrer la page d'accueil.");
       }
-      const updated = (data as { settings?: HomepageSettings }).settings;
-      if (updated) {
-        setSettings({
-          ...EMPTY_SETTINGS,
-          ...updated,
-          features: parseFeatures(updated.features),
-          testimonials: parseTestimonials(updated.testimonials),
-          navLinks: parseNavLinks(updated.navLinks),
-          primaryNavButton:
-            updated.primaryNavButton && typeof updated.primaryNavButton === "object"
-              ? {
-                  label: typeof (updated.primaryNavButton as any).label === "string"
-                    ? (updated.primaryNavButton as any).label
-                    : "",
-                  href: typeof (updated.primaryNavButton as any).href === "string"
-                    ? (updated.primaryNavButton as any).href
-                    : "",
-                }
-              : { label: "", href: "" },
-          featureCards: parseFeatureCards(updated.featureCards),
-          highlightedProductIds: Array.isArray(updated.highlightedProductIds)
-            ? (updated.highlightedProductIds as unknown[])
-                .map((id) => (id == null ? null : String(id)))
-                .filter((id): id is string => Boolean(id))
-            : [],
-        });
-      }
-      setSuccess("Page d'accueil enregistrée avec succès.");
+      setSettings({ ...DEFAULT_SETTINGS, ...(data as HomepageSettings) });
+      setSuccess("Page d'accueil mise à jour.");
     } catch (err: any) {
-      console.error("Erreur sauvegarde homepage", err);
-      setError(err?.message || "Impossible d'enregistrer.");
+      console.error("Erreur lors de la sauvegarde de la home", err);
+      setError(err?.message || "Impossible d'enregistrer la page d'accueil.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  if (isLoading) {
-    return <p className="text-xs text-slate-600">Chargement de la page...</p>;
-  }
+  const renderFeatureFields = (
+    prefix: "feature1" | "feature2" | "feature3",
+    label: string
+  ) => (
+    // TODO: brancher des icônes réelles côté front si besoin
+    <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="text-sm font-semibold text-slate-900">{label}</div>
+      {(() => {
+        const iconKey = `${prefix}Icon` as keyof HomepageSettings;
+        const titleKey = `${prefix}Title` as keyof HomepageSettings;
+        const textKey = `${prefix}Text` as keyof HomepageSettings;
 
-  if (!settings) {
-    return <p className="text-xs text-red-600">{error || "Aucune donnée."}</p>;
-  }
+        return (
+          <>
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="text-xs font-medium text-slate-600">
+                Icône (placeholder)
+                <input
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  value={settings[iconKey]}
+                  onChange={(e) => updateField(iconKey, e.target.value)}
+                />
+              </label>
+              <label className="text-xs font-medium text-slate-600">
+                Titre
+                <input
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  value={settings[titleKey]}
+                  onChange={(e) => updateField(titleKey, e.target.value)}
+                />
+              </label>
+            </div>
+            <label className="text-xs font-medium text-slate-600">
+              Description
+              <textarea
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                rows={3}
+                value={settings[textKey]}
+                onChange={(e) => updateField(textKey, e.target.value)}
+              />
+            </label>
+          </>
+        );
+      })()}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
-      <header className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-        <h1 className="text-xl font-semibold text-black">Page d'accueil</h1>
-        <p className="text-xs text-slate-600">
-          Personnalisez la page d'accueil publique comme dans un CMS : bannière principale,
-          arguments, produits mis en avant, témoignages et SEO.
+      <div>
+        <h1 className="text-xl font-semibold text-slate-900">Page d'accueil</h1>
+        <p className="text-sm text-slate-600">
+          Modifiez les textes et visuels de la page d’accueil publique.
         </p>
-      </header>
+      </div>
 
-      {error && <p className="text-[11px] text-red-600">{error}</p>}
-      {success && <p className="text-[11px] text-emerald-600">{success}</p>}
+      {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+      {success && (
+        <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          {success}
+        </div>
+      )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="space-y-1">
-            <h2 className="text-sm font-semibold text-black">Navigation & branding</h2>
-            <p className="text-[11px] text-slate-600">
-              Configurez les textes de logo, les liens du menu principal et le bouton d'appel à l'action.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600">Texte du logo</label>
+      {isLoading ? (
+        <div className="rounded-xl border border-slate-200 bg-white px-6 py-10 text-center text-sm text-slate-500">
+          Chargement…
+        </div>
+      ) : (
+        <form onSubmit={save} className="space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
+            <div className="text-sm font-semibold text-slate-900">Hero</div>
+            <label className="text-xs font-medium text-slate-600">
+              Titre principal
               <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                value={settings.logoText || ""}
-                onChange={(e) => updateField("logoText", e.target.value)}
-                placeholder="COMPTAMATCH"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600">Monogramme (carré)</label>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                value={settings.logoSquareText || ""}
-                onChange={(e) => updateField("logoSquareText", e.target.value)}
-                placeholder="CM"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xs font-semibold text-black">Liens de navigation</h3>
-                <p className="text-[11px] text-slate-600">Liens affichés dans la barre principale.</p>
-              </div>
-              <button
-                type="button"
-                onClick={addNavLink}
-                className="rounded-full bg-slate-900 px-3 py-1 text-[11px] font-semibold text-white hover:opacity-90"
-              >
-                Ajouter un lien
-              </button>
-            </div>
-            <div className="space-y-3">
-              {(settings.navLinks || []).map((link, index) => (
-                <div
-                  key={`nav-link-${index}`}
-                  className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3 md:grid-cols-[1fr_1fr_auto] md:items-center"
-                >
-                  <input
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                    value={link.label}
-                    onChange={(e) => updateNavLink(index, "label", e.target.value)}
-                    placeholder="Comparer les offres"
-                  />
-                  <input
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                    value={link.href}
-                    onChange={(e) => updateNavLink(index, "href", e.target.value)}
-                    placeholder="/offres"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeNavLink(index)}
-                    className="text-xs font-semibold text-red-600 hover:underline"
-                  >
-                    Supprimer
-                  </button>
-                </div>
-              ))}
-              {(!settings.navLinks || settings.navLinks.length === 0) && (
-                <p className="text-[11px] text-slate-500">Aucun lien pour le moment.</p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600">Bouton principal (label)</label>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                value={settings.primaryNavButton?.label || ""}
-                onChange={(e) =>
-                  updateField("primaryNavButton", {
-                    ...(settings.primaryNavButton || { href: "" }),
-                    label: e.target.value,
-                  })
-                }
-                placeholder="Contact"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600">Bouton principal (URL)</label>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                value={settings.primaryNavButton?.href || ""}
-                onChange={(e) =>
-                  updateField("primaryNavButton", {
-                    ...(settings.primaryNavButton || { label: "" }),
-                    href: e.target.value,
-                  })
-                }
-                placeholder="/contact"
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="space-y-1">
-            <h2 className="text-sm font-semibold text-black">Logos du site</h2>
-            <p className="text-[11px] text-slate-600">
-              Définissez les logos utilisés sur la page publique : logo principal
-              (SEO, hero) et logo de la barre de navigation.
-            </p>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-[11px] font-semibold text-slate-700">
-                Logo du site (URL d&apos;image)
-              </label>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                value={settings.siteLogoUrl || ""}
-                onChange={(e) => updateField("siteLogoUrl", e.target.value)}
-                placeholder="https://...png"
-              />
-              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-center">
-                {settings.siteLogoUrl ? (
-                  <img
-                    src={settings.siteLogoUrl}
-                    alt="Aperçu du logo du site"
-                    className="mx-auto h-16 max-h-24 w-auto object-contain"
-                  />
-                ) : (
-                  <p className="text-[11px] text-slate-500">Aucun logo défini.</p>
-                )}
-              </div>
-              <p className="text-[10px] text-slate-500">
-                Utilisé comme logo principal (SEO, sections de la page
-                d&apos;accueil).
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[11px] font-semibold text-slate-700">
-                Logo de la barre principale (header)
-              </label>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                value={settings.navbarLogoUrl || ""}
-                onChange={(e) => updateField("navbarLogoUrl", e.target.value)}
-                placeholder="https://...png"
-              />
-              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-center">
-                {settings.navbarLogoUrl ? (
-                  <img
-                    src={settings.navbarLogoUrl}
-                    alt="Aperçu du logo de la barre"
-                    className="mx-auto h-12 max-h-20 w-auto object-contain"
-                  />
-                ) : (
-                  <p className="text-[11px] text-slate-500">Aucun logo défini.</p>
-                )}
-              </div>
-              <p className="text-[10px] text-slate-500">
-                Image affichée dans la barre de menus en haut du site (format
-                horizontal recommandé).
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[11px] font-semibold text-slate-700">Favicon (URL)</label>
-            <input
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-              value={settings.faviconUrl || ""}
-              onChange={(e) => updateField("faviconUrl", e.target.value)}
-              placeholder="https://...ico"
-            />
-            <p className="text-[10px] text-slate-500">
-              Icône de l&apos;onglet navigateur (formats .ico, .png ou .svg).
-            </p>
-          </div>
-        </section>
-
-        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-black">Bannière principale</h2>
-              <p className="text-[11px] text-slate-600">
-                Titre, sous-titre, bouton et visuels affichés en hero sur la home publique.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600">Titre</label>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
                 value={settings.heroTitle}
                 onChange={(e) => updateField("heroTitle", e.target.value)}
-                required
               />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600">Sous-titre</label>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            </label>
+            <label className="text-xs font-medium text-slate-600">
+              Sous-titre
+              <textarea
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                rows={3}
                 value={settings.heroSubtitle}
                 onChange={(e) => updateField("heroSubtitle", e.target.value)}
-                required
               />
+            </label>
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="text-xs font-medium text-slate-600">
+                Libellé du bouton
+                <input
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  value={settings.heroButtonLabel}
+                  onChange={(e) => updateField("heroButtonLabel", e.target.value)}
+                />
+              </label>
+              <label className="text-xs font-medium text-slate-600">
+                Lien du bouton (placeholder)
+                <input
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  value={settings.heroButtonLink}
+                  onChange={(e) => updateField("heroButtonLink", e.target.value)}
+                />
+              </label>
             </div>
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600">Libellé du bouton</label>
+            <label className="text-xs font-medium text-slate-600">
+              URL de l’illustration
               <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                value={settings.heroButtonLabel}
-                onChange={(e) => updateField("heroButtonLabel", e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600">URL du bouton</label>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                value={settings.heroButtonUrl}
-                onChange={(e) => updateField("heroButtonUrl", e.target.value)}
-                placeholder="/offres"
-                required
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600">CTA principal (label)</label>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                value={settings.heroPrimaryCtaLabel || ""}
-                onChange={(e) => updateField("heroPrimaryCtaLabel", e.target.value)}
-                placeholder="Découvrir nos logiciels"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600">CTA principal (URL)</label>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                value={settings.heroPrimaryCtaHref || ""}
-                onChange={(e) => updateField("heroPrimaryCtaHref", e.target.value)}
-                placeholder="/telechargements"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600">Image (URL)</label>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                value={settings.heroImageUrl || ""}
-                onChange={(e) => updateField("heroImageUrl", e.target.value)}
-                placeholder="https://...jpg"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600">Illustration principale (URL)</label>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                value={settings.heroIllustrationUrl || ""}
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                value={settings.heroIllustrationUrl}
                 onChange={(e) => updateField("heroIllustrationUrl", e.target.value)}
-                placeholder="https://...svg"
               />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600">Image de fond (URL)</label>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                value={settings.heroBackgroundImageUrl || ""}
-                onChange={(e) =>
-                  updateField("heroBackgroundImageUrl", e.target.value)
-                }
-                placeholder="https://...jpg"
-              />
+            </label>
+            <div className="grid gap-3 md:grid-cols-3">
+              <label className="text-xs font-medium text-slate-600">
+                Tag du titre (h1, h2…)
+                <input
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  value={settings.heroTitleTag}
+                  onChange={(e) => updateField("heroTitleTag", e.target.value)}
+                />
+              </label>
+              <label className="text-xs font-medium text-slate-600">
+                Tag du sous-titre
+                <input
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  value={settings.heroSubtitleTag}
+                  onChange={(e) => updateField("heroSubtitleTag", e.target.value)}
+                />
+              </label>
+              <label className="text-xs font-medium text-slate-600">
+                Style du bouton
+                <input
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  value={settings.heroButtonStyle}
+                  onChange={(e) => updateField("heroButtonStyle", e.target.value)}
+                />
+              </label>
             </div>
           </div>
-        </section>
 
-        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-black">Cartes fonctionnalités (bandeau)</h2>
-              <p className="text-[11px] text-slate-600">
-                Icône, titre et description affichés sous le hero sur la home publique.
-              </p>
+          <div className="space-y-3">
+            <div className="text-sm font-semibold text-slate-900">Cartes de mise en avant</div>
+            <div className="grid gap-3 md:grid-cols-3">
+              {renderFeatureFields("feature1", "Carte 1")}
+              {renderFeatureFields("feature2", "Carte 2")}
+              {renderFeatureFields("feature3", "Carte 3")}
             </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3">
             <button
-              type="button"
-              onClick={addFeatureCard}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-100"
+              type="submit"
+              className="inline-flex items-center justify-center rounded-full bg-black px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-900 disabled:opacity-60"
+              disabled={isSaving}
             >
-              Ajouter une carte
+              {isSaving ? "Enregistrement..." : "Enregistrer"}
             </button>
           </div>
-
-          <div className="space-y-3">
-            {(settings.featureCards || []).map((card, index) => (
-              <div
-                key={`feature-card-${index}`}
-                className="rounded-lg border border-slate-200 p-3 space-y-2"
-              >
-                <div className="grid gap-3 md:grid-cols-3">
-                  <div className="space-y-1">
-                    <label className="text-[11px] text-slate-600">Clé d'icône</label>
-                    <input
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                      value={card.iconKey}
-                      onChange={(e) => updateFeatureCard(index, "iconKey", e.target.value)}
-                      placeholder="apps / pricing / support"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] text-slate-600">Titre</label>
-                    <input
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                      value={card.title}
-                      onChange={(e) => updateFeatureCard(index, "title", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] text-slate-600">Description</label>
-                    <input
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                      value={card.description}
-                      onChange={(e) => updateFeatureCard(index, "description", e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => removeFeatureCard(index)}
-                    className="text-[11px] text-red-600"
-                  >
-                    Supprimer
-                  </button>
-                </div>
-              </div>
-            ))}
-            {(!settings.featureCards || settings.featureCards.length === 0) && (
-              <p className="text-[11px] text-slate-500">Aucune carte pour le moment.</p>
-            )}
-          </div>
-        </section>
-
-        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-black">Arguments / bénéfices</h2>
-              <p className="text-[11px] text-slate-600">Liste éditable des points forts.</p>
-            </div>
-            <button
-              type="button"
-              onClick={addFeature}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-100"
-            >
-              Ajouter un argument
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            {(settings.features || []).map((feature, index) => (
-              <div
-                key={index}
-                className="rounded-lg border border-slate-200 p-3 space-y-2"
-              >
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div className="space-y-1">
-                    <label className="text-[11px] text-slate-600">Titre</label>
-                    <input
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                      value={feature.title}
-                      onChange={(e) =>
-                        updateFeature(index, "title", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] text-slate-600">Description</label>
-                    <input
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                      value={feature.description}
-                      onChange={(e) =>
-                        updateFeature(index, "description", e.target.value)
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => removeFeature(index)}
-                    className="text-[11px] text-red-600"
-                  >
-                    Supprimer
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {(!settings.features || settings.features.length === 0) && (
-              <p className="text-[11px] text-slate-500">Aucun argument pour le moment.</p>
-            )}
-          </div>
-        </section>
-
-        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-black">Produits mis en avant</h2>
-              <p className="text-[11px] text-slate-600">
-                Sélectionnez les produits téléchargeables à afficher sur la home.
-              </p>
-            </div>
-          </div>
-
-          {availableProducts.length === 0 ? (
-            <p className="text-[11px] text-slate-500">
-              Aucun produit actif n'est disponible pour le moment.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              <label className="text-[11px] text-slate-600">Sélection multiple</label>
-              <select
-                multiple
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                value={settings.highlightedProductIds || []}
-                onChange={handleHighlightedChange}
-              >
-                {availableProducts.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.name} – {(product.priceCents / 100).toFixed(2)} €
-                  </option>
-                ))}
-              </select>
-              <p className="text-[11px] text-slate-500">
-                Conseil : choisissez 2 ou 3 logiciels maximum.
-              </p>
-            </div>
-          )}
-        </section>
-
-        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-black">Témoignages</h2>
-              <p className="text-[11px] text-slate-600">Ajoutez ou supprimez des témoignages clients.</p>
-            </div>
-            <button
-              type="button"
-              onClick={addTestimonial}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-100"
-            >
-              Ajouter un témoignage
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            {(settings.testimonials || []).map((testimonial, index) => (
-              <div
-                key={index}
-                className="rounded-lg border border-slate-200 p-3 space-y-2"
-              >
-                <div className="grid gap-3 md:grid-cols-3">
-                  <div className="space-y-1">
-                    <label className="text-[11px] text-slate-600">Nom</label>
-                    <input
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                      value={testimonial.name}
-                      onChange={(e) =>
-                        updateTestimonial(index, "name", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] text-slate-600">Rôle</label>
-                    <input
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                      value={testimonial.role}
-                      onChange={(e) =>
-                        updateTestimonial(index, "role", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] text-slate-600">Texte</label>
-                    <textarea
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                      value={testimonial.text}
-                      onChange={(e) =>
-                        updateTestimonial(index, "text", e.target.value)
-                      }
-                      rows={3}
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => removeTestimonial(index)}
-                    className="text-[11px] text-red-600"
-                  >
-                    Supprimer
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {(!settings.testimonials || settings.testimonials.length === 0) && (
-              <p className="text-[11px] text-slate-500">Aucun témoignage pour le moment.</p>
-            )}
-          </div>
-        </section>
-
-        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="space-y-1">
-            <h2 className="text-sm font-semibold text-black">Bloc texte libre</h2>
-            <p className="text-[11px] text-slate-600">Titre et contenu éditorial.</p>
-          </div>
-
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600">Titre</label>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                value={settings.contentBlockTitle || ""}
-                onChange={(e) => updateField("contentBlockTitle", e.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600">Contenu</label>
-              <textarea
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                value={settings.contentBlockBody || ""}
-                onChange={(e) => updateField("contentBlockBody", e.target.value)}
-                rows={4}
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="space-y-1">
-            <h2 className="text-sm font-semibold text-black">SEO de la page</h2>
-            <p className="text-[11px] text-slate-600">Balises title et meta description.</p>
-          </div>
-
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600">Titre SEO</label>
-              <input
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                value={settings.seoTitle || ""}
-                onChange={(e) => updateField("seoTitle", e.target.value)}
-                placeholder="ComptaMatch | ..."
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600">Description SEO</label>
-              <textarea
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                value={settings.seoDescription || ""}
-                onChange={(e) => updateField("seoDescription", e.target.value)}
-                rows={3}
-              />
-            </div>
-          </div>
-        </section>
-
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
-          >
-            {isSaving ? "Enregistrement..." : "Enregistrer"}
-          </button>
-        </div>
-      </form>
+        </form>
+      )}
     </div>
   );
 };

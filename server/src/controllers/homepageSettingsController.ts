@@ -1,32 +1,81 @@
 import { Request, Response } from "express";
-import { prisma } from "../config/prisma";
+import { HomepageSettings } from "@prisma/client";
 import {
   getOrCreateHomepageSettings,
   updateHomepageSettings,
 } from "../services/homepageSettingsService";
-import { getOrCreateSeoSettings } from "../services/seoSettingsService";
-import { getOrCreateCompanySettings } from "../services/companySettingsService";
-import { getOrCreateEmailSettings } from "../services/emailSettingsService";
-import { getStructuredDataForPage } from "../utils/structuredData";
 
-function orderByIds<T extends { id: string }>(items: T[], ids: string[]): T[] {
-  const orderMap = ids.reduce<Record<string, number>>((acc, id, index) => {
-    acc[id] = index;
-    return acc;
-  }, {});
+export type HomepageSettingsDTO = {
+  heroTitle: string;
+  heroSubtitle: string;
+  heroButtonLabel: string;
+  heroButtonLink: string;
+  heroIllustrationUrl: string;
+  feature1Icon: string;
+  feature1Title: string;
+  feature1Text: string;
+  feature2Icon: string;
+  feature2Title: string;
+  feature2Text: string;
+  feature3Icon: string;
+  feature3Title: string;
+  feature3Text: string;
+  heroTitleTag: string;
+  heroSubtitleTag: string;
+  heroButtonStyle: string;
+};
 
-  return [...items].sort((a, b) => (orderMap[a.id] ?? 0) - (orderMap[b.id] ?? 0));
+const FALLBACK_DTO: HomepageSettingsDTO = {
+  heroTitle: "L’aide à la comptabilité des TPE au meilleur prix.",
+  heroSubtitle:
+    "Centralisez votre gestion comptable simplement, soyez toujours à jour, et concentrez-vous sur l’essentiel : votre activité.",
+  heroButtonLabel: "Découvrir nos logiciels",
+  heroButtonLink: "#",
+  heroIllustrationUrl:
+    "https://images.unsplash.com/photo-1521791055366-0d553872125f?auto=format&fit=crop&w=1200&q=80",
+  feature1Icon: "check",
+  feature1Title: "Outils simples & complets",
+  feature1Text: "Des outils intuitifs pour suivre votre comptabilité au quotidien.",
+  feature2Icon: "layers",
+  feature2Title: "Tarifs transparents",
+  feature2Text: "Des offres claires et sans surprise, adaptées aux TPE.",
+  feature3Icon: "support",
+  feature3Title: "Support dédié & réactif",
+  feature3Text: "Une équipe qui répond vite pour vous accompagner.",
+  heroTitleTag: "h1",
+  heroSubtitleTag: "p",
+  heroButtonStyle: "primary",
+};
+
+function toDto(settings: HomepageSettings | null): HomepageSettingsDTO {
+  const safe = settings ?? ({} as HomepageSettings);
+
+  return {
+    heroTitle: safe.heroTitle || FALLBACK_DTO.heroTitle,
+    heroSubtitle: safe.heroSubtitle || FALLBACK_DTO.heroSubtitle,
+    heroButtonLabel: safe.heroButtonLabel || FALLBACK_DTO.heroButtonLabel,
+    heroButtonLink: safe.heroButtonLink || safe.heroButtonUrl || FALLBACK_DTO.heroButtonLink,
+    heroIllustrationUrl:
+      safe.heroIllustrationUrl || safe.heroImageUrl || FALLBACK_DTO.heroIllustrationUrl,
+    feature1Icon: safe.feature1Icon || FALLBACK_DTO.feature1Icon,
+    feature1Title: safe.feature1Title || FALLBACK_DTO.feature1Title,
+    feature1Text: safe.feature1Text || FALLBACK_DTO.feature1Text,
+    feature2Icon: safe.feature2Icon || FALLBACK_DTO.feature2Icon,
+    feature2Title: safe.feature2Title || FALLBACK_DTO.feature2Title,
+    feature2Text: safe.feature2Text || FALLBACK_DTO.feature2Text,
+    feature3Icon: safe.feature3Icon || FALLBACK_DTO.feature3Icon,
+    feature3Title: safe.feature3Title || FALLBACK_DTO.feature3Title,
+    feature3Text: safe.feature3Text || FALLBACK_DTO.feature3Text,
+    heroTitleTag: safe.heroTitleTag || FALLBACK_DTO.heroTitleTag,
+    heroSubtitleTag: safe.heroSubtitleTag || FALLBACK_DTO.heroSubtitleTag,
+    heroButtonStyle: safe.heroButtonStyle || FALLBACK_DTO.heroButtonStyle,
+  };
 }
 
 export async function adminGetHomepageSettings(_req: Request, res: Response) {
   try {
     const settings = await getOrCreateHomepageSettings();
-    const availableProducts = await prisma.downloadableProduct.findMany({
-      where: { isActive: true },
-      orderBy: { name: "asc" },
-    });
-
-    return res.json({ settings, availableProducts });
+    return res.json(toDto(settings));
   } catch (error) {
     console.error("Erreur lors du chargement de la home admin", error);
     return res
@@ -38,7 +87,7 @@ export async function adminGetHomepageSettings(_req: Request, res: Response) {
 export async function adminSaveHomepageSettings(req: Request, res: Response) {
   try {
     const settings = await updateHomepageSettings(req.body || {});
-    return res.json({ settings, message: "Page d'accueil mise à jour." });
+    return res.json(toDto(settings));
   } catch (error) {
     console.error("Erreur lors de la sauvegarde de la home", error);
     return res
@@ -47,130 +96,10 @@ export async function adminSaveHomepageSettings(req: Request, res: Response) {
   }
 }
 
-export async function publicGetHomepageSettings(_req: Request, res: Response) {
-  try {
-    const settings = await getOrCreateHomepageSettings();
-    const highlightedIds = Array.isArray(settings.highlightedProductIds)
-      ? (settings.highlightedProductIds as unknown[])
-          .map((id) => (id == null ? null : String(id)))
-          .filter((id): id is string => Boolean(id))
-      : [];
-
-    let highlightedProducts: any[] = [];
-    if (highlightedIds.length > 0) {
-      const products = await prisma.downloadableProduct.findMany({
-        where: {
-          id: { in: highlightedIds },
-          isActive: true,
-        },
-      });
-
-      highlightedProducts = orderByIds(products, highlightedIds);
-    }
-
-    const [seoSettings, companySettings, emailSettings] = await Promise.all([
-      getOrCreateSeoSettings(),
-      getOrCreateCompanySettings(),
-      getOrCreateEmailSettings(),
-    ]);
-
-    const structuredData = await getStructuredDataForPage({
-      type: "home",
-      seoSettings,
-      companySettings,
-      emailSettings,
-      canonicalPath: "/",
-      breadcrumbItems: [{ name: "Accueil", path: "/" }],
-    });
-
-    return res.json({ settings, highlightedProducts, structuredData });
-  } catch (error) {
-    console.error("Erreur lors du chargement public de la home", error);
-    return res
-      .status(500)
-      .json({ message: "Impossible de charger la page d'accueil." });
-  }
-}
-
-type HomepageSettingsDTO = {
-  logoText: string;
-  logoSquareText: string;
-  navLinks: { label: string; href: string }[];
-  primaryNavButton: { label: string; href: string } | null;
-  heroTitle: string;
-  heroSubtitle: string;
-  heroPrimaryCtaLabel: string;
-  heroPrimaryCtaHref: string;
-  heroIllustrationUrl: string;
-  featureCards: {
-    iconKey: string;
-    title: string;
-    description: string;
-  }[];
-};
-
-function normalizeNavLinks(value: unknown): { label: string; href: string }[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => ({
-      label: typeof item?.label === "string" ? item.label.trim() : "",
-      href: typeof item?.href === "string" ? item.href.trim() : "",
-    }))
-    .filter((link) => link.label && link.href);
-}
-
-function normalizeFeatureCards(
-  value: unknown
-): { iconKey: string; title: string; description: string }[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => ({
-      iconKey: typeof item?.iconKey === "string" ? item.iconKey.trim() : "",
-      title: typeof item?.title === "string" ? item.title.trim() : "",
-      description: typeof item?.description === "string" ? item.description.trim() : "",
-    }))
-    .filter((card) => card.iconKey || card.title || card.description);
-}
-
 export async function publicGetHomepage(_req: Request, res: Response) {
   try {
     const settings = await getOrCreateHomepageSettings();
-
-    const dto: HomepageSettingsDTO = {
-      logoText: settings.logoText || "COMPTAMATCH",
-      logoSquareText: settings.logoSquareText || "CM",
-      navLinks:
-        normalizeNavLinks(settings.navLinks) ||
-        normalizeNavLinks([
-          { label: "Comparer les offres", href: "/offres" },
-          { label: "Nos logiciels", href: "/telechargements" },
-          { label: "Contact", href: "/contact" },
-        ]),
-      primaryNavButton:
-        typeof settings.primaryNavButton === "object" && settings.primaryNavButton
-          ? {
-              label:
-                typeof (settings.primaryNavButton as any).label === "string"
-                  ? (settings.primaryNavButton as any).label
-                  : "Contact",
-              href:
-                typeof (settings.primaryNavButton as any).href === "string"
-                  ? (settings.primaryNavButton as any).href
-                  : "/contact",
-            }
-          : null,
-      heroTitle: settings.heroTitle,
-      heroSubtitle: settings.heroSubtitle,
-      heroPrimaryCtaLabel: settings.heroPrimaryCtaLabel || settings.heroButtonLabel,
-      heroPrimaryCtaHref: settings.heroPrimaryCtaHref || settings.heroButtonUrl,
-      heroIllustrationUrl: settings.heroIllustrationUrl || settings.heroImageUrl || "",
-      featureCards:
-        normalizeFeatureCards(settings.featureCards) ||
-        normalizeFeatureCards(settings.features) ||
-        [],
-    };
-
-    return res.json(dto);
+    return res.json(toDto(settings));
   } catch (error) {
     console.error("Erreur lors du chargement public de la home", error);
     return res

@@ -1,24 +1,16 @@
-export type FeatureIconKey = "apps" | "pricing" | "support" | "security" | "automation" | "custom";
-
 export type HomepageSettingsDTO = {
-  logoText: string;
-  logoSquareText: string;
-  navLinks: {
-    label: string;
-    href: string;
-  }[];
-  primaryNavButton: {
-    label: string;
-    href: string;
-  } | null;
   heroTitle: string;
   heroSubtitle: string;
-  heroPrimaryCtaLabel: string;
-  heroPrimaryCtaHref: string;
+  heroButtonLabel: string;
+  heroButtonLink: string;
   heroIllustrationUrl: string;
-  featureCards: {
-    iconKey: FeatureIconKey;
-    title: string;
-    description: string;
-  }[];
+  feature1Icon: string;
+  feature1Title: string;
+  feature1Text: string;
+  feature2Icon: string;
+  feature2Title: string;
+  feature2Text: string;
+  feature3Icon: string;
+  feature3Title: string;
+  feature3Text: string;
 };

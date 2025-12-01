@@ -1,75 +1,128 @@
-import React from "react";
-import StructuredDataScript from "../components/StructuredDataScript";
-import { FeatureCardsRow } from "../components/home/FeatureCardsRow";
-import { HeroSection } from "../components/home/HeroSection";
-import { MainNavbar } from "../components/home/MainNavbar";
-import { layout } from "../design/tokens";
-import { useHomepageContent } from "../hooks/useHomepageContent";
-import { useCustomPage } from "../hooks/useCustomPage";
-import PageRenderer from "../components/pageBuilder/PageRenderer";
+import React, { useEffect, useState } from "react";
+
+type HomepageSettingsDto = {
+  heroTitle: string;
+  heroSubtitle: string;
+  heroButtonLabel: string;
+  heroButtonLink: string;
+  heroTitleTag?: string;
+  heroSubtitleTag?: string;
+  heroIllustrationUrl: string;
+  feature1Icon: string;
+  feature1Title: string;
+  feature1Text: string;
+  feature2Icon: string;
+  feature2Title: string;
+  feature2Text: string;
+  feature3Icon: string;
+  feature3Title: string;
+  feature3Text: string;
+};
+
+const FALLBACK_SETTINGS: HomepageSettingsDto = {
+  heroTitle: "L’aide à la comptabilité des TPE au meilleur prix.",
+  heroSubtitle:
+    "Centralisez votre gestion comptable simplement, soyez toujours à jour, et concentrez-vous sur l’essentiel : votre activité.",
+  heroButtonLabel: "Découvrir nos logiciels",
+  heroButtonLink: "#",
+  heroIllustrationUrl:
+    "https://images.unsplash.com/photo-1521791055366-0d553872125f?auto=format&fit=crop&w=1200&q=80",
+  feature1Icon: "✓",
+  feature1Title: "Outils simples & complets",
+  feature1Text: "Des outils intuitifs pour suivre votre comptabilité au quotidien.",
+  feature2Icon: "◎",
+  feature2Title: "Tarifs transparents",
+  feature2Text: "Des offres claires et sans surprise, adaptées aux TPE.",
+  feature3Icon: "☎",
+  feature3Title: "Support dédié & réactif",
+  feature3Text: "Une équipe qui répond vite pour vous accompagner.",
+};
+
+const FeatureCard: React.FC<{ icon: string; title: string; text: string }> = ({ icon, title, text }) => (
+  <div className="rounded-3xl border border-slate-100 bg-white px-6 py-6 shadow-sm">
+    <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200">
+      <span className="text-sm">{icon}</span>
+    </div>
+    <h3 className="mb-2 text-base font-semibold text-slate-900">{title}</h3>
+    <p className="text-sm text-slate-600">{text}</p>
+  </div>
+);
 
 const HomePage: React.FC = () => {
-  const { settings, isLoading, error } = useHomepageContent();
-  const { data: builderData, isLoading: isBuilderLoading, error: builderError } = useCustomPage("/");
+  const [data, setData] = useState<HomepageSettingsDto | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const shouldRenderBuilder =
-    builderData && Array.isArray(builderData.sections) && builderData.sections.length > 0;
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/public/homepage");
+        if (!res.ok) {
+          throw new Error("Impossible de charger la page d'accueil");
+        }
+        const json: HomepageSettingsDto = await res.json();
+        setData({ ...FALLBACK_SETTINGS, ...json });
+      } catch (error) {
+        console.error("Erreur lors du chargement de la home", error);
+        setData(FALLBACK_SETTINGS);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
-  React.useEffect(() => {
-    document.title = settings.heroTitle || "ComptaMatch";
-  }, [settings.heroTitle]);
+  const settings = data || FALLBACK_SETTINGS;
+  const TitleTag = (settings.heroTitleTag || "h1") as keyof JSX.IntrinsicElements;
+  const SubtitleTag = (settings.heroSubtitleTag || "p") as keyof JSX.IntrinsicElements;
 
-  if (isLoading || (isBuilderLoading && !shouldRenderBuilder)) {
+  if (loading && !data) {
     return (
-      <main className={`min-h-screen ${layout.pageBackground} flex items-center justify-center`}>
+      <main className="min-h-screen bg-slate-50 flex items-center justify-center">
         <p className="text-sm text-slate-500">Chargement…</p>
       </main>
     );
   }
 
-  if (builderError) {
-    console.warn("Page builder indisponible", builderError);
-  }
-
-  if (error && !settings) {
-    return (
-      <main className={`min-h-screen ${layout.pageBackground} flex items-center justify-center px-4`}>
-        <div className="max-w-lg bg-white rounded-3xl shadow-lg px-8 py-10 text-center">
-          <p className="text-sm text-slate-500">{error}</p>
-        </div>
-      </main>
-    );
-  }
-
-  if (shouldRenderBuilder) {
-    return (
-      <div className="space-y-8 text-slate-900">
-        <PageRenderer page={builderData!.page} sections={builderData!.sections} />
-      </div>
-    );
-  }
-
   return (
-    <main className={`min-h-screen ${layout.pageBackground}`}>
-      <StructuredDataScript data={null} />
-      <MainNavbar
-        logoText={settings.logoText}
-        logoSquareText={settings.logoSquareText}
-        navLinks={settings.navLinks}
-        primaryNavButton={settings.primaryNavButton}
-      />
+    <main className="min-h-screen bg-slate-50">
+      {/* HERO */}
+      <section className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-12 md:flex-row md:items-center md:py-20">
+        {/* Texte gauche */}
+        <div className="max-w-xl space-y-6">
+          <TitleTag className="text-3xl font-semibold leading-tight text-slate-900 md:text-5xl">
+            {settings.heroTitle}
+          </TitleTag>
+          <SubtitleTag className="text-sm leading-relaxed text-slate-600 md:text-base">
+            {settings.heroSubtitle}
+          </SubtitleTag>
+          <a
+            className="inline-flex items-center justify-center rounded-full bg-[#3066e4] px-7 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#2451b8]"
+            href={settings.heroButtonLink || "#"}
+            onClick={(e) => e.preventDefault()} // TODO: activer la navigation plus tard
+          >
+            {settings.heroButtonLabel}
+          </a>
+        </div>
 
-      <div className="mx-auto max-w-6xl px-4 pb-16 pt-10 md:pt-16">
-        <HeroSection
-          title={settings.heroTitle}
-          subtitle={settings.heroSubtitle}
-          ctaHref={settings.heroPrimaryCtaHref}
-          ctaLabel={settings.heroPrimaryCtaLabel}
-          illustrationUrl={settings.heroIllustrationUrl}
-        />
+        {/* Illustration droite */}
+        <div className="flex flex-1 items-center justify-center">
+          <div className="relative flex w-full max-w-md items-center justify-center rounded-3xl border border-slate-100 bg-white px-6 py-8">
+            <img
+              src={settings.heroIllustrationUrl}
+              alt="Illustration comptable"
+              className="h-auto w-full object-contain"
+            />
+          </div>
+        </div>
+      </section>
 
-        <FeatureCardsRow cards={settings.featureCards} />
-      </div>
+      {/* 3 cartes de features */}
+      <section className="bg-white">
+        <div className="mx-auto grid max-w-6xl gap-4 px-4 py-10 md:grid-cols-3 md:py-14">
+          <FeatureCard icon={settings.feature1Icon || "✓"} title={settings.feature1Title} text={settings.feature1Text} />
+          <FeatureCard icon={settings.feature2Icon || "◎"} title={settings.feature2Title} text={settings.feature2Text} />
+          <FeatureCard icon={settings.feature3Icon || "☎"} title={settings.feature3Title} text={settings.feature3Text} />
+        </div>
+      </section>
     </main>
   );
 };

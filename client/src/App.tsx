@@ -1,33 +1,9 @@
 import React from "react";
-import { Routes, Route, Navigate, useLocation, Outlet } from "react-router-dom";
+import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import AdminLayout from "./layouts/AdminLayout";
 
 import HomePage from "./pages/HomePage";
-import OffersPage from "./pages/OffersPage";
-import PricingPage from "./pages/PricingPage";
-import DownloadsPage from "./pages/DownloadsPage";
-import { DownloadableSoftwaresPublicPage } from "./pages/DownloadableSoftwaresPublicPage";
-import DownloadDetailPage from "./pages/DownloadDetailPage";
-import CartPage from "./pages/CartPage";
-import CheckoutSummaryPage from "./pages/CheckoutSummaryPage";
-import ContactPage from "./pages/ContactPage";
-import FaqPage from "./pages/FaqPage";
-import ArticlesPage from "./pages/ArticlesPage";
-import ArticleDetailPage from "./pages/ArticleDetailPage";
-import PaymentSuccessPage from "./pages/PaymentSuccessPage";
-import PaymentCancelPage from "./pages/PaymentCancelPage";
-
-import CgvPage from "./pages/CgvPage";
-import MentionsLegalesPage from "./pages/MentionsLegalesPage";
-import ConfidentialitePage from "./pages/ConfidentialitePage";
-import CookiesPage from "./pages/CookiesPage";
-
-import NotFoundPage from "./pages/NotFoundPage";
-import AuthLoginPage from "./pages/AuthLoginPage";
-import AuthRegisterPage from "./pages/AuthRegisterPage";
-import AccountPage from "./pages/AccountPage";
-import { useClientAuth } from "./context/AuthContext";
 import { useAdminAuth } from "./context/AdminAuthContext";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminDownloadsPage from "./pages/admin/AdminDownloadsPage";
@@ -51,25 +27,6 @@ import AdminPagesPage from "./pages/admin/AdminPagesPage";
 import AdminPageDetailPage from "./pages/admin/AdminPageDetailPage";
 import AnalyticsTracker from "./components/AnalyticsTracker";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
-
-const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isLoading } = useClientAuth();
-  const location = useLocation();
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center py-10 text-xs text-slate-600">
-        Vérification de votre session en cours...
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/auth/login" state={{ from: location }} replace />;
-  }
-
-  return <>{children}</>;
-};
 
 const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { admin, isLoading } = useAdminAuth();
@@ -111,42 +68,8 @@ const App: React.FC = () => {
       <Routes>
         <Route element={<MainLayoutWrapper />}>
           <Route path="/" element={<HomePage />} />
-          <Route path="/offres" element={<OffersPage />} />
-          <Route path="/tarifs" element={<PricingPage />} />
-          <Route path="/telechargements" element={<DownloadsPage />} />
-          <Route
-            path="/nos-logiciels"
-            element={<DownloadableSoftwaresPublicPage />}
-          />
-          <Route path="/telechargements/:slug" element={<DownloadDetailPage />} />
-          <Route path="/panier" element={<CartPage />} />
-          <Route path="/paiement" element={<CheckoutSummaryPage />} />
-          <Route path="/checkout/summary" element={<CheckoutSummaryPage />} />
-          <Route path="/paiement/success" element={<PaymentSuccessPage />} />
-          <Route path="/paiement/cancel" element={<PaymentCancelPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/faq" element={<FaqPage />} />
-          <Route path="/articles" element={<ArticlesPage />} />
-          <Route path="/articles/:slug" element={<ArticleDetailPage />} />
-
-          <Route path="/cgv" element={<CgvPage />} />
-          <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
-          <Route path="/confidentialite" element={<ConfidentialitePage />} />
-          <Route path="/cookies" element={<CookiesPage />} />
-
-          <Route path="/auth/login" element={<AuthLoginPage />} />
-          <Route path="/auth/register" element={<AuthRegisterPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
-          <Route
-            path="/mon-compte"
-            element={
-              <RequireAuth>
-                <AccountPage />
-              </RequireAuth>
-            }
-          />
-
-          <Route path="*" element={<NotFoundPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
 
         <Route path="/admin" element={<AdminLayoutWrapper />}>
@@ -171,7 +94,7 @@ const App: React.FC = () => {
           <Route path="pages/:id" element={<AdminPageDetailPage />} />
           <Route path="homepage" element={<AdminHomepagePage />} />
           <Route path="seo" element={<AdminSeoPage />} />
-          <Route path="*" element={<NotFoundPage />} />
+          <Route path="*" element={<Navigate to="/admin" replace />} />
         </Route>
       </Routes>
     </>
