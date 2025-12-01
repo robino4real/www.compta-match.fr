@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { API_BASE_URL } from "../config/api";
 
 type HomepageSettingsDto = {
   heroTitle: string;
@@ -53,21 +54,34 @@ const HomePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     (async () => {
       try {
-        const res = await fetch("/api/public/homepage");
+        const res = await fetch(`${API_BASE_URL}/public/homepage`, {
+          signal: controller.signal,
+        });
         if (!res.ok) {
           throw new Error("Impossible de charger la page d'accueil");
         }
         const json: HomepageSettingsDto = await res.json();
-        setData({ ...FALLBACK_SETTINGS, ...json });
+        if (!controller.signal.aborted) {
+          setData({ ...FALLBACK_SETTINGS, ...json });
+        }
       } catch (error) {
+        if (controller.signal.aborted) return;
         console.error("Erreur lors du chargement de la home", error);
         setData(FALLBACK_SETTINGS);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     })();
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   const settings = data || FALLBACK_SETTINGS;
