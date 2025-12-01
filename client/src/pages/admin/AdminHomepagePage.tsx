@@ -12,16 +12,35 @@ interface Testimonial {
   text: string;
 }
 
+interface NavLinkItem {
+  label: string;
+  href: string;
+}
+
+interface FeatureCard {
+  iconKey: string;
+  title: string;
+  description: string;
+}
+
 interface HomepageSettings {
   heroTitle: string;
   heroSubtitle: string;
   heroButtonLabel: string;
   heroButtonUrl: string;
+  heroPrimaryCtaLabel?: string;
+  heroPrimaryCtaHref?: string;
+  heroIllustrationUrl?: string | null;
   heroImageUrl?: string | null;
   heroBackgroundImageUrl?: string | null;
   siteLogoUrl?: string | null;
   navbarLogoUrl?: string | null;
   faviconUrl?: string | null;
+  logoText?: string | null;
+  logoSquareText?: string | null;
+  navLinks?: NavLinkItem[];
+  primaryNavButton?: NavLinkItem | null;
+  featureCards?: FeatureCard[];
   features?: Feature[];
   highlightedProductIds?: string[];
   testimonials?: Testimonial[];
@@ -43,11 +62,19 @@ const EMPTY_SETTINGS: HomepageSettings = {
   heroSubtitle: "",
   heroButtonLabel: "",
   heroButtonUrl: "",
+  heroPrimaryCtaLabel: "",
+  heroPrimaryCtaHref: "",
+  heroIllustrationUrl: "",
   heroImageUrl: null,
   heroBackgroundImageUrl: null,
   siteLogoUrl: null,
   navbarLogoUrl: null,
   faviconUrl: null,
+  logoText: "",
+  logoSquareText: "",
+  navLinks: [],
+  primaryNavButton: { label: "", href: "" },
+  featureCards: [],
   features: [],
   highlightedProductIds: [],
   testimonials: [],
@@ -89,6 +116,27 @@ const AdminHomepagePage: React.FC = () => {
       .filter((item) => item.name || item.role || item.text);
   };
 
+  const parseNavLinks = (value: unknown): NavLinkItem[] => {
+    if (!Array.isArray(value)) return [];
+    return value
+      .map((item) => ({
+        label: typeof item?.label === "string" ? item.label : "",
+        href: typeof item?.href === "string" ? item.href : "",
+      }))
+      .filter((link) => link.label && link.href);
+  };
+
+  const parseFeatureCards = (value: unknown): FeatureCard[] => {
+    if (!Array.isArray(value)) return [];
+    return value
+      .map((item) => ({
+        iconKey: typeof item?.iconKey === "string" ? item.iconKey : "",
+        title: typeof item?.title === "string" ? item.title : "",
+        description: typeof item?.description === "string" ? item.description : "",
+      }))
+      .filter((card) => card.iconKey || card.title || card.description);
+  };
+
   React.useEffect(() => {
     const load = async () => {
       try {
@@ -111,6 +159,22 @@ const AdminHomepagePage: React.FC = () => {
           ...(incomingSettings || {}),
           features: parseFeatures(incomingSettings?.features),
           testimonials: parseTestimonials(incomingSettings?.testimonials),
+          navLinks: parseNavLinks(incomingSettings?.navLinks),
+          primaryNavButton:
+            incomingSettings?.primaryNavButton &&
+            typeof incomingSettings?.primaryNavButton === "object"
+              ? {
+                  label:
+                    typeof (incomingSettings.primaryNavButton as any).label === "string"
+                      ? (incomingSettings.primaryNavButton as any).label
+                      : "",
+                  href:
+                    typeof (incomingSettings.primaryNavButton as any).href === "string"
+                      ? (incomingSettings.primaryNavButton as any).href
+                      : "",
+                }
+              : { label: "", href: "" },
+          featureCards: parseFeatureCards(incomingSettings?.featureCards),
           highlightedProductIds: Array.isArray(
             incomingSettings?.highlightedProductIds
           )
@@ -169,6 +233,62 @@ const AdminHomepagePage: React.FC = () => {
       const features = [...(prev.features || [])];
       features.splice(index, 1);
       return { ...prev, features };
+    });
+  };
+
+  const updateNavLink = (index: number, field: keyof NavLinkItem, value: string) => {
+    setSettings((prev) => {
+      if (!prev) return prev;
+      const navLinks = prev.navLinks ? [...prev.navLinks] : [];
+      navLinks[index] = { ...navLinks[index], [field]: value } as NavLinkItem;
+      return { ...prev, navLinks };
+    });
+  };
+
+  const addNavLink = () => {
+    setSettings((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        navLinks: [...(prev.navLinks || []), { label: "", href: "" }],
+      };
+    });
+  };
+
+  const removeNavLink = (index: number) => {
+    setSettings((prev) => {
+      if (!prev) return prev;
+      const navLinks = [...(prev.navLinks || [])];
+      navLinks.splice(index, 1);
+      return { ...prev, navLinks };
+    });
+  };
+
+  const updateFeatureCard = (index: number, field: keyof FeatureCard, value: string) => {
+    setSettings((prev) => {
+      if (!prev) return prev;
+      const featureCards = prev.featureCards ? [...prev.featureCards] : [];
+      featureCards[index] = { ...featureCards[index], [field]: value } as FeatureCard;
+      return { ...prev, featureCards };
+    });
+  };
+
+  const addFeatureCard = () => {
+    setSettings((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        featureCards: [...(prev.featureCards || []), { iconKey: "", title: "", description: "" }],
+      };
+    });
+  };
+
+  const removeFeatureCard = (index: number) => {
+    setSettings((prev) => {
+      if (!prev) return prev;
+      const featureCards = [...(prev.featureCards || [])];
+      featureCards.splice(index, 1);
+      return { ...prev, featureCards };
     });
   };
 
@@ -243,6 +363,19 @@ const AdminHomepagePage: React.FC = () => {
           ...updated,
           features: parseFeatures(updated.features),
           testimonials: parseTestimonials(updated.testimonials),
+          navLinks: parseNavLinks(updated.navLinks),
+          primaryNavButton:
+            updated.primaryNavButton && typeof updated.primaryNavButton === "object"
+              ? {
+                  label: typeof (updated.primaryNavButton as any).label === "string"
+                    ? (updated.primaryNavButton as any).label
+                    : "",
+                  href: typeof (updated.primaryNavButton as any).href === "string"
+                    ? (updated.primaryNavButton as any).href
+                    : "",
+                }
+              : { label: "", href: "" },
+          featureCards: parseFeatureCards(updated.featureCards),
           highlightedProductIds: Array.isArray(updated.highlightedProductIds)
             ? (updated.highlightedProductIds as unknown[])
                 .map((id) => (id == null ? null : String(id)))
@@ -281,6 +414,114 @@ const AdminHomepagePage: React.FC = () => {
       {success && <p className="text-[11px] text-emerald-600">{success}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="space-y-1">
+            <h2 className="text-sm font-semibold text-black">Navigation & branding</h2>
+            <p className="text-[11px] text-slate-600">
+              Configurez les textes de logo, les liens du menu principal et le bouton d'appel à l'action.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-1">
+              <label className="text-[11px] text-slate-600">Texte du logo</label>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                value={settings.logoText || ""}
+                onChange={(e) => updateField("logoText", e.target.value)}
+                placeholder="COMPTAMATCH"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] text-slate-600">Monogramme (carré)</label>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                value={settings.logoSquareText || ""}
+                onChange={(e) => updateField("logoSquareText", e.target.value)}
+                placeholder="CM"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-semibold text-black">Liens de navigation</h3>
+                <p className="text-[11px] text-slate-600">Liens affichés dans la barre principale.</p>
+              </div>
+              <button
+                type="button"
+                onClick={addNavLink}
+                className="rounded-full bg-slate-900 px-3 py-1 text-[11px] font-semibold text-white hover:opacity-90"
+              >
+                Ajouter un lien
+              </button>
+            </div>
+            <div className="space-y-3">
+              {(settings.navLinks || []).map((link, index) => (
+                <div
+                  key={`nav-link-${index}`}
+                  className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3 md:grid-cols-[1fr_1fr_auto] md:items-center"
+                >
+                  <input
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    value={link.label}
+                    onChange={(e) => updateNavLink(index, "label", e.target.value)}
+                    placeholder="Comparer les offres"
+                  />
+                  <input
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    value={link.href}
+                    onChange={(e) => updateNavLink(index, "href", e.target.value)}
+                    placeholder="/offres"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeNavLink(index)}
+                    className="text-xs font-semibold text-red-600 hover:underline"
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              ))}
+              {(!settings.navLinks || settings.navLinks.length === 0) && (
+                <p className="text-[11px] text-slate-500">Aucun lien pour le moment.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-1">
+              <label className="text-[11px] text-slate-600">Bouton principal (label)</label>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                value={settings.primaryNavButton?.label || ""}
+                onChange={(e) =>
+                  updateField("primaryNavButton", {
+                    ...(settings.primaryNavButton || { href: "" }),
+                    label: e.target.value,
+                  })
+                }
+                placeholder="Contact"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] text-slate-600">Bouton principal (URL)</label>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                value={settings.primaryNavButton?.href || ""}
+                onChange={(e) =>
+                  updateField("primaryNavButton", {
+                    ...(settings.primaryNavButton || { label: "" }),
+                    href: e.target.value,
+                  })
+                }
+                placeholder="/contact"
+              />
+            </div>
+          </div>
+        </section>
+
         <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
           <div className="space-y-1">
             <h2 className="text-sm font-semibold text-black">Logos du site</h2>
@@ -409,12 +650,39 @@ const AdminHomepagePage: React.FC = () => {
               />
             </div>
             <div className="space-y-1">
+              <label className="text-[11px] text-slate-600">CTA principal (label)</label>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                value={settings.heroPrimaryCtaLabel || ""}
+                onChange={(e) => updateField("heroPrimaryCtaLabel", e.target.value)}
+                placeholder="Découvrir nos logiciels"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] text-slate-600">CTA principal (URL)</label>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                value={settings.heroPrimaryCtaHref || ""}
+                onChange={(e) => updateField("heroPrimaryCtaHref", e.target.value)}
+                placeholder="/telechargements"
+              />
+            </div>
+            <div className="space-y-1">
               <label className="text-[11px] text-slate-600">Image (URL)</label>
               <input
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                 value={settings.heroImageUrl || ""}
                 onChange={(e) => updateField("heroImageUrl", e.target.value)}
                 placeholder="https://...jpg"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] text-slate-600">Illustration principale (URL)</label>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                value={settings.heroIllustrationUrl || ""}
+                onChange={(e) => updateField("heroIllustrationUrl", e.target.value)}
+                placeholder="https://...svg"
               />
             </div>
             <div className="space-y-1">
@@ -428,6 +696,73 @@ const AdminHomepagePage: React.FC = () => {
                 placeholder="https://...jpg"
               />
             </div>
+          </div>
+        </section>
+
+        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-black">Cartes fonctionnalités (bandeau)</h2>
+              <p className="text-[11px] text-slate-600">
+                Icône, titre et description affichés sous le hero sur la home publique.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={addFeatureCard}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-100"
+            >
+              Ajouter une carte
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {(settings.featureCards || []).map((card, index) => (
+              <div
+                key={`feature-card-${index}`}
+                className="rounded-lg border border-slate-200 p-3 space-y-2"
+              >
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-slate-600">Clé d'icône</label>
+                    <input
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      value={card.iconKey}
+                      onChange={(e) => updateFeatureCard(index, "iconKey", e.target.value)}
+                      placeholder="apps / pricing / support"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-slate-600">Titre</label>
+                    <input
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      value={card.title}
+                      onChange={(e) => updateFeatureCard(index, "title", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-slate-600">Description</label>
+                    <input
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      value={card.description}
+                      onChange={(e) => updateFeatureCard(index, "description", e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => removeFeatureCard(index)}
+                    className="text-[11px] text-red-600"
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              </div>
+            ))}
+            {(!settings.featureCards || settings.featureCards.length === 0) && (
+              <p className="text-[11px] text-slate-500">Aucune carte pour le moment.</p>
+            )}
           </div>
         </section>
 

@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { publicGetHomepageSettings } from "../controllers/homepageSettingsController";
+import {
+  publicGetHomepage,
+  publicGetHomepageSettings,
+} from "../controllers/homepageSettingsController";
 import { getPublicContactInfo } from "../controllers/publicInfoController";
 import { publicGetCustomPageByRoute } from "../controllers/pageBuilderController";
 import {
@@ -11,6 +14,7 @@ const router = Router();
 
 router.get("/contact", getPublicContactInfo);
 router.get("/homepage-settings", publicGetHomepageSettings);
+router.get("/homepage", publicGetHomepage);
 router.get("/pages/by-route", publicGetCustomPageByRoute);
 router.get("/products", publicListDownloadableProducts);
 router.get("/downloadable-products", publicListDownloadableProducts);
