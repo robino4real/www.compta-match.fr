@@ -10,6 +10,31 @@ import {
   getProductStructuredData,
 } from "../utils/structuredData";
 
+type PublicDownloadableProductDTO = {
+  id: string;
+  slug: string;
+  name: string;
+  shortDescription: string;
+  longDescription: string;
+  priceTtcFormatted: string;
+  badge?: string | null;
+  heroImageUrl?: string | null;
+  screenshots?: string[];
+  targetAudience?: string[];
+  keyFeatures?: string[];
+  priceCents?: number;
+};
+
+const formatPriceTtc = (priceCents: number, currency?: string) => {
+  if (Number.isNaN(priceCents)) return "Prix à venir";
+  const formatted = new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: currency || "EUR",
+    minimumFractionDigits: 2,
+  }).format(priceCents / 100);
+  return `${formatted} TTC`;
+};
+
 function buildProductStructuredData(
   products: DownloadableProduct[],
   companySettings: any,
@@ -101,18 +126,28 @@ export async function publicListDownloadableProducts(_req: Request, res: Respons
       emailSettings
     );
 
-    const publicProducts = products.map((product) => ({
-      id: product.id,
-      slug: product.slug,
-      name: product.name,
-      thumbnailUrl: product.thumbnailUrl,
-      shortDescription: product.shortDescription,
-      featureBullets: Array.isArray(product.featureBullets)
-        ? (product.featureBullets as string[])
-        : [],
-      priceCents: product.priceCents,
-      detailHtml: product.detailHtml,
-    }));
+    const publicProducts: PublicDownloadableProductDTO[] = products.map(
+      (product) => ({
+        id: product.id,
+        slug: product.slug,
+        name: product.name,
+        shortDescription:
+          product.shortDescription || "Logiciel comptable COMPTAMATCH",
+        longDescription:
+          product.longDescription ||
+          product.shortDescription ||
+          "Description à venir",
+        priceTtcFormatted: formatPriceTtc(product.priceCents, product.currency),
+        badge: null,
+        heroImageUrl: product.thumbnailUrl || product.ogImageUrl,
+        screenshots: product.thumbnailUrl ? [product.thumbnailUrl] : [],
+        targetAudience: undefined,
+        keyFeatures: Array.isArray(product.featureBullets)
+          ? (product.featureBullets as string[])
+          : undefined,
+        priceCents: product.priceCents,
+      })
+    );
 
     return res.json({ products: publicProducts, structuredData });
   } catch (error) {
