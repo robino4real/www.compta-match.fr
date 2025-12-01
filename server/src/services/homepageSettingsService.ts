@@ -125,9 +125,11 @@ export async function updateHomepageSettings(
     payload.heroButtonLink,
     existing.heroButtonLink || DEFAULT_HOME_SETTINGS.heroButtonLink
   );
+  const defaultHeroIllustrationUrl =
+    DEFAULT_HOME_SETTINGS.heroIllustrationUrl ?? "";
   const heroIllustrationUrl = withDefault(
     payload.heroIllustrationUrl,
-    existing.heroIllustrationUrl || DEFAULT_HOME_SETTINGS.heroIllustrationUrl
+    existing.heroIllustrationUrl ?? defaultHeroIllustrationUrl
   );
 
   return prisma.homepageSettings.update({
