@@ -61,14 +61,14 @@ const HomePage: React.FC = () => {
 
       <div className="mx-auto max-w-6xl px-4 pb-16 pt-10 md:pt-16">
         <HeroSection
-          heroTitle={settings.heroTitle}
-          heroSubtitle={settings.heroSubtitle}
-          heroPrimaryCtaHref={settings.heroPrimaryCtaHref}
-          heroPrimaryCtaLabel={settings.heroPrimaryCtaLabel}
-          heroIllustrationUrl={settings.heroIllustrationUrl}
+          title={settings.heroTitle}
+          subtitle={settings.heroSubtitle}
+          ctaHref={settings.heroPrimaryCtaHref}
+          ctaLabel={settings.heroPrimaryCtaLabel}
+          illustrationUrl={settings.heroIllustrationUrl}
         />
 
-        <FeatureCardsRow featureCards={settings.featureCards} />
+        <FeatureCardsRow cards={settings.featureCards} />
       </div>
     </main>
   );
