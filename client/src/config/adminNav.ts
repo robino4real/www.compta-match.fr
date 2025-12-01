@@ -20,6 +20,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
       { label: "Codes promo", href: "/admin/promo-codes" },
       { label: "Commandes", href: "/admin/orders" },
       { label: "Factures", href: "/admin/invoices" },
+      { label: "Services payants", href: "/admin/paid-services" },
     ],
   },
   {

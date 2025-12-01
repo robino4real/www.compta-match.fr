@@ -28,6 +28,8 @@ import AdminPageDetailPage from "./pages/admin/AdminPageDetailPage";
 import AnalyticsTracker from "./components/AnalyticsTracker";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import DownloadableProductsPage from "./pages/DownloadableProductsPage";
+import ComptaProSubscriptionPage from "./pages/ComptaProSubscriptionPage";
+import AdminPaidServicesPage from "./pages/admin/AdminPaidServicesPage";
 
 const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { admin, isLoading } = useAdminAuth();
@@ -70,6 +72,7 @@ const App: React.FC = () => {
         <Route element={<MainLayoutWrapper />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/tarifs" element={<DownloadableProductsPage />} />
+          <Route path="/comptapro" element={<ComptaProSubscriptionPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
@@ -96,6 +99,7 @@ const App: React.FC = () => {
           <Route path="pages/:id" element={<AdminPageDetailPage />} />
           <Route path="homepage" element={<AdminHomepagePage />} />
           <Route path="seo" element={<AdminSeoPage />} />
+          <Route path="paid-services" element={<AdminPaidServicesPage />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Route>
       </Routes>
