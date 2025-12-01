@@ -34,8 +34,13 @@ const AuthLoginPage: React.FC = () => {
       const result = await login(email, password);
 
       if (result.status === "OTP_REQUIRED") {
-        setError(result.message ?? "Connexion administrateur détectée.");
-        window.setTimeout(() => navigate("/admin/login", { replace: true }), 300);
+        navigate("/admin/login", {
+          replace: true,
+          state: {
+            otpToken: result.twoFactorToken,
+            email,
+          },
+        });
         return;
       }
 

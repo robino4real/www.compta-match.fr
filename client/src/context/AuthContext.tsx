@@ -17,7 +17,12 @@ interface ClientAuthContextValue {
   login: (
     email: string,
     password: string
-  ) => Promise<{ success: boolean; message?: string; status?: string }>;
+  ) => Promise<{
+    success: boolean;
+    message?: string;
+    status?: string;
+    twoFactorToken?: string;
+  }>;
   logout: (redirectTo?: string) => Promise<void>;
 }
 
@@ -63,7 +68,12 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({
     async (
       email: string,
       password: string
-    ): Promise<{ success: boolean; message?: string; status?: string }> => {
+    ): Promise<{
+      success: boolean;
+      message?: string;
+      status?: string;
+      twoFactorToken?: string;
+    }> => {
       setIsLoading(true);
       try {
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -81,6 +91,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({
             status: data.status,
             message:
               "Connexion administrateur détectée. Merci d'utiliser l'espace /admin.",
+            twoFactorToken: data.twoFactorToken,
           };
         }
 
