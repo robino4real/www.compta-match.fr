@@ -38,6 +38,7 @@ import AdminInvoicesPage from "./pages/admin/AdminInvoicesPage";
 import AdminInvoiceDetailPage from "./pages/admin/AdminInvoiceDetailPage";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
 import AdminOrderDetailPage from "./pages/admin/AdminOrderDetailPage";
+import AdminCustomersPage from "./pages/admin/AdminCustomersPage";
 import AdminEmailsPage from "./pages/admin/AdminEmailsPage";
 import AdminLegalPagesPage from "./pages/admin/AdminLegalPagesPage";
 import AdminLegalPageEditPage from "./pages/admin/AdminLegalPageEditPage";
@@ -147,6 +148,7 @@ const App: React.FC = () => {
           <Route index element={<AdminDashboardPage />} />
           <Route path="telechargements" element={<AdminDownloadsPage />} />
           <Route path="telechargements/:id" element={<AdminDownloadEditPage />} />
+          <Route path="clients" element={<AdminCustomersPage />} />
           <Route path="promo-codes" element={<AdminPromoCodesPage />} />
           <Route path="stripe-settings" element={<AdminStripeSettingsPage />} />
           <Route path="company-settings" element={<AdminCompanySettingsPage />} />
