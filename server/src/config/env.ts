@@ -7,27 +7,40 @@ const appendApiSuffix = (value: string) => {
   return normalized.endsWith("/api") ? normalized : `${normalized}/api`;
 };
 
-const safeParseOrigin = (value?: string | null) => {
+const normalizeOrigin = (value?: string | null) => {
   if (!value) return null;
 
   try {
     const url = new URL(value);
     return url.origin;
   } catch (error) {
-    console.warn(`[env] Impossible de parser l'URL fournie: ${value}`, error);
-    return null;
+    // Tente d'ajouter un schéma manquant (ex: "https://") pour éviter les CORS vides
+    try {
+      const url = new URL(`https://${value.replace(/^\/*/, "")}`);
+      return url.origin;
+    } catch (nestedError) {
+      console.warn(`[env] Impossible de parser l'URL fournie: ${value}`, error, nestedError);
+      return null;
+    }
   }
 };
 
 const rawFrontendBaseUrl = process.env.FRONTEND_BASE_URL || "http://localhost:5173";
-const rawApiBaseUrl = process.env.API_BASE_URL
-  ? appendApiSuffix(process.env.API_BASE_URL)
-  : "http://localhost:4000/api";
+const rawApiBaseUrl = appendApiSuffix(
+  process.env.API_BASE_URL || process.env.FRONTEND_BASE_URL || "http://localhost:4000"
+);
 
-const frontendOrigin = safeParseOrigin(rawFrontendBaseUrl);
-const apiOrigin = safeParseOrigin(rawApiBaseUrl.replace(/\/api$/, ""));
-const allowCorsOrigins = [frontendOrigin, apiOrigin].filter(
-  (value): value is string => Boolean(value)
+const extraCorsOrigins = (process.env.ALLOWED_CORS_ORIGINS || "")
+  .split(/[,\s]+/)
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const frontendOrigin = normalizeOrigin(rawFrontendBaseUrl);
+const apiOrigin = normalizeOrigin(rawApiBaseUrl.replace(/\/api$/, ""));
+const allowCorsOrigins = Array.from(
+  new Set([frontendOrigin, apiOrigin, ...extraCorsOrigins.map(normalizeOrigin)].filter(
+    (value): value is string => Boolean(value)
+  ))
 );
 
 const isCrossSite = frontendOrigin && apiOrigin && frontendOrigin !== apiOrigin;
