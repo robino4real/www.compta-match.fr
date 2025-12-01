@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { DownloadableProduct } from "../../types/downloadableProduct";
 import { formatPrice } from "../../lib/formatPrice";
+import { useCart } from "../../context/CartContext";
+import { API_BASE_URL } from "../../config/api";
 
 const skeletonItems = Array.from({ length: 3 });
 
@@ -14,6 +16,7 @@ const buildImageList = (product: DownloadableProduct | null) => {
 };
 
 export const DownloadableProductsSection: React.FC = () => {
+  const { addDownloadableProduct } = useCart();
   const [products, setProducts] = useState<DownloadableProduct[]>([]);
   const [selectedProduct, setSelectedProduct] =
     useState<DownloadableProduct | null>(null);
@@ -29,7 +32,9 @@ export const DownloadableProductsSection: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch("/api/downloadable-products/public");
+        const response = await fetch(
+          `${API_BASE_URL}/downloadable-products/public`
+        );
         const json = await response.json().catch(() => ({}));
 
         if (!response.ok) {
@@ -87,6 +92,14 @@ export const DownloadableProductsSection: React.FC = () => {
     setSelectedProduct(product);
   };
 
+  const handleAddToCart = (product: DownloadableProduct) => {
+    addDownloadableProduct({
+      id: product.id,
+      name: product.name,
+      priceCents: Math.round(product.priceTtc * 100),
+    });
+  };
+
   const renderCards = () => {
     if (loading) {
       return skeletonItems.map((_, idx) => (
@@ -113,10 +126,17 @@ export const DownloadableProductsSection: React.FC = () => {
     }
 
     return products.map((product) => (
-      <button
+      <article
         key={product.id}
-        type="button"
+        role="button"
+        tabIndex={0}
         onClick={() => handleSelect(product)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            handleSelect(product);
+          }
+        }}
         aria-pressed={selectedProduct?.id === product.id}
         className={`min-w-[260px] max-w-[320px] rounded-3xl border border-slate-200 bg-white px-6 py-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${
           selectedProduct?.id === product.id
@@ -143,12 +163,19 @@ export const DownloadableProductsSection: React.FC = () => {
             <span className="text-xs font-semibold text-slate-500">{product.currency}</span>
           </div>
           <div>
-            <span className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-900">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleAddToCart(product);
+              }}
+              className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-900"
+            >
               Ajouter au panier
-            </span>
+            </button>
           </div>
         </div>
-      </button>
+      </article>
     ));
   };
 
@@ -216,6 +243,7 @@ export const DownloadableProductsSection: React.FC = () => {
             </div>
             <button
               type="button"
+              onClick={() => handleAddToCart(selectedProduct)}
               className="inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-medium text-white transition hover:bg-slate-900"
             >
               Ajouter au panier

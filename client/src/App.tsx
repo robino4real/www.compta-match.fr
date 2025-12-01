@@ -36,6 +36,10 @@ import AccountSubscriptionsPage from "./pages/account/AccountSubscriptionsPage";
 import AccountOrdersPage from "./pages/account/AccountOrdersPage";
 import AccountSettingsPage from "./pages/account/AccountSettingsPage";
 import AccountProfilePage from "./pages/account/AccountProfilePage";
+import CartPage from "./pages/CartPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
+import PaymentCancelPage from "./pages/PaymentCancelPage";
 
 const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { admin, isLoading } = useAdminAuth();
@@ -79,6 +83,10 @@ const App: React.FC = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/tarifs" element={<DownloadableProductsPage />} />
           <Route path="/comptapro" element={<ComptaProSubscriptionPage />} />
+          <Route path="/panier" element={<CartPage />} />
+          <Route path="/commande" element={<CheckoutPage />} />
+          <Route path="/paiement/success" element={<PaymentSuccessPage />} />
+          <Route path="/paiement/cancel" element={<PaymentCancelPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/compte" element={<MonProfilPage />} />
