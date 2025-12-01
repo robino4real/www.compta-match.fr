@@ -1,3 +1,5 @@
+export type FeatureIconKey = "apps" | "pricing" | "support" | "security" | "automation" | "custom";
+
 export type HomepageSettingsDTO = {
   logoText: string;
   logoSquareText: string;
@@ -15,7 +17,7 @@ export type HomepageSettingsDTO = {
   heroPrimaryCtaHref: string;
   heroIllustrationUrl: string;
   featureCards: {
-    iconKey: string;
+    iconKey: FeatureIconKey;
     title: string;
     description: string;
   }[];
