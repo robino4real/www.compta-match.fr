@@ -32,7 +32,11 @@ app.set("trust proxy", 1);
 app.use((req, res, next) => {
   const requestOrigin = req.headers.origin as string | undefined;
 
-  if (requestOrigin && env.allowCorsOrigins.includes(requestOrigin)) {
+  const isAllowedOrigin =
+    !env.allowCorsOrigins.length ||
+    (requestOrigin && env.allowCorsOrigins.includes(requestOrigin));
+
+  if (requestOrigin && isAllowedOrigin) {
     res.header("Access-Control-Allow-Origin", requestOrigin);
     res.header("Vary", "Origin");
   }
