@@ -40,3 +40,35 @@ a {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+.rich-text-editor-content {
+  outline: none;
+}
+
+.rich-text-editor-content:empty:before {
+  content: attr(data-placeholder);
+  color: #94a3b8;
+  pointer-events: none;
+  display: block;
+}
+
+.legal-page-content h1,
+.legal-page-content h2,
+.legal-page-content h3,
+.legal-page-content h4 {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.legal-page-content h1 { font-size: 1.75rem; }
+.legal-page-content h2 { font-size: 1.4rem; }
+.legal-page-content h3 { font-size: 1.2rem; }
+
+.legal-page-content p,
+.legal-page-content ul,
+.legal-page-content ol {
+  margin: 0 0 0.85rem 0;
+}
+
+.legal-page-content ul { list-style: disc; padding-left: 1.25rem; }
+.legal-page-content ol { list-style: decimal; padding-left: 1.25rem; }

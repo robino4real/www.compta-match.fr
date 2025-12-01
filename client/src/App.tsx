@@ -40,6 +40,7 @@ import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import PaymentCancelPage from "./pages/PaymentCancelPage";
+import LegalPage from "./pages/LegalPage";
 
 const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { admin, isLoading } = useAdminAuth();
@@ -88,6 +89,7 @@ const App: React.FC = () => {
           <Route path="/paiement/success" element={<PaymentSuccessPage />} />
           <Route path="/paiement/cancel" element={<PaymentCancelPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route path="/:legalSlug" element={<LegalPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/compte" element={<MonProfilPage />} />
             <Route path="/compte/abonnements" element={<AccountSubscriptionsPage />} />
