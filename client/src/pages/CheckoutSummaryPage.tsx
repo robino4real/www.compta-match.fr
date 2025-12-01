@@ -227,7 +227,6 @@ const CheckoutSummaryPage: React.FC = () => {
 
     if (Object.keys(errors).length > 0) {
       setModalError("Merci de corriger les informations de facturation.");
-      setShowModal(false);
       return;
     }
 
@@ -260,8 +259,8 @@ const CheckoutSummaryPage: React.FC = () => {
           ...billing,
           country: billing.country || "France",
         },
-        acceptedTerms: true,
-        acceptedLicense: true,
+        acceptedTerms,
+        acceptedLicense,
       };
 
       const response = await fetch(

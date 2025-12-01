@@ -1,10 +1,11 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 
 const AdminLoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { admin, isLoading, refreshAdmin } = useAdminAuth();
   const [email, setEmail] = React.useState("admin-user@compta-match.fr");
   const [password, setPassword] = React.useState("");
@@ -16,9 +17,29 @@ const AdminLoginPage: React.FC = () => {
 
   React.useEffect(() => {
     if (!isLoading && admin) {
-      navigate("/admin/dashboard", { replace: true });
+      navigate("/admin", { replace: true });
     }
   }, [admin, isLoading, navigate]);
+
+  React.useEffect(() => {
+    const state = location.state as
+      | {
+          otpToken?: string | null;
+          email?: string | null;
+        }
+      | null;
+
+    if (state?.otpToken) {
+      setOtpToken(state.otpToken);
+      if (state.email) {
+        setEmail(state.email);
+      }
+      setError(null);
+      setSuccess(
+        "Un code de vérification a déjà été envoyé sur votre email personnel."
+      );
+    }
+  }, [location.state]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -56,7 +77,7 @@ const AdminLoginPage: React.FC = () => {
         }
 
         await refreshAdmin();
-        navigate("/admin/dashboard", { replace: true });
+        navigate("/admin", { replace: true });
         return;
       }
 
@@ -99,7 +120,7 @@ const AdminLoginPage: React.FC = () => {
         setSuccess("Connexion réussie. Redirection en cours...");
         await refreshAdmin();
         window.setTimeout(() => {
-          navigate("/admin/dashboard", { replace: true });
+          navigate("/admin", { replace: true });
         }, 300);
         return;
       }
