@@ -25,6 +25,21 @@ type PublicDownloadableProductDTO = {
   priceCents?: number;
 };
 
+type PublicDownloadableProductV2DTO = {
+  id: string;
+  slug: string;
+  name: string;
+  shortDescription: string;
+  longDescription: string;
+  priceTtc: number;
+  currency: "EUR";
+  badge?: string | null;
+  tags?: string[];
+  heroImageUrl?: string;
+  galleryUrls?: string[];
+  isPublished: boolean;
+};
+
 const formatPriceTtc = (priceCents: number, currency?: string) => {
   if (Number.isNaN(priceCents)) return "Prix à venir";
   const formatted = new Intl.NumberFormat("fr-FR", {
@@ -152,6 +167,52 @@ export async function publicListDownloadableProducts(_req: Request, res: Respons
     return res.json({ products: publicProducts, structuredData });
   } catch (error) {
     console.error("Erreur lors du chargement public des téléchargements", error);
+    return res
+      .status(500)
+      .json({ message: "Impossible de charger les produits téléchargeables." });
+  }
+}
+
+export async function publicListDownloadableProductsV2(_req: Request, res: Response) {
+  try {
+    const products = await prisma.downloadableProduct.findMany({
+      where: { isActive: true, isArchived: false },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const response: PublicDownloadableProductV2DTO[] = products.map((product) => {
+      const galleryUrls: string[] = [];
+      if (product.thumbnailUrl) {
+        galleryUrls.push(product.thumbnailUrl);
+      }
+      if (product.ogImageUrl && product.ogImageUrl !== product.thumbnailUrl) {
+        galleryUrls.push(product.ogImageUrl);
+      }
+
+      const tags = Array.isArray(product.featureBullets)
+        ? (product.featureBullets as string[])
+        : undefined;
+
+      return {
+        id: product.id,
+        slug: product.slug,
+        name: product.name,
+        shortDescription: product.shortDescription || "Logiciel comptable COMPTAMATCH",
+        longDescription:
+          product.longDescription || product.shortDescription || "Description à venir",
+        priceTtc: Math.round((product.priceCents / 100) * 100) / 100,
+        currency: "EUR",
+        badge: null,
+        tags,
+        heroImageUrl: product.thumbnailUrl || product.ogImageUrl || undefined,
+        galleryUrls: galleryUrls.length ? galleryUrls : undefined,
+        isPublished: product.isActive && !product.isArchived,
+      };
+    });
+
+    return res.json({ products: response });
+  } catch (error) {
+    console.error("Erreur lors du chargement public des téléchargements v2", error);
     return res
       .status(500)
       .json({ message: "Impossible de charger les produits téléchargeables." });

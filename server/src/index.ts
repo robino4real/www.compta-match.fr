@@ -21,6 +21,7 @@ import authRoutes from "./routes/authRoutes";
 import analyticsRoutes from "./routes/analyticsRoutes";
 import publicRoutes from "./routes/publicRoutes";
 import catalogRoutes from "./routes/catalogRoutes";
+import downloadableProductRoutes from "./routes/downloadableProductRoutes";
 import { ensureAdminAccount } from "./services/adminAccountService";
 import { robotsTxtHandler, sitemapHandler } from "./controllers/seoController";
 
@@ -59,6 +60,7 @@ apiRouter.use("/health", healthRoutes);
 apiRouter.use("/auth", authRoutes);
 apiRouter.use("/analytics", analyticsRoutes);
 apiRouter.use("/public", publicRoutes);
+apiRouter.use("/downloadable-products", downloadableProductRoutes);
 apiRouter.use(attachUserToRequest);
 apiRouter.use("/payments", paymentRoutes);
 apiRouter.use("/catalog", catalogRoutes);

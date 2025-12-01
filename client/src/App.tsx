@@ -27,6 +27,7 @@ import AdminPagesPage from "./pages/admin/AdminPagesPage";
 import AdminPageDetailPage from "./pages/admin/AdminPageDetailPage";
 import AnalyticsTracker from "./components/AnalyticsTracker";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
+import DownloadableProductsPage from "./pages/DownloadableProductsPage";
 
 const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { admin, isLoading } = useAdminAuth();
@@ -68,6 +69,7 @@ const App: React.FC = () => {
       <Routes>
         <Route element={<MainLayoutWrapper />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/tarifs" element={<DownloadableProductsPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
