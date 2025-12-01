@@ -3,38 +3,22 @@ import { API_BASE_URL } from "../config/api";
 import { HomepageSettingsDTO } from "../types/homepage";
 
 const FALLBACK_SETTINGS: HomepageSettingsDTO = {
-  logoText: "COMPTAMATCH",
-  logoSquareText: "CM",
-  navLinks: [
-    { label: "Comparer les offres", href: "/offres" },
-    { label: "Nos logiciels", href: "/telechargements" },
-    { label: "Contact", href: "/contact" },
-  ],
-  primaryNavButton: { label: "Contact", href: "/contact" },
-  heroTitle: "La plateforme pour trouver et comparer vos logiciels comptables",
+  heroTitle: "L’aide à la comptabilité des TPE au meilleur prix.",
   heroSubtitle:
-    "Centralisez vos outils, comparez les offres et gardez une vue claire sur votre comptabilité en quelques clics.",
-  heroPrimaryCtaLabel: "Découvrir nos logiciels",
-  heroPrimaryCtaHref: "/telechargements",
+    "Centralisez votre gestion comptable simplement, soyez toujours à jour, et concentrez-vous sur l’essentiel : votre activité.",
+  heroButtonLabel: "Découvrir nos logiciels",
+  heroButtonLink: "#",
   heroIllustrationUrl:
-    "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1200&q=80",
-  featureCards: [
-    {
-      iconKey: "apps",
-      title: "Outils simples & complets",
-      description: "Des logiciels sélectionnés pour aller à l'essentiel sans jargon inutile.",
-    },
-    {
-      iconKey: "pricing",
-      title: "Tarifs transparents",
-      description: "Comparez facilement les offres et choisissez celle qui vous convient.",
-    },
-    {
-      iconKey: "support",
-      title: "Support réactif",
-      description: "Une équipe pour vous accompagner et des guides pratiques toujours accessibles.",
-    },
-  ],
+    "https://images.unsplash.com/photo-1521791055366-0d553872125f?auto=format&fit=crop&w=1200&q=80",
+  feature1Icon: "✓",
+  feature1Title: "Outils simples & complets",
+  feature1Text: "Des outils intuitifs pour suivre votre comptabilité au quotidien.",
+  feature2Icon: "◎",
+  feature2Title: "Tarifs transparents",
+  feature2Text: "Des offres claires et sans surprise, adaptées aux TPE.",
+  feature3Icon: "☎",
+  feature3Title: "Support dédié & réactif",
+  feature3Text: "Une équipe qui répond vite pour vous accompagner.",
 };
 
 export function useHomepageContent() {

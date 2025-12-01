@@ -318,19 +318,9 @@ router.post(
   adminCreateDefaultLegalPages
 );
 
-router.get(
-  "/homepage-settings",
-  attachUserToRequest,
-  requireAdmin,
-  adminGetHomepageSettings
-);
+router.get("/homepage", attachUserToRequest, requireAdmin, adminGetHomepageSettings);
 
-router.put(
-  "/homepage-settings",
-  attachUserToRequest,
-  requireAdmin,
-  adminSaveHomepageSettings
-);
+router.put("/homepage", attachUserToRequest, requireAdmin, adminSaveHomepageSettings);
 
 // Page Builder - pages
 router.get(

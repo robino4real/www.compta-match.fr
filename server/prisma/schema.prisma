@@ -402,6 +402,10 @@ model HomepageSettings {
   heroSubtitle           String
   heroButtonLabel        String
   heroButtonUrl          String
+  heroButtonLink         String   @default("")
+  heroTitleTag           String   @default("h1")
+  heroSubtitleTag        String   @default("p")
+  heroButtonStyle        String   @default("primary")
   heroImageUrl           String?
   heroBackgroundImageUrl String?
   siteLogoUrl            String?
@@ -414,6 +418,15 @@ model HomepageSettings {
   heroPrimaryCtaLabel    String?
   heroPrimaryCtaHref     String?
   heroIllustrationUrl    String?
+  feature1Icon           String   @default("")
+  feature1Title          String   @default("")
+  feature1Text           String   @default("")
+  feature2Icon           String   @default("")
+  feature2Title          String   @default("")
+  feature2Text           String   @default("")
+  feature3Icon           String   @default("")
+  feature3Title          String   @default("")
+  feature3Text           String   @default("")
   featureCards           Json?
   features               Json?
   highlightedProductIds  Json?
