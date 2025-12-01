@@ -407,6 +407,14 @@ model HomepageSettings {
   siteLogoUrl            String?
   navbarLogoUrl          String?
   faviconUrl             String?
+  logoText               String?
+  logoSquareText         String?
+  navLinks               Json?
+  primaryNavButton       Json?
+  heroPrimaryCtaLabel    String?
+  heroPrimaryCtaHref     String?
+  heroIllustrationUrl    String?
+  featureCards           Json?
   features               Json?
   highlightedProductIds  Json?
   testimonials           Json?
