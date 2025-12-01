@@ -2,6 +2,8 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
 
+type StatusFilter = "active" | "archived" | "all";
+
 interface DownloadableProduct {
   id: string;
   name: string;
@@ -10,17 +12,47 @@ interface DownloadableProduct {
   fileName: string;
   fileSize: number;
   isActive: boolean;
+  isArchived?: boolean;
   createdAt: string;
+  shortDescription?: string | null;
+  featureBullets?: string[] | null;
+  thumbnailUrl?: string | null;
 }
+
+const formatFileSize = (bytes?: number) => {
+  if (!bytes) return "—";
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} Mo`;
+};
+
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
 const AdminDownloadsPage: React.FC = () => {
   const navigate = useNavigate();
+
   const [name, setName] = React.useState("");
   const [slug, setSlug] = React.useState("");
+  const [slugEdited, setSlugEdited] = React.useState(false);
   const [priceEuros, setPriceEuros] = React.useState("");
   const [shortDescription, setShortDescription] = React.useState("");
   const [longDescription, setLongDescription] = React.useState("");
+  const [thumbnailUrl, setThumbnailUrl] = React.useState("");
+  const [featureBullets, setFeatureBullets] = React.useState<string[]>([]);
+  const [featureInput, setFeatureInput] = React.useState("");
+  const [detailHtml, setDetailHtml] = React.useState("");
+  const [releaseChannel, setReleaseChannel] = React.useState("stable");
+  const [platforms, setPlatforms] = React.useState<string[]>([]);
+  const [licenseType, setLicenseType] = React.useState("perpetual");
+  const [supportContact, setSupportContact] = React.useState("support@compta-match.fr");
   const [file, setFile] = React.useState<File | null>(null);
+
+  const [statusFilter, setStatusFilter] = React.useState<StatusFilter>("active");
+  const [searchTerm, setSearchTerm] = React.useState("");
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -34,10 +66,13 @@ const AdminDownloadsPage: React.FC = () => {
       setIsLoadingProducts(true);
       setErrorProducts(null);
 
-      const response = await fetch(`${API_BASE_URL}/catalog/downloads`, {
-        method: "GET",
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/admin/downloadable-products?status=${statusFilter}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
 
       const data = await response.json().catch(() => ({}));
 
@@ -61,7 +96,13 @@ const AdminDownloadsPage: React.FC = () => {
     } finally {
       setIsLoadingProducts(false);
     }
-  }, []);
+  }, [statusFilter]);
+
+  React.useEffect(() => {
+    if (!slugEdited && name.trim()) {
+      setSlug(slugify(name));
+    }
+  }, [name, slugEdited]);
 
   React.useEffect(() => {
     fetchProducts();
@@ -70,6 +111,24 @@ const AdminDownloadsPage: React.FC = () => {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selected = event.target.files?.[0] ?? null;
     setFile(selected);
+  };
+
+  const addFeature = () => {
+    if (!featureInput.trim()) return;
+    setFeatureBullets((prev) => [...prev, featureInput.trim()]);
+    setFeatureInput("");
+  };
+
+  const removeFeature = (index: number) => {
+    setFeatureBullets((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const togglePlatform = (platform: string) => {
+    setPlatforms((prev) =>
+      prev.includes(platform)
+        ? prev.filter((entry) => entry !== platform)
+        : [...prev, platform]
+    );
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -102,6 +161,20 @@ const AdminDownloadsPage: React.FC = () => {
 
     const priceCents = Math.round(priceNumber * 100);
 
+    const detailSegments: string[] = [];
+    if (detailHtml.trim()) {
+      detailSegments.push(detailHtml.trim());
+    }
+    const metaList: string[] = [];
+    if (releaseChannel) metaList.push(`Canal : ${releaseChannel}`);
+    if (licenseType) metaList.push(`Licence : ${licenseType}`);
+    if (platforms.length) metaList.push(`Compatibilité : ${platforms.join(", ")}`);
+    if (supportContact.trim()) metaList.push(`Support : ${supportContact}`);
+    if (metaList.length) {
+      detailSegments.push(`<ul>${metaList.map((line) => `<li>${line}</li>`).join("")}</ul>`);
+    }
+    const formattedDetailHtml = detailSegments.join("\n");
+
     const formData = new FormData();
     formData.append("name", name.trim());
     if (slug.trim()) {
@@ -114,9 +187,16 @@ const AdminDownloadsPage: React.FC = () => {
     if (longDescription.trim()) {
       formData.append("longDescription", longDescription.trim());
     }
-    if (file) {
-      formData.append("file", file);
+    if (thumbnailUrl.trim()) {
+      formData.append("thumbnailUrl", thumbnailUrl.trim());
     }
+    if (featureBullets.length) {
+      formData.append("featureBullets", JSON.stringify(featureBullets));
+    }
+    if (formattedDetailHtml.trim()) {
+      formData.append("detailHtml", formattedDetailHtml);
+    }
+    formData.append("file", file);
 
     try {
       setIsSubmitting(true);
@@ -133,9 +213,18 @@ const AdminDownloadsPage: React.FC = () => {
         setSuccess("Produit créé et fichier téléversé avec succès.");
         setName("");
         setSlug("");
+        setSlugEdited(false);
         setPriceEuros("");
         setShortDescription("");
         setLongDescription("");
+        setThumbnailUrl("");
+        setFeatureBullets([]);
+        setFeatureInput("");
+        setDetailHtml("");
+        setReleaseChannel("stable");
+        setPlatforms([]);
+        setLicenseType("perpetual");
+        setSupportContact("support@compta-match.fr");
         setFile(null);
         event.currentTarget.reset();
         await fetchProducts();
@@ -155,248 +244,544 @@ const AdminDownloadsPage: React.FC = () => {
     }
   };
 
+  const filteredProducts = React.useMemo(() => {
+    if (!searchTerm.trim()) return products;
+    const term = searchTerm.toLowerCase();
+    return products.filter(
+      (product) =>
+        product.name.toLowerCase().includes(term) ||
+        (product.slug && product.slug.toLowerCase().includes(term))
+    );
+  }, [products, searchTerm]);
+
+  const pricePreview = React.useMemo(() => {
+    const normalizedPrice = priceEuros.replace(",", ".");
+    const priceNumber = Number(normalizedPrice);
+    if (Number.isNaN(priceNumber)) return null;
+    return {
+      euros: priceNumber.toFixed(2),
+      cents: Math.round(priceNumber * 100),
+    };
+  }, [priceEuros]);
+
+  const checklist = [
+    { label: "Identité complète", done: Boolean(name && shortDescription && slug) },
+    { label: "Tarif validé", done: Boolean(pricePreview && pricePreview.cents > 0) },
+    { label: "Fichier attaché", done: Boolean(file) },
+    { label: "Mise en avant (vignette ou bullets)", done: Boolean(thumbnailUrl || featureBullets.length) },
+  ];
+
   return (
     <div className="space-y-6">
-      <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-        <h1 className="text-xl font-semibold text-black">
-          Gestion des logiciels téléchargeables
-        </h1>
-        <p className="text-xs text-slate-600">
-          Depuis cet espace, vous pouvez ajouter un nouveau logiciel à la vitrine
-          en important le fichier exécutable ou l&apos;archive depuis votre ordinateur.
-          Les produits créés ici pourront ensuite être proposés à la vente sur le site.
-        </p>
+      <section className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 rounded-2xl p-6 text-white shadow-sm">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-1">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-200">Back-office</p>
+            <h1 className="text-2xl font-semibold">Articles téléchargeables</h1>
+            <p className="text-sm text-slate-200/80">
+              Concevez un produit prêt à la vente : identité, pitch, packaging et contrôle qualité
+              réunis dans un seul onglet.
+            </p>
+          </div>
+          <div className="rounded-xl bg-white/10 px-4 py-3 text-sm backdrop-blur">
+            <p className="text-xs uppercase tracking-wide text-slate-200">Assistant live</p>
+            <p className="font-semibold">{name || "Nouveau logiciel"}</p>
+            <p className="text-xs text-slate-200">{slug || "slug-auto"}</p>
+          </div>
+        </div>
       </section>
 
-      <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
-        <h2 className="text-sm font-semibold text-black">
-          Ajouter un nouveau produit téléchargeable
-        </h2>
-
-        {error && <p className="text-[11px] text-red-600">{error}</p>}
-        {success && <p className="text-[11px] text-emerald-600">{success}</p>}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Nom + Slug */}
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="space-y-1">
-              <label className="block text-xs font-medium text-slate-800">
-                Nom du logiciel *
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                placeholder="ComptaMini - Edition comptabilité générale"
-                required
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="block text-xs font-medium text-slate-800">
-                Slug (optionnel)
-              </label>
-              <input
-                type="text"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                placeholder="comptamini-compta-generale"
-              />
-              <p className="text-[11px] text-slate-500">
-                Si laissé vide, un identifiant sera généré automatiquement à partir du
-                nom.
+      <section className="grid gap-5 lg:grid-cols-3">
+        <form
+          onSubmit={handleSubmit}
+          className="lg:col-span-2 space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-black">Créer un nouveau produit</h2>
+              <p className="text-xs text-slate-600">
+                Renseignez chaque zone : nous gardons la validation et la mise en forme cohérente.
               </p>
             </div>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-white hover:text-black hover:border hover:border-black disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSubmitting ? "Création en cours..." : "Publier"}
+            </button>
           </div>
 
-          {/* Prix */}
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-slate-800">
-              Prix TTC (en euros) *
-            </label>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={priceEuros}
-              onChange={(e) => setPriceEuros(e.target.value)}
-              className="w-full max-w-xs rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-              placeholder="49,90"
-              required
-            />
-            <p className="text-[11px] text-slate-500">
-              Le montant sera automatiquement converti en centimes côté serveur.
-            </p>
+          {error && <p className="text-[11px] text-red-600">{error}</p>}
+          {success && <p className="text-[11px] text-emerald-600">{success}</p>}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold text-slate-700">Identité & pitch</p>
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-slate-800">Nom *</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                  placeholder="ComptaMini - Edition comptabilité générale"
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-slate-800">Slug</label>
+                <input
+                  type="text"
+                  value={slug}
+                  onChange={(e) => {
+                    setSlug(e.target.value);
+                    setSlugEdited(true);
+                  }}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                  placeholder="comptamini-compta-generale"
+                />
+                <p className="text-[11px] text-slate-500">
+                  Généré automatiquement. Vous pouvez le personnaliser si besoin.
+                </p>
+              </div>
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-slate-800">Vignette / visuel</label>
+                <input
+                  type="url"
+                  value={thumbnailUrl}
+                  onChange={(e) => setThumbnailUrl(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                  placeholder="https://cdn.exemple.com/visuels/comptamini.png"
+                />
+                <p className="text-[11px] text-slate-500">
+                  URL d&apos;aperçu affichée dans la vitrine et dans la fiche produit.
+                </p>
+              </div>
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-slate-800">Courte description</label>
+                <input
+                  type="text"
+                  value={shortDescription}
+                  onChange={(e) => setShortDescription(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                  placeholder="Résumé rapide affiché dans la vitrine."
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-slate-800">Description détaillée</label>
+                <textarea
+                  value={longDescription}
+                  onChange={(e) => setLongDescription(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black min-h-[110px]"
+                  placeholder="Fonctionnalités clés, cas d'usage, prérequis..."
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold text-slate-700">Tarification & packaging</p>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-medium text-slate-800">Prix TTC (euros) *</label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={priceEuros}
+                    onChange={(e) => setPriceEuros(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                    placeholder="49,90"
+                    required
+                  />
+                  <p className="text-[11px] text-slate-500">
+                    Le montant est converti en centimes côté serveur.
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-medium text-slate-800">Type de licence</label>
+                  <select
+                    value={licenseType}
+                    onChange={(e) => setLicenseType(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                  >
+                    <option value="perpetual">Licence perpétuelle</option>
+                    <option value="subscription">Abonnement</option>
+                    <option value="seat">Par utilisateur</option>
+                  </select>
+                  <p className="text-[11px] text-slate-500">
+                    Information ajoutée automatiquement dans les notes détaillées.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-medium text-slate-800">Canal de release</label>
+                  <select
+                    value={releaseChannel}
+                    onChange={(e) => setReleaseChannel(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                  >
+                    <option value="stable">Stable</option>
+                    <option value="beta">Beta</option>
+                    <option value="lts">LTS</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-medium text-slate-800">Contact support</label>
+                  <input
+                    type="text"
+                    value={supportContact}
+                    onChange={(e) => setSupportContact(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                    placeholder="support@compta-match.fr"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-[11px] font-medium text-slate-800">Plateformes ciblées</p>
+                <div className="flex flex-wrap gap-2">
+                  {["Windows", "macOS", "Linux", "Web"].map((platform) => {
+                    const active = platforms.includes(platform);
+                    return (
+                      <button
+                        key={platform}
+                        type="button"
+                        onClick={() => togglePlatform(platform)}
+                        className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition ${
+                          active
+                            ? "border-black bg-black text-white"
+                            : "border-slate-300 bg-white text-slate-700 hover:border-black hover:text-black"
+                        }`}
+                      >
+                        {active ? "✓ " : ""}
+                        {platform}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Descriptions */}
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-slate-800">
-              Courte description
-            </label>
-            <input
-              type="text"
-              value={shortDescription}
-              onChange={(e) => setShortDescription(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-              placeholder="Résumé rapide affiché dans la vitrine."
-            />
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="md:col-span-2 space-y-3 rounded-xl border border-slate-200 bg-white p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-black">Promesse et arguments</p>
+                <span className="text-[11px] text-slate-500">Ajoutez des bullet points cliquables</span>
+              </div>
+              <div className="flex flex-col gap-2 md:flex-row">
+                <input
+                  type="text"
+                  value={featureInput}
+                  onChange={(e) => setFeatureInput(e.target.value)}
+                  className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                  placeholder="Ex : Plan de comptes personnalisable"
+                />
+                <button
+                  type="button"
+                  onClick={addFeature}
+                  className="rounded-full border border-black px-4 py-2 text-xs font-semibold text-black transition hover:bg-black hover:text-white"
+                >
+                  Ajouter
+                </button>
+              </div>
+              {featureBullets.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {featureBullets.map((feature, index) => (
+                    <span
+                      key={feature + index}
+                      className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] text-slate-800"
+                    >
+                      {feature}
+                      <button
+                        type="button"
+                        onClick={() => removeFeature(index)}
+                        className="text-slate-500 hover:text-black"
+                        aria-label={`Supprimer ${feature}`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-slate-800">Notes détaillées (HTML autorisé)</label>
+                <textarea
+                  value={detailHtml}
+                  onChange={(e) => setDetailHtml(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black min-h-[120px]"
+                  placeholder="<ul><li>Intégration API simplifiée</li><li>Modèles d'export personnalisables</li></ul>"
+                />
+                <p className="text-[11px] text-slate-500">
+                  Un bloc mémo contenant licence, plateforme, canal et contact sera ajouté sous forme de liste.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-black">Fichier à téléverser</p>
+              <input
+                type="file"
+                onChange={handleFileChange}
+                className="block w-full text-xs text-slate-700 file:mr-3 file:rounded-full file:border-0 file:bg-black file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-white hover:file:text-black hover:file:border hover:file:border-black"
+                required
+              />
+              <p className="text-[11px] text-slate-500">
+                Archive, binaire ou image disque. Nous conservons la taille et le type MIME.
+              </p>
+              <div className="rounded-lg bg-white p-3 text-[11px] text-slate-700 shadow-inner">
+                <p className="font-semibold text-slate-800">Résumé import</p>
+                <ul className="mt-2 space-y-1">
+                  <li>Nom : {file?.name || "—"}</li>
+                  <li>Taille : {file ? formatFileSize(file.size) : "—"}</li>
+                  <li>Canal : {releaseChannel}</li>
+                  <li>Licence : {licenseType}</li>
+                  <li>Compatibilité : {platforms.length ? platforms.join(", ") : "Non renseigné"}</li>
+                </ul>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-slate-800">
-              Description détaillée
-            </label>
-            <textarea
-              value={longDescription}
-              onChange={(e) => setLongDescription(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-black min-h-[100px]"
-              placeholder="Description complète du logiciel, fonctionnalités, prérequis, etc."
-            />
-          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-4">
+              <p className="text-sm font-semibold text-black">Contrôles rapides</p>
+              <ul className="space-y-2">
+                {checklist.map((item) => (
+                  <li key={item.label} className="flex items-center gap-2 text-xs text-slate-700">
+                    <span
+                      className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold ${
+                        item.done ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      {item.done ? "✓" : "•"}
+                    </span>
+                    {item.label}
+                  </li>
+                ))}
+              </ul>
+              {pricePreview && (
+                <div className="rounded-lg bg-slate-50 p-3 text-[11px] text-slate-700">
+                  <p className="font-semibold text-slate-900">Lecture tarif</p>
+                  <p>{pricePreview.euros} € TTC ({pricePreview.cents} centimes)</p>
+                </div>
+              )}
+            </div>
 
-          {/* Fichier */}
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-slate-800">
-              Fichier du logiciel (EXE, DMG, ZIP) *
-            </label>
-            <input
-              type="file"
-              onChange={handleFileChange}
-              className="block w-full text-xs text-slate-700 file:mr-3 file:rounded-full file:border-0 file:bg-black file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-white hover:file:text-black hover:file:border hover:file:border-black"
-              required
-            />
-            <p className="text-[11px] text-slate-500">
-              Le fichier sera stocké sur le serveur. Assurez-vous d&apos;uploader la version
-              correcte du logiciel (Windows, macOS, etc.).
-            </p>
+            <div className="md:col-span-2 space-y-2 rounded-xl border border-slate-200 bg-white p-4">
+              <p className="text-sm font-semibold text-black">Aperçu vitrine</p>
+              <div className="flex flex-col gap-3 md:flex-row">
+                <div className="h-28 w-full rounded-lg bg-slate-100 md:w-40">
+                  {thumbnailUrl ? (
+                    <img
+                      src={thumbnailUrl}
+                      alt="Aperçu visuel"
+                      className="h-full w-full rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-[11px] text-slate-400">
+                      Aucun visuel
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 space-y-1 text-sm text-slate-800">
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-black px-2 py-0.5 text-[11px] font-semibold text-white">
+                      Nouveau
+                    </span>
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                      {licenseType}
+                    </span>
+                    {releaseChannel !== "stable" && (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                        {releaseChannel}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-lg font-semibold text-black">{name || "Produit sans nom"}</p>
+                  <p className="text-xs text-slate-600">{shortDescription || "Ajoutez un pitch court."}</p>
+                  {featureBullets.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {featureBullets.slice(0, 3).map((feature) => (
+                        <span
+                          key={feature}
+                          className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700"
+                        >
+                          {feature}
+                        </span>
+                      ))}
+                      {featureBullets.length > 3 && (
+                        <span className="rounded-full bg-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-700">
+                          +{featureBullets.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <p className="text-[13px] font-semibold text-emerald-700">
+                    {pricePreview ? `${pricePreview.euros} € TTC` : "Prix à définir"}
+                  </p>
+                  <p className="text-[11px] text-slate-500">Support : {supportContact || "À renseigner"}</p>
+                </div>
+              </div>
+            </div>
           </div>
-
-          {/* Bouton */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="inline-flex items-center rounded-full bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-white hover:text-black hover:border hover:border-black transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? "Création en cours..." : "Créer le produit"}
-          </button>
         </form>
 
-        <p className="text-[11px] text-slate-500">
-          Remarque : pour les tests de développement, le fichier est stocké sur le
-          serveur dans un dossier interne. Plus tard, une logique de droits d&apos;accès et
-          de lien de téléchargement client sera mise en place.
-        </p>
-      </section>
+        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-black">Centre de pilotage</h3>
+              <p className="text-xs text-slate-600">Filtrez vos ressources et accédez à l&apos;édition avancée.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800"
+              >
+                <option value="active">Actifs</option>
+                <option value="archived">Archivés</option>
+                <option value="all">Tous</option>
+              </select>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                placeholder="Recherche par nom ou slug"
+              />
+            </div>
+          </div>
 
-      <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-black">
-            Liste des logiciels téléchargeables
-          </h2>
           {isLoadingProducts && (
-            <span className="text-[11px] text-slate-500">
-              Chargement en cours...
-            </span>
+            <p className="text-[11px] text-slate-500">Chargement en cours...</p>
+          )}
+
+          {errorProducts && (
+            <p className="text-[11px] text-red-600">{errorProducts}</p>
+          )}
+
+          {!isLoadingProducts && !errorProducts && filteredProducts.length === 0 && (
+            <p className="text-[11px] text-slate-500">Aucun produit à afficher avec ce filtre.</p>
+          )}
+
+          {!isLoadingProducts && !errorProducts && filteredProducts.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-xs">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">Produit</th>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">Slug</th>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">Tarif</th>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">Argumentaire</th>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">Fichier</th>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">Statut</th>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">Créé le</th>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredProducts.map((product) => {
+                    const priceEuros = (product.priceCents ?? 0) / 100;
+                    const created = product.createdAt
+                      ? new Date(product.createdAt).toISOString().slice(0, 10)
+                      : "—";
+
+                    return (
+                      <tr key={product.id} className="odd:bg-white even:bg-slate-50">
+                        <td className="px-3 py-3 align-top text-slate-800">
+                          <div className="flex items-start gap-2">
+                            <div className="h-10 w-10 overflow-hidden rounded-lg bg-slate-100">
+                              {product.thumbnailUrl ? (
+                                <img
+                                  src={product.thumbnailUrl}
+                                  alt="vignette"
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-full items-center justify-center text-[10px] text-slate-400">
+                                  —
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-semibold">{product.name}</p>
+                              <p className="text-[11px] text-slate-500">
+                                {product.shortDescription || "Sans description"}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 align-top text-slate-700">{product.slug}</td>
+                        <td className="px-3 py-3 align-top text-slate-700">{priceEuros.toFixed(2)} €</td>
+                        <td className="px-3 py-3 align-top text-slate-700">
+                          {product.featureBullets && product.featureBullets.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {product.featureBullets.slice(0, 3).map((feature) => (
+                                <span
+                                  key={feature}
+                                  className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700"
+                                >
+                                  {feature}
+                                </span>
+                              ))}
+                              {product.featureBullets.length > 3 && (
+                                <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+                                  +{product.featureBullets.length - 3}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-slate-500">—</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-3 align-top text-slate-700">
+                          <div className="space-y-1">
+                            <p>{product.fileName}</p>
+                            <p className="text-[11px] text-slate-500">{formatFileSize(product.fileSize)}</p>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 align-top text-slate-700">
+                          <span
+                            className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
+                              product.isArchived
+                                ? "bg-slate-200 text-slate-700"
+                                : product.isActive
+                                ? "bg-emerald-100 text-emerald-800"
+                                : "bg-amber-100 text-amber-800"
+                            }`}
+                          >
+                            {product.isArchived ? "Archivé" : product.isActive ? "Actif" : "Inactif"}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 align-top text-slate-700">{created}</td>
+                        <td className="px-3 py-3 align-top text-slate-700">
+                          <div className="flex flex-col gap-2">
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/admin/telechargements/${product.id}`)}
+                              className="rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 transition hover:border-black hover:text-black"
+                            >
+                              Modifier
+                            </button>
+                            <a
+                              href={`${API_BASE_URL}/downloads/${product.slug}`}
+                              className="rounded-full border border-slate-200 px-3 py-1 text-[11px] font-semibold text-slate-600 transition hover:border-black hover:text-black"
+                            >
+                              Voir la fiche
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
-
-        {errorProducts && (
-          <p className="text-[11px] text-red-600">
-            {errorProducts}
-          </p>
-        )}
-
-        {!isLoadingProducts && !errorProducts && products.length === 0 && (
-          <p className="text-[11px] text-slate-500">
-            Aucun produit téléchargeable n&apos;a encore été créé.
-          </p>
-        )}
-
-        {!isLoadingProducts && !errorProducts && products.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">
-                    Nom
-                  </th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">
-                    Slug
-                  </th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">
-                    Prix
-                  </th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">
-                    Fichier
-                  </th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">
-                    Taille
-                  </th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">
-                    Actif
-                  </th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">
-                    Créé le
-                  </th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.map((product) => {
-                  const priceEuros = (product.priceCents ?? 0) / 100;
-                  const sizeMb = product.fileSize
-                    ? product.fileSize / (1024 * 1024)
-                    : 0;
-                  const sizeLabel =
-                    product.fileSize ? `${sizeMb.toFixed(2)} Mo` : "—";
-                  const created = product.createdAt
-                    ? new Date(product.createdAt).toISOString().slice(0, 10)
-                    : "—";
-
-                  return (
-                    <tr key={product.id} className="odd:bg-white even:bg-slate-50">
-                      <td className="px-3 py-2 align-top text-slate-800">
-                        {product.name}
-                      </td>
-                      <td className="px-3 py-2 align-top text-slate-700">
-                        {product.slug}
-                      </td>
-                      <td className="px-3 py-2 align-top text-slate-700">
-                        {priceEuros.toFixed(2)} €
-                      </td>
-                      <td className="px-3 py-2 align-top text-slate-700">
-                        {product.fileName}
-                      </td>
-                      <td className="px-3 py-2 align-top text-slate-700">
-                        {sizeLabel}
-                      </td>
-                      <td className="px-3 py-2 align-top text-slate-700">
-                        {product.isActive ? "Oui" : "Non"}
-                      </td>
-                      <td className="px-3 py-2 align-top text-slate-700">
-                        {created}
-                      </td>
-                      <td className="px-3 py-2 align-top text-slate-700">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            navigate(`/admin/telechargements/${product.id}`)
-                          }
-                          className="rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:border-black hover:text-black transition"
-                        >
-                          Modifier
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
       </section>
     </div>
   );
