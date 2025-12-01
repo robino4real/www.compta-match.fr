@@ -20,13 +20,19 @@ export function MainNavbar() {
           <Link className="text-slate-900" to="/" aria-label="Accueil">
             Accueil
           </Link>
-          <Link className="hover:text-slate-900" to="/">
+          <Link className="hover:text-slate-900" to="/comptapro">
             Comparer les offres
           </Link>
           <Link className="hover:text-slate-900" to="/tarifs">
-            Nos tarifs
+            Tarifs
           </Link>
-          <Link className="hover:text-slate-900" to="/">
+          <Link className="hover:text-slate-900" to="/tarifs">
+            Nos logiciels
+          </Link>
+          <Link className="hover:text-slate-900" to="/comptapro">
+            ComptaPro
+          </Link>
+          <Link className="hover:text-slate-900" to="/contact">
             Contact
           </Link>
         </nav>
@@ -34,7 +40,7 @@ export function MainNavbar() {
         {/* Bouton contact / compte (placeholder) */}
         <Link
           className="hidden items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 md:flex"
-          to="/"
+          to="/contact"
         >
           <span>Contact</span>
         </Link>
