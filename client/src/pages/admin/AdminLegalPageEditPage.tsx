@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
+import RichTextEditor from "../../components/admin/RichTextEditor";
 
 interface LegalPageDetail {
   id: string;
@@ -193,17 +194,21 @@ const AdminLegalPageEditPage: React.FC = () => {
               </label>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center justify-between gap-3">
-                <span className="text-sm font-semibold text-slate-700">Contenu HTML</span>
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-semibold text-slate-700">Contenu HTML</span>
+                  <span className="text-[11px] text-slate-500">
+                    Utilisez la barre d'outils pour mettre en forme le texte (taille, gras, italique, listes) ou supprimer du contenu.
+                  </span>
+                </div>
                 <span className="text-[11px] text-slate-500">{titleHelp}</span>
               </div>
-              <textarea
+
+              <RichTextEditor
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={14}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:border-black focus:outline-none"
-                placeholder="Saisissez ou collez le contenu HTML complet de la page."
+                onChange={setContent}
+                placeholder="Rédigez ou collez votre contenu puis ajustez la mise en forme."
               />
             </div>
 
