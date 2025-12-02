@@ -25,7 +25,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
+    <div className="min-h-screen flex bg-white">
       <aside
         className={`fixed inset-y-0 left-0 z-30 w-64 border-r border-slate-200 bg-white px-4 py-6 transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 lg:block ${
           isMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
