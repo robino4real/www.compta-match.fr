@@ -5,6 +5,9 @@ import { useCart } from "../../context/CartContext";
 import { API_BASE_URL } from "../../config/api";
 
 const skeletonItems = Array.from({ length: 3 });
+const CARD_WIDTH = 300;
+const CARD_GAP = 24;
+const VISIBLE_CARDS = 3;
 
 const buildImageList = (product: DownloadableProduct | null) => {
   if (!product) return [];
@@ -24,6 +27,7 @@ export const DownloadableProductsSection: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [imageIndex, setImageIndex] = useState(0);
   const [isFading, setIsFading] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -52,6 +56,7 @@ export const DownloadableProductsSection: React.FC = () => {
         setProducts(incoming);
         setSelectedProduct(incoming[0] ?? null);
         setImageIndex(0);
+        setCurrentIndex(0);
       } catch (err: any) {
         console.error("Erreur de chargement des produits téléchargeables", err);
         if (!isMounted) return;
@@ -81,6 +86,18 @@ export const DownloadableProductsSection: React.FC = () => {
     setImageIndex(0);
   }, [selectedProduct?.id]);
 
+  const maxIndex = Math.max(products.length - VISIBLE_CARDS, 0);
+
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [products.length]);
+
+  useEffect(() => {
+    if (currentIndex > maxIndex) {
+      setCurrentIndex(maxIndex);
+    }
+  }, [currentIndex, maxIndex]);
+
   useEffect(() => {
     setIsFading(true);
     const timeout = window.setTimeout(() => setIsFading(false), 50);
@@ -100,12 +117,21 @@ export const DownloadableProductsSection: React.FC = () => {
     });
   };
 
+  const handlePrev = () => {
+    setCurrentIndex((prev) => Math.max(prev - 1, 0));
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => Math.min(prev + 1, maxIndex));
+  };
+
   const renderCards = () => {
     if (loading) {
       return skeletonItems.map((_, idx) => (
         <div
           key={`skeleton-${idx}`}
-          className="min-w-[260px] max-w-[320px] rounded-3xl border border-slate-100 bg-white px-7 py-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)]"
+          style={{ width: CARD_WIDTH }}
+          className="flex-shrink-0 rounded-3xl border border-slate-100 bg-white px-7 py-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)]"
         >
           <div className="h-5 w-2/3 animate-pulse rounded-full bg-slate-200" />
           <div className="mt-3 h-4 w-full animate-pulse rounded-full bg-slate-200" />
@@ -129,7 +155,8 @@ export const DownloadableProductsSection: React.FC = () => {
         key={product.id}
         role="button"
         onClick={() => handleSelect(product)}
-        className={`group min-w-[260px] max-w-[320px] cursor-pointer rounded-3xl border bg-white px-7 py-6 text-center shadow-[0_24px_60px_rgba(15,23,42,0.12)] transition-all duration-200 ${
+        style={{ width: CARD_WIDTH }}
+        className={`group flex-shrink-0 cursor-pointer rounded-3xl border bg-white px-7 py-6 text-center shadow-[0_24px_60px_rgba(15,23,42,0.12)] transition-all duration-200 ${
           selectedProduct?.id === product.id
             ? "border-slate-900 shadow-[0_28px_70px_rgba(15,23,42,0.16)]"
             : "border-slate-100 hover:-translate-y-1 hover:border-slate-200 hover:shadow-[0_26px_66px_rgba(15,23,42,0.12)]"
@@ -276,6 +303,15 @@ export const DownloadableProductsSection: React.FC = () => {
     );
   };
 
+  const showNavigation = !loading && products.length > VISIBLE_CARDS;
+  const translateX = showNavigation ? currentIndex * (CARD_WIDTH + CARD_GAP) : 0;
+  const fadeMaskStyle = useMemo(() => ({
+    WebkitMaskImage:
+      "linear-gradient(90deg, transparent 0%, black 6%, black 94%, transparent 100%)",
+    maskImage:
+      "linear-gradient(90deg, transparent 0%, black 6%, black 94%, transparent 100%)",
+  }), []);
+
   return (
     <section className="space-y-8 rounded-3xl border border-slate-100 bg-white/80 px-6 py-8 shadow-[0_30px_80px_rgba(15,23,42,0.12)] backdrop-blur md:px-10 md:py-12">
       <div className="flex flex-col gap-3 text-center">
@@ -288,8 +324,49 @@ export const DownloadableProductsSection: React.FC = () => {
         )}
       </div>
 
-      <div className="flex flex-wrap justify-center gap-6">
-        {renderCards()}
+      <div className="relative">
+        {showNavigation && (
+          <>
+            <button
+              type="button"
+              onClick={handlePrev}
+              disabled={currentIndex === 0}
+              className="absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-slate-200 bg-white p-3 text-slate-900 shadow-[0_12px_30px_rgba(15,23,42,0.12)] transition hover:border-slate-300 hover:shadow-[0_16px_36px_rgba(15,23,42,0.16)] disabled:opacity-40 lg:inline-flex"
+              aria-label="Afficher les logiciels précédents"
+            >
+              <span aria-hidden>←</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={currentIndex === maxIndex}
+              className="absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-slate-200 bg-white p-3 text-slate-900 shadow-[0_12px_30px_rgba(15,23,42,0.12)] transition hover:border-slate-300 hover:shadow-[0_16px_36px_rgba(15,23,42,0.16)] disabled:opacity-40 lg:inline-flex"
+              aria-label="Afficher les logiciels suivants"
+            >
+              <span aria-hidden>→</span>
+            </button>
+          </>
+        )}
+
+        <div className="overflow-hidden">
+          <div
+            className="mx-auto max-w-6xl"
+            style={showNavigation ? fadeMaskStyle : undefined}
+          >
+            <div
+              className={`flex gap-6 transition-transform duration-500 ease-out ${
+                showNavigation ? "" : "flex-wrap justify-center"
+              }`}
+              style={
+                showNavigation
+                  ? { transform: `translateX(-${translateX}px)` }
+                  : undefined
+              }
+            >
+              {renderCards()}
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="pt-2">
