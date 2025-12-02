@@ -235,7 +235,9 @@ export async function createDownloadCheckoutSession(
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      payment_method_types: ["card"],
+      // Stripe sélectionne automatiquement les moyens de paiement disponibles ;
+      // le paramètre payment_method_types est volontairement omis pour rester
+      // compatible avec les dernières versions de l'API.
       line_items: [
         {
           quantity: 1,
@@ -260,8 +262,18 @@ export async function createDownloadCheckoutSession(
       "Erreur lors de la création de la session de paiement Stripe :",
       error
     );
+
+    const stripeMessage =
+      typeof error === "object" &&
+      error !== null &&
+      "message" in error &&
+      typeof (error as any).message === "string"
+        ? (error as any).message
+        : null;
+
     return res.status(500).json({
       message:
+        stripeMessage ||
         "Erreur lors de la création de la session de paiement Stripe.",
     });
   }
