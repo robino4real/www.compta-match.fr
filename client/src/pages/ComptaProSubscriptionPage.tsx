@@ -64,8 +64,8 @@ const ComptaProSubscriptionPage: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleSubscribeClick = (slug: string) => {
-    navigate(`/contact?plan=${encodeURIComponent(slug)}`);
+  const handlePlanDetailClick = (slug: string) => {
+    navigate(`/comptapro/${encodeURIComponent(slug)}`);
   };
 
   const handleProAccessClick = () => {
@@ -89,9 +89,9 @@ const ComptaProSubscriptionPage: React.FC = () => {
       {plan.subtitle && <p className="mt-2 text-sm text-slate-600">{plan.subtitle}</p>}
       <button
         className="mt-6 inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-medium text-white hover:bg-slate-900"
-        onClick={() => handleSubscribeClick(plan.slug)}
+        onClick={() => handlePlanDetailClick(plan.slug)}
       >
-        S’abonner
+        En savoir plus
       </button>
     </article>
   );
