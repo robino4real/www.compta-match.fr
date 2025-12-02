@@ -1,6 +1,7 @@
 import React from "react";
 import { MainNavbar } from "../components/layout/MainNavbar";
 import { useHomepageSettings } from "../hooks/useHomepageSettings";
+import Footer from "../components/Footer";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -24,9 +25,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   }, [settings.faviconUrl, settings.navbarLogoUrl]);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
       <MainNavbar />
-      <main>{children}</main>
+      <main className="flex-1">{children}</main>
+      <Footer />
     </div>
   );
 };

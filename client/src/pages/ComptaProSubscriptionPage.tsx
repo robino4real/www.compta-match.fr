@@ -1,5 +1,5 @@
 import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
 import {
   PaidServiceComparison,
@@ -20,11 +20,8 @@ const formatPrice = (value: number, currency: string) => {
     .replace(currency === "EUR" ? "€" : currency, "€");
 };
 
-const PRO_APP_URL = import.meta.env.VITE_PRO_APP_URL || "about:blank";
-
 const ComptaProSubscriptionPage: React.FC = () => {
-  const { user, isLoading: isAuthLoading } = useAuth();
-  const location = useLocation();
+  const { isLoading: isAuthLoading } = useAuth();
   const navigate = useNavigate();
   const [plans, setPlans] = React.useState<PaidServicePlan[]>([]);
   const [comparison, setComparison] = React.useState<PaidServiceComparison | null>(null);
@@ -74,12 +71,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
   const handleProAccessClick = () => {
     if (isAuthLoading) return;
 
-    if (!user) {
-      navigate("/auth/login", { state: { from: location } });
-      return;
-    }
-
-    window.open(PRO_APP_URL, "_blank", "noopener,noreferrer");
+    navigate("/mon-espace-pro");
   };
 
   const renderPlanCard = (plan: PaidServicePlan) => (
