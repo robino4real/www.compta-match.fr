@@ -10,6 +10,7 @@ export interface CartItem {
 
 interface CartContextValue {
   items: CartItem[];
+  lastAdditionTimestamp: number;
   addDownloadableProduct: (product: {
     id: string;
     name: string;
@@ -57,6 +58,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [items]);
 
+  const [lastAdditionTimestamp, setLastAdditionTimestamp] =
+    React.useState<number>(0);
+
   const addDownloadableProduct = React.useCallback(
     (product: { id: string; name: string; priceCents: number }) => {
       setItems((prev) => {
@@ -67,6 +71,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         if (existing) {
           return prev;
         }
+        setLastAdditionTimestamp(Date.now());
         return [
           ...prev,
           {
@@ -102,12 +107,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   const value: CartContextValue = React.useMemo(
     () => ({
       items,
+      lastAdditionTimestamp,
       addDownloadableProduct,
       removeItem,
       clearCart,
       totalCents,
     }),
-    [items, addDownloadableProduct, removeItem, clearCart, totalCents]
+    [
+      items,
+      lastAdditionTimestamp,
+      addDownloadableProduct,
+      removeItem,
+      clearCart,
+      totalCents,
+    ]
   );
 
   return (

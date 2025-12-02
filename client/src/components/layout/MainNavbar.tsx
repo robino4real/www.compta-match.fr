@@ -6,16 +6,17 @@ import { useHomepageSettings } from "../../hooks/useHomepageSettings";
 
 export function MainNavbar() {
   const { user, isLoading } = useAuth();
-  const { items } = useCart();
+  const { items, lastAdditionTimestamp } = useCart();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [isCartBouncing, setIsCartBouncing] = React.useState(false);
   const { settings: homepageSettings } = useHomepageSettings();
 
   const menuItems = React.useMemo(
     () => [
       { to: "/", label: "Accueil", exact: true },
       { to: "/offres", label: "Comparer les offres" },
-    { to: "/logiciels", label: "Nos logiciels" },
+      { to: "/logiciels", label: "Nos logiciels" },
       { to: "/comptapro", label: "ComptaPro" },
     ],
     []
@@ -25,7 +26,20 @@ export function MainNavbar() {
     setIsMenuOpen(false);
   }, [location.pathname]);
 
+  React.useEffect(() => {
+    if (!lastAdditionTimestamp) return;
+
+    setIsCartBouncing(true);
+    const timeout = window.setTimeout(() => setIsCartBouncing(false), 600);
+
+    return () => window.clearTimeout(timeout);
+  }, [lastAdditionTimestamp]);
+
   const navbarLogoUrl = homepageSettings.navbarLogoUrl?.trim();
+
+  const cartLinkClasses =
+    "relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-800 transition hover:border-slate-300 hover:bg-white" +
+    (isCartBouncing ? " cart-icon-bounce" : "");
 
   return (
     <header className="w-full bg-white">
@@ -87,11 +101,7 @@ export function MainNavbar() {
             </div>
             <span>{user ? "Mon compte" : "Se connecter"}</span>
           </Link>
-          <Link
-            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-800 transition hover:border-slate-300 hover:bg-white"
-            to="/panier"
-            aria-label="Panier"
-          >
+          <Link className={cartLinkClasses} to="/panier" aria-label="Panier">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -179,7 +189,7 @@ export function MainNavbar() {
               <span>{user ? "Mon compte" : "Se connecter"}</span>
             </Link>
             <Link
-              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-800 transition hover:border-slate-300 hover:bg-white"
+              className={cartLinkClasses}
               to="/panier"
               aria-label="Panier"
             >

@@ -182,7 +182,7 @@ export const DownloadableProductsSection: React.FC = () => {
               event.stopPropagation();
               handleAddToCart(product);
             }}
-            className="mt-2 inline-flex w-full items-center justify-center rounded-full bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-900"
+            className="pressable-button mt-2 inline-flex w-full items-center justify-center rounded-full bg-black px-4 py-3 text-sm font-semibold text-white hover:bg-slate-900"
           >
             Ajouter au panier
           </button>
@@ -258,7 +258,7 @@ export const DownloadableProductsSection: React.FC = () => {
             <button
               type="button"
               onClick={() => handleAddToCart(selectedProduct)}
-              className="inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-900"
+              className="pressable-button inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white hover:bg-slate-900"
             >
               Ajouter au panier
             </button>
