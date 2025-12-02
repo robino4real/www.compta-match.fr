@@ -5,8 +5,8 @@ import { useCart } from "../../context/CartContext";
 import { API_BASE_URL } from "../../config/api";
 
 const skeletonItems = Array.from({ length: 3 });
-const CARD_WIDTH = 300;
-const CARD_GAP = 24;
+const CARD_WIDTH = 320;
+const CARD_GAP = 28;
 const VISIBLE_CARDS = 3;
 
 const buildImageList = (product: DownloadableProduct | null) => {
@@ -305,12 +305,10 @@ export const DownloadableProductsSection: React.FC = () => {
 
   const showNavigation = !loading && products.length > VISIBLE_CARDS;
   const translateX = showNavigation ? currentIndex * (CARD_WIDTH + CARD_GAP) : 0;
-  const fadeMaskStyle = useMemo(() => ({
-    WebkitMaskImage:
-      "linear-gradient(90deg, transparent 0%, black 6%, black 94%, transparent 100%)",
-    maskImage:
-      "linear-gradient(90deg, transparent 0%, black 6%, black 94%, transparent 100%)",
-  }), []);
+  const viewportWidth = useMemo(
+    () => VISIBLE_CARDS * CARD_WIDTH + CARD_GAP * (VISIBLE_CARDS - 1),
+    []
+  );
 
   return (
     <section className="space-y-8 rounded-3xl border border-slate-100 bg-white/80 px-6 py-8 shadow-[0_30px_80px_rgba(15,23,42,0.12)] backdrop-blur md:px-10 md:py-12">
@@ -324,46 +322,48 @@ export const DownloadableProductsSection: React.FC = () => {
         )}
       </div>
 
-      <div className="relative">
+      <div className="space-y-4">
         {showNavigation && (
-          <>
+          <div className="flex justify-end gap-3">
             <button
               type="button"
               onClick={handlePrev}
               disabled={currentIndex === 0}
-              className="absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-slate-200 bg-white p-3 text-slate-900 shadow-[0_12px_30px_rgba(15,23,42,0.12)] transition hover:border-slate-300 hover:shadow-[0_16px_36px_rgba(15,23,42,0.16)] disabled:opacity-40 lg:inline-flex"
+              className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-[0_12px_30px_rgba(15,23,42,0.12)] transition hover:border-slate-300 hover:shadow-[0_16px_36px_rgba(15,23,42,0.16)] disabled:opacity-40"
               aria-label="Afficher les logiciels précédents"
             >
-              <span aria-hidden>←</span>
+              ←
             </button>
             <button
               type="button"
               onClick={handleNext}
               disabled={currentIndex === maxIndex}
-              className="absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-slate-200 bg-white p-3 text-slate-900 shadow-[0_12px_30px_rgba(15,23,42,0.12)] transition hover:border-slate-300 hover:shadow-[0_16px_36px_rgba(15,23,42,0.16)] disabled:opacity-40 lg:inline-flex"
+              className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-[0_12px_30px_rgba(15,23,42,0.12)] transition hover:border-slate-300 hover:shadow-[0_16px_36px_rgba(15,23,42,0.16)] disabled:opacity-40"
               aria-label="Afficher les logiciels suivants"
             >
-              <span aria-hidden>→</span>
+              →
             </button>
-          </>
+          </div>
         )}
 
-        <div className="overflow-hidden">
-          <div
-            className="mx-auto max-w-6xl"
-            style={showNavigation ? fadeMaskStyle : undefined}
-          >
-            <div
-              className={`flex gap-6 transition-transform duration-500 ease-out ${
-                showNavigation ? "" : "flex-wrap justify-center"
-              }`}
-              style={
-                showNavigation
-                  ? { transform: `translateX(-${translateX}px)` }
-                  : undefined
-              }
-            >
-              {renderCards()}
+        <div className="relative">
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-white via-white/70 to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white via-white/70 to-transparent" />
+
+          <div className="overflow-visible py-2">
+            <div className="mx-auto" style={{ maxWidth: viewportWidth + 120 }}>
+              <div
+                className={`flex gap-7 transition-transform duration-500 ease-out ${
+                  showNavigation ? "" : "flex-wrap justify-center"
+                }`}
+                style={
+                  showNavigation
+                    ? { transform: `translateX(-${translateX}px)` }
+                    : undefined
+                }
+              >
+                {renderCards()}
+              </div>
             </div>
           </div>
         </div>
