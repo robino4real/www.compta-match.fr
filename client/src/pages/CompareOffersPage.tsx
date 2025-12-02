@@ -163,27 +163,16 @@ const CompareOffersPage: React.FC = () => {
     <main className="min-h-screen bg-white pb-16">
       <section className="bg-white">
         <div className="px-4 py-12 text-center lg:px-12 lg:py-16">
-          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Comparatif</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
             Comparatif des offres comptables en ligne
           </h1>
-          <p className="mt-4 mx-auto max-w-3xl text-base text-slate-600">
-            Sélectionnez une solution concurrente dans le menu latéral : le tableau se met à jour automatiquement
-            pour afficher les différences concrètes avec ComptaPro.
-          </p>
-          <div className="mt-6 inline-flex gap-3 rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200">
-            <span className="inline-flex h-2 w-2 translate-y-[3px] rounded-full bg-emerald-500" aria-hidden />
-            <span>Tableau de comparaison mis à jour en temps réel</span>
-          </div>
         </div>
       </section>
 
       <section className="mt-6 lg:mt-10">
         <div className="grid lg:grid-cols-[300px,1fr] lg:gap-0">
-          <aside className="border-r border-slate-200 bg-white px-4 py-6 shadow-sm lg:sticky lg:top-20 lg:min-h-[70vh] lg:px-6 lg:py-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Menu comparatif</p>
+          <aside className="bg-white px-4 py-6 lg:sticky lg:top-20 lg:min-h-[70vh] lg:px-6 lg:py-8">
             <h3 className="mt-2 text-lg font-semibold text-slate-900">Choisissez une alternative</h3>
-            <p className="mt-2 text-sm text-slate-600">Chaque clic met à jour instantanément le tableau principal.</p>
             <div className="mt-4 space-y-2">
               {comparisonOptions.map((option) => {
                 const isActive = option.id === activeComparisonId;
@@ -204,22 +193,13 @@ const CompareOffersPage: React.FC = () => {
                 );
               })}
             </div>
-            <div className="mt-4 rounded-2xl bg-white p-3 text-xs text-slate-600 ring-1 ring-slate-200">
-              Le tableau reste centré sur ComptaPro et s'adapte à chaque concurrent sélectionné.
-            </div>
           </aside>
 
           <div className="px-4 py-6 lg:px-12 lg:py-10">
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Comparatif dynamique</p>
-                  <h3 className="text-xl font-semibold text-slate-900">{activeComparison.title}</h3>
-                  <p className="mt-1 text-sm text-slate-600">{activeComparison.summary}</p>
-                </div>
-                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
-                  Tableau mis à jour automatiquement
-                </span>
+              <div className="text-center">
+                <h3 className="text-2xl font-semibold text-slate-900">{activeComparison.title}</h3>
+                <p className="mt-2 text-sm text-slate-600">{activeComparison.summary}</p>
               </div>
 
               <div className="mt-6 overflow-hidden rounded-2xl border border-slate-100">
@@ -245,14 +225,6 @@ const CompareOffersPage: React.FC = () => {
                     </tbody>
                   </table>
                 </div>
-              </div>
-
-              <div className="mt-4 rounded-2xl bg-slate-900 px-4 py-3 text-sm text-white">
-                <p className="font-semibold">À retenir</p>
-                <p className="mt-1 text-slate-100">
-                  Choisissez un concurrent dans le menu à gauche : le tableau reste focalisé sur ComptaPro et affiche
-                  instantanément les différences clés.
-                </p>
               </div>
             </div>
           </div>
