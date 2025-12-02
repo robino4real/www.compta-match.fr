@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createDownloadCheckoutSession,
+  getDownloadCheckoutConfirmation,
   handleStripeWebhook,
 } from "../controllers/paymentController";
 import {
@@ -19,6 +20,13 @@ router.post(
   attachUserToRequest,
   requireAuth,
   createDownloadCheckoutSession
+);
+
+router.get(
+  "/downloads/confirmation",
+  attachUserToRequest,
+  requireAuth,
+  getDownloadCheckoutConfirmation
 );
 
 /**

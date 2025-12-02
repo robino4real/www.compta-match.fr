@@ -84,6 +84,15 @@ function buildBillingAddress(billing: BillingInfo): string {
   return parts.join(", ");
 }
 
+function buildSuccessUrl(baseUrl: string): string {
+  if (baseUrl.includes("{CHECKOUT_SESSION_ID}")) {
+    return baseUrl;
+  }
+
+  const separator = baseUrl.includes("?") ? "&" : "?";
+  return `${baseUrl}${separator}session_id={CHECKOUT_SESSION_ID}`;
+}
+
 /**
  * Création d'une session Stripe Checkout pour les logiciels téléchargeables.
  * Nécessite un utilisateur connecté.
@@ -202,9 +211,10 @@ export async function createDownloadCheckoutSession(
     const billingName = `${billingInfo.firstName} ${billingInfo.lastName}`.trim();
     const billingAddress = buildBillingAddress(billingInfo);
 
-    const successUrl =
+    const successUrl = buildSuccessUrl(
       process.env.STRIPE_SUCCESS_URL ||
-      "http://localhost:5173/paiement/success";
+        "http://localhost:5173/paiement/success"
+    );
     const cancelUrl =
       process.env.STRIPE_CANCEL_URL ||
       "http://localhost:5173/paiement/cancel";
@@ -533,5 +543,80 @@ export async function handleStripeWebhook(req: Request, res: Response) {
     console.error("[Stripe webhook] Erreur dans le handler :", error);
     // On renvoie tout de même 200 pour éviter les retries infinis en dev
     return res.status(200).json({ received: true });
+  }
+}
+
+export async function getDownloadCheckoutConfirmation(
+  req: Request,
+  res: Response
+) {
+  const request = req as AuthenticatedRequest;
+
+  try {
+    const userId = request.user?.id;
+    const sessionId = req.query.session_id as string | undefined;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Utilisateur non authentifié." });
+    }
+
+    if (!sessionId || !sessionId.trim()) {
+      return res
+        .status(400)
+        .json({ message: "Identifiant de session Stripe manquant." });
+    }
+
+    const order = await prisma.order.findFirst({
+      where: { stripeSessionId: sessionId, userId },
+      include: {
+        items: {
+          include: {
+            product: true,
+            downloadLinks: true,
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: "Commande introuvable." });
+    }
+
+    if (order.status !== "PAID" || !order.paidAt) {
+      return res
+        .status(400)
+        .json({ message: "Le paiement n'est pas confirmé." });
+    }
+
+    const activeDownloadLink = order.items
+      .flatMap((item) => item.downloadLinks)
+      .find((link) => link.status === "ACTIVE");
+
+    const primaryItem = order.items[0];
+
+    return res.status(200).json({
+      order: {
+        id: order.id,
+        paidAt: order.paidAt,
+        currency: order.currency,
+        totalPaid: order.totalPaid,
+        firstProductName:
+          primaryItem?.productNameSnapshot || primaryItem?.product?.name || "",
+      },
+      download:
+        activeDownloadLink && primaryItem
+          ? {
+              token: activeDownloadLink.token,
+              productName:
+                primaryItem.productNameSnapshot || primaryItem.product?.name,
+            }
+          : null,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la confirmation Stripe :", error);
+    return res.status(500).json({
+      message:
+        "Impossible de vérifier la confirmation de paiement. Merci de réessayer.",
+    });
   }
 }
