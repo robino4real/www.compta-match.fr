@@ -523,7 +523,7 @@ const AdminEmailsPage: React.FC = () => {
         {!isLoadingTemplates && templates.length > 0 && (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-xs">
-              <thead className="bg-slate-50">
+              <thead className="bg-white">
                 <tr>
                   <th className="px-3 py-2 text-left font-semibold text-slate-500">
                     Nom
@@ -544,7 +544,7 @@ const AdminEmailsPage: React.FC = () => {
               </thead>
               <tbody>
                 {templates.map((tpl) => (
-                  <tr key={tpl.id} className="odd:bg-white even:bg-slate-50">
+                  <tr key={tpl.id} className="odd:bg-white even:bg-white">
                     <td className="px-3 py-2 align-top text-slate-800">
                       {tpl.name}
                     </td>

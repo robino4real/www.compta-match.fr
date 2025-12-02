@@ -221,7 +221,7 @@ const AdminCustomersPage: React.FC = () => {
                 className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition ${
                   highlightedStat === entry.key
                     ? "border-black bg-black text-white"
-                    : "border-slate-200 bg-slate-50 text-slate-800 hover:border-black hover:bg-white"
+                    : "border-slate-200 bg-white text-slate-800 hover:border-black hover:bg-white"
                 }`}
               >
                 <div>
@@ -233,7 +233,7 @@ const AdminCustomersPage: React.FC = () => {
             ))}
           </div>
 
-          <div className="rounded-xl bg-slate-50 p-4 text-xs text-slate-700">
+          <div className="rounded-xl bg-white p-4 text-xs text-slate-700">
             <p className="font-semibold text-slate-900">Sélection active</p>
             <p className="mt-1 text-slate-600">
               {highlightedStat
@@ -266,7 +266,7 @@ const AdminCustomersPage: React.FC = () => {
                     className={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${
                       segment === item.key
                         ? "bg-black text-white"
-                        : "border border-slate-200 bg-slate-50 text-slate-700 hover:border-black hover:text-black"
+                        : "border border-slate-200 bg-white text-slate-700 hover:border-black hover:text-black"
                     }`}
                     aria-label={`Filtrer ${item.label}`}
                   >
@@ -287,7 +287,7 @@ const AdminCustomersPage: React.FC = () => {
           {!isLoadingUsers && filteredUsers.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-xs">
-                <thead className="bg-slate-50">
+                <thead className="bg-white">
                   <tr>
                     <th className="px-3 py-2 text-left font-semibold text-slate-500">Email</th>
                     <th className="px-3 py-2 text-left font-semibold text-slate-500">Rôle</th>
@@ -298,7 +298,7 @@ const AdminCustomersPage: React.FC = () => {
                 </thead>
                 <tbody>
                   {filteredUsers.map((user) => (
-                    <tr key={user.id} className="odd:bg-white even:bg-slate-50">
+                    <tr key={user.id} className="odd:bg-white even:bg-white">
                       <td className="px-3 py-2 align-top text-slate-800">{user.email}</td>
                       <td className="px-3 py-2 align-top text-slate-800">
                         <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700">
@@ -327,7 +327,7 @@ const AdminCustomersPage: React.FC = () => {
             </div>
           )}
 
-          <div className="rounded-xl bg-slate-50 p-4 text-[11px] text-slate-700">
+          <div className="rounded-xl bg-white p-4 text-[11px] text-slate-700">
             <p className="font-semibold text-slate-900">Conseil</p>
             <p className="mt-1 text-slate-600">
               La sélection d&apos;une statistique ajuste automatiquement le filtre. Exportez la table (⌘+A puis

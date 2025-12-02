@@ -17,7 +17,7 @@ const CartPage: React.FC = () => {
   };
 
   return (
-    <main className="bg-slate-50 min-h-screen py-10">
+    <main className="bg-white min-h-screen py-10">
       <div className="mx-auto max-w-6xl px-4 lg:px-8">
         <header className="flex flex-col gap-3 border-b border-slate-200 pb-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -145,7 +145,7 @@ const CartPage: React.FC = () => {
                   </div>
                 ))}
               </div>
-              <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm">
+              <div className="mt-4 rounded-2xl bg-white px-4 py-3 text-sm">
                 <div className="flex items-center justify-between font-semibold text-slate-900">
                   <span>Total TTC</span>
                   <span>{formatPrice(baseTotalCents / 100)}</span>

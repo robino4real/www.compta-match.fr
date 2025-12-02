@@ -108,7 +108,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
   const hasPlans = plans.length > 0;
 
   return (
-    <main className="bg-slate-50 min-h-screen py-12">
+    <main className="bg-white min-h-screen py-12">
       <div className="max-w-5xl mx-auto px-4 lg:px-8 space-y-10">
         <section className="text-center space-y-4">
           <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-slate-900">
@@ -145,7 +145,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
           )}
 
           {!error && !isLoading && !hasPlans && (
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-700">
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-6 text-center text-sm text-slate-700">
               Les abonnements à la web app COMPTAMATCH seront disponibles prochainement.
             </div>
           )}
@@ -163,11 +163,11 @@ const ComptaProSubscriptionPage: React.FC = () => {
               <table className="min-w-full border-separate border-spacing-y-1 text-sm text-slate-700">
                 <thead>
                   <tr>
-                    <th className="bg-slate-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Fonctionnalités</th>
-                    <th className="bg-slate-50 px-4 py-3 text-center text-sm font-semibold text-slate-900">
+                    <th className="bg-white px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Fonctionnalités</th>
+                    <th className="bg-white px-4 py-3 text-center text-sm font-semibold text-slate-900">
                       {comparison.plans[0]?.name || "Plan A"}
                     </th>
-                    <th className="bg-slate-50 px-4 py-3 text-center text-sm font-semibold text-slate-900">
+                    <th className="bg-white px-4 py-3 text-center text-sm font-semibold text-slate-900">
                       {comparison.plans[1]?.name || "Plan B"}
                     </th>
                   </tr>
@@ -209,7 +209,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
                     </div>
                     {section.imageUrl && (
                       <div
-                        className={`overflow-hidden rounded-3xl border border-slate-100 bg-slate-50 shadow-sm ${
+                        className={`overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm ${
                           index % 2 === 1 ? "order-1 lg:order-2" : ""
                         }`}
                       >

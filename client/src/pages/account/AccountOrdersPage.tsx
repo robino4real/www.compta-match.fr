@@ -65,7 +65,7 @@ const AccountOrdersPage: React.FC = () => {
   };
 
   return (
-    <main className="bg-slate-50 min-h-screen py-10">
+    <main className="bg-white min-h-screen py-10">
       <div className="max-w-5xl mx-auto px-4 lg:px-8 space-y-6">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Espace client</p>
@@ -97,7 +97,7 @@ const AccountOrdersPage: React.FC = () => {
           <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-slate-50">
+                <thead className="bg-white">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
                       Date
@@ -118,7 +118,7 @@ const AccountOrdersPage: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {orders.map((order) => (
-                    <tr key={order.id} className="hover:bg-slate-50">
+                    <tr key={order.id} className="hover:bg-white">
                       <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-700">
                         {new Date(order.createdAt).toLocaleDateString("fr-FR")}
                       </td>
@@ -169,7 +169,7 @@ const AccountOrdersPage: React.FC = () => {
               </table>
             </div>
 
-            <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 text-xs text-slate-600">
+            <div className="border-t border-slate-200 bg-white px-6 py-4 text-xs text-slate-600">
               Les liens de téléchargement restent disponibles dans vos emails de confirmation.
             </div>
           </div>

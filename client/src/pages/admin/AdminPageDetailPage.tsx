@@ -895,7 +895,7 @@ const AdminPageDetailPage: React.FC = () => {
               </div>
               <div className="space-y-2">
                 {(blockDraft.items || []).map((item: any, index: number) => (
-                  <div key={index} className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+                  <div key={index} className="rounded-lg border border-slate-200 bg-white p-3 space-y-2">
                     <div className="space-y-1">
                       <label className="text-[11px] font-semibold text-slate-700">Titre</label>
                       <input
@@ -971,7 +971,7 @@ const AdminPageDetailPage: React.FC = () => {
             {blockDraft.mode !== "latest" && (
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-slate-700">Produits sélectionnés</p>
-                <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
                   {productOptions.map((product) => {
                     const checked = Array.isArray(blockDraft.productIds)
                       ? blockDraft.productIds.includes(product.id)
@@ -1035,7 +1035,7 @@ const AdminPageDetailPage: React.FC = () => {
             {blockDraft.mode === "selected" && (
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-slate-700">Articles sélectionnés</p>
-                <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
                   {articleOptions.map((article) => {
                     const checked = Array.isArray(blockDraft.articleIds)
                       ? blockDraft.articleIds.includes(article.id)
@@ -1084,7 +1084,7 @@ const AdminPageDetailPage: React.FC = () => {
               </div>
               <div className="space-y-2">
                 {(blockDraft.testimonials || []).map((testimonial: any, index: number) => (
-                  <div key={index} className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <div key={index} className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
                     <div className="grid gap-2 md:grid-cols-2">
                       <div className="space-y-1">
                         <label className="text-[11px] font-semibold text-slate-700">Nom</label>
@@ -1276,7 +1276,7 @@ const AdminPageDetailPage: React.FC = () => {
               </button>
             </div>
 
-            <form className="space-y-2 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-3" onSubmit={createSection}>
+            <form className="space-y-2 rounded-xl border border-dashed border-slate-200 bg-white p-3" onSubmit={createSection}>
               <div className="grid gap-2 md:grid-cols-[1.2fr,1fr]">
                 <input
                   type="text"
@@ -1419,7 +1419,7 @@ const AdminPageDetailPage: React.FC = () => {
                     value={sectionForm.backgroundColor}
                     onChange={(e) => setSectionForm({ ...sectionForm, backgroundColor: e.target.value })}
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
-                    placeholder="bg-white, bg-slate-50..."
+                    placeholder="bg-white, bg-white..."
                   />
                 </div>
                 <div className="space-y-1">
@@ -1443,7 +1443,7 @@ const AdminPageDetailPage: React.FC = () => {
                 </button>
               </div>
 
-              <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-black">Blocs</h3>
                   <div className="flex items-center gap-2">
