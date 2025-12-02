@@ -141,11 +141,11 @@ export async function updateHomepageSettings(
   );
   const navbarLogoUrl = withDefault(
     payload.navbarLogoUrl,
-    existing.navbarLogoUrl || DEFAULT_HOME_SETTINGS.navbarLogoUrl
+    existing.navbarLogoUrl ?? DEFAULT_HOME_SETTINGS.navbarLogoUrl ?? ""
   );
   const faviconUrl = withDefault(
     payload.faviconUrl,
-    existing.faviconUrl || DEFAULT_HOME_SETTINGS.faviconUrl
+    existing.faviconUrl ?? DEFAULT_HOME_SETTINGS.faviconUrl ?? ""
   );
 
   return prisma.homepageSettings.update({
