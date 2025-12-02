@@ -122,7 +122,7 @@ const AdminOrdersPage: React.FC = () => {
       {!isLoading && orders.length > 0 && (
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-xs">
-            <thead className="bg-slate-50">
+            <thead className="bg-white">
               <tr>
                 <th className="px-3 py-2 text-left font-semibold text-slate-500">
                   Date
@@ -149,7 +149,7 @@ const AdminOrdersPage: React.FC = () => {
             </thead>
             <tbody>
               {orders.map((order) => (
-                <tr key={order.id} className="odd:bg-white even:bg-slate-50">
+                <tr key={order.id} className="odd:bg-white even:bg-white">
                   <td className="px-3 py-2 align-top text-slate-700">
                     {new Date(order.paidAt || order.createdAt)
                       .toISOString()

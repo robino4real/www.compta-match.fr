@@ -57,7 +57,7 @@ export function MainNavbar() {
         {/* Bouton connexion + panier */}
         <div className="hidden items-center gap-2 md:flex">
           <Link
-            className="flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white"
             to={user ? "/compte" : "/auth/login"}
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/40 text-xs font-semibold text-slate-900">
@@ -80,7 +80,7 @@ export function MainNavbar() {
             <span>{user ? "Mon compte" : "Se connecter"}</span>
           </Link>
           <Link
-            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-800 transition hover:border-slate-300 hover:bg-slate-50"
+            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-800 transition hover:border-slate-300 hover:bg-white"
             to="/panier"
             aria-label="Panier"
           >
@@ -106,7 +106,7 @@ export function MainNavbar() {
         {/* Bouton mobile */}
         <button
           type="button"
-          className="inline-flex items-center justify-center rounded-full border border-slate-200 p-2 text-slate-700 transition hover:bg-slate-50 md:hidden"
+          className="inline-flex items-center justify-center rounded-full border border-slate-200 p-2 text-slate-700 transition hover:bg-white md:hidden"
           aria-label="Ouvrir le menu"
           aria-expanded={isMenuOpen}
           onClick={() => setIsMenuOpen((open) => !open)}
@@ -138,7 +138,7 @@ export function MainNavbar() {
             {menuItems.map((item) => (
               <Link
                 key={item.to}
-                className="rounded-lg px-2 py-2 hover:bg-slate-50"
+                className="rounded-lg px-2 py-2 hover:bg-white"
                 to={item.to}
                 aria-label={item.label}
               >
@@ -148,7 +148,7 @@ export function MainNavbar() {
           </nav>
           <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-3">
             <Link
-              className="flex flex-1 items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="flex flex-1 items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-white"
               to={user ? "/compte" : "/auth/login"}
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/40 text-xs font-semibold text-slate-900">
@@ -171,7 +171,7 @@ export function MainNavbar() {
               <span>{user ? "Mon compte" : "Se connecter"}</span>
             </Link>
             <Link
-              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-800 transition hover:border-slate-300 hover:bg-slate-50"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-800 transition hover:border-slate-300 hover:bg-white"
               to="/panier"
               aria-label="Panier"
             >

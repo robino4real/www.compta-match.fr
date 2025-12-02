@@ -243,7 +243,7 @@ const CheckoutPage: React.FC = () => {
   };
 
   return (
-    <main className="bg-slate-50 min-h-screen py-10">
+    <main className="bg-white min-h-screen py-10">
       <div className="mx-auto max-w-6xl px-4 lg:px-8">
         <header className="flex flex-col gap-3 border-b border-slate-200 pb-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -445,7 +445,7 @@ const CheckoutPage: React.FC = () => {
                 {enrichedItems.map((item) => (
                   <div
                     key={item.id}
-                    className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                    className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="space-y-1">
                       <p className="text-sm font-semibold text-slate-900">
@@ -525,7 +525,7 @@ const CheckoutPage: React.FC = () => {
               )}
             </div>
 
-            <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3">
+            <div className="mt-4 rounded-2xl bg-white px-4 py-3">
               <div className="flex items-center justify-between text-base font-semibold text-slate-900">
                 <span>Montant à payer</span>
                 <span>{formatPrice(payableCents / 100)}</span>

@@ -180,7 +180,7 @@ const AdminOrderDetailPage: React.FC = () => {
         <h2 className="text-sm font-semibold text-black">Produits</h2>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-xs">
-            <thead className="bg-slate-50">
+            <thead className="bg-white">
               <tr>
                 <th className="px-3 py-2 text-left font-semibold text-slate-500">Désignation</th>
                 <th className="px-3 py-2 text-left font-semibold text-slate-500">Qté</th>
@@ -191,7 +191,7 @@ const AdminOrderDetailPage: React.FC = () => {
             </thead>
             <tbody>
               {order.items.map((item) => (
-                <tr key={item.id} className="odd:bg-white even:bg-slate-50">
+                <tr key={item.id} className="odd:bg-white even:bg-white">
                   <td className="px-3 py-2 text-slate-800">
                     {item.productNameSnapshot || item.product?.name}
                   </td>

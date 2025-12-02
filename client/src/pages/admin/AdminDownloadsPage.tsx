@@ -316,7 +316,7 @@ const AdminDownloadsPage: React.FC = () => {
           {success && <p className="text-[11px] text-emerald-600">{success}</p>}
 
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
               <p className="text-xs font-semibold text-slate-700">Identité & pitch</p>
               <div className="space-y-1">
                 <label className="block text-[11px] font-medium text-slate-800">Nom *</label>
@@ -379,7 +379,7 @@ const AdminDownloadsPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
               <p className="text-xs font-semibold text-slate-700">Tarification & packaging</p>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-1">
@@ -521,7 +521,7 @@ const AdminDownloadsPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="space-y-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+            <div className="space-y-3 rounded-xl border border-dashed border-slate-300 bg-white p-4">
               <p className="text-sm font-semibold text-black">Fichier à téléverser</p>
               <input
                 type="file"
@@ -563,7 +563,7 @@ const AdminDownloadsPage: React.FC = () => {
                 ))}
               </ul>
               {pricePreview && (
-                <div className="rounded-lg bg-slate-50 p-3 text-[11px] text-slate-700">
+                <div className="rounded-lg bg-white p-3 text-[11px] text-slate-700">
                   <p className="font-semibold text-slate-900">Lecture tarif</p>
                   <p>{pricePreview.euros} € TTC ({pricePreview.cents} centimes)</p>
                 </div>
@@ -670,7 +670,7 @@ const AdminDownloadsPage: React.FC = () => {
           {!isLoadingProducts && !errorProducts && filteredProducts.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-xs">
-                <thead className="bg-slate-50">
+                <thead className="bg-white">
                   <tr>
                     <th className="px-3 py-2 text-left font-semibold text-slate-500">Produit</th>
                     <th className="px-3 py-2 text-left font-semibold text-slate-500">Slug</th>
@@ -690,7 +690,7 @@ const AdminDownloadsPage: React.FC = () => {
                       : "—";
 
                     return (
-                      <tr key={product.id} className="odd:bg-white even:bg-slate-50">
+                      <tr key={product.id} className="odd:bg-white even:bg-white">
                         <td className="px-3 py-3 align-top text-slate-800">
                           <div className="flex items-start gap-2">
                             <div className="h-10 w-10 overflow-hidden rounded-lg bg-slate-100">

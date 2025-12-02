@@ -37,7 +37,7 @@ const PaymentSuccessPage: React.FC = () => {
     : "Lien valable pendant 1h après clic";
 
   return (
-    <main className="bg-slate-50 min-h-screen py-12">
+    <main className="bg-white min-h-screen py-12">
       <div className="mx-auto max-w-4xl px-4 lg:px-8">
         <section className="rounded-3xl border border-slate-200 bg-white px-6 py-8 shadow-[0_24px_60px_rgba(15,23,42,0.06)] md:px-10 md:py-12">
           <div className="flex flex-col gap-4 border-b border-slate-100 pb-6">
@@ -54,13 +54,13 @@ const PaymentSuccessPage: React.FC = () => {
 
           <div className="mt-8 grid gap-6 md:grid-cols-2">
             <div className="space-y-4">
-              <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+              <div className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">
                 <p className="font-semibold text-slate-900">Accès aux téléchargements</p>
                 <p className="mt-1 text-sm text-slate-700">
                   Rendez-vous dans votre espace client pour télécharger vos logiciels autant de fois que nécessaire pendant la période de validité.
                 </p>
               </div>
-              <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+              <div className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">
                 <p className="font-semibold text-slate-900">Validité du lien</p>
                 <p className="mt-1 text-sm text-slate-700">
                   Chaque lien de téléchargement reste actif pendant une heure après avoir été cliqué. Un compte à rebours démarre dès que vous lancez un téléchargement.

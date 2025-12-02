@@ -118,7 +118,7 @@ export const DownloadableProductsSection: React.FC = () => {
 
     if (!products.length) {
       return (
-        <div className="flex min-h-[160px] w-full flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600">
+        <div className="flex min-h-[160px] w-full flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-6 text-center text-sm text-slate-600">
           <p>Aucun logiciel n’est encore disponible à la vente.</p>
           <p className="mt-1">Revenez bientôt ou contactez-nous pour plus d’informations.</p>
         </div>
@@ -250,7 +250,7 @@ export const DownloadableProductsSection: React.FC = () => {
             </button>
             <button
               type="button"
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-3 text-sm font-medium text-slate-900 transition hover:bg-white"
             >
               Voir la fiche complète
             </button>
@@ -258,7 +258,7 @@ export const DownloadableProductsSection: React.FC = () => {
         </div>
 
         <div>
-          <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
             {currentImageUrl ? (
               <img
                 key={`${selectedProduct.id}-${imageIndex}`}

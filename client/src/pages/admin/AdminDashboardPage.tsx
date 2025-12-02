@@ -181,7 +181,7 @@ const AdminDashboardPage: React.FC = () => {
             helper={loading ? null : `${stats?.sales.timeline.length ?? 0} points sur la période`}
           />
         </div>
-        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
           <p className="mb-3 text-sm font-semibold text-slate-800">Évolution du CA</p>
           <SalesTimelineChart data={stats?.sales.timeline ?? []} loading={loading} />
         </div>
@@ -226,7 +226,7 @@ const AdminDashboardPage: React.FC = () => {
           </div>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full border-collapse">
-              <thead className="bg-slate-50">
+              <thead className="bg-white">
                 <tr>
                   <TableHead>Produit</TableHead>
                   <TableHead>Type</TableHead>
@@ -252,7 +252,7 @@ const AdminDashboardPage: React.FC = () => {
                 )}
                 {!loading &&
                   stats?.products.sales.map((product) => (
-                    <tr key={product.productId} className="odd:bg-white even:bg-slate-50">
+                    <tr key={product.productId} className="odd:bg-white even:bg-white">
                       <TableCell>{product.name}</TableCell>
                       <TableCell className="capitalize">{product.type}</TableCell>
                       <TableCell>{product.salesCountInRange}</TableCell>
@@ -278,7 +278,7 @@ const AdminDashboardPage: React.FC = () => {
           </div>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full border-collapse">
-              <thead className="bg-slate-50">
+              <thead className="bg-white">
                 <tr>
                   <TableHead>Produit</TableHead>
                   <TableHead>Vues</TableHead>
@@ -308,7 +308,7 @@ const AdminDashboardPage: React.FC = () => {
                       ? Math.round((interaction.addToCartInRange / total) * 100)
                       : 0;
                     return (
-                      <tr key={interaction.productId} className="odd:bg-white even:bg-slate-50">
+                      <tr key={interaction.productId} className="odd:bg-white even:bg-white">
                         <TableCell>{interaction.name}</TableCell>
                         <TableCell>{interaction.viewsInRange}</TableCell>
                         <TableCell>{interaction.addToCartInRange}</TableCell>

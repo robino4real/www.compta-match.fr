@@ -84,7 +84,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
+      <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-2">
         <select
           className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 shadow-sm focus:border-black focus:outline-none"
           aria-label="Taille de police"

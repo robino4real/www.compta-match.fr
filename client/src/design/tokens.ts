@@ -7,6 +7,6 @@ export const typography = {
 };
 
 export const layout = {
-  pageBackground: "bg-slate-50",
+  pageBackground: "bg-white",
   cardSurface: "bg-white rounded-3xl shadow-[0_18px_60px_rgba(15,23,42,0.04)]",
 };

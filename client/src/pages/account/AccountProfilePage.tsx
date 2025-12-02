@@ -84,7 +84,7 @@ const AccountProfilePage: React.FC = () => {
   };
 
   return (
-    <main className="bg-slate-50 min-h-screen py-10">
+    <main className="bg-white min-h-screen py-10">
       <div className="max-w-4xl mx-auto px-4 lg:px-8 space-y-6">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Espace client</p>
@@ -192,7 +192,7 @@ const AccountProfilePage: React.FC = () => {
               </div>
             </div>
 
-            <div className="space-y-3 rounded-2xl bg-slate-50 px-4 py-4">
+            <div className="space-y-3 rounded-2xl bg-white px-4 py-4">
               <p className="text-sm font-semibold text-slate-900">Adresse de facturation</p>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2 md:col-span-2">

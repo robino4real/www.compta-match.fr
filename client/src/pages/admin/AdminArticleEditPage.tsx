@@ -228,7 +228,7 @@ const AdminArticleEditPage: React.FC = () => {
             </div>
             <div className="space-y-1">
               <label className="text-[11px] font-semibold text-slate-700">Lien permanent (slug)</label>
-              <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+              <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
                 <span className="text-slate-500">/articles/</span>
                 <input
                   type="text"

@@ -507,7 +507,7 @@ const AdminPromoCodesPage: React.FC = () => {
         {!isLoading && !error && promos.length > 0 && (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-xs">
-              <thead className="bg-slate-50">
+              <thead className="bg-white">
                 <tr>
                   <th className="px-3 py-2 text-left font-semibold text-slate-500">
                     Code
@@ -539,7 +539,7 @@ const AdminPromoCodesPage: React.FC = () => {
                   return (
                     <tr
                       key={promo.id}
-                      className="odd:bg-white even:bg-slate-50"
+                      className="odd:bg-white even:bg-white"
                     >
                       <td className="px-3 py-2 align-top text-slate-800">
                         <div className="space-y-1">
