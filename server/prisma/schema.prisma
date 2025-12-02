@@ -431,7 +431,8 @@ model HomepageSettings {
   feature3Title          String   @default("")
   feature3Text           String   @default("")
   featureCards           Json?
-  features               Json?
+  features               Json?    @default("[]")
+  heroSections           Json?    @default("[]")
   highlightedProductIds  Json?
   testimonials           Json?
   contentBlockTitle      String?

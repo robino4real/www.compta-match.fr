@@ -1,6 +1,17 @@
 import { HomepageSettings } from "@prisma/client";
 import { prisma } from "../config/prisma";
 
+type FeatureCard = { title: string; text: string; iconUrl?: string };
+
+type HeroSection = {
+  title: string;
+  subtitle: string;
+  buttonLabel: string;
+  buttonLink: string;
+  illustrationUrl: string;
+  align?: "left" | "right";
+};
+
 const DEFAULT_HOME_SETTINGS: Pick<
   HomepageSettings,
   | "heroTitle"
@@ -23,13 +34,18 @@ const DEFAULT_HOME_SETTINGS: Pick<
   | "heroButtonStyle"
   | "navbarLogoUrl"
   | "faviconUrl"
-> & { heroPrimaryCtaLabel: string; heroPrimaryCtaHref: string } = {
+> & {
+    heroPrimaryCtaLabel: string;
+    heroPrimaryCtaHref: string;
+    features: FeatureCard[];
+    heroSections: HeroSection[];
+  } = {
   heroTitle: "L’aide à la comptabilité des TPE au meilleur prix.",
   heroSubtitle:
     "Centralisez votre gestion comptable simplement, soyez toujours à jour, et concentrez-vous sur l’essentiel : votre activité.",
   heroButtonLabel: "Découvrir nos logiciels",
-  heroButtonUrl: "#",
-  heroButtonLink: "#",
+  heroButtonUrl: "/offres",
+  heroButtonLink: "/offres",
   heroIllustrationUrl:
     "https://images.unsplash.com/photo-1521791055366-0d553872125f?auto=format&fit=crop&w=1200&q=80",
   feature1Icon: "check",
@@ -45,9 +61,27 @@ const DEFAULT_HOME_SETTINGS: Pick<
   heroSubtitleTag: "p",
   heroButtonStyle: "primary",
   heroPrimaryCtaLabel: "Découvrir nos logiciels",
-  heroPrimaryCtaHref: "#",
+  heroPrimaryCtaHref: "/offres",
   navbarLogoUrl: "",
   faviconUrl: "",
+  features: [
+    {
+      title: "Outils simples & complets",
+      text: "Des outils intuitifs pour suivre votre comptabilité au quotidien.",
+      iconUrl: "",
+    },
+    {
+      title: "Tarifs transparents",
+      text: "Des offres claires et sans surprise, adaptées aux TPE.",
+      iconUrl: "",
+    },
+    {
+      title: "Support dédié & réactif",
+      text: "Une équipe qui répond vite pour vous accompagner.",
+      iconUrl: "",
+    },
+  ],
+  heroSections: [],
 };
 
 type HomepageEditableFields = Pick<
@@ -71,16 +105,98 @@ type HomepageEditableFields = Pick<
   | "heroButtonStyle"
   | "navbarLogoUrl"
   | "faviconUrl"
->;
+> & {
+  features?: FeatureCard[];
+  heroSections?: HeroSection[];
+};
 
 function sanitize(value: unknown): string | undefined {
   if (typeof value === "string") return value.trim();
   return undefined;
 }
 
+function sanitizeFeatureList(value: unknown): FeatureCard[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+
+  const cleaned = value
+    .map((entry) => ({
+      title: sanitize((entry as any)?.title) || "",
+      text: sanitize((entry as any)?.text) || "",
+      iconUrl: sanitize((entry as any)?.iconUrl) || "",
+    }))
+    .filter((entry) => entry.title || entry.text || entry.iconUrl);
+
+  if (!cleaned) return undefined;
+  return cleaned;
+}
+
+function sanitizeHeroSections(value: unknown): HeroSection[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+
+  const cleaned = value
+    .map((entry) => {
+      const alignCandidate = sanitize((entry as any)?.align);
+      const align: "left" | "right" = alignCandidate === "right" ? "right" : "left";
+
+      return {
+        title: sanitize((entry as any)?.title) || "",
+        subtitle: sanitize((entry as any)?.subtitle) || "",
+        buttonLabel: sanitize((entry as any)?.buttonLabel) || "",
+        buttonLink: sanitize((entry as any)?.buttonLink) || "",
+        illustrationUrl: sanitize((entry as any)?.illustrationUrl) || "",
+        align,
+      };
+    })
+    .filter((entry) => entry.title || entry.subtitle || entry.illustrationUrl);
+
+  return cleaned;
+}
+
 function withDefault(value: unknown, fallback: string) {
   const sanitized = sanitize(value);
   return sanitized === undefined || sanitized === "" ? fallback : sanitized;
+}
+
+function normalizeFeatures(
+  incoming: FeatureCard[] | undefined,
+  existing: HomepageSettings
+): FeatureCard[] {
+  if (incoming) return incoming;
+
+  if (Array.isArray(existing.features)) {
+    return sanitizeFeatureList(existing.features) ?? DEFAULT_HOME_SETTINGS.features;
+  }
+
+  const legacy = [
+    {
+      title: existing.feature1Title || DEFAULT_HOME_SETTINGS.feature1Title,
+      text: existing.feature1Text || DEFAULT_HOME_SETTINGS.feature1Text,
+      iconUrl: existing.feature1Icon || DEFAULT_HOME_SETTINGS.feature1Icon,
+    },
+    {
+      title: existing.feature2Title || DEFAULT_HOME_SETTINGS.feature2Title,
+      text: existing.feature2Text || DEFAULT_HOME_SETTINGS.feature2Text,
+      iconUrl: existing.feature2Icon || DEFAULT_HOME_SETTINGS.feature2Icon,
+    },
+    {
+      title: existing.feature3Title || DEFAULT_HOME_SETTINGS.feature3Title,
+      text: existing.feature3Text || DEFAULT_HOME_SETTINGS.feature3Text,
+      iconUrl: existing.feature3Icon || DEFAULT_HOME_SETTINGS.feature3Icon,
+    },
+  ].filter((feature) => feature.title || feature.text || feature.iconUrl);
+
+  return legacy.length ? legacy : DEFAULT_HOME_SETTINGS.features;
+}
+
+function normalizeHeroSections(
+  incoming: HeroSection[] | undefined,
+  existing: HomepageSettings
+): HeroSection[] {
+  if (incoming) return incoming;
+  if (Array.isArray(existing.heroSections)) {
+    return sanitizeHeroSections(existing.heroSections) ?? [];
+  }
+  return [];
 }
 
 export async function getOrCreateHomepageSettings(): Promise<HomepageSettings> {
@@ -111,6 +227,8 @@ export async function getOrCreateHomepageSettings(): Promise<HomepageSettings> {
       heroTitleTag: DEFAULT_HOME_SETTINGS.heroTitleTag,
       heroSubtitleTag: DEFAULT_HOME_SETTINGS.heroSubtitleTag,
       heroButtonStyle: DEFAULT_HOME_SETTINGS.heroButtonStyle,
+      features: DEFAULT_HOME_SETTINGS.features,
+      heroSections: DEFAULT_HOME_SETTINGS.heroSections,
     },
   });
 }
@@ -148,6 +266,9 @@ export async function updateHomepageSettings(
     existing.faviconUrl ?? DEFAULT_HOME_SETTINGS.faviconUrl ?? ""
   );
 
+  const normalizedFeatures = sanitizeFeatureList(payload.features) ?? normalizeFeatures(undefined, existing);
+  const normalizedHeroSections = sanitizeHeroSections(payload.heroSections) ?? normalizeHeroSections(undefined, existing);
+
   return prisma.homepageSettings.update({
     where: { id: existing.id },
     data: {
@@ -161,33 +282,17 @@ export async function updateHomepageSettings(
       heroIllustrationUrl,
       navbarLogoUrl,
       faviconUrl,
-      feature1Icon: withDefault(payload.feature1Icon, existing.feature1Icon || DEFAULT_HOME_SETTINGS.feature1Icon),
-      feature1Title: withDefault(
-        payload.feature1Title,
-        existing.feature1Title || DEFAULT_HOME_SETTINGS.feature1Title
-      ),
-      feature1Text: withDefault(
-        payload.feature1Text,
-        existing.feature1Text || DEFAULT_HOME_SETTINGS.feature1Text
-      ),
-      feature2Icon: withDefault(payload.feature2Icon, existing.feature2Icon || DEFAULT_HOME_SETTINGS.feature2Icon),
-      feature2Title: withDefault(
-        payload.feature2Title,
-        existing.feature2Title || DEFAULT_HOME_SETTINGS.feature2Title
-      ),
-      feature2Text: withDefault(
-        payload.feature2Text,
-        existing.feature2Text || DEFAULT_HOME_SETTINGS.feature2Text
-      ),
-      feature3Icon: withDefault(payload.feature3Icon, existing.feature3Icon || DEFAULT_HOME_SETTINGS.feature3Icon),
-      feature3Title: withDefault(
-        payload.feature3Title,
-        existing.feature3Title || DEFAULT_HOME_SETTINGS.feature3Title
-      ),
-      feature3Text: withDefault(
-        payload.feature3Text,
-        existing.feature3Text || DEFAULT_HOME_SETTINGS.feature3Text
-      ),
+      features: normalizedFeatures,
+      heroSections: normalizedHeroSections,
+      feature1Icon: normalizedFeatures[0]?.iconUrl ?? "",
+      feature1Title: normalizedFeatures[0]?.title ?? "",
+      feature1Text: normalizedFeatures[0]?.text ?? "",
+      feature2Icon: normalizedFeatures[1]?.iconUrl ?? "",
+      feature2Title: normalizedFeatures[1]?.title ?? "",
+      feature2Text: normalizedFeatures[1]?.text ?? "",
+      feature3Icon: normalizedFeatures[2]?.iconUrl ?? "",
+      feature3Title: normalizedFeatures[2]?.title ?? "",
+      feature3Text: normalizedFeatures[2]?.text ?? "",
       heroTitleTag: withDefault(
         payload.heroTitleTag,
         existing.heroTitleTag || DEFAULT_HOME_SETTINGS.heroTitleTag
