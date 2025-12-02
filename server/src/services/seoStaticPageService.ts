@@ -18,9 +18,9 @@ const DEFAULT_STATIC_PAGES: Record<SeoStaticPageKey, Prisma.SeoStaticPageCreateI
   },
   PRICING_PAGE: {
     key: "PRICING_PAGE",
-    route: "/tarifs",
-    title: "Tarifs ComptaMatch",
-    metaDescription: "Découvrez les offres et tarifs des solutions ComptaMatch.",
+    route: "/logiciels",
+    title: "Logiciels ComptaMatch",
+    metaDescription: "Découvrez les logiciels et tarifs des solutions ComptaMatch.",
   },
   CONTACT_PAGE: {
     key: "CONTACT_PAGE",

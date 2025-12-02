@@ -52,7 +52,7 @@ const CartPage: React.FC = () => {
             </p>
             <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
-                to="/tarifs"
+                to="/logiciels"
                 className="inline-flex items-center justify-center rounded-full bg-black px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-900"
               >
                 Découvrir les logiciels
@@ -164,7 +164,7 @@ const CartPage: React.FC = () => {
                   Valider le panier
                 </button>
                 <Link
-                  to="/tarifs"
+                  to="/logiciels"
                   className="flex w-full items-center justify-center rounded-full border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:border-black hover:text-black"
                 >
                   Continuer mes achats

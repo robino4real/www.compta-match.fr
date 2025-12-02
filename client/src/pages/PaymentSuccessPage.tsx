@@ -126,7 +126,7 @@ const PaymentSuccessPage: React.FC = () => {
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Link
-                to="/tarifs"
+                to="/logiciels"
                 className="inline-flex items-center justify-center rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:border-black hover:text-black"
               >
                 Découvrir d’autres logiciels

@@ -2,7 +2,7 @@ import { prisma } from "../src/config/prisma";
 
 const DEFAULT_PAGES = [
   { key: "HOME", route: "/", name: "Page d'accueil" },
-  { key: "PRICING", route: "/tarifs", name: "Tarifs" },
+  { key: "PRICING", route: "/logiciels", name: "Logiciels" },
   { key: "CONTACT", route: "/contact", name: "Contact" },
   { key: "ABOUT", route: "/a-propos", name: "À propos" },
 ];
