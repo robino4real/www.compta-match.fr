@@ -1,54 +1,5 @@
 import React from "react";
 
-const overviewCards = [
-  {
-    name: "ComptaPro",
-    description: "Cabinet en ligne nouvelle génération, dédié aux TPE et indépendants.",
-    strengths: [
-      "Automatisation bancaire avec pré-catégorisation validée par nos équipes",
-      "Collaboration directe avec un expert-comptable attitré",
-      "Pilotage en temps réel : tableau de bord, alertes et relances clients",
-    ],
-    badge: "Notre solution",
-  },
-  {
-    name: "Indy",
-    description: "Solution déclarative pour indépendants et professions libérales.",
-    strengths: [
-      "Automatise les déclarations courantes",
-      "Focus sur les statuts micro ou BNC",
-      "Support principalement en ligne",
-    ],
-  },
-  {
-    name: "Axonaut",
-    description: "ERP/CRM avec module comptable simplifié pour les petites structures.",
-    strengths: [
-      "Outils commerciaux et facturation intégrés",
-      "Approche généraliste centrée sur la gestion",
-      "Export comptable pour l'expert-comptable externe",
-    ],
-  },
-  {
-    name: "EBP Compta",
-    description: "Logiciel historique à installer pour la comptabilité et la facturation.",
-    strengths: [
-      "Catalogue fonctionnel large",
-      "Paramétrage avancé pour certains secteurs",
-      "Installation locale et mises à jour manuelles",
-    ],
-  },
-  {
-    name: "MaCompta.fr",
-    description: "Outil en ligne pour automatiser sa comptabilité avec accompagnement modulable.",
-    strengths: [
-      "Automatisation bancaire et saisies guidées",
-      "Accompagnement comptable optionnel",
-      "Formations et webinaires inclus",
-    ],
-  },
-];
-
 const comparisonOptions = [
   {
     id: "indy",
@@ -211,57 +162,28 @@ const CompareOffersPage: React.FC = () => {
   return (
     <main className="min-h-screen bg-white pb-16">
       <section className="bg-white">
-        <div className="mx-auto max-w-5xl px-4 py-12 lg:px-8 lg:py-16">
+        <div className="px-4 py-12 lg:px-12 lg:py-16">
           <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Comparatif</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
-            Comparez ComptaPro avec les autres solutions du marché
+            Comparatif des offres comptables en ligne
           </h1>
           <p className="mt-4 max-w-3xl text-base text-slate-600">
-            Choisissez le comparatif qui vous correspond : la colonne de droite se met à jour instantanément
-            pour mettre en avant les différences concrètes entre ComptaPro et chaque alternative.
+            Sélectionnez une solution concurrente dans le menu latéral : le tableau se met à jour automatiquement
+            pour afficher les différences concrètes avec ComptaPro.
           </p>
           <div className="mt-6 inline-flex gap-3 rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200">
             <span className="inline-flex h-2 w-2 translate-y-[3px] rounded-full bg-emerald-500" aria-hidden />
-            <span>Analyse indépendante de nos équipes produits</span>
+            <span>Tableau de comparaison mis à jour en temps réel</span>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto mt-10 max-w-6xl px-4 lg:px-8">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {overviewCards.map((item) => (
-            <article
-              key={item.name}
-              className="flex h-full flex-col gap-4 rounded-3xl border border-slate-200 bg-white px-6 py-6 shadow-sm"
-            >
-              <header className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{item.badge || "Alternative"}</p>
-                  <h2 className="text-lg font-semibold text-slate-900">{item.name}</h2>
-                </div>
-              </header>
-              <p className="text-sm text-slate-600">{item.description}</p>
-              <ul className="mt-2 space-y-2 text-sm text-slate-700">
-                {item.strengths.map((strength) => (
-                  <li key={strength} className="flex gap-2">
-                    <span className="mt-[6px] inline-block h-2 w-2 rounded-full bg-slate-300" aria-hidden />
-                    <span>{strength}</span>
-                  </li>
-                ))}
-              </ul>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto mt-12 max-w-6xl px-4 lg:px-8">
-        <div className="grid gap-6 lg:grid-cols-[280px,1fr]">
-          <aside className="rounded-3xl border border-slate-200 bg-slate-50/60 p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Choisissez votre comparatif</p>
-            <h3 className="mt-2 text-lg font-semibold text-slate-900">ComptaPro face à chaque solution</h3>
-            <p className="mt-2 text-sm text-slate-600">
-              Sélectionnez une alternative pour mettre à jour le tableau à droite.
-            </p>
+      <section className="mt-6 lg:mt-10">
+        <div className="grid lg:grid-cols-[300px,1fr] lg:gap-0">
+          <aside className="border-y border-r border-slate-200 bg-slate-50/70 px-4 py-6 shadow-sm lg:sticky lg:top-20 lg:min-h-[70vh] lg:px-6 lg:py-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Menu comparatif</p>
+            <h3 className="mt-2 text-lg font-semibold text-slate-900">Choisissez une alternative</h3>
+            <p className="mt-2 text-sm text-slate-600">Chaque clic met à jour instantanément le tableau principal.</p>
             <div className="mt-4 space-y-2">
               {comparisonOptions.map((option) => {
                 const isActive = option.id === activeComparisonId;
@@ -283,53 +205,55 @@ const CompareOffersPage: React.FC = () => {
               })}
             </div>
             <div className="mt-4 rounded-2xl bg-white p-3 text-xs text-slate-600 ring-1 ring-slate-200">
-              Les tableaux évoluent instantanément pour montrer ce que change votre choix de logiciel ou de cabinet.
+              Le tableau reste centré sur ComptaPro et s'adapte à chaque concurrent sélectionné.
             </div>
           </aside>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Comparatif dynamique</p>
-                <h3 className="text-xl font-semibold text-slate-900">{activeComparison.title}</h3>
-                <p className="mt-1 text-sm text-slate-600">{activeComparison.summary}</p>
+          <div className="px-4 py-6 lg:border-y lg:border-slate-200 lg:px-12 lg:py-10">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Comparatif dynamique</p>
+                  <h3 className="text-xl font-semibold text-slate-900">{activeComparison.title}</h3>
+                  <p className="mt-1 text-sm text-slate-600">{activeComparison.summary}</p>
+                </div>
+                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                  Tableau mis à jour automatiquement
+                </span>
               </div>
-              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
-                Tableau mis à jour automatiquement
-              </span>
-            </div>
 
-            <div className="mt-6 overflow-hidden rounded-2xl border border-slate-100">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-200 text-sm">
-                  <thead className="bg-slate-50">
-                    <tr className="text-left text-slate-600">
-                      <th className="px-4 py-3 font-semibold text-slate-700">Critère</th>
-                      <th className="px-4 py-3 font-semibold text-slate-700">ComptaPro</th>
-                      <th className="px-4 py-3 font-semibold text-slate-700">{activeComparison.competitor}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {activeComparison.rows.map((row) => (
-                      <tr key={row.label} className="align-top text-slate-800">
-                        <th scope="row" className="bg-slate-50 px-4 py-4 text-left text-sm font-semibold text-slate-900">
-                          {row.label}
-                        </th>
-                        <td className="px-4 py-4 text-slate-700">{row.comptapro}</td>
-                        <td className="px-4 py-4 text-slate-700">{row.competitor}</td>
+              <div className="mt-6 overflow-hidden rounded-2xl border border-slate-100">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead className="bg-slate-50">
+                      <tr className="text-left text-slate-600">
+                        <th className="px-4 py-3 font-semibold text-slate-700">Critère</th>
+                        <th className="px-4 py-3 font-semibold text-slate-700">ComptaPro</th>
+                        <th className="px-4 py-3 font-semibold text-slate-700">{activeComparison.competitor}</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {activeComparison.rows.map((row) => (
+                        <tr key={row.label} className="align-top text-slate-800">
+                          <th scope="row" className="bg-slate-50 px-4 py-4 text-left text-sm font-semibold text-slate-900">
+                            {row.label}
+                          </th>
+                          <td className="px-4 py-4 text-slate-700">{row.comptapro}</td>
+                          <td className="px-4 py-4 text-slate-700">{row.competitor}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
 
-            <div className="mt-4 rounded-2xl bg-slate-900 px-4 py-3 text-sm text-white">
-              <p className="font-semibold">À retenir</p>
-              <p className="mt-1 text-slate-100">
-                Vous pouvez changer de comparaison à gauche : ComptaPro reste la colonne de référence, le tableau s'adapte aux
-                spécificités de {activeComparison.competitor} pour mieux guider votre choix.
-              </p>
+              <div className="mt-4 rounded-2xl bg-slate-900 px-4 py-3 text-sm text-white">
+                <p className="font-semibold">À retenir</p>
+                <p className="mt-1 text-slate-100">
+                  Choisissez un concurrent dans le menu à gauche : le tableau reste focalisé sur ComptaPro et affiche
+                  instantanément les différences clés.
+                </p>
+              </div>
             </div>
           </div>
         </div>

@@ -7,7 +7,7 @@ const FALLBACK_SETTINGS: HomepageSettingsDTO = {
   heroSubtitle:
     "Centralisez votre gestion comptable simplement, soyez toujours à jour, et concentrez-vous sur l’essentiel : votre activité.",
   heroButtonLabel: "Découvrir nos logiciels",
-  heroButtonLink: "/offres",
+  heroButtonLink: "/comparatif-des-offres",
   heroIllustrationUrl:
     "https://images.unsplash.com/photo-1521791055366-0d553872125f?auto=format&fit=crop&w=1200&q=80",
   features: [

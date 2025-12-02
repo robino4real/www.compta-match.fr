@@ -39,7 +39,7 @@ const HeroBlock: React.FC<{
         <SubtitleTag className="text-sm leading-relaxed text-slate-600 md:text-base">{subtitle}</SubtitleTag>
         <a
           className="inline-flex items-center justify-center rounded-full bg-[#0b2e6f] px-7 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#0a275d]"
-          href={buttonLink || "/offres"}
+            href={buttonLink || "/comparatif-des-offres"}
         >
           {buttonLabel}
         </a>
