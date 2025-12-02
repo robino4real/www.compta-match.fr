@@ -19,6 +19,8 @@ interface HomepageSettings {
   heroTitleTag: string;
   heroSubtitleTag: string;
   heroButtonStyle: string;
+  navbarLogoUrl?: string;
+  faviconUrl?: string;
 }
 
 const DEFAULT_SETTINGS: HomepageSettings = {
@@ -41,6 +43,8 @@ const DEFAULT_SETTINGS: HomepageSettings = {
   heroTitleTag: "h1",
   heroSubtitleTag: "p",
   heroButtonStyle: "primary",
+  navbarLogoUrl: "",
+  faviconUrl: "",
 };
 
 const AdminHomepagePage: React.FC = () => {
@@ -170,14 +174,42 @@ const AdminHomepagePage: React.FC = () => {
         </div>
       )}
 
-      {isLoading ? (
-        <div className="rounded-xl border border-slate-200 bg-white px-6 py-10 text-center text-sm text-slate-500">
-          Chargement…
-        </div>
-      ) : (
-        <form onSubmit={save} className="space-y-6">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
-            <div className="text-sm font-semibold text-slate-900">Hero</div>
+          {isLoading ? (
+            <div className="rounded-xl border border-slate-200 bg-white px-6 py-10 text-center text-sm text-slate-500">
+              Chargement…
+            </div>
+          ) : (
+            <form onSubmit={save} className="space-y-6">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
+                <div className="text-sm font-semibold text-slate-900">Identité visuelle</div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <label className="text-xs font-medium text-slate-600">
+                    Logo de navigation (URL)
+                    <input
+                      className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      value={settings.navbarLogoUrl || ""}
+                      onChange={(e) => updateField("navbarLogoUrl", e.target.value)}
+                      placeholder="https://.../logo.png"
+                    />
+                  </label>
+                  <label className="text-xs font-medium text-slate-600">
+                    Favicon (URL)
+                    <input
+                      className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      value={settings.faviconUrl || ""}
+                      onChange={(e) => updateField("faviconUrl", e.target.value)}
+                      placeholder="https://.../favicon.ico"
+                    />
+                  </label>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Le logo de navigation apparaît à gauche du titre dans la barre principale. Le favicon est utilisé pour l’icône
+                  du site dans l’onglet du navigateur.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
+                <div className="text-sm font-semibold text-slate-900">Hero</div>
             <label className="text-xs font-medium text-slate-600">
               Titre principal
               <input

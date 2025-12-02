@@ -21,6 +21,8 @@ const DEFAULT_HOME_SETTINGS: Pick<
   | "heroTitleTag"
   | "heroSubtitleTag"
   | "heroButtonStyle"
+  | "navbarLogoUrl"
+  | "faviconUrl"
 > & { heroPrimaryCtaLabel: string; heroPrimaryCtaHref: string } = {
   heroTitle: "L’aide à la comptabilité des TPE au meilleur prix.",
   heroSubtitle:
@@ -44,6 +46,8 @@ const DEFAULT_HOME_SETTINGS: Pick<
   heroButtonStyle: "primary",
   heroPrimaryCtaLabel: "Découvrir nos logiciels",
   heroPrimaryCtaHref: "#",
+  navbarLogoUrl: "",
+  faviconUrl: "",
 };
 
 type HomepageEditableFields = Pick<
@@ -65,6 +69,8 @@ type HomepageEditableFields = Pick<
   | "heroTitleTag"
   | "heroSubtitleTag"
   | "heroButtonStyle"
+  | "navbarLogoUrl"
+  | "faviconUrl"
 >;
 
 function sanitize(value: unknown): string | undefined {
@@ -91,6 +97,8 @@ export async function getOrCreateHomepageSettings(): Promise<HomepageSettings> {
       heroPrimaryCtaLabel: DEFAULT_HOME_SETTINGS.heroPrimaryCtaLabel,
       heroPrimaryCtaHref: DEFAULT_HOME_SETTINGS.heroPrimaryCtaHref,
       heroIllustrationUrl: DEFAULT_HOME_SETTINGS.heroIllustrationUrl,
+      navbarLogoUrl: DEFAULT_HOME_SETTINGS.navbarLogoUrl,
+      faviconUrl: DEFAULT_HOME_SETTINGS.faviconUrl,
       feature1Icon: DEFAULT_HOME_SETTINGS.feature1Icon,
       feature1Title: DEFAULT_HOME_SETTINGS.feature1Title,
       feature1Text: DEFAULT_HOME_SETTINGS.feature1Text,
@@ -131,6 +139,14 @@ export async function updateHomepageSettings(
     payload.heroIllustrationUrl,
     existing.heroIllustrationUrl ?? defaultHeroIllustrationUrl
   );
+  const navbarLogoUrl = withDefault(
+    payload.navbarLogoUrl,
+    existing.navbarLogoUrl || DEFAULT_HOME_SETTINGS.navbarLogoUrl
+  );
+  const faviconUrl = withDefault(
+    payload.faviconUrl,
+    existing.faviconUrl || DEFAULT_HOME_SETTINGS.faviconUrl
+  );
 
   return prisma.homepageSettings.update({
     where: { id: existing.id },
@@ -143,6 +159,8 @@ export async function updateHomepageSettings(
       heroPrimaryCtaLabel: heroButtonLabel,
       heroPrimaryCtaHref: heroButtonLink,
       heroIllustrationUrl,
+      navbarLogoUrl,
+      faviconUrl,
       feature1Icon: withDefault(payload.feature1Icon, existing.feature1Icon || DEFAULT_HOME_SETTINGS.feature1Icon),
       feature1Title: withDefault(
         payload.feature1Title,
