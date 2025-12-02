@@ -11,13 +11,15 @@ const VISIBLE_CARDS = 3;
 
 type DetailSlide = { imageUrl?: string | null; description?: string | null };
 
+type BuiltSlides = { slides: DetailSlide[]; fromBackOffice: boolean };
+
 const buildDetailSlides = (
   product: DownloadableProduct | null
-): DetailSlide[] => {
-  if (!product) return [];
+): BuiltSlides => {
+  if (!product) return { slides: [], fromBackOffice: false };
 
   if (Array.isArray(product.detailSlides) && product.detailSlides.length) {
-    return product.detailSlides
+    const slides = product.detailSlides
       .map((slide) => ({
         imageUrl: slide?.imageUrl || undefined,
         description:
@@ -27,6 +29,10 @@ const buildDetailSlides = (
           "",
       }))
       .filter((slide) => slide.imageUrl || slide.description);
+
+    if (slides.length) {
+      return { slides, fromBackOffice: true };
+    }
   }
 
   const fallbackDescription =
@@ -39,18 +45,24 @@ const buildDetailSlides = (
   const uniqueUrls = Array.from(new Set(urls));
 
   if (uniqueUrls.length) {
-    return uniqueUrls.map((url) => ({
-      imageUrl: url,
-      description: fallbackDescription,
-    }));
+    return {
+      slides: uniqueUrls.map((url) => ({
+        imageUrl: url,
+        description: fallbackDescription,
+      })),
+      fromBackOffice: false,
+    };
   }
 
-  return [
-    {
-      imageUrl: undefined,
-      description: fallbackDescription,
-    },
-  ];
+  return {
+    slides: [
+      {
+        imageUrl: undefined,
+        description: fallbackDescription,
+      },
+    ],
+    fromBackOffice: false,
+  };
 };
 
 export const DownloadableProductsSection: React.FC = () => {
@@ -113,10 +125,18 @@ export const DownloadableProductsSection: React.FC = () => {
     };
   }, []);
 
-  const detailSlides = useMemo(
+  const { slides: detailSlides, fromBackOffice: slidesFromBackOffice } = useMemo(
     () => buildDetailSlides(selectedProduct),
     [selectedProduct]
   );
+
+  useEffect(() => {
+    setImageIndex(0);
+  }, [selectedProduct?.id]);
+
+  const hasMultipleDetailSlides = detailSlides.length > 1;
+  const hasBackOfficeSlideSet =
+    slidesFromBackOffice && detailSlides.length > 1;
 
   useEffect(() => {
     setImageIndex(0);
@@ -130,7 +150,6 @@ export const DownloadableProductsSection: React.FC = () => {
 
   const currentSlide =
     detailSlides[imageIndex] || detailSlides[0] || { imageUrl: null, description: null };
-  const currentImageUrl = currentSlide.imageUrl || null;
   const currentDescription =
     currentSlide.description ||
     selectedProduct?.longDescription ||
@@ -176,6 +195,20 @@ export const DownloadableProductsSection: React.FC = () => {
     setCurrentIndex((prev) => Math.min(prev + 1, maxIndex));
   };
 
+  const handleSlidePrev = () => {
+    setImageIndex((prev) => {
+      if (!detailSlides.length) return 0;
+      return prev === 0 ? detailSlides.length - 1 : prev - 1;
+    });
+  };
+
+  const handleSlideNext = () => {
+    setImageIndex((prev) => {
+      if (!detailSlides.length) return 0;
+      return prev === detailSlides.length - 1 ? 0 : prev + 1;
+    });
+  };
+
   const renderCards = () => {
     if (loading) {
       return skeletonItems.map((_, idx) => (
@@ -214,7 +247,7 @@ export const DownloadableProductsSection: React.FC = () => {
         }`}
       >
         <div className="flex flex-col items-center gap-3">
-          <div className="flex h-32 w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-100">
+          <div className="flex w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-100 aspect-square">
             {product.cardImageUrl ? (
               <img
                 src={product.cardImageUrl}
@@ -294,6 +327,27 @@ export const DownloadableProductsSection: React.FC = () => {
             >
               {currentDescription}
             </p>
+            {hasBackOfficeSlideSet && (
+              <div
+                className="mt-2 flex items-center gap-2"
+                aria-label="Pagination des visuels du descriptif"
+              >
+                {detailSlides.map((_, idx) => (
+                  <button
+                    key={`indicator-${idx}`}
+                    type="button"
+                    onClick={() => setImageIndex(idx)}
+                    className={`h-2.5 w-2.5 rounded-full transition duration-200 ${
+                      imageIndex === idx
+                        ? "bg-slate-900 shadow-[0_0_0_4px_rgba(15,23,42,0.08)]"
+                        : "bg-slate-300 hover:bg-slate-400"
+                    }`}
+                    aria-label={`Aller au visuel ${idx + 1}`}
+                    aria-pressed={imageIndex === idx}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {!!features.length && (
@@ -326,37 +380,101 @@ export const DownloadableProductsSection: React.FC = () => {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-3xl bg-white p-6">
-          <div className="relative overflow-hidden rounded-2xl bg-white">
-            {currentImageUrl ? (
-              <img
-                key={`${selectedProduct.id}-${imageIndex}`}
-                src={currentImageUrl}
-                alt={selectedProduct.name}
-                className={`block h-auto w-full object-cover transition-opacity duration-500 ease-out ${
-                  isFading ? "opacity-0" : "opacity-100"
-                }`}
-              />
-            ) : (
-              <div className="flex h-72 items-center justify-center text-sm font-semibold text-slate-500">
-                Visuel à venir
-              </div>
+        <div className="overflow-visible rounded-3xl bg-white p-6">
+          <div className="relative overflow-hidden rounded-2xl bg-white shadow-[0_16px_60px_rgba(15,23,42,0.08)]">
+            <div
+              className="flex transition-transform duration-500 ease-out"
+              style={{ transform: `translateX(-${imageIndex * 100}%)` }}
+            >
+              {detailSlides.map((slide, idx) => {
+                const isActiveSlide = idx === imageIndex;
+
+                return (
+                  <div key={slide.imageUrl ?? `slide-${idx}`} className="w-full flex-shrink-0">
+                    {slide.imageUrl ? (
+                      <img
+                        src={slide.imageUrl}
+                        alt={selectedProduct.name}
+                        className={`block aspect-[4/3] w-full object-cover transition-opacity duration-500 ease-out ${
+                          isActiveSlide && isFading ? "opacity-0" : "opacity-100"
+                        }`}
+                      />
+                    ) : (
+                      <div className="flex aspect-[4/3] w-full items-center justify-center text-sm font-semibold text-slate-500">
+                        Visuel à venir
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {hasMultipleDetailSlides && (
+              <>
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white via-transparent to-white opacity-70" aria-hidden />
+                <div className="absolute inset-y-0 left-0 flex items-center px-3">
+                  <button
+                    type="button"
+                    onClick={handleSlidePrev}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-lg font-semibold text-slate-900 shadow-[0_10px_30px_rgba(15,23,42,0.14)] transition hover:shadow-[0_14px_36px_rgba(15,23,42,0.16)]"
+                    aria-label="Afficher l’image précédente"
+                  >
+                    ←
+                  </button>
+                </div>
+                <div className="absolute inset-y-0 right-0 flex items-center px-3">
+                  <button
+                    type="button"
+                    onClick={handleSlideNext}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-lg font-semibold text-slate-900 shadow-[0_10px_30px_rgba(15,23,42,0.14)] transition hover:shadow-[0_14px_36px_rgba(15,23,42,0.16)]"
+                    aria-label="Afficher l’image suivante"
+                  >
+                    →
+                  </button>
+                </div>
+              </>
             )}
           </div>
 
-          {detailSlides.length > 1 && (
-            <div className="mt-4 flex items-center justify-center gap-3">
-              {detailSlides.map((slide, idx) => (
-                <button
-                  key={slide.imageUrl ?? `slide-${idx}`}
-                  type="button"
-                  aria-label={`Afficher l’aperçu ${idx + 1}`}
-                  onClick={() => setImageIndex(idx)}
-                  className={`h-2 w-6 rounded-full bg-slate-200 transition-colors ${
-                    idx === imageIndex ? "bg-slate-900" : ""
-                  }`}
-                />
-              ))}
+            {hasBackOfficeSlideSet && (
+              <div className="mt-5 flex items-center justify-center gap-3">
+              {detailSlides.map((slide, idx) => {
+                const isActiveSlide = idx === imageIndex;
+
+                return (
+                  <button
+                    key={slide.imageUrl ?? `thumb-${idx}`}
+                    type="button"
+                    aria-label={`Afficher l’aperçu ${idx + 1}`}
+                    onClick={() => setImageIndex(idx)}
+                    className={`group relative h-16 w-16 overflow-hidden rounded-2xl border transition duration-150 ${
+                      isActiveSlide
+                        ? "border-slate-900 shadow-[0_14px_36px_rgba(15,23,42,0.16)]"
+                        : "border-slate-200 hover:border-slate-400"
+                    }`}
+                  >
+                    {slide.imageUrl ? (
+                      <img
+                        src={slide.imageUrl}
+                        alt=""
+                        className={`h-full w-full object-cover transition-opacity duration-300 ${
+                          isActiveSlide ? "opacity-100" : "opacity-80 group-hover:opacity-100"
+                        }`}
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                        Visuel
+                      </div>
+                    )}
+                    <span
+                      className={`pointer-events-none absolute inset-0 rounded-2xl ring-2 transition ${
+                        isActiveSlide ? "ring-slate-900" : "ring-transparent group-hover:ring-slate-300"
+                      }`}
+                      aria-hidden
+                    />
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
@@ -411,7 +529,7 @@ export const DownloadableProductsSection: React.FC = () => {
           )}
 
           <div
-            className="mx-auto overflow-hidden"
+            className="mx-auto overflow-x-hidden overflow-y-visible pb-10"
             style={{ maxWidth: viewportWidth, width: "100%" }}
           >
             <div
