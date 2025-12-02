@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import AdminLayout from "./layouts/AdminLayout";
 
@@ -46,7 +46,6 @@ import AuthLoginPage from "./pages/AuthLoginPage";
 
 const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { admin, isLoading } = useAdminAuth();
-  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -57,7 +56,7 @@ const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   }
 
   if (!admin) {
-    return <Navigate to="/admin/login" state={{ from: location }} replace />;
+    return <AdminLoginPage />;
   }
 
   return <>{children}</>;
@@ -92,7 +91,6 @@ const App: React.FC = () => {
           <Route path="/paiement/success" element={<PaymentSuccessPage />} />
           <Route path="/paiement/cancel" element={<PaymentCancelPage />} />
           <Route path="/auth/login" element={<AuthLoginPage />} />
-          <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/:legalSlug" element={<LegalPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/compte" element={<MonProfilPage />} />

@@ -21,7 +21,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
   const handleLogout = async () => {
-    await logoutAdmin("/admin/login");
+    await logoutAdmin("/admin");
   };
 
   return (
