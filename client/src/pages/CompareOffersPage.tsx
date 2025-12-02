@@ -57,7 +57,7 @@ const comparisonPoints = [
 const CompareOffersPage: React.FC = () => {
   return (
     <main className="min-h-screen bg-white pb-16">
-      <section className="bg-gradient-to-b from-slate-50 to-white border-b border-slate-100">
+      <section className="bg-white">
         <div className="mx-auto max-w-5xl px-4 py-12 lg:px-8 lg:py-16">
           <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
             Comparatif

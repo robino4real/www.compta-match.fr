@@ -119,7 +119,7 @@ const HomePage: React.FC = () => {
 
         {/* Illustration droite */}
         <div className="flex flex-1 items-center justify-center">
-          <div className="relative flex w-full max-w-md items-center justify-center rounded-3xl border border-slate-100 bg-white px-6 py-8">
+          <div className="relative flex w-full max-w-md items-center justify-center">
             <img
               src={settings.heroIllustrationUrl}
               alt="Illustration comptable"
