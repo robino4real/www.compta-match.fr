@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { API_BASE_URL } from "../config/api";
+import { HomepageFeature, HomepageHeroSection } from "../types/homepage";
 
-export type Feature = { title: string; description: string };
 export type Testimonial = { name: string; role: string; text: string };
 
 export type HighlightedProduct = {
@@ -18,13 +18,14 @@ export type HomepageSettings = {
   heroTitle: string;
   heroSubtitle: string;
   heroButtonLabel: string;
-  heroButtonUrl: string;
+  heroButtonLink: string;
   heroImageUrl?: string | null;
   heroBackgroundImageUrl?: string | null;
   siteLogoUrl?: string | null;
   navbarLogoUrl?: string | null;
   faviconUrl?: string | null;
-  features?: Feature[];
+  features: HomepageFeature[];
+  heroSections: HomepageHeroSection[];
   highlightedProductIds?: string[];
   testimonials?: Testimonial[];
   contentBlockTitle?: string | null;
@@ -38,7 +39,7 @@ const FALLBACK_SETTINGS: HomepageSettings = {
   heroSubtitle:
     "Outils et contenus pour aider les TPE, micro-entreprises et indépendants à piloter leur comptabilité.",
   heroButtonLabel: "Découvrir nos offres",
-  heroButtonUrl: "/offres",
+  heroButtonLink: "/offres",
   heroImageUrl: null,
   heroBackgroundImageUrl: null,
   siteLogoUrl: null,
@@ -47,17 +48,21 @@ const FALLBACK_SETTINGS: HomepageSettings = {
   features: [
     {
       title: "Simplicité",
-      description: "Une interface claire pour suivre vos obligations et vos documents sans jargon inutile.",
+      text: "Une interface claire pour suivre vos obligations et vos documents sans jargon inutile.",
+      iconUrl: "",
     },
     {
       title: "Souplesse",
-      description: "Choisissez entre outils téléchargeables et ressources en ligne.",
+      text: "Choisissez entre outils téléchargeables et ressources en ligne.",
+      iconUrl: "",
     },
     {
       title: "Support",
-      description: "Une équipe disponible et des guides pour vous accompagner au quotidien.",
+      text: "Une équipe disponible et des guides pour vous accompagner au quotidien.",
+      iconUrl: "",
     },
   ],
+  heroSections: [],
   highlightedProductIds: [],
   testimonials: [],
   contentBlockTitle: "Une approche pragmatique",
@@ -83,16 +88,6 @@ type HookState = {
 let cachedState: HookState | null = null;
 let inflightRequest: Promise<HookState> | null = null;
 
-function parseFeatures(value: unknown): Feature[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => ({
-      title: typeof item?.title === "string" ? item.title : "",
-      description: typeof item?.description === "string" ? item.description : "",
-    }))
-    .filter((item) => item.title || item.description);
-}
-
 function parseTestimonials(value: unknown): Testimonial[] {
   if (!Array.isArray(value)) return [];
   return value
@@ -106,10 +101,30 @@ function parseTestimonials(value: unknown): Testimonial[] {
 
 function normalizeSettings(incoming: HomepageSettings | undefined): HomepageSettings {
   if (!incoming) return FALLBACK_SETTINGS;
+  const normalizedFeatures = Array.isArray(incoming.features)
+    ? incoming.features.map((feature) => ({
+        title: typeof feature?.title === "string" ? feature.title : "",
+        text: typeof (feature as any)?.text === "string" ? (feature as any).text : "",
+        iconUrl: typeof feature?.iconUrl === "string" ? feature.iconUrl : "",
+      }))
+    : [];
+
+  const normalizedHeroSections = Array.isArray(incoming.heroSections)
+    ? incoming.heroSections.map((section) => ({
+        title: typeof section?.title === "string" ? section.title : "",
+        subtitle: typeof section?.subtitle === "string" ? section.subtitle : "",
+        buttonLabel: typeof section?.buttonLabel === "string" ? section.buttonLabel : "",
+        buttonLink: typeof section?.buttonLink === "string" ? section.buttonLink : "",
+        illustrationUrl: typeof section?.illustrationUrl === "string" ? section.illustrationUrl : "",
+        align: section?.align === "right" ? "right" : "left",
+      }))
+    : [];
+
   return {
     ...FALLBACK_SETTINGS,
     ...incoming,
-    features: parseFeatures(incoming.features),
+    features: normalizedFeatures.length ? normalizedFeatures : FALLBACK_SETTINGS.features,
+    heroSections: normalizedHeroSections,
     testimonials: parseTestimonials(incoming.testimonials),
     highlightedProductIds: Array.isArray(incoming.highlightedProductIds)
       ? (incoming.highlightedProductIds as unknown[])
@@ -119,8 +134,12 @@ function normalizeSettings(incoming: HomepageSettings | undefined): HomepageSett
   };
 }
 
-async function fetchPublicHomepage(): Promise<HookState> {
-  if (cachedState) return cachedState;
+async function fetchPublicHomepage(forceRefresh = false): Promise<HookState> {
+  if (forceRefresh) {
+    cachedState = null;
+  }
+
+  if (cachedState && !forceRefresh) return cachedState;
   if (inflightRequest) return inflightRequest;
 
   inflightRequest = (async () => {
@@ -157,11 +176,11 @@ export function useHomepageSettings() {
   const [isLoading, setIsLoading] = useState(!cachedState);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (forceRefresh = false) => {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await fetchPublicHomepage();
+      const result = await fetchPublicHomepage(forceRefresh);
       setSettings(result.settings);
       setHighlightedProducts(result.highlightedProducts);
       setStructuredData(result.structuredData ?? null);
@@ -177,8 +196,7 @@ export function useHomepageSettings() {
   }, []);
 
   useEffect(() => {
-    if (cachedState) return;
-    load().catch(() => {
+    load(true).catch(() => {
       /* handled in load */
     });
     return () => {
@@ -192,7 +210,7 @@ export function useHomepageSettings() {
     structuredData,
     isLoading,
     error,
-    reload: load,
+    reload: () => load(true),
   };
 }
 

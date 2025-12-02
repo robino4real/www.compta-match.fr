@@ -11,15 +11,15 @@ export type HomepageSettingsDTO = {
   heroButtonLabel: string;
   heroButtonLink: string;
   heroIllustrationUrl: string;
-  feature1Icon: string;
-  feature1Title: string;
-  feature1Text: string;
-  feature2Icon: string;
-  feature2Title: string;
-  feature2Text: string;
-  feature3Icon: string;
-  feature3Title: string;
-  feature3Text: string;
+  features: { title: string; text: string; iconUrl?: string }[];
+  heroSections: {
+    title: string;
+    subtitle: string;
+    buttonLabel: string;
+    buttonLink: string;
+    illustrationUrl: string;
+    align?: "left" | "right";
+  }[];
   heroTitleTag: string;
   heroSubtitleTag: string;
   heroButtonStyle: string;
@@ -32,24 +32,89 @@ const FALLBACK_DTO: HomepageSettingsDTO = {
   heroSubtitle:
     "Centralisez votre gestion comptable simplement, soyez toujours à jour, et concentrez-vous sur l’essentiel : votre activité.",
   heroButtonLabel: "Découvrir nos logiciels",
-  heroButtonLink: "#",
+  heroButtonLink: "/offres",
   heroIllustrationUrl:
     "https://images.unsplash.com/photo-1521791055366-0d553872125f?auto=format&fit=crop&w=1200&q=80",
-  feature1Icon: "check",
-  feature1Title: "Outils simples & complets",
-  feature1Text: "Des outils intuitifs pour suivre votre comptabilité au quotidien.",
-  feature2Icon: "layers",
-  feature2Title: "Tarifs transparents",
-  feature2Text: "Des offres claires et sans surprise, adaptées aux TPE.",
-  feature3Icon: "support",
-  feature3Title: "Support dédié & réactif",
-  feature3Text: "Une équipe qui répond vite pour vous accompagner.",
+  features: [
+    {
+      iconUrl: "check",
+      title: "Outils simples & complets",
+      text: "Des outils intuitifs pour suivre votre comptabilité au quotidien.",
+    },
+    {
+      iconUrl: "layers",
+      title: "Tarifs transparents",
+      text: "Des offres claires et sans surprise, adaptées aux TPE.",
+    },
+    {
+      iconUrl: "support",
+      title: "Support dédié & réactif",
+      text: "Une équipe qui répond vite pour vous accompagner.",
+    },
+  ],
+  heroSections: [],
   heroTitleTag: "h1",
   heroSubtitleTag: "p",
   heroButtonStyle: "primary",
   navbarLogoUrl: "",
   faviconUrl: "",
 };
+
+function sanitize(value: unknown) {
+  return typeof value === "string" ? value.trim() : undefined;
+}
+
+function parseFeatures(settings: HomepageSettings | null) {
+  const fromJson = Array.isArray(settings?.features)
+    ? (settings?.features as any[]).map((item) => ({
+        title: sanitize(item?.title) || "",
+        text: sanitize(item?.text) || "",
+        iconUrl: sanitize(item?.iconUrl) || "",
+      }))
+    : [];
+
+  if (fromJson.some((feature) => feature.title || feature.text || feature.iconUrl)) {
+    return fromJson;
+  }
+
+  const legacy = [
+    {
+      title: settings?.feature1Title || "",
+      text: settings?.feature1Text || "",
+      iconUrl: settings?.feature1Icon || "",
+    },
+    {
+      title: settings?.feature2Title || "",
+      text: settings?.feature2Text || "",
+      iconUrl: settings?.feature2Icon || "",
+    },
+    {
+      title: settings?.feature3Title || "",
+      text: settings?.feature3Text || "",
+      iconUrl: settings?.feature3Icon || "",
+    },
+  ].filter((feature) => feature.title || feature.text || feature.iconUrl);
+
+  return legacy.length ? legacy : FALLBACK_DTO.features;
+}
+
+function parseHeroSections(settings: HomepageSettings | null) {
+  if (!Array.isArray(settings?.heroSections)) return [];
+  return (settings?.heroSections as any[])
+    .map((section) => {
+      const alignCandidate = sanitize(section?.align);
+      const align: "left" | "right" = alignCandidate === "right" ? "right" : "left";
+      return {
+        title: sanitize(section?.title) || "",
+        subtitle: sanitize(section?.subtitle) || "",
+        buttonLabel: sanitize(section?.buttonLabel) || "",
+        buttonLink: sanitize(section?.buttonLink) || "",
+        illustrationUrl: sanitize(section?.illustrationUrl) || "",
+        align,
+      };
+    })
+    .filter((section) => section.title || section.subtitle || section.illustrationUrl);
+}
 
 function toDto(settings: HomepageSettings | null): HomepageSettingsDTO {
   const safe = settings ?? ({} as HomepageSettings);
@@ -61,15 +126,8 @@ function toDto(settings: HomepageSettings | null): HomepageSettingsDTO {
     heroButtonLink: safe.heroButtonLink || safe.heroButtonUrl || FALLBACK_DTO.heroButtonLink,
     heroIllustrationUrl:
       safe.heroIllustrationUrl || safe.heroImageUrl || FALLBACK_DTO.heroIllustrationUrl,
-    feature1Icon: safe.feature1Icon || FALLBACK_DTO.feature1Icon,
-    feature1Title: safe.feature1Title || FALLBACK_DTO.feature1Title,
-    feature1Text: safe.feature1Text || FALLBACK_DTO.feature1Text,
-    feature2Icon: safe.feature2Icon || FALLBACK_DTO.feature2Icon,
-    feature2Title: safe.feature2Title || FALLBACK_DTO.feature2Title,
-    feature2Text: safe.feature2Text || FALLBACK_DTO.feature2Text,
-    feature3Icon: safe.feature3Icon || FALLBACK_DTO.feature3Icon,
-    feature3Title: safe.feature3Title || FALLBACK_DTO.feature3Title,
-    feature3Text: safe.feature3Text || FALLBACK_DTO.feature3Text,
+    features: parseFeatures(settings),
+    heroSections: parseHeroSections(settings),
     heroTitleTag: safe.heroTitleTag || FALLBACK_DTO.heroTitleTag,
     heroSubtitleTag: safe.heroSubtitleTag || FALLBACK_DTO.heroSubtitleTag,
     heroButtonStyle: safe.heroButtonStyle || FALLBACK_DTO.heroButtonStyle,
