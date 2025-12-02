@@ -12,7 +12,7 @@ export function MainNavbar() {
   const menuItems = React.useMemo(
     () => [
       { to: "/", label: "Accueil", exact: true },
-      { to: "/comptapro", label: "Comparer les offres" },
+      { to: "/offres", label: "Comparer les offres" },
       { to: "/tarifs", label: "Nos logiciels" },
       { to: "/comptapro", label: "ComptaPro" },
     ],

@@ -29,6 +29,7 @@ import AnalyticsTracker from "./components/AnalyticsTracker";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import DownloadableProductsPage from "./pages/DownloadableProductsPage";
 import ComptaProSubscriptionPage from "./pages/ComptaProSubscriptionPage";
+import CompareOffersPage from "./pages/CompareOffersPage";
 import AdminPaidServicesPage from "./pages/admin/AdminPaidServicesPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MonProfilPage from "./pages/account/MonProfilPage";
@@ -83,6 +84,7 @@ const App: React.FC = () => {
       <Routes>
         <Route element={<MainLayoutWrapper />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/offres" element={<CompareOffersPage />} />
           <Route path="/tarifs" element={<DownloadableProductsPage />} />
           <Route path="/comptapro" element={<ComptaProSubscriptionPage />} />
           <Route path="/panier" element={<CartPage />} />
