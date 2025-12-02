@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { DownloadableProduct } from "@prisma/client";
+import { DownloadableProduct, VatRegime } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { getOrCreateSeoSettings } from "../services/seoSettingsService";
 import { getOrCreateCompanySettings } from "../services/companySettingsService";
@@ -35,10 +35,60 @@ type PublicDownloadableProductV2DTO = {
   currency: "EUR";
   badge?: string | null;
   tags?: string[];
+  cardImageUrl?: string;
   heroImageUrl?: string;
   galleryUrls?: string[];
+  detailSlides?: { imageUrl: string; description?: string | null }[];
+  priceDisplayMode: "HT" | "TTC";
   isPublished: boolean;
 };
+
+type DetailSlideDTO = { imageUrl: string; description?: string | null };
+
+function parseDetailSlides(raw: unknown): DetailSlideDTO[] | undefined {
+  if (Array.isArray(raw)) {
+    const slides = raw
+      .map((entry) => {
+        if (entry && typeof entry === "object") {
+          const { imageUrl, description } = entry as {
+            imageUrl?: string | null;
+            description?: string | null;
+          };
+          if (typeof imageUrl === "string" && imageUrl.trim().length > 0) {
+            return {
+              imageUrl: imageUrl.trim(),
+              description:
+                typeof description === "string"
+                  ? description.trim()
+                  : description ?? null,
+            };
+          }
+        }
+        return null;
+      })
+      .filter(Boolean) as DetailSlideDTO[];
+
+    return slides.length ? slides : undefined;
+  }
+
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      return parseDetailSlides(parsed);
+    } catch (error) {
+      console.warn("Impossible de parser detailSlides", error);
+    }
+  }
+
+  return undefined;
+}
+
+function resolvePriceDisplayMode(vatRegime?: VatRegime | null): "HT" | "TTC" {
+  if (vatRegime === VatRegime.NO_VAT_293B || vatRegime === VatRegime.OTHER) {
+    return "HT";
+  }
+  return "TTC";
+}
 
 const formatPriceTtc = (priceCents: number, currency?: string) => {
   if (Number.isNaN(priceCents)) return "Prix à venir";
@@ -175,10 +225,15 @@ export async function publicListDownloadableProducts(_req: Request, res: Respons
 
 export async function publicListDownloadableProductsV2(_req: Request, res: Response) {
   try {
-    const products = await prisma.downloadableProduct.findMany({
-      where: { isActive: true, isArchived: false },
-      orderBy: { createdAt: "desc" },
-    });
+    const [products, companySettings] = await Promise.all([
+      prisma.downloadableProduct.findMany({
+        where: { isActive: true, isArchived: false },
+        orderBy: { createdAt: "desc" },
+      }),
+      getOrCreateCompanySettings(),
+    ]);
+
+    const priceDisplayMode = resolvePriceDisplayMode(companySettings?.vatRegime);
 
     const response: PublicDownloadableProductV2DTO[] = products.map((product) => {
       const galleryUrls: string[] = [];
@@ -193,6 +248,8 @@ export async function publicListDownloadableProductsV2(_req: Request, res: Respo
         ? (product.featureBullets as string[])
         : undefined;
 
+      const detailSlides = parseDetailSlides(product.detailSlides);
+
       return {
         id: product.id,
         slug: product.slug,
@@ -204,8 +261,11 @@ export async function publicListDownloadableProductsV2(_req: Request, res: Respo
         currency: "EUR",
         badge: null,
         tags,
+        cardImageUrl: product.cardImageUrl || product.thumbnailUrl || product.ogImageUrl || undefined,
         heroImageUrl: product.thumbnailUrl || product.ogImageUrl || undefined,
         galleryUrls: galleryUrls.length ? galleryUrls : undefined,
+        detailSlides,
+        priceDisplayMode,
         isPublished: product.isActive && !product.isArchived,
       };
     });

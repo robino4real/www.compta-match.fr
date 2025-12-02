@@ -4,6 +4,11 @@ import { createDownloadableProduct } from "./adminController";
 
 type StatusFilter = "active" | "archived" | "all";
 
+type DetailSlideInput = {
+  imageUrl?: string | null;
+  description?: string | null;
+};
+
 function parseFeatureBullets(raw: unknown) {
   if (Array.isArray(raw)) {
     return raw.filter((entry) => typeof entry === "string" && entry.trim().length > 0);
@@ -17,6 +22,41 @@ function parseFeatureBullets(raw: unknown) {
       }
     } catch (error) {
       console.warn("Impossible de parser featureBullets", error);
+    }
+  }
+
+  return undefined;
+}
+
+function parseDetailSlides(raw: unknown): DetailSlideInput[] | undefined {
+  if (Array.isArray(raw)) {
+    const slides = raw
+      .map((entry) => {
+        if (entry && typeof entry === "object") {
+          const { imageUrl, description } = entry as DetailSlideInput;
+          if (typeof imageUrl === "string" && imageUrl.trim().length > 0) {
+            return {
+              imageUrl: imageUrl.trim(),
+              description:
+                typeof description === "string"
+                  ? description.trim()
+                  : description ?? null,
+            };
+          }
+        }
+        return null;
+      })
+      .filter(Boolean) as DetailSlideInput[];
+
+    return slides.length ? slides : undefined;
+  }
+
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      return parseDetailSlides(parsed);
+    } catch (error) {
+      console.warn("Impossible de parser detailSlides", error);
     }
   }
 
@@ -93,6 +133,7 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
       slug,
       shortDescription,
       longDescription,
+      cardImageUrl,
       priceCents,
       isActive,
       seoTitle,
@@ -102,6 +143,7 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
       ogImageUrl,
       thumbnailUrl,
       featureBullets,
+      detailSlides,
       detailHtml,
       isArchived,
     } = req.body as {
@@ -109,6 +151,7 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
       slug?: string;
       shortDescription?: string | null;
       longDescription?: string | null;
+      cardImageUrl?: string | null;
       priceCents?: number;
       isActive?: boolean;
       seoTitle?: string | null;
@@ -118,6 +161,7 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
       ogImageUrl?: string | null;
       thumbnailUrl?: string | null;
       featureBullets?: unknown;
+      detailSlides?: unknown;
       detailHtml?: string | null;
       isArchived?: boolean;
     };
@@ -150,6 +194,11 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
     if (typeof longDescription !== "undefined") {
       updateData.longDescription =
         longDescription === null ? null : String(longDescription);
+    }
+
+    if (typeof cardImageUrl !== "undefined") {
+      updateData.cardImageUrl =
+        cardImageUrl === null ? null : String(cardImageUrl).trim();
     }
 
     if (typeof priceCents !== "undefined") {
@@ -196,6 +245,11 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
     const parsedFeatureBullets = parseFeatureBullets(featureBullets);
     if (parsedFeatureBullets) {
       updateData.featureBullets = parsedFeatureBullets;
+    }
+
+    const parsedDetailSlides = parseDetailSlides(detailSlides);
+    if (typeof detailSlides !== "undefined") {
+      updateData.detailSlides = parsedDetailSlides ?? [];
     }
 
     if (typeof detailHtml !== "undefined") {

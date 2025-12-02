@@ -8,9 +8,16 @@ interface AdminDownloadProduct {
   name: string;
   shortDescription?: string | null;
   longDescription?: string | null;
+  cardImageUrl?: string | null;
   priceCents: number;
   currency: string;
   isActive: boolean;
+  detailSlides?: { imageUrl?: string | null; description?: string | null }[];
+}
+
+interface DetailSlideFormValue {
+  imageUrl: string;
+  description: string;
 }
 
 const AdminDownloadEditPage: React.FC = () => {
@@ -23,9 +30,22 @@ const AdminDownloadEditPage: React.FC = () => {
   const [name, setName] = React.useState("");
   const [shortDescription, setShortDescription] = React.useState("");
   const [longDescription, setLongDescription] = React.useState("");
+  const [cardImageUrl, setCardImageUrl] = React.useState("");
+  const [cardImageError, setCardImageError] = React.useState<string | null>(
+    null
+  );
+  const [isUploadingCardImage, setIsUploadingCardImage] = React.useState(false);
   const [thumbnailUrl, setThumbnailUrl] = React.useState("");
   const [thumbnailError, setThumbnailError] = React.useState<string | null>(null);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = React.useState(false);
+  const [detailSlides, setDetailSlides] = React.useState<DetailSlideFormValue[]>(
+    []
+  );
+  const [slideUploadError, setSlideUploadError] = React.useState<string | null>(
+    null
+  );
+  const [uploadingSlideIndex, setUploadingSlideIndex] =
+    React.useState<number | null>(null);
   const [priceEuros, setPriceEuros] = React.useState("");
   const [isActive, setIsActive] = React.useState(true);
 
@@ -63,7 +83,16 @@ const AdminDownloadEditPage: React.FC = () => {
         setName(prod.name ?? "");
         setShortDescription(prod.shortDescription ?? "");
         setLongDescription(prod.longDescription ?? "");
+        setCardImageUrl(prod.cardImageUrl ?? "");
         setThumbnailUrl(prod.thumbnailUrl ?? "");
+        setDetailSlides(
+          Array.isArray(prod.detailSlides)
+            ? prod.detailSlides.map((slide) => ({
+                imageUrl: slide?.imageUrl ?? "",
+                description: slide?.description ?? "",
+              }))
+            : []
+        );
         setPriceEuros(
           typeof prod.priceCents === "number"
             ? (prod.priceCents / 100).toString()
@@ -102,7 +131,14 @@ const AdminDownloadEditPage: React.FC = () => {
         name: name.trim(),
         shortDescription: shortDescription.trim() || null,
         longDescription: longDescription.trim() || null,
+        cardImageUrl: cardImageUrl.trim() || null,
         thumbnailUrl: thumbnailUrl.trim() || null,
+        detailSlides: detailSlides
+          .map((slide) => ({
+            imageUrl: slide.imageUrl.trim() || null,
+            description: slide.description.trim() || null,
+          }))
+          .filter((slide) => slide.imageUrl),
         priceCents: Math.round(parsedPrice * 100),
         isActive,
       };
@@ -156,6 +192,80 @@ const AdminDownloadEditPage: React.FC = () => {
       );
     } finally {
       setIsUploadingThumbnail(false);
+    }
+  };
+
+  const handleCardImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const selected = event.target.files?.[0];
+    if (!selected) return;
+
+    setCardImageError(null);
+    setIsUploadingCardImage(true);
+
+    try {
+      const upload = await uploadAdminImage(selected);
+      setCardImageUrl(upload.url);
+    } catch (err: any) {
+      console.error("Erreur upload image de vignette", err);
+      setCardImageError(
+        err?.message || "Impossible de téléverser l'image de vignette pour le moment."
+      );
+    } finally {
+      setIsUploadingCardImage(false);
+    }
+  };
+
+  const handleAddSlide = () => {
+    setDetailSlides((prev) => [...prev, { imageUrl: "", description: "" }]);
+  };
+
+  const handleRemoveSlide = (index: number) => {
+    setDetailSlides((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
+  const handleSlideChange = (
+    index: number,
+    field: keyof DetailSlideFormValue,
+    value: string
+  ) => {
+    setDetailSlides((prev) =>
+      prev.map((slide, idx) =>
+        idx === index
+          ? {
+              ...slide,
+              [field]: value,
+            }
+          : slide
+      )
+    );
+  };
+
+  const handleSlideImageUpload = async (
+    index: number,
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const selected = event.target.files?.[0];
+    if (!selected) return;
+
+    setSlideUploadError(null);
+    setUploadingSlideIndex(index);
+
+    try {
+      const upload = await uploadAdminImage(selected);
+      setDetailSlides((prev) =>
+        prev.map((slide, idx) =>
+          idx === index ? { ...slide, imageUrl: upload.url } : slide
+        )
+      );
+    } catch (err: any) {
+      console.error("Erreur upload visuel de descriptif", err);
+      setSlideUploadError(
+        err?.message || "Impossible de téléverser ce visuel pour le moment."
+      );
+    } finally {
+      setUploadingSlideIndex(null);
     }
   };
 
@@ -281,7 +391,51 @@ const AdminDownloadEditPage: React.FC = () => {
 
           <div className="space-y-2">
             <label className="text-xs font-semibold text-slate-700">
-              Vignette / visuel
+              Image de vignette (format carré)
+            </label>
+            <input
+              type="url"
+              value={cardImageUrl}
+              onChange={(e) => setCardImageUrl(e.target.value)}
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+              placeholder="https://cdn.exemple.com/visuels/vignette.png"
+            />
+            <div className="flex items-center gap-3 text-[11px] text-slate-500">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleCardImageUpload}
+                className="text-[11px]"
+              />
+              {isUploadingCardImage && <span>Import en cours...</span>}
+            </div>
+            {cardImageError && (
+              <p className="text-[11px] text-red-600">{cardImageError}</p>
+            )}
+            {cardImageUrl && (
+              <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700">
+                <img
+                  src={cardImageUrl}
+                  alt="Prévisualisation de la vignette"
+                  className="h-12 w-12 rounded object-cover"
+                />
+                <button
+                  type="button"
+                  className="text-slate-500 hover:text-black"
+                  onClick={() => setCardImageUrl("")}
+                >
+                  Supprimer
+                </button>
+              </div>
+            )}
+            <p className="text-[11px] text-slate-500">
+              Image dédiée aux vignettes du carrousel (format carré conseillé).
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-slate-700">
+              Visuel principal (page descriptif)
             </label>
             <input
               type="url"
@@ -306,7 +460,7 @@ const AdminDownloadEditPage: React.FC = () => {
               <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700">
                 <img
                   src={thumbnailUrl}
-                  alt="Prévisualisation de la vignette"
+                  alt="Prévisualisation du visuel"
                   className="h-10 w-10 rounded object-cover"
                 />
                 <button
@@ -319,13 +473,115 @@ const AdminDownloadEditPage: React.FC = () => {
               </div>
             )}
             <p className="text-[11px] text-slate-500">
-              URL ou import direct pour illustrer la fiche produit.
+              Image par défaut affichée dans la page descriptive.
             </p>
+          </div>
+
+          <div className="space-y-3 rounded-xl border border-dashed border-slate-200 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-slate-700">
+                  Visuels supplémentaires et descriptions
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  Chaque image peut avoir sa description dédiée pour le carrousel de fiche produit.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddSlide}
+                className="rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 transition hover:border-black hover:text-black"
+              >
+                Ajouter un visuel
+              </button>
+            </div>
+
+            {slideUploadError && (
+              <p className="text-[11px] text-red-600">{slideUploadError}</p>
+            )}
+
+            {detailSlides.length === 0 && (
+              <p className="text-[11px] text-slate-600">
+                Aucun visuel additionnel pour le moment.
+              </p>
+            )}
+
+            <div className="space-y-3">
+              {detailSlides.map((slide, index) => (
+                <div
+                  key={`slide-${index}`}
+                  className="rounded-xl border border-slate-200 bg-slate-50 p-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 space-y-1">
+                      <label className="text-[11px] font-semibold text-slate-700">
+                        Description associée
+                      </label>
+                      <textarea
+                        value={slide.description}
+                        onChange={(e) =>
+                          handleSlideChange(index, "description", e.target.value)
+                        }
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-[11px] text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                        rows={3}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSlide(index)}
+                      className="text-[11px] font-semibold text-slate-500 transition hover:text-red-600"
+                    >
+                      Supprimer
+                    </button>
+                  </div>
+
+                  <div className="mt-3 space-y-2">
+                    <label className="text-[11px] font-semibold text-slate-700">
+                      Image du visuel
+                    </label>
+                    <input
+                      type="url"
+                      value={slide.imageUrl}
+                      onChange={(e) =>
+                        handleSlideChange(index, "imageUrl", e.target.value)
+                      }
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-[11px] text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                      placeholder="https://cdn.exemple.com/visuels/screenshot.png"
+                    />
+                    <div className="flex items-center gap-3 text-[11px] text-slate-500">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) => handleSlideImageUpload(index, event)}
+                        className="text-[11px]"
+                      />
+                      {uploadingSlideIndex === index && <span>Import en cours...</span>}
+                    </div>
+                    {slide.imageUrl && (
+                      <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2 text-[11px] text-slate-700">
+                        <img
+                          src={slide.imageUrl}
+                          alt="Aperçu du visuel"
+                          className="h-12 w-12 rounded object-cover"
+                        />
+                        <button
+                          type="button"
+                          className="text-slate-500 hover:text-black"
+                          onClick={() => handleSlideChange(index, "imageUrl", "")}
+                        >
+                          Supprimer
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-700">
-              Prix TTC (en euros)
+              Prix (en euros)
             </label>
             <input
               type="text"
