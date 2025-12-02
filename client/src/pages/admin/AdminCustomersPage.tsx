@@ -39,6 +39,7 @@ const AdminCustomersPage: React.FC = () => {
   const [search, setSearch] = React.useState("");
   const [segment, setSegment] = React.useState<SegmentKey>("all");
   const [highlightedStat, setHighlightedStat] = React.useState<StatKey | null>(null);
+  const [utilityMessage, setUtilityMessage] = React.useState<string | null>(null);
 
   const fetchUsers = React.useCallback(async () => {
     try {
@@ -131,6 +132,71 @@ const AdminCustomersPage: React.FC = () => {
     });
   }, [users, search, segment]);
 
+  const customerInsights = React.useMemo(
+    () => [
+      {
+        label: "Emails vérifiés",
+        value: verifiedCount,
+        helper: "Adresses prêtes pour les campagnes.",
+      },
+      {
+        label: "Administrateurs",
+        value: adminsCount,
+        helper: "Comptes internes ou partenaires.",
+      },
+      {
+        label: "Créations 30 derniers jours",
+        value: users.filter((user) => Date.now() - new Date(user.createdAt).getTime() < 30 * 24 * 60 * 60 * 1000).length,
+        helper: "Suivi onboarding récent.",
+      },
+    ],
+    [adminsCount, users, verifiedCount]
+  );
+
+  const exportCsv = () => {
+    if (!filteredUsers.length) {
+      setUtilityMessage("Aucune ligne à exporter pour ce filtre.");
+      return;
+    }
+
+    const headers = ["id", "email", "role", "isEmailVerified", "createdAt"];
+    const rows = filteredUsers
+      .map((user) =>
+        headers
+          .map((key) => {
+            const value = (user as Record<string, unknown>)[key];
+            return typeof value === "string" ? `"${value.replace(/"/g, '""')}"` : String(value);
+          })
+          .join(",")
+      )
+      .join("\n");
+
+    const content = `${headers.join(",")}\n${rows}`;
+    const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "clients_comptamatch.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+    setUtilityMessage("Export CSV généré à partir du filtre actif.");
+  };
+
+  const copyEmailsToClipboard = async () => {
+    try {
+      if (!filteredUsers.length) {
+        setUtilityMessage("Aucun email à copier pour ce filtre.");
+        return;
+      }
+      const emails = filteredUsers.map((user) => user.email).join(", ");
+      await navigator.clipboard.writeText(emails);
+      setUtilityMessage("Liste d'emails copiée dans le presse-papiers.");
+    } catch (err) {
+      console.error("Erreur de copie emails", err);
+      setUtilityMessage("Impossible de copier les emails : autorisez l'accès au presse-papiers.");
+    }
+  };
+
   const statEntries: { key: StatKey; label: string; value: number; helper: string }[] = [
     {
       key: "totalRegisteredUsers",
@@ -180,7 +246,7 @@ const AdminCustomersPage: React.FC = () => {
               Identifiez tous les profils, filtrez par statut et plongez dans les chiffres clés.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col items-start gap-2 text-right lg:items-end">
             <label htmlFor="stats-range" className="text-xs font-semibold text-slate-700">
               Période statistique
             </label>
@@ -196,8 +262,29 @@ const AdminCustomersPage: React.FC = () => {
                 </option>
               ))}
             </select>
+            {utilityMessage && <p className="text-[11px] text-slate-500">{utilityMessage}</p>}
           </div>
         </div>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-3">
+        {customerInsights.map((item) => (
+          <div
+            key={item.label}
+            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {item.label}
+              </p>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-700">
+                Live
+              </span>
+            </div>
+            <p className="mt-2 text-2xl font-semibold text-black">{item.value}</p>
+            <p className="text-xs text-slate-600">{item.helper}</p>
+          </div>
+        ))}
       </section>
 
       <section className="grid gap-5 lg:grid-cols-3">
@@ -273,6 +360,20 @@ const AdminCustomersPage: React.FC = () => {
                     {item.label} ({item.count})
                   </button>
                 ))}
+                <button
+                  type="button"
+                  onClick={exportCsv}
+                  className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 transition hover:border-black hover:text-black"
+                >
+                  Export CSV
+                </button>
+                <button
+                  type="button"
+                  onClick={copyEmailsToClipboard}
+                  className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 transition hover:border-black hover:text-black"
+                >
+                  Copier les emails
+                </button>
               </div>
             </div>
           </div>

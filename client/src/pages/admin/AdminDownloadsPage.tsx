@@ -54,6 +54,9 @@ const AdminDownloadsPage: React.FC = () => {
   const [supportContact, setSupportContact] = React.useState("support@compta-match.fr");
   const [file, setFile] = React.useState<File | null>(null);
 
+  const [seoTitleOverride, setSeoTitleOverride] = React.useState("");
+  const [seoDescriptionOverride, setSeoDescriptionOverride] = React.useState("");
+
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>("active");
   const [searchTerm, setSearchTerm] = React.useState("");
 
@@ -287,6 +290,39 @@ const AdminDownloadsPage: React.FC = () => {
     };
   }, [priceEuros]);
 
+  const seoTitle = (seoTitleOverride || name || "Titre SEO à définir").trim();
+  const seoDescription = (
+    seoDescriptionOverride ||
+    shortDescription ||
+    longDescription ||
+    "Décrivez le bénéfice principal et le format téléchargeable."
+  ).trim();
+  const seoTitleLength = seoTitle.length;
+  const seoDescriptionLength = seoDescription.length;
+  const seoScore = React.useMemo(() => {
+    let score = 0;
+    if (seoTitleLength >= 40 && seoTitleLength <= 60) score += 40;
+    if (seoDescriptionLength >= 110 && seoDescriptionLength <= 170) score += 40;
+    if (thumbnailUrl) score += 10;
+    if (slug) score += 10;
+    return score;
+  }, [seoDescriptionLength, seoTitleLength, slug, thumbnailUrl]);
+  const seoChecklist = [
+    { label: "Slug propre", done: Boolean(slug) },
+    { label: "Titre entre 40 et 60 caractères", done: seoTitleLength >= 40 && seoTitleLength <= 60 },
+    { label: "Description entre 110 et 170 caractères", done: seoDescriptionLength >= 110 && seoDescriptionLength <= 170 },
+    { label: "Visuel OG (vignette)", done: Boolean(thumbnailUrl) },
+  ];
+
+  const copySlugToClipboard = async () => {
+    try {
+      if (!slug) return;
+      await navigator.clipboard.writeText(slug);
+    } catch (err) {
+      console.error("Copie slug", err);
+    }
+  };
+
   const checklist = [
     { label: "Identité complète", done: Boolean(name && shortDescription && slug) },
     { label: "Tarif validé", done: Boolean(pricePreview && pricePreview.cents > 0) },
@@ -364,9 +400,16 @@ const AdminDownloadsPage: React.FC = () => {
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
                   placeholder="comptamini-compta-generale"
                 />
-                <p className="text-[11px] text-slate-500">
-                  Généré automatiquement. Vous pouvez le personnaliser si besoin.
-                </p>
+                <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+                  <p>Généré automatiquement. Vous pouvez le personnaliser si besoin.</p>
+                  <button
+                    type="button"
+                    onClick={copySlugToClipboard}
+                    className="rounded-full border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-700 transition hover:border-black hover:text-black"
+                  >
+                    Copier
+                  </button>
+                </div>
               </div>
               <div className="space-y-1">
                 <label className="block text-[11px] font-medium text-slate-800">Vignette / visuel</label>
@@ -418,6 +461,27 @@ const AdminDownloadsPage: React.FC = () => {
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
                   placeholder="Résumé rapide affiché dans la vitrine."
                 />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-slate-800">Titre SEO dédié</label>
+                <input
+                  type="text"
+                  value={seoTitleOverride}
+                  onChange={(e) => setSeoTitleOverride(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                  placeholder="Optimisez le titre pour Google (40-60 caractères)"
+                />
+                <p className="text-[11px] text-slate-500">{seoTitleLength} caractères (40-60 recommandé).</p>
+              </div>
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-slate-800">Description SEO dédiée</label>
+                <textarea
+                  value={seoDescriptionOverride}
+                  onChange={(e) => setSeoDescriptionOverride(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black min-h-[80px]"
+                  placeholder="Résumé cliquable pour les SERP (110-170 caractères)."
+                />
+                <p className="text-[11px] text-slate-500">{seoDescriptionLength} caractères.</p>
               </div>
               <div className="space-y-1">
                 <label className="block text-[11px] font-medium text-slate-800">Description détaillée</label>
@@ -622,58 +686,86 @@ const AdminDownloadsPage: React.FC = () => {
             </div>
 
             <div className="md:col-span-2 space-y-2 rounded-xl border border-slate-200 bg-white p-4">
-              <p className="text-sm font-semibold text-black">Aperçu vitrine</p>
-              <div className="flex flex-col gap-3 md:flex-row">
-                <div className="h-28 w-full rounded-lg bg-slate-100 md:w-40">
-                  {thumbnailUrl ? (
-                    <img
-                      src={thumbnailUrl}
-                      alt="Aperçu visuel"
-                      className="h-full w-full rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-[11px] text-slate-400">
-                      Aucun visuel
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 space-y-1 text-sm text-slate-800">
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-black px-2 py-0.5 text-[11px] font-semibold text-white">
-                      Nouveau
-                    </span>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
-                      {licenseType}
-                    </span>
-                    {releaseChannel !== "stable" && (
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
-                        {releaseChannel}
-                      </span>
+              <p className="text-sm font-semibold text-black">Aperçu vitrine & SEO express</p>
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="flex flex-col gap-3 md:flex-row">
+                  <div className="h-28 w-full rounded-lg bg-slate-100 md:w-40">
+                    {thumbnailUrl ? (
+                      <img
+                        src={thumbnailUrl}
+                        alt="Aperçu visuel"
+                        className="h-full w-full rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-[11px] text-slate-400">
+                        Aucun visuel
+                      </div>
                     )}
                   </div>
-                  <p className="text-lg font-semibold text-black">{name || "Produit sans nom"}</p>
-                  <p className="text-xs text-slate-600">{shortDescription || "Ajoutez un pitch court."}</p>
-                  {featureBullets.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      {featureBullets.slice(0, 3).map((feature) => (
-                        <span
-                          key={feature}
-                          className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700"
-                        >
-                          {feature}
-                        </span>
-                      ))}
-                      {featureBullets.length > 3 && (
-                        <span className="rounded-full bg-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-700">
-                          +{featureBullets.length - 3}
+                  <div className="flex-1 space-y-1 text-sm text-slate-800">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-black px-2 py-0.5 text-[11px] font-semibold text-white">
+                        Nouveau
+                      </span>
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                        {licenseType}
+                      </span>
+                      {releaseChannel !== "stable" && (
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                          {releaseChannel}
                         </span>
                       )}
                     </div>
-                  )}
-                  <p className="text-[13px] font-semibold text-emerald-700">
-                    {pricePreview ? `${pricePreview.euros} € TTC` : "Prix à définir"}
-                  </p>
-                  <p className="text-[11px] text-slate-500">Support : {supportContact || "À renseigner"}</p>
+                    <p className="text-lg font-semibold text-black">{name || "Produit sans nom"}</p>
+                    <p className="text-xs text-slate-600">{shortDescription || "Ajoutez un pitch court."}</p>
+                    {featureBullets.length > 0 && (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {featureBullets.slice(0, 3).map((feature) => (
+                          <span
+                            key={feature}
+                            className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700"
+                          >
+                            {feature}
+                          </span>
+                        ))}
+                        {featureBullets.length > 3 && (
+                          <span className="rounded-full bg-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-700">
+                            +{featureBullets.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <p className="text-[13px] font-semibold text-emerald-700">
+                      {pricePreview ? `${pricePreview.euros} € TTC` : "Prix à définir"}
+                    </p>
+                    <p className="text-[11px] text-slate-500">Support : {supportContact || "À renseigner"}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-sm text-slate-800">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Snippet SERP</p>
+                    <span className="text-[11px] font-semibold text-slate-600">Score : {seoScore}/100</span>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-inner">
+                    <p className="truncate text-sm font-semibold text-indigo-900">{seoTitle}</p>
+                    <p className="truncate text-xs text-emerald-700">https://www.compta-match.fr/telechargements/{slug || "slug"}</p>
+                    <p className="line-clamp-2 pt-1 text-xs text-slate-700">{seoDescription}</p>
+                  </div>
+                  <div className="space-y-2 text-[11px] text-slate-700">
+                    {seoChecklist.map((item) => (
+                      <div key={item.label} className="flex items-center justify-between">
+                        <span>{item.label}</span>
+                        <span
+                          className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold ${
+                            item.done ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"
+                          }`}
+                        >
+                          {item.done ? "✓" : "!"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

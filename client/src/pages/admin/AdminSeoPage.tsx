@@ -38,6 +38,8 @@ const AdminSeoPage: React.FC = () => {
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
   const [staticPageMessage, setStaticPageMessage] = React.useState<string | null>(null);
+  const [initialSettings, setInitialSettings] = React.useState<SeoSettings | null>(null);
+  const [lastSavedAt, setLastSavedAt] = React.useState<string | null>(null);
 
   const loadData = async () => {
     try {
@@ -58,6 +60,7 @@ const AdminSeoPage: React.FC = () => {
       }
 
       setSettings(settingsData.settings as SeoSettings);
+      setInitialSettings(settingsData.settings as SeoSettings);
       setStaticPages(staticPagesData.pages as SeoStaticPage[]);
     } catch (err: any) {
       console.error("Erreur chargement SEO", err);
@@ -93,11 +96,56 @@ const AdminSeoPage: React.FC = () => {
       }
       setSettings(data.settings as SeoSettings);
       setSuccess("Paramètres SEO enregistrés.");
+      setLastSavedAt(new Date().toLocaleString());
     } catch (err: any) {
       console.error("Erreur sauvegarde SEO", err);
       setError(err?.message || "Impossible d'enregistrer les paramètres.");
     }
   };
+
+  const autoCompleteSeo = () => {
+    if (!settings) return;
+    const enriched: SeoSettings = {
+      ...settings,
+      defaultTitle:
+        settings.defaultTitle || `${settings.siteName} — ${settings.siteTagline || "Solutions métiers"}`,
+      titleTemplate: settings.titleTemplate || "{{pageTitle}} | {{siteName}}",
+      defaultMetaDescription:
+        settings.defaultMetaDescription ||
+        "Logiciels comptables et ressources téléchargeables pour cabinets et indépendants.",
+      defaultRobotsIndex: settings.defaultRobotsIndex || "index",
+      defaultRobotsFollow: settings.defaultRobotsFollow || "follow",
+      canonicalBaseUrl: settings.canonicalBaseUrl || "https://www.compta-match.fr",
+    };
+    setSettings(enriched);
+    setSuccess("Champs complétés avec les suggestions SEO.");
+  };
+
+  const resetSettings = () => {
+    if (initialSettings) {
+      setSettings(initialSettings);
+      setSuccess("Paramètres restaurés.");
+    }
+  };
+
+  const seoHealth = React.useMemo(() => {
+    if (!settings) return 0;
+    const fields = [
+      settings.siteName,
+      settings.defaultTitle,
+      settings.titleTemplate,
+      settings.defaultMetaDescription,
+      settings.defaultOgImageUrl,
+      settings.canonicalBaseUrl,
+    ];
+    const filled = fields.filter((value) => Boolean(value && String(value).trim())).length;
+    return Math.round((filled / fields.length) * 100);
+  }, [settings]);
+
+  const previewTitle = settings?.defaultTitle || settings?.siteName || "Titre par défaut";
+  const previewDescription =
+    settings?.defaultMetaDescription ||
+    "Préparez un résumé orienté bénéfice pour vos pages principales.";
 
   const handleStaticPageChange = (id: string, field: keyof SeoStaticPage, value: any) => {
     setStaticPages((prev) =>
@@ -139,19 +187,63 @@ const AdminSeoPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-xl font-semibold text-black">SEO – Paramètres généraux</h1>
             <p className="text-xs text-slate-600">
               Configurez le titre par défaut, le template et les options d'indexation globales.
             </p>
+            {lastSavedAt && (
+              <p className="text-[11px] text-slate-500">Dernier enregistrement : {lastSavedAt}</p>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={autoCompleteSeo}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800 hover:border-black hover:text-black"
+            >
+              Remplir automatiquement
+            </button>
+            <button
+              type="button"
+              onClick={resetSettings}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800 hover:border-black hover:text-black"
+            >
+              Restaurer
+            </button>
+            <span className="rounded-lg bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-700">
+              Santé SEO : {seoHealth}%
+            </span>
           </div>
         </div>
 
         {error && <p className="mt-2 text-[11px] text-red-600">{error}</p>}
         {success && <p className="mt-2 text-[11px] text-green-600">{success}</p>}
 
-        <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3 md:col-span-2">
+            <p className="text-xs font-semibold text-slate-700">Aperçu SERP (page par défaut)</p>
+            <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-inner">
+              <p className="truncate text-sm font-semibold text-indigo-900">{previewTitle}</p>
+              <p className="truncate text-xs text-emerald-700">{settings.canonicalBaseUrl || "https://www.compta-match.fr"}</p>
+              <p className="line-clamp-2 pt-1 text-xs text-slate-700">{previewDescription}</p>
+            </div>
+            <p className="text-[11px] text-slate-600">
+              Longueur titre : {previewTitle.length} caractères · Longueur description : {previewDescription.length} caractères.
+            </p>
+          </div>
+          <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+            <p className="text-xs font-semibold text-slate-700">Actions rapides</p>
+            <ul className="space-y-1 text-[11px] text-slate-600">
+              <li>• Vérifiez que le titre reste &lt; 60 caractères.</li>
+              <li>• Ajoutez une image OG hébergée en HTTPS.</li>
+              <li>• Utilisez le handle Twitter pour les cartes enrichies.</li>
+            </ul>
+          </div>
+        </div>
+
+        <form className="mt-6 grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
           <div className="space-y-1">
             <label className="text-[11px] text-slate-600">Nom du site</label>
             <input
