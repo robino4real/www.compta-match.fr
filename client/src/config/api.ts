@@ -3,6 +3,11 @@ const appendApiSuffix = (value: string) => {
   return normalized.endsWith("/api") ? normalized : `${normalized}/api`;
 };
 
+const normalizePath = (path: string) => {
+  const prefixed = path.startsWith("/") ? path : `/${path}`;
+  return prefixed.replace(/\/+/g, "/");
+};
+
 const inferBaseUrl = () => {
   if (import.meta.env.VITE_API_BASE_URL) {
     return appendApiSuffix(import.meta.env.VITE_API_BASE_URL);
@@ -16,3 +21,5 @@ const inferBaseUrl = () => {
 };
 
 export const API_BASE_URL = inferBaseUrl();
+
+export const buildApiUrl = (path: string) => `${API_BASE_URL}${normalizePath(path)}`;

@@ -1,5 +1,5 @@
 import React from "react";
-import { API_BASE_URL } from "../config/api";
+import { buildApiUrl } from "../config/api";
 import { AuthUser } from "./AuthContext";
 
 interface AdminAuthContextValue {
@@ -25,7 +25,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({
 
   const refreshAdmin = React.useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      const response = await fetch(buildApiUrl("/auth/me"), {
         method: "GET",
         credentials: "include",
       });
@@ -54,7 +54,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({
 
   const logoutAdmin = React.useCallback(async (redirectTo?: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+      const response = await fetch(buildApiUrl("/auth/logout"), {
         method: "POST",
         credentials: "include",
       });

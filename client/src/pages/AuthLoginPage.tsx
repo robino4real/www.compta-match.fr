@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation, useNavigate, type Location } from "react-router-dom";
-import { API_BASE_URL } from "../config/api";
+import { buildApiUrl } from "../config/api";
 import { useAuth } from "../context/AuthContext";
 import { useAdminAuth } from "../context/AdminAuthContext";
 
@@ -94,7 +94,7 @@ const AuthLoginPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/admin-2fa-verify`, {
+      const response = await fetch(buildApiUrl("/auth/admin-2fa-verify"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

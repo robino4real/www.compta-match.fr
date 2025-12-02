@@ -1,5 +1,5 @@
 import React from "react";
-import { API_BASE_URL } from "../config/api";
+import { buildApiUrl } from "../config/api";
 
 export interface AuthUser {
   id: string;
@@ -43,7 +43,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({
 
   const refreshUser = React.useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      const response = await fetch(buildApiUrl("/auth/me"), {
         method: "GET",
         credentials: "include",
       });
@@ -78,7 +78,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({
     }> => {
       setIsLoading(true);
       try {
-        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        const response = await fetch(buildApiUrl("/auth/login"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -129,7 +129,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({
 
   const logout = React.useCallback(async (redirectTo?: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+      const response = await fetch(buildApiUrl("/auth/logout"), {
         method: "POST",
         credentials: "include",
       });
