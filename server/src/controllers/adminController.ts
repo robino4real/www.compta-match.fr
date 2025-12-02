@@ -112,3 +112,34 @@ export async function createDownloadableProduct(req: Request, res: Response) {
       .json({ message: "Erreur lors de la création du produit téléchargeable." });
   }
 }
+
+export async function adminUploadAsset(req: Request, res: Response) {
+  try {
+    const file = (req as any).file as Express.Multer.File | undefined;
+
+    if (!file) {
+      return res.status(400).json({ message: "Aucun fichier reçu." });
+    }
+
+    if (file.mimetype && !file.mimetype.startsWith("image/")) {
+      return res
+        .status(400)
+        .json({ message: "Seuls les fichiers image peuvent être importés." });
+    }
+
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    const url = `${baseUrl}/uploads/${encodeURIComponent(file.filename)}`;
+
+    return res.status(201).json({
+      url,
+      filename: file.filename,
+      size: file.size,
+      mimeType: file.mimetype,
+    });
+  } catch (error) {
+    console.error("Erreur lors de l'upload d'un fichier", error);
+    return res
+      .status(500)
+      .json({ message: "Impossible de téléverser ce fichier pour le moment." });
+  }
+}

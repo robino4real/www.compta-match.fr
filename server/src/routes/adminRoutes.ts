@@ -3,7 +3,7 @@ import multer from "multer";
 import fs from "fs";
 import { env } from "../config/env";
 import { attachUserToRequest, requireAdmin } from "../middleware/authMiddleware";
-import { listUsers } from "../controllers/adminController";
+import { adminUploadAsset, listUsers } from "../controllers/adminController";
 import {
   createDownloadableProduct,
   getDownloadableProductById,
@@ -114,6 +114,14 @@ router.post(
   requireAdmin,
   upload.single("file"),
   createDownloadableProduct
+);
+
+router.post(
+  "/uploads",
+  attachUserToRequest,
+  requireAdmin,
+  upload.single("file"),
+  adminUploadAsset
 );
 
 router.get(

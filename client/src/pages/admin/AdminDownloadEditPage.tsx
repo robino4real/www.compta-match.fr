@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
+import { uploadAdminImage } from "../../lib/adminUpload";
 
 interface AdminDownloadProduct {
   id: string;
@@ -22,6 +23,9 @@ const AdminDownloadEditPage: React.FC = () => {
   const [name, setName] = React.useState("");
   const [shortDescription, setShortDescription] = React.useState("");
   const [longDescription, setLongDescription] = React.useState("");
+  const [thumbnailUrl, setThumbnailUrl] = React.useState("");
+  const [thumbnailError, setThumbnailError] = React.useState<string | null>(null);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = React.useState(false);
   const [priceEuros, setPriceEuros] = React.useState("");
   const [isActive, setIsActive] = React.useState(true);
 
@@ -59,6 +63,7 @@ const AdminDownloadEditPage: React.FC = () => {
         setName(prod.name ?? "");
         setShortDescription(prod.shortDescription ?? "");
         setLongDescription(prod.longDescription ?? "");
+        setThumbnailUrl(prod.thumbnailUrl ?? "");
         setPriceEuros(
           typeof prod.priceCents === "number"
             ? (prod.priceCents / 100).toString()
@@ -97,6 +102,7 @@ const AdminDownloadEditPage: React.FC = () => {
         name: name.trim(),
         shortDescription: shortDescription.trim() || null,
         longDescription: longDescription.trim() || null,
+        thumbnailUrl: thumbnailUrl.trim() || null,
         priceCents: Math.round(parsedPrice * 100),
         isActive,
       };
@@ -130,6 +136,26 @@ const AdminDownloadEditPage: React.FC = () => {
       );
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleThumbnailUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = event.target.files?.[0];
+    if (!selected) return;
+
+    setThumbnailError(null);
+    setIsUploadingThumbnail(true);
+
+    try {
+      const upload = await uploadAdminImage(selected);
+      setThumbnailUrl(upload.url);
+    } catch (err: any) {
+      console.error("Erreur upload vignette", err);
+      setThumbnailError(
+        err?.message || "Impossible de téléverser la vignette pour le moment."
+      );
+    } finally {
+      setIsUploadingThumbnail(false);
     }
   };
 
@@ -251,6 +277,50 @@ const AdminDownloadEditPage: React.FC = () => {
               className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
               rows={6}
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-slate-700">
+              Vignette / visuel
+            </label>
+            <input
+              type="url"
+              value={thumbnailUrl}
+              onChange={(e) => setThumbnailUrl(e.target.value)}
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+              placeholder="https://cdn.exemple.com/visuels/comptamini.png"
+            />
+            <div className="flex items-center gap-3 text-[11px] text-slate-500">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleThumbnailUpload}
+                className="text-[11px]"
+              />
+              {isUploadingThumbnail && <span>Import en cours...</span>}
+            </div>
+            {thumbnailError && (
+              <p className="text-[11px] text-red-600">{thumbnailError}</p>
+            )}
+            {thumbnailUrl && (
+              <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700">
+                <img
+                  src={thumbnailUrl}
+                  alt="Prévisualisation de la vignette"
+                  className="h-10 w-10 rounded object-cover"
+                />
+                <button
+                  type="button"
+                  className="text-slate-500 hover:text-black"
+                  onClick={() => setThumbnailUrl("")}
+                >
+                  Supprimer
+                </button>
+              </div>
+            )}
+            <p className="text-[11px] text-slate-500">
+              URL ou import direct pour illustrer la fiche produit.
+            </p>
           </div>
 
           <div className="space-y-1">

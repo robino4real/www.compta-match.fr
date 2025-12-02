@@ -57,6 +57,7 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use("/uploads", express.static(env.downloadsStorageDir));
 
 apiRouter.use("/health", healthRoutes);
 apiRouter.use("/auth", authRoutes);

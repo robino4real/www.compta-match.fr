@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
+import { uploadAdminImage } from "../../lib/adminUpload";
 
 type StatusFilter = "active" | "archived" | "all";
 
@@ -42,6 +43,8 @@ const AdminDownloadsPage: React.FC = () => {
   const [shortDescription, setShortDescription] = React.useState("");
   const [longDescription, setLongDescription] = React.useState("");
   const [thumbnailUrl, setThumbnailUrl] = React.useState("");
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = React.useState(false);
+  const [thumbnailUploadError, setThumbnailUploadError] = React.useState<string | null>(null);
   const [featureBullets, setFeatureBullets] = React.useState<string[]>([]);
   const [featureInput, setFeatureInput] = React.useState("");
   const [detailHtml, setDetailHtml] = React.useState("");
@@ -111,6 +114,26 @@ const AdminDownloadsPage: React.FC = () => {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selected = event.target.files?.[0] ?? null;
     setFile(selected);
+  };
+
+  const handleThumbnailUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = event.target.files?.[0];
+    if (!selected) return;
+
+    setThumbnailUploadError(null);
+    setIsUploadingThumbnail(true);
+
+    try {
+      const upload = await uploadAdminImage(selected);
+      setThumbnailUrl(upload.url);
+    } catch (err: any) {
+      console.error("Erreur upload vignette", err);
+      setThumbnailUploadError(
+        err?.message || "Impossible de téléverser la vignette pour le moment."
+      );
+    } finally {
+      setIsUploadingThumbnail(false);
+    }
   };
 
   const addFeature = () => {
@@ -354,8 +377,36 @@ const AdminDownloadsPage: React.FC = () => {
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
                   placeholder="https://cdn.exemple.com/visuels/comptamini.png"
                 />
+                <div className="flex items-center gap-3 text-[11px] text-slate-500">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleThumbnailUpload}
+                    className="text-[11px]"
+                  />
+                  {isUploadingThumbnail && <span>Import en cours...</span>}
+                </div>
+                {thumbnailUploadError && (
+                  <p className="text-[11px] text-red-600">{thumbnailUploadError}</p>
+                )}
+                {thumbnailUrl && (
+                  <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700">
+                    <img
+                      src={thumbnailUrl}
+                      alt="Prévisualisation de la vignette"
+                      className="h-10 w-10 rounded object-cover"
+                    />
+                    <button
+                      type="button"
+                      className="text-slate-500 hover:text-black"
+                      onClick={() => setThumbnailUrl("")}
+                    >
+                      Supprimer
+                    </button>
+                  </div>
+                )}
                 <p className="text-[11px] text-slate-500">
-                  URL d&apos;aperçu affichée dans la vitrine et dans la fiche produit.
+                  URL d&apos;aperçu affichée dans la vitrine et dans la fiche produit. Vous pouvez saisir une URL ou importer un visuel depuis votre ordinateur.
                 </p>
               </div>
               <div className="space-y-1">
