@@ -19,6 +19,8 @@ const formatPrice = (value: number, currency: string) => {
     .replace(currency === "EUR" ? "€" : currency, "€");
 };
 
+const PRO_APP_URL = import.meta.env.VITE_PRO_APP_URL || "about:blank";
+
 const ComptaProSubscriptionPage: React.FC = () => {
   const navigate = useNavigate();
   const [plans, setPlans] = React.useState<PaidServicePlan[]>([]);
@@ -116,6 +118,23 @@ const ComptaProSubscriptionPage: React.FC = () => {
             Profitez de toute la puissance de COMPTAMATCH directement en ligne : choisissez l’abonnement qui vous convient et
             pilotez votre comptabilité en toute sérénité.
           </p>
+        </section>
+
+        <section className="rounded-3xl border border-slate-200 bg-slate-900 px-6 py-6 shadow-lg md:flex md:items-center md:justify-between md:px-10 md:py-8">
+          <div className="space-y-2 text-white md:max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-200">Accéder à mon espace Pro</p>
+            <p className="text-sm md:text-base text-slate-100">
+              Déjà abonné ? Retrouvez votre espace dédié dans un nouvel onglet pour gérer vos outils en ligne.
+            </p>
+          </div>
+          <a
+            href={PRO_APP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-3 text-center text-sm font-semibold text-slate-900 shadow-md transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:mt-0 md:w-auto"
+          >
+            Accéder à mon espace Pro
+          </a>
         </section>
 
         <section className="bg-white rounded-3xl border border-slate-100 shadow-[0_24px_60px_rgba(15,23,42,0.06)] px-6 py-8 md:px-10 md:py-10 space-y-10">

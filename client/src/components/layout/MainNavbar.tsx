@@ -31,7 +31,7 @@ export function MainNavbar() {
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-black text-xs font-semibold text-white">
             CM
           </div>
-          <span className="text-sm font-semibold tracking-tight text-slate-900">
+          <span className="text-base font-semibold tracking-tight text-slate-900 md:text-lg">
             COMPTAMATCH
           </span>
         </Link>
@@ -61,7 +61,21 @@ export function MainNavbar() {
             to={user ? "/compte" : "/auth/login"}
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/40 text-xs font-semibold text-slate-900">
-              {!isLoading && user?.email ? user.email.charAt(0).toUpperCase() : "➜"}
+              {!isLoading && user?.email ? (
+                user.email.charAt(0).toUpperCase()
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.6}
+                  className="h-4 w-4"
+                >
+                  <circle cx="12" cy="8" r="3.25" />
+                  <path d="M6.5 18.5c0-2.35 2.7-4 5.5-4s5.5 1.65 5.5 4" />
+                </svg>
+              )}
             </div>
             <span>{user ? "Mon compte" : "Se connecter"}</span>
           </Link>
@@ -138,7 +152,21 @@ export function MainNavbar() {
               to={user ? "/compte" : "/auth/login"}
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/40 text-xs font-semibold text-slate-900">
-                {!isLoading && user?.email ? user.email.charAt(0).toUpperCase() : "➜"}
+                {!isLoading && user?.email ? (
+                  user.email.charAt(0).toUpperCase()
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.6}
+                    className="h-4 w-4"
+                  >
+                    <circle cx="12" cy="8" r="3.25" />
+                    <path d="M6.5 18.5c0-2.35 2.7-4 5.5-4s5.5 1.65 5.5 4" />
+                  </svg>
+                )}
               </div>
               <span>{user ? "Mon compte" : "Se connecter"}</span>
             </Link>
