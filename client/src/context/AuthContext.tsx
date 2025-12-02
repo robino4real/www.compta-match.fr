@@ -19,6 +19,7 @@ interface ClientAuthContextValue {
     password: string
   ) => Promise<{
     success: boolean;
+    user?: AuthUser;
     message?: string;
     status?: string;
     twoFactorToken?: string;
@@ -70,6 +71,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({
       password: string
     ): Promise<{
       success: boolean;
+      user?: AuthUser;
       message?: string;
       status?: string;
       twoFactorToken?: string;
@@ -90,14 +92,15 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({
             success: false,
             status: data.status,
             message:
-              "Connexion administrateur détectée. Merci d'utiliser l'espace /admin.",
+              data?.message ||
+              "Connexion sécurisée requise. Merci de saisir le code reçu par email.",
             twoFactorToken: data.twoFactorToken,
           };
         }
 
         if (response.ok && data?.user) {
           setUser(data.user as AuthUser);
-          return { success: true };
+          return { success: true, user: data.user as AuthUser };
         }
 
         return {
