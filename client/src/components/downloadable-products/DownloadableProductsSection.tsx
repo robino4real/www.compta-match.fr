@@ -156,10 +156,10 @@ export const DownloadableProductsSection: React.FC = () => {
         role="button"
         onClick={() => handleSelect(product)}
         style={{ width: CARD_WIDTH }}
-        className={`group flex-shrink-0 cursor-pointer rounded-3xl border bg-white px-7 py-6 text-center shadow-[0_24px_60px_rgba(15,23,42,0.12)] transition-all duration-200 ${
+        className={`group flex-shrink-0 cursor-pointer rounded-3xl px-7 py-6 text-center transition-all duration-200 ${
           selectedProduct?.id === product.id
-            ? "border-slate-900 shadow-[0_28px_70px_rgba(15,23,42,0.16)]"
-            : "border-slate-100 hover:-translate-y-1 hover:border-slate-200 hover:shadow-[0_26px_66px_rgba(15,23,42,0.12)]"
+            ? "bg-slate-50 shadow-[0_20px_50px_rgba(15,23,42,0.12)]"
+            : "bg-white hover:-translate-y-1 hover:bg-slate-50 hover:shadow-[0_18px_44px_rgba(15,23,42,0.1)]"
         }`}
       >
         <div className="flex flex-col items-center gap-3">
@@ -205,7 +205,7 @@ export const DownloadableProductsSection: React.FC = () => {
               <div className="h-10 w-40 animate-pulse rounded-full bg-slate-200" />
             </div>
           </div>
-          <div className="h-72 rounded-3xl bg-gradient-to-br from-[#eef2ff] via-white to-[#e6f0ff] animate-pulse" />
+          <div className="h-72 rounded-3xl bg-slate-100 animate-pulse" />
         </div>
       );
     }
@@ -265,8 +265,8 @@ export const DownloadableProductsSection: React.FC = () => {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-[#eef2ff] via-white to-[#e6f0ff] p-6 shadow-[0_24px_60px_rgba(15,23,42,0.12)]">
-          <div className="relative overflow-hidden rounded-2xl border border-white/40 bg-white/60">
+        <div className="overflow-hidden rounded-3xl bg-white p-6">
+          <div className="relative overflow-hidden rounded-2xl bg-white">
             {currentImageUrl ? (
               <img
                 key={`${selectedProduct.id}-${imageIndex}`}
@@ -311,7 +311,7 @@ export const DownloadableProductsSection: React.FC = () => {
   );
 
   return (
-    <section className="space-y-8 rounded-3xl border border-slate-100 bg-white/80 px-6 py-8 shadow-[0_30px_80px_rgba(15,23,42,0.12)] backdrop-blur md:px-10 md:py-12">
+    <section className="space-y-8">
       <div className="flex flex-col gap-3 text-center">
         <p className="text-base font-semibold text-slate-900">Sélectionnez un logiciel</p>
         <p className="text-sm text-slate-600">Choisissez un logiciel pour afficher la description détaillée et l’ajouter à votre panier.</p>
@@ -322,48 +322,53 @@ export const DownloadableProductsSection: React.FC = () => {
         )}
       </div>
 
-      <div className="space-y-4">
-        {showNavigation && (
-          <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={handlePrev}
-              disabled={currentIndex === 0}
-              className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-[0_12px_30px_rgba(15,23,42,0.12)] transition hover:border-slate-300 hover:shadow-[0_16px_36px_rgba(15,23,42,0.16)] disabled:opacity-40"
-              aria-label="Afficher les logiciels précédents"
-            >
-              ←
-            </button>
-            <button
-              type="button"
-              onClick={handleNext}
-              disabled={currentIndex === maxIndex}
-              className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-[0_12px_30px_rgba(15,23,42,0.12)] transition hover:border-slate-300 hover:shadow-[0_16px_36px_rgba(15,23,42,0.16)] disabled:opacity-40"
-              aria-label="Afficher les logiciels suivants"
-            >
-              →
-            </button>
-          </div>
-        )}
-
+      <div className="space-y-6">
         <div className="relative">
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-white via-white/70 to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white via-white/70 to-transparent" />
-
-          <div className="overflow-visible py-2">
-            <div className="mx-auto" style={{ maxWidth: viewportWidth + 120 }}>
-              <div
-                className={`flex gap-7 transition-transform duration-500 ease-out ${
-                  showNavigation ? "" : "flex-wrap justify-center"
-                }`}
-                style={
-                  showNavigation
-                    ? { transform: `translateX(-${translateX}px)` }
-                    : undefined
-                }
-              >
-                {renderCards()}
+          {showNavigation && (
+            <>
+              <div className="absolute inset-y-0 -left-12 flex items-center">
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  disabled={currentIndex === 0}
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white text-lg font-semibold text-slate-900 shadow-[0_10px_30px_rgba(15,23,42,0.14)] transition hover:shadow-[0_14px_36px_rgba(15,23,42,0.16)] disabled:opacity-40"
+                  aria-label="Afficher les logiciels précédents"
+                >
+                  ←
+                </button>
               </div>
+              <div className="absolute inset-y-0 -right-12 flex items-center">
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={currentIndex === maxIndex}
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white text-lg font-semibold text-slate-900 shadow-[0_10px_30px_rgba(15,23,42,0.14)] transition hover:shadow-[0_14px_36px_rgba(15,23,42,0.16)] disabled:opacity-40"
+                  aria-label="Afficher les logiciels suivants"
+                >
+                  →
+                </button>
+              </div>
+            </>
+          )}
+
+          <div className="mx-auto overflow-hidden" style={{ maxWidth: viewportWidth }}>
+            <div
+              className={`flex gap-7 py-2 transition-transform duration-500 ease-out ${
+                showNavigation ? "" : "flex-wrap justify-center"
+              }`}
+              style={
+                showNavigation
+                  ? {
+                      transform: `translateX(-${translateX}px)`,
+                      maskImage:
+                        "linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%)",
+                      WebkitMaskImage:
+                        "linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%)",
+                    }
+                  : undefined
+              }
+            >
+              {renderCards()}
             </div>
           </div>
         </div>
