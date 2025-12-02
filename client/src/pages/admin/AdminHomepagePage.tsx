@@ -1,5 +1,6 @@
 import React from "react";
 import { API_BASE_URL } from "../../config/api";
+import { uploadAdminImage } from "../../lib/adminUpload";
 
 interface HomepageSettings {
   heroTitle: string;
@@ -53,6 +54,8 @@ const AdminHomepagePage: React.FC = () => {
   const [isSaving, setIsSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
+  const [uploadingField, setUploadingField] = React.useState<string | null>(null);
+  const [uploadError, setUploadError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const load = async () => {
@@ -158,6 +161,29 @@ const AdminHomepagePage: React.FC = () => {
     </div>
   );
 
+  const handleAssetUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+    field: "heroIllustrationUrl" | "navbarLogoUrl" | "faviconUrl"
+  ) => {
+    const selected = event.target.files?.[0];
+    if (!selected) return;
+
+    setUploadError(null);
+    setUploadingField(field);
+
+    try {
+      const upload = await uploadAdminImage(selected);
+      updateField(field, upload.url);
+    } catch (err: any) {
+      console.error("Erreur upload asset homepage", err);
+      setUploadError(
+        err?.message || "Impossible de téléverser ce fichier pour le moment."
+      );
+    } finally {
+      setUploadingField(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -173,6 +199,11 @@ const AdminHomepagePage: React.FC = () => {
           {success}
         </div>
       )}
+      {uploadError && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {uploadError}
+        </div>
+      )}
 
           {isLoading ? (
             <div className="rounded-xl border border-slate-200 bg-white px-6 py-10 text-center text-sm text-slate-500">
@@ -183,25 +214,57 @@ const AdminHomepagePage: React.FC = () => {
               <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
                 <div className="text-sm font-semibold text-slate-900">Identité visuelle</div>
                 <div className="grid gap-3 md:grid-cols-2">
-                  <label className="text-xs font-medium text-slate-600">
-                    Logo de navigation (URL)
+                <label className="text-xs font-medium text-slate-600">
+                  Logo de navigation (URL)
+                  <input
+                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    value={settings.navbarLogoUrl || ""}
+                    onChange={(e) => updateField("navbarLogoUrl", e.target.value)}
+                    placeholder="https://.../logo.png"
+                  />
+                  <div className="mt-2 flex items-center gap-3 text-[11px] text-slate-500">
                     <input
-                      className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                      value={settings.navbarLogoUrl || ""}
-                      onChange={(e) => updateField("navbarLogoUrl", e.target.value)}
-                      placeholder="https://.../logo.png"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleAssetUpload(e, "navbarLogoUrl")}
+                      className="text-[11px]"
                     />
-                  </label>
-                  <label className="text-xs font-medium text-slate-600">
-                    Favicon (URL)
+                    {uploadingField === "navbarLogoUrl" && <span>Import en cours...</span>}
+                    {settings.navbarLogoUrl && (
+                      <img
+                        src={settings.navbarLogoUrl}
+                        alt="Logo prévisualisation"
+                        className="h-8 w-8 rounded object-contain"
+                      />
+                    )}
+                  </div>
+                </label>
+                <label className="text-xs font-medium text-slate-600">
+                  Favicon (URL)
+                  <input
+                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    value={settings.faviconUrl || ""}
+                    onChange={(e) => updateField("faviconUrl", e.target.value)}
+                    placeholder="https://.../favicon.ico"
+                  />
+                  <div className="mt-2 flex items-center gap-3 text-[11px] text-slate-500">
                     <input
-                      className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                      value={settings.faviconUrl || ""}
-                      onChange={(e) => updateField("faviconUrl", e.target.value)}
-                      placeholder="https://.../favicon.ico"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleAssetUpload(e, "faviconUrl")}
+                      className="text-[11px]"
                     />
-                  </label>
-                </div>
+                    {uploadingField === "faviconUrl" && <span>Import en cours...</span>}
+                    {settings.faviconUrl && (
+                      <img
+                        src={settings.faviconUrl}
+                        alt="Favicon prévisualisation"
+                        className="h-6 w-6 rounded object-contain"
+                      />
+                    )}
+                  </div>
+                </label>
+              </div>
                 <p className="text-xs text-slate-500">
                   Le logo de navigation apparaît à gauche du titre dans la barre principale. Le favicon est utilisé pour l’icône
                   du site dans l’onglet du navigateur.
@@ -253,6 +316,22 @@ const AdminHomepagePage: React.FC = () => {
                 onChange={(e) => updateField("heroIllustrationUrl", e.target.value)}
               />
             </label>
+            <div className="flex items-center gap-3 text-[11px] text-slate-500">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleAssetUpload(e, "heroIllustrationUrl")}
+                className="text-[11px]"
+              />
+              {uploadingField === "heroIllustrationUrl" && <span>Import en cours...</span>}
+              {settings.heroIllustrationUrl && (
+                <img
+                  src={settings.heroIllustrationUrl}
+                  alt="Illustration hero"
+                  className="h-12 w-12 rounded object-cover"
+                />
+              )}
+            </div>
             <div className="grid gap-3 md:grid-cols-3">
               <label className="text-xs font-medium text-slate-600">
                 Tag du titre (h1, h2…)
