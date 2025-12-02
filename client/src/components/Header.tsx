@@ -107,41 +107,12 @@ const Header: React.FC = () => {
             <NavLink to="/offres" className={navLinkClass}>
               Comparer les offres
             </NavLink>
-            <NavLink to="/tarifs" className={navLinkClass}>
-              Tarifs
-            </NavLink>
             <NavLink to="/telechargements" className={navLinkClass}>
               Nos logiciels
-            </NavLink>
-            <NavLink to="/contact" className={navLinkClass}>
-              Contact
             </NavLink>
           </nav>
 
           <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
-            <Link
-              to="/panier"
-              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
-              aria-label="Panier"
-              onClick={() => setIsNavOpen(false)}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                className="h-5 w-5"
-              >
-                <circle cx="9" cy="21" r="1" />
-                <circle cx="20" cy="21" r="1" />
-                <path d="M1 1h4l2.68 12.39a1 1 0 0 0 .98.8h8.72a1 1 0 0 0 .98-.8L21 6H6" strokeWidth={1.6} />
-              </svg>
-              {items.length > 0 && (
-                <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-black px-1 text-[10px] font-semibold text-white">
-                  {items.length}
-                </span>
-              )}
-            </Link>
             {!user || isLoading ? (
               <>
                 <Link
@@ -152,10 +123,27 @@ const Header: React.FC = () => {
                   Se connecter
                 </Link>
                 <Link
-                  to="/auth/register"
-                  className="flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-white hover:text-black hover:border hover:border-black"
+                  to="/panier"
+                  className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
+                  aria-label="Panier"
+                  onClick={() => setIsNavOpen(false)}
                 >
-                  Créer un compte
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    className="h-5 w-5"
+                  >
+                    <circle cx="9" cy="21" r="1" />
+                    <circle cx="20" cy="21" r="1" />
+                    <path d="M1 1h4l2.68 12.39a1 1 0 0 0 .98.8h8.72a1 1 0 0 0 .98-.8L21 6H6" strokeWidth={1.6} />
+                  </svg>
+                  {items.length > 0 && (
+                    <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-black px-1 text-[10px] font-semibold text-white">
+                      {items.length}
+                    </span>
+                  )}
                 </Link>
               </>
             ) : (
@@ -177,6 +165,29 @@ const Header: React.FC = () => {
                 >
                   Se déconnecter
                 </button>
+                <Link
+                  to="/panier"
+                  className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
+                  aria-label="Panier"
+                  onClick={() => setIsNavOpen(false)}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    className="h-5 w-5"
+                  >
+                    <circle cx="9" cy="21" r="1" />
+                    <circle cx="20" cy="21" r="1" />
+                    <path d="M1 1h4l2.68 12.39a1 1 0 0 0 .98.8h8.72a1 1 0 0 0 .98-.8L21 6H6" strokeWidth={1.6} />
+                  </svg>
+                  {items.length > 0 && (
+                    <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-black px-1 text-[10px] font-semibold text-white">
+                      {items.length}
+                    </span>
+                  )}
+                </Link>
               </div>
             )}
           </div>

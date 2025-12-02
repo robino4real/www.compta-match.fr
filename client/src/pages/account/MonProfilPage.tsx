@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const cards = [
   {
@@ -97,13 +98,29 @@ const cards = [
 
 const MonProfilPage: React.FC = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    await logout("/");
+  };
 
   return (
     <main className="bg-slate-50 min-h-screen py-10">
       <div className="max-w-6xl mx-auto px-4 lg:px-8">
-        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-slate-900 mb-8">
-          Mon profil
-        </h1>
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-slate-900">
+            Mon profil
+          </h1>
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:border-black hover:text-black"
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? "Déconnexion..." : "Se déconnecter"}
+          </button>
+        </div>
 
         <div className="grid gap-6 md:grid-cols-2">
           {cards.map((card) => (
