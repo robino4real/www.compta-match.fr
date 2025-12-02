@@ -81,7 +81,9 @@ app.use("/api", apiRouter);
 app.get("/robots.txt", robotsTxtHandler);
 app.get("/sitemap.xml", sitemapHandler);
 
-const frontendDir = path.resolve(__dirname, "..", "frontend");
+// Servez toujours le build Vite généré dans client/dist pour éviter de renvoyer
+// d'anciennes versions du site lorsque l'utilisateur rafraîchit la page.
+const frontendDir = path.resolve(__dirname, "..", "..", "client", "dist");
 app.use(express.static(frontendDir));
 
 app.get("*", (req, res, next) => {
