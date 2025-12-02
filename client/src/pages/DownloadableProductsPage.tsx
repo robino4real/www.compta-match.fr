@@ -3,7 +3,7 @@ import DownloadableProductsSection from "../components/downloadable-products/Dow
 
 export default function DownloadableProductsPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#f5f7ff] via-white to-white py-14">
+    <main className="min-h-screen bg-white py-14">
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 lg:px-8">
         <section className="text-center">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">

@@ -24,7 +24,7 @@ export function MainNavbar() {
   }, [location.pathname]);
 
   return (
-    <header className="w-full border-b border-slate-100 bg-white">
+    <header className="w-full bg-white">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:h-20 md:px-0">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3">
@@ -133,7 +133,7 @@ export function MainNavbar() {
       </div>
 
       {isMenuOpen && (
-        <div className="border-t border-slate-100 bg-white shadow-sm md:hidden">
+        <div className="bg-white shadow-sm md:hidden">
           <nav className="grid gap-1 px-4 py-3 text-sm font-medium text-slate-700">
             {menuItems.map((item) => (
               <Link
@@ -146,7 +146,7 @@ export function MainNavbar() {
               </Link>
             ))}
           </nav>
-          <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-3">
+          <div className="flex items-center justify-between gap-3 px-4 py-3">
             <Link
               className="flex flex-1 items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-white"
               to={user ? "/compte" : "/auth/login"}
