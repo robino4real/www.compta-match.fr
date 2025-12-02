@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "../config/api";
+import { buildApiUrl } from "../config/api";
 
 export type AdminUploadResponse = {
   url: string;
@@ -11,7 +11,7 @@ export async function uploadAdminImage(file: File): Promise<AdminUploadResponse>
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${API_BASE_URL}/admin/uploads`, {
+  const response = await fetch(buildApiUrl("/admin/uploads"), {
     method: "POST",
     credentials: "include",
     body: formData,
