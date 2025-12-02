@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { HomepageSettings } from "@prisma/client";
 import {
+  DEFAULT_HOMEPAGE_BLOCKS,
+  HomepageContentBlock,
   getOrCreateHomepageSettings,
   updateHomepageSettings,
 } from "../services/homepageSettingsService";
@@ -25,6 +27,7 @@ export type HomepageSettingsDTO = {
   heroButtonStyle: string;
   navbarLogoUrl?: string;
   faviconUrl?: string;
+  blocks: HomepageContentBlock[];
 };
 
 const FALLBACK_DTO: HomepageSettingsDTO = {
@@ -58,6 +61,7 @@ const FALLBACK_DTO: HomepageSettingsDTO = {
   heroButtonStyle: "primary",
   navbarLogoUrl: "",
   faviconUrl: "",
+  blocks: DEFAULT_HOMEPAGE_BLOCKS,
 };
 
 function sanitize(value: unknown) {
@@ -116,6 +120,46 @@ function parseHeroSections(settings: HomepageSettings | null) {
     .filter((section) => section.title || section.subtitle || section.illustrationUrl);
 }
 
+function parseBlocks(settings: HomepageSettings | null): HomepageContentBlock[] {
+  if (!Array.isArray(settings?.blocks)) return FALLBACK_DTO.blocks;
+
+  const cleaned = (settings?.blocks as any[])
+    .map((block, index) => {
+      const kindCandidate = sanitize(block?.kind);
+      const kind: HomepageContentBlock["kind"] =
+        kindCandidate === "experience" ||
+        kindCandidate === "story" ||
+        kindCandidate === "feature-grid" ||
+        kindCandidate === "cta" ||
+        kindCandidate === "identity"
+          ? (kindCandidate as HomepageContentBlock["kind"])
+          : "experience";
+
+      const bullets = Array.isArray(block?.bullets)
+        ? (block?.bullets as unknown[])
+            .map((item) => sanitize(item))
+            .filter((item): item is string => Boolean(item))
+        : [];
+
+      return {
+        id: sanitize(block?.id) || `block-${index}`,
+        kind,
+        title: sanitize(block?.title) || "",
+        subtitle: sanitize(block?.subtitle) || "",
+        body: sanitize(block?.body) || "",
+        buttonLabel: sanitize(block?.buttonLabel) || "",
+        buttonLink: sanitize(block?.buttonLink) || "",
+        bullets,
+        badge: sanitize(block?.badge) || "",
+        imageUrl: sanitize(block?.imageUrl) || "",
+        mutedText: sanitize(block?.mutedText) || "",
+      } satisfies HomepageContentBlock;
+    })
+    .filter((block) => block.title || block.subtitle || block.body || block.kind === "identity");
+
+  return cleaned.length ? cleaned : FALLBACK_DTO.blocks;
+}
+
 function toDto(settings: HomepageSettings | null): HomepageSettingsDTO {
   const safe = settings ?? ({} as HomepageSettings);
 
@@ -133,6 +177,7 @@ function toDto(settings: HomepageSettings | null): HomepageSettingsDTO {
     heroButtonStyle: safe.heroButtonStyle || FALLBACK_DTO.heroButtonStyle,
     navbarLogoUrl: safe.navbarLogoUrl || FALLBACK_DTO.navbarLogoUrl,
     faviconUrl: safe.faviconUrl || FALLBACK_DTO.faviconUrl,
+    blocks: parseBlocks(settings),
   };
 }
 

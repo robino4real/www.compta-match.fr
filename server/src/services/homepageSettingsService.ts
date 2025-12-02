@@ -12,6 +12,73 @@ type HeroSection = {
   align?: "left" | "right";
 };
 
+export type HomepageContentBlock = {
+  id: string;
+  kind: "identity" | "experience" | "story" | "feature-grid" | "cta";
+  title: string;
+  subtitle?: string;
+  body?: string;
+  buttonLabel?: string;
+  buttonLink?: string;
+  bullets?: string[];
+  badge?: string;
+  imageUrl?: string;
+  mutedText?: string;
+};
+
+export const DEFAULT_HOMEPAGE_BLOCKS: HomepageContentBlock[] = [
+  {
+    id: "identity",
+    kind: "identity",
+    title: "Identité visuelle synchronisée",
+    subtitle: "Logos, favicon et visuels importés depuis le back-office.",
+    body: "Chaque élément graphique est instantanément répercuté sur la page publique pour rester cohérent avec votre marque.",
+    buttonLabel: "Mettre à jour la charte",
+    buttonLink: "/admin/homepage",
+    bullets: ["Logo de navigation", "Favicon et visuels secondaires"],
+  },
+  {
+    id: "experience",
+    kind: "experience",
+    title: "Expérience immersive",
+    subtitle: "Un scroll à la Apple",
+    body: "Animations synchronisées, sections qui se dévoilent et transitions douces pour une lecture fluide.",
+    bullets: [
+      "Intersection Observer pour révéler le contenu au bon moment.",
+      "Sections épurées, typographie lisible et responsive.",
+    ],
+    badge: "Expérience", 
+  },
+  {
+    id: "story",
+    kind: "story",
+    title: "Une histoire en défilement",
+    subtitle: "Les points forts de ComptaMatch se découvrent au fil du scroll.",
+    body: "Chaque bloc déclenche une évolution visuelle qui reste épinglée pour un effet premium inspiré des pages macOS.",
+    badge: "Parcours",
+  },
+  {
+    id: "features",
+    kind: "feature-grid",
+    title: "Pensé pour les dirigeants exigeants",
+    subtitle: "Fonctionnalités clés",
+    body: "Grille modulaire, responsive, et synchronisée avec les données du back-office pour mettre en avant vos nouveautés.",
+    badge: "Fonctionnalités",
+  },
+  {
+    id: "cta",
+    kind: "cta",
+    title: "Page d'accueil premium, compatible back-office",
+    subtitle:
+      "Une expérience inspirée d'Apple, des animations fluides, et des visuels pilotés par vos réglages.",
+    body:
+      "Vos logos et images sont prêts à être intégrés, sans compromis sur la performance ni l'accessibilité.",
+    buttonLabel: "Lancer ComptaMatch",
+    buttonLink: "/comparatif-des-offres",
+    badge: "Action",
+  },
+];
+
 const DEFAULT_HOME_SETTINGS: Pick<
   HomepageSettings,
   | "heroTitle"
@@ -39,6 +106,7 @@ const DEFAULT_HOME_SETTINGS: Pick<
     heroPrimaryCtaHref: string;
     features: FeatureCard[];
     heroSections: HeroSection[];
+    blocks: HomepageContentBlock[];
   } = {
   heroTitle: "L’aide à la comptabilité des TPE au meilleur prix.",
   heroSubtitle:
@@ -82,6 +150,7 @@ const DEFAULT_HOME_SETTINGS: Pick<
     },
   ],
   heroSections: [],
+  blocks: DEFAULT_HOMEPAGE_BLOCKS,
 };
 
 type HomepageEditableFields = Pick<
@@ -108,6 +177,7 @@ type HomepageEditableFields = Pick<
 > & {
   features?: FeatureCard[];
   heroSections?: HeroSection[];
+  blocks?: HomepageContentBlock[];
 };
 
 function sanitize(value: unknown): string | undefined {
@@ -149,6 +219,47 @@ function sanitizeHeroSections(value: unknown): HeroSection[] | undefined {
     })
     .filter((entry) => entry.title || entry.subtitle || entry.illustrationUrl);
 
+  return cleaned;
+}
+
+function sanitizeBlocks(value: unknown): HomepageContentBlock[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+
+  const cleaned = value
+    .map((entry, index) => {
+      const kindCandidate = sanitize((entry as any)?.kind);
+      const kind: HomepageContentBlock["kind"] =
+        kindCandidate === "experience" ||
+        kindCandidate === "story" ||
+        kindCandidate === "feature-grid" ||
+        kindCandidate === "cta" ||
+        kindCandidate === "identity"
+          ? (kindCandidate as HomepageContentBlock["kind"])
+          : "experience";
+
+      const bullets = Array.isArray((entry as any)?.bullets)
+        ? ((entry as any)?.bullets as unknown[])
+            .map((item) => sanitize(item))
+            .filter((item): item is string => Boolean(item))
+        : [];
+
+      return {
+        id: sanitize((entry as any)?.id) || `block-${index}-${Date.now()}`,
+        kind,
+        title: sanitize((entry as any)?.title) || "",
+        subtitle: sanitize((entry as any)?.subtitle) || "",
+        body: sanitize((entry as any)?.body) || "",
+        buttonLabel: sanitize((entry as any)?.buttonLabel) || "",
+        buttonLink: sanitize((entry as any)?.buttonLink) || "",
+        bullets,
+        badge: sanitize((entry as any)?.badge) || "",
+        imageUrl: sanitize((entry as any)?.imageUrl) || "",
+        mutedText: sanitize((entry as any)?.mutedText) || "",
+      } as HomepageContentBlock;
+    })
+    .filter((entry) => entry.title || entry.subtitle || entry.body || entry.kind === "identity");
+
+  if (!cleaned.length) return undefined;
   return cleaned;
 }
 
@@ -199,6 +310,17 @@ function normalizeHeroSections(
   return [];
 }
 
+function normalizeBlocks(
+  incoming: HomepageContentBlock[] | undefined,
+  existing: HomepageSettings
+): HomepageContentBlock[] {
+  if (incoming) return incoming;
+  if (Array.isArray(existing.blocks)) {
+    return sanitizeBlocks(existing.blocks) ?? DEFAULT_HOMEPAGE_BLOCKS;
+  }
+  return DEFAULT_HOMEPAGE_BLOCKS;
+}
+
 export async function getOrCreateHomepageSettings(): Promise<HomepageSettings> {
   return prisma.homepageSettings.upsert({
     where: { id: 1 },
@@ -229,6 +351,7 @@ export async function getOrCreateHomepageSettings(): Promise<HomepageSettings> {
       heroButtonStyle: DEFAULT_HOME_SETTINGS.heroButtonStyle,
       features: DEFAULT_HOME_SETTINGS.features,
       heroSections: DEFAULT_HOME_SETTINGS.heroSections,
+      blocks: DEFAULT_HOME_SETTINGS.blocks,
     },
   });
 }
@@ -268,6 +391,7 @@ export async function updateHomepageSettings(
 
   const normalizedFeatures = sanitizeFeatureList(payload.features) ?? normalizeFeatures(undefined, existing);
   const normalizedHeroSections = sanitizeHeroSections(payload.heroSections) ?? normalizeHeroSections(undefined, existing);
+  const normalizedBlocks = sanitizeBlocks(payload.blocks) ?? normalizeBlocks(undefined, existing);
 
   return prisma.homepageSettings.update({
     where: { id: existing.id },
@@ -284,6 +408,7 @@ export async function updateHomepageSettings(
       faviconUrl,
       features: normalizedFeatures,
       heroSections: normalizedHeroSections,
+      blocks: normalizedBlocks,
       feature1Icon: normalizedFeatures[0]?.iconUrl ?? "",
       feature1Title: normalizedFeatures[0]?.title ?? "",
       feature1Text: normalizedFeatures[0]?.text ?? "",

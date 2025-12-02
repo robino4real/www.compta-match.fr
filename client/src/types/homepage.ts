@@ -13,6 +13,20 @@ export type HomepageHeroSection = {
   align?: "left" | "right";
 };
 
+export type HomepageContentBlock = {
+  id: string;
+  kind: "identity" | "experience" | "story" | "feature-grid" | "cta";
+  title: string;
+  subtitle?: string;
+  body?: string;
+  buttonLabel?: string;
+  buttonLink?: string;
+  bullets?: string[];
+  badge?: string;
+  imageUrl?: string;
+  mutedText?: string;
+};
+
 export type HomepageSettingsDTO = {
   heroTitle: string;
   heroSubtitle: string;
@@ -21,6 +35,7 @@ export type HomepageSettingsDTO = {
   heroIllustrationUrl: string;
   features: HomepageFeature[];
   heroSections: HomepageHeroSection[];
+  blocks: HomepageContentBlock[];
   heroTitleTag?: string;
   heroSubtitleTag?: string;
   heroButtonStyle?: string;

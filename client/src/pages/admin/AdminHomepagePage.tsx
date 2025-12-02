@@ -1,7 +1,7 @@
 import React from "react";
 import { API_BASE_URL } from "../../config/api";
 import { uploadAdminImage } from "../../lib/adminUpload";
-import { HomepageFeature, HomepageHeroSection } from "../../types/homepage";
+import { HomepageContentBlock, HomepageFeature, HomepageHeroSection } from "../../types/homepage";
 
 interface HomepageSettings {
   heroTitle: string;
@@ -16,6 +16,7 @@ interface HomepageSettings {
   faviconUrl?: string;
   features: HomepageFeature[];
   heroSections: HomepageHeroSection[];
+  blocks: HomepageContentBlock[];
 }
 
 const DEFAULT_SETTINGS: HomepageSettings = {
@@ -49,6 +50,58 @@ const DEFAULT_SETTINGS: HomepageSettings = {
     },
   ],
   heroSections: [],
+  blocks: [
+    {
+      id: "identity",
+      kind: "identity",
+      title: "Identité visuelle synchronisée",
+      subtitle: "Logos, favicon et visuels importés depuis le back-office.",
+      body: "Chaque élément graphique est immédiatement reflété côté public pour conserver une cohérence de marque.",
+      buttonLabel: "Mettre à jour la charte",
+      buttonLink: "/admin/homepage",
+      bullets: ["Logo de navigation", "Favicon"],
+    },
+    {
+      id: "experience",
+      kind: "experience",
+      title: "Expérience immersive",
+      subtitle: "Un scroll à la Apple",
+      body: "Animations synchronisées, sections qui se dévoilent et transitions douces pour une lecture fluide.",
+      bullets: [
+        "Intersection Observer pour révéler le contenu au bon moment.",
+        "Sections épurées, typographie lisible et responsive.",
+      ],
+      badge: "Expérience",
+    },
+    {
+      id: "story",
+      kind: "story",
+      title: "Une histoire en défilement",
+      subtitle: "Les points forts de ComptaMatch se découvrent au fil du scroll.",
+      body: "Chaque bloc déclenche une évolution visuelle qui reste épinglée pour un effet premium inspiré des pages macOS.",
+      badge: "Parcours",
+    },
+    {
+      id: "features",
+      kind: "feature-grid",
+      title: "Pensé pour les dirigeants exigeants",
+      subtitle: "Fonctionnalités clés",
+      body: "Grille modulaire, responsive, et synchronisée avec les données du back-office pour mettre en avant vos nouveautés.",
+      badge: "Fonctionnalités",
+    },
+    {
+      id: "cta",
+      kind: "cta",
+      title: "Page d'accueil premium, compatible back-office",
+      subtitle:
+        "Une expérience inspirée d'Apple, des animations fluides, et des visuels pilotés par vos réglages.",
+      body:
+        "Vos logos et images sont prêts à être intégrés, sans compromis sur la performance ni l'accessibilité.",
+      buttonLabel: "Lancer ComptaMatch",
+      buttonLink: "/comparatif-des-offres",
+      badge: "Action",
+    },
+  ],
 };
 
 const AdminHomepagePage: React.FC = () => {
@@ -81,6 +134,9 @@ const AdminHomepagePage: React.FC = () => {
           heroSections: Array.isArray((data as HomepageSettings).heroSections)
             ? (data as HomepageSettings).heroSections
             : [],
+          blocks: Array.isArray((data as HomepageSettings).blocks)
+            ? (data as HomepageSettings).blocks
+            : DEFAULT_SETTINGS.blocks,
         });
       } catch (err: any) {
         console.error("Erreur chargement homepage settings", err);
@@ -155,6 +211,108 @@ const AdminHomepagePage: React.FC = () => {
     }));
   };
 
+  const createBlockTemplate = (kind: HomepageContentBlock["kind"] = "experience"): HomepageContentBlock => {
+    const id = `block-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`;
+    const common = {
+      id,
+      kind,
+      title: "Bloc personnalisé",
+      subtitle: "",
+      body: "",
+      buttonLabel: settings.heroButtonLabel,
+      buttonLink: settings.heroButtonLink,
+      bullets: [],
+      badge: "",
+    } satisfies HomepageContentBlock;
+
+    switch (kind) {
+      case "identity":
+        return {
+          ...common,
+          title: "Identité visuelle synchronisée",
+          subtitle: "Logos, favicon et visuels importés depuis le back-office.",
+          body: "Les images importées (logo, favicon) se retrouvent automatiquement sur la page publique.",
+          bullets: ["Logo de navigation", "Favicon"],
+        };
+      case "story":
+        return {
+          ...common,
+          title: "Une histoire en défilement",
+          subtitle: "Synchronisé avec les blocs épinglés.",
+          body: "Chaque section suit la chronologie et déclenche les visuels collants.",
+          badge: "Parcours",
+        };
+      case "feature-grid":
+        return {
+          ...common,
+          title: "Grille de fonctionnalités",
+          subtitle: "Cartes synchronisées",
+          body: "Les cartes de mise en avant s'affichent dans ce bloc.",
+          badge: "Fonctionnalités",
+        };
+      case "cta":
+        return {
+          ...common,
+          title: "Appel à l'action",
+          subtitle: "Mettre en avant un lien clé",
+          body: "Choisissez le libellé et le lien du bouton pour conclure la page.",
+          buttonLabel: settings.heroButtonLabel,
+          buttonLink: settings.heroButtonLink,
+          badge: "Action",
+        };
+      default:
+        return {
+          ...common,
+          title: "Expérience immersive",
+          subtitle: "Bloc narratif",
+          body: "Mettez en avant une section immersive avec visuels et puces.",
+          bullets: ["Texte à gauche ou à droite", "Animations au scroll"],
+          badge: "Expérience",
+        };
+    }
+  };
+
+  const addBlock = () => {
+    setSettings((prev) => ({ ...prev, blocks: [...prev.blocks, createBlockTemplate()] }));
+  };
+
+  const updateBlock = (id: string, patch: Partial<HomepageContentBlock>) => {
+    setSettings((prev) => ({
+      ...prev,
+      blocks: prev.blocks.map((block) => (block.id === id ? { ...block, ...patch } : block)),
+    }));
+  };
+
+  const removeBlock = (id: string) => {
+    setSettings((prev) => ({ ...prev, blocks: prev.blocks.filter((block) => block.id !== id) }));
+  };
+
+  const moveBlock = (id: string, direction: -1 | 1) => {
+    setSettings((prev) => {
+      const index = prev.blocks.findIndex((block) => block.id === id);
+      if (index === -1) return prev;
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= prev.blocks.length) return prev;
+      const reordered = [...prev.blocks];
+      const [removed] = reordered.splice(index, 1);
+      reordered.splice(targetIndex, 0, removed);
+      return { ...prev, blocks: reordered };
+    });
+  };
+
+  const updateBlockBullets = (id: string, value: string) => {
+    const bullets = value
+      .split(/\n+/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+    updateBlock(id, { bullets });
+  };
+
+  const changeBlockKind = (id: string, kind: HomepageContentBlock["kind"]) => {
+    const template = createBlockTemplate(kind);
+    updateBlock(id, { ...template, id, kind });
+  };
+
   const handleAssetUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
     onUploaded: (url: string) => void,
@@ -204,6 +362,9 @@ const AdminHomepagePage: React.FC = () => {
         heroSections: Array.isArray((data as HomepageSettings).heroSections)
           ? (data as HomepageSettings).heroSections
           : [],
+        blocks: Array.isArray((data as HomepageSettings).blocks)
+          ? (data as HomepageSettings).blocks
+          : DEFAULT_SETTINGS.blocks,
       });
       setSuccess("Page d'accueil mise à jour.");
     } catch (err: any) {
@@ -501,6 +662,186 @@ const AdminHomepagePage: React.FC = () => {
                       />
                     )}
                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-slate-900">Sections de la page d'accueil</div>
+              <button
+                type="button"
+                className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                onClick={addBlock}
+              >
+                + Ajouter une section
+              </button>
+            </div>
+            <p className="text-xs text-slate-500">
+              Chaque section correspond à un bloc visible sur la page publique (identité, expérience, parcours, fonctionnalités, CTA).
+            </p>
+            <div className="space-y-4">
+              {settings.blocks.length === 0 && (
+                <div className="rounded-lg border border-dashed border-slate-200 px-4 py-6 text-center text-xs text-slate-500">
+                  Aucun bloc pour le moment. Ajoutez-en pour structurer la page d'accueil.
+                </div>
+              )}
+
+              {settings.blocks.map((block, index) => (
+                <div key={block.id} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="text-sm font-semibold text-slate-900">
+                      Bloc {index + 1} — {block.kind}
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px] font-semibold">
+                      <button
+                        type="button"
+                        className="rounded-full border border-slate-200 px-3 py-1 text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+                        onClick={() => moveBlock(block.id, -1)}
+                        disabled={index === 0}
+                      >
+                        ↑ Monter
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-full border border-slate-200 px-3 py-1 text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+                        onClick={() => moveBlock(block.id, 1)}
+                        disabled={index === settings.blocks.length - 1}
+                      >
+                        ↓ Descendre
+                      </button>
+                      <button
+                        type="button"
+                        className="text-red-600"
+                        onClick={() => removeBlock(block.id)}
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <label className="text-xs font-medium text-slate-600">
+                      Type de bloc
+                      <select
+                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                        value={block.kind}
+                        onChange={(e) => changeBlockKind(block.id, e.target.value as HomepageContentBlock["kind"])}
+                      >
+                        <option value="identity">Identité visuelle</option>
+                        <option value="experience">Bloc immersif</option>
+                        <option value="story">Parcours épinglé</option>
+                        <option value="feature-grid">Grille de cartes</option>
+                        <option value="cta">Appel à l'action</option>
+                      </select>
+                    </label>
+                    <label className="text-xs font-medium text-slate-600">
+                      Badge / étiquette
+                      <input
+                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                        value={block.badge || ""}
+                        onChange={(e) => updateBlock(block.id, { badge: e.target.value })}
+                        placeholder="Fonctionnalités, Expérience..."
+                      />
+                    </label>
+                    <label className="text-xs font-medium text-slate-600">
+                      Image illustratrice (optionnel)
+                      <input
+                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                        value={block.imageUrl || ""}
+                        onChange={(e) => updateBlock(block.id, { imageUrl: e.target.value })}
+                        placeholder="https://.../visuel.png"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <label className="text-xs font-medium text-slate-600">
+                      Titre du bloc
+                      <input
+                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                        value={block.title}
+                        onChange={(e) => updateBlock(block.id, { title: e.target.value })}
+                      />
+                    </label>
+                    <label className="text-xs font-medium text-slate-600">
+                      Sous-titre
+                      <input
+                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                        value={block.subtitle || ""}
+                        onChange={(e) => updateBlock(block.id, { subtitle: e.target.value })}
+                      />
+                    </label>
+                  </div>
+
+                  <label className="text-xs font-medium text-slate-600">
+                    Texte principal
+                    <textarea
+                      className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      rows={3}
+                      value={block.body || ""}
+                      onChange={(e) => updateBlock(block.id, { body: e.target.value })}
+                    />
+                  </label>
+
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <label className="text-xs font-medium text-slate-600">
+                      Libellé du bouton
+                      <input
+                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                        value={block.buttonLabel || ""}
+                        onChange={(e) => updateBlock(block.id, { buttonLabel: e.target.value })}
+                        placeholder={settings.heroButtonLabel}
+                      />
+                    </label>
+                    <label className="text-xs font-medium text-slate-600">
+                      Lien du bouton
+                      <input
+                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                        value={block.buttonLink || ""}
+                        onChange={(e) => updateBlock(block.id, { buttonLink: e.target.value })}
+                        placeholder={settings.heroButtonLink}
+                      />
+                    </label>
+                  </div>
+
+                  <label className="text-xs font-medium text-slate-600">
+                    Puces (une par ligne)
+                    <textarea
+                      className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      rows={3}
+                      value={(block.bullets || []).join("\n")}
+                      onChange={(e) => updateBlockBullets(block.id, e.target.value)}
+                      placeholder={"Ex: Animation au scroll\nLogos synchronisés"}
+                    />
+                  </label>
+
+                  {block.kind === "identity" && (
+                    <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-[11px] text-slate-700">
+                      Les visuels importés ci-dessus (logo de navigation, favicon) seront affichés dans ce bloc côté public.
+                      Vérifiez-les rapidement :
+                      <div className="mt-2 flex items-center gap-3">
+                        {settings.navbarLogoUrl && (
+                          <img
+                            src={settings.navbarLogoUrl}
+                            alt="Logo de navigation"
+                            className="h-10 w-10 rounded object-contain ring-1 ring-slate-200"
+                          />
+                        )}
+                        {settings.faviconUrl && (
+                          <img
+                            src={settings.faviconUrl}
+                            alt="Favicon"
+                            className="h-8 w-8 rounded object-contain ring-1 ring-slate-200"
+                          />
+                        )}
+                        {!settings.navbarLogoUrl && !settings.faviconUrl && (
+                          <span className="text-slate-500">Ajoutez un logo et un favicon dans "Identité visuelle".</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import type { HomepageSettings as HomepageSettingsType } from "../hooks/useHomepageSettings";
 import { useHomepageSettings } from "../hooks/useHomepageSettings";
-import { HomepageFeature, HomepageHeroSection } from "../types/homepage";
+import { HomepageContentBlock, HomepageFeature, HomepageHeroSection } from "../types/homepage";
 
 const FeatureCard: React.FC<{ feature: HomepageFeature }> = ({ feature }) => (
   <article className="group rounded-3xl border border-slate-100 bg-white/70 p-6 shadow-sm backdrop-blur transition duration-500 hover:-translate-y-1 hover:shadow-2xl">
@@ -57,6 +58,247 @@ const StoryPoint: React.FC<{
     </div>
   );
 };
+
+const IdentitySection: React.FC<{
+  block: HomepageContentBlock;
+  settings: HomepageSettingsType;
+  heroVisualUrl: string;
+}> = ({ block, settings, heroVisualUrl }) => (
+  <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50 to-white py-20">
+    <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white via-slate-50 to-transparent" aria-hidden />
+    <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 md:flex-row md:items-center">
+      <div className="reveal-on-scroll space-y-4 md:max-w-xl">
+        {block.badge && (
+          <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-600 ring-1 ring-slate-200">
+            {block.badge}
+          </span>
+        )}
+        <h2 className="text-3xl font-semibold text-slate-900 md:text-4xl">{block.title}</h2>
+        {block.subtitle && <p className="text-base leading-relaxed text-slate-600">{block.subtitle}</p>}
+        {block.body && <p className="text-sm leading-relaxed text-slate-600">{block.body}</p>}
+        <div className="grid gap-3 md:grid-cols-2">
+          {(block.bullets || []).map((item) => (
+            <div key={item} className="flex items-center gap-3 rounded-xl bg-white/80 p-3 ring-1 ring-slate-100">
+              <span className="h-2 w-2 rounded-full bg-[#0b2e6f]" />
+              <span className="text-sm text-slate-700">{item}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="reveal-on-scroll relative flex-1">
+        <div className="overflow-hidden rounded-[32px] bg-gradient-to-br from-slate-50 via-white to-slate-100 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] ring-1 ring-slate-100">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2 rounded-2xl bg-white/80 p-4 ring-1 ring-slate-100">
+              <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500">Logo de navigation</p>
+              {settings.navbarLogoUrl ? (
+                <img src={settings.navbarLogoUrl} alt="Logo ComptaMatch" className="h-12 w-full rounded object-contain" />
+              ) : (
+                <p className="text-sm text-slate-500">Importez un logo dans l'onglet d'identité visuelle.</p>
+              )}
+            </div>
+            <div className="space-y-2 rounded-2xl bg-white/80 p-4 ring-1 ring-slate-100">
+              <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500">Favicon</p>
+              {settings.faviconUrl ? (
+                <img src={settings.faviconUrl} alt="Favicon" className="h-10 w-10 rounded object-contain" />
+              ) : (
+                <p className="text-sm text-slate-500">Ajoutez un favicon pour l'onglet du navigateur.</p>
+              )}
+            </div>
+          </div>
+          <div className="mt-4 rounded-2xl bg-gradient-to-br from-[#0b2e6f]/10 via-white to-[#0b2e6f]/5 p-4 ring-1 ring-slate-100">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Visuel général</p>
+            {block.imageUrl || heroVisualUrl ? (
+              <img
+                src={block.imageUrl || heroVisualUrl}
+                alt={block.title}
+                className="mt-3 h-64 w-full rounded-xl object-contain"
+              />
+            ) : (
+              <div className="mt-3 flex h-64 items-center justify-center rounded-xl bg-white text-sm text-slate-500 ring-1 ring-slate-200">
+                Ajoutez une image pour ce bloc
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
+const ExperienceSection: React.FC<{ block: HomepageContentBlock; heroVisualUrl: string }> = ({ block, heroVisualUrl }) => (
+  <section id="experience" className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50 to-white">
+    <div className="absolute inset-x-8 top-10 h-[1px] bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+    <div className="mx-auto flex max-w-6xl flex-col gap-12 px-4 py-20 md:flex-row md:items-start">
+      <div className="reveal-on-scroll space-y-4 md:max-w-sm">
+        {(block.badge || block.subtitle) && (
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            {block.badge || block.subtitle}
+          </p>
+        )}
+        <h2 className="text-3xl font-semibold text-slate-900 md:text-4xl">{block.title}</h2>
+        {block.body && <p className="text-base leading-relaxed text-slate-600">{block.body}</p>}
+        <div className="grid gap-4 pt-2 text-sm text-slate-600">
+          {(block.bullets || []).map((bullet) => (
+            <div key={bullet} className="flex items-center gap-3 rounded-2xl bg-white/80 p-3 ring-1 ring-slate-100">
+              <span className="h-2 w-2 rounded-full bg-[#0b2e6f]" />
+              {bullet}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="relative flex-1 overflow-hidden rounded-[32px] bg-gradient-to-br from-slate-900 to-[#0b2e6f] p-8 text-white shadow-2xl">
+        <div className="reveal-on-scroll space-y-6">
+          <h3 className="text-2xl font-semibold">Synchronisé avec votre back-office</h3>
+          <p className="text-sm leading-relaxed text-slate-100">
+            Logos, visuels et liens sont chargés dynamiquement depuis vos réglages. La page d'accueil reste alignée avec vos campagnes.
+          </p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl bg-white/10 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-200">Logos et visuels</p>
+              <p className="mt-2 text-sm leading-relaxed text-slate-50">
+                Hero, sections et cartes supportent des images haute définition en provenance du back-office.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-white/10 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-200">Compatibilité</p>
+              <p className="mt-2 text-sm leading-relaxed text-slate-50">
+                Le contenu reste lisible, même sans animations, pour garder l'accessibilité au cœur de la page.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="pointer-events-none absolute -left-24 bottom-8 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
+        <div className="pointer-events-none absolute -right-16 top-8 h-32 w-32 rounded-full bg-sky-300/20 blur-3xl" />
+        {block.imageUrl && (
+          <img
+            src={block.imageUrl || heroVisualUrl}
+            alt={block.title}
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-10"
+          />
+        )}
+      </div>
+    </div>
+  </section>
+);
+
+const FeatureGridSection: React.FC<{
+  block: HomepageContentBlock;
+  features: HomepageFeature[];
+}> = ({ block, features }) => (
+  <section className="bg-gradient-to-b from-white via-slate-50 to-white py-20">
+    <div className="mx-auto max-w-6xl space-y-10 px-4">
+      <div className="reveal-on-scroll space-y-3 text-center">
+        {(block.badge || block.subtitle) && (
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">{block.subtitle || block.badge}</p>
+        )}
+        <h2 className="text-3xl font-semibold text-slate-900 md:text-4xl">{block.title}</h2>
+        {block.body && (
+          <p className="text-base text-slate-600 md:text-lg">
+            {block.body}
+          </p>
+        )}
+      </div>
+
+      {features.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-3">
+          {features.map((feature) => (
+            <FeatureCard key={`${feature.title}-${feature.iconUrl}`} feature={feature} />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-dashed border-slate-200 bg-white/70 px-4 py-10 text-center text-sm text-slate-500">
+          Configurez vos cartes de mise en avant dans le back-office pour remplir cette grille.
+        </div>
+      )}
+    </div>
+  </section>
+);
+
+const StorySection: React.FC<{
+  block: HomepageContentBlock;
+  storyPoints: HomepageHeroSection[];
+  activePinnedIndex: number;
+  onStoryVisible: (index: number) => void;
+}> = ({ block, storyPoints, activePinnedIndex, onStoryVisible }) => (
+  <section className="relative overflow-hidden bg-white py-24">
+    <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-50 via-white to-white" aria-hidden />
+    <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 md:grid-cols-[1.05fr_0.95fr] md:gap-14">
+      <div className="space-y-6">
+        <div className="reveal-on-scroll space-y-3">
+          {(block.badge || block.subtitle) && (
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">{block.badge || block.subtitle}</p>
+          )}
+          <h2 className="text-3xl font-semibold text-slate-900 md:text-4xl">{block.title}</h2>
+          {block.body && <p className="text-base leading-relaxed text-slate-600">{block.body}</p>}
+        </div>
+
+        <div className="grid gap-4">
+          {storyPoints.map((section, index) => (
+            <StoryPoint key={`${section.title}-${index}`} section={section} index={index} onVisible={onStoryVisible} />
+          ))}
+        </div>
+      </div>
+
+      <div className="relative">
+        <div className="sticky top-28 overflow-hidden rounded-[32px] bg-gradient-to-br from-slate-50 via-white to-slate-100 p-6 shadow-[0_32px_80px_rgba(15,23,42,0.12)] ring-1 ring-slate-100">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-slate-100/60" />
+          {storyPoints.map((section, index) => (
+            <div
+              key={`${section.illustrationUrl}-${index}`}
+              className={`transition-all duration-700 ease-out ${
+                activePinnedIndex === index ? "opacity-100 translate-y-0" : "pointer-events-none -translate-y-4 opacity-0"
+              } absolute inset-0`}
+              aria-hidden={activePinnedIndex !== index}
+            >
+              {section.illustrationUrl ? (
+                <img
+                  src={section.illustrationUrl}
+                  alt={section.title}
+                  className="h-full w-full object-contain drop-shadow-2xl"
+                  loading={index === 0 ? "eager" : "lazy"}
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center rounded-[28px] bg-gradient-to-br from-[#0b2e6f]/10 via-white to-slate-100 text-sm font-semibold text-slate-700">
+                  Visuel synchronisé ({index + 1})
+                </div>
+              )}
+            </div>
+          ))}
+          <div className="aspect-[4/3]" />
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
+const CtaSection: React.FC<{ block: HomepageContentBlock }> = ({ block }) => (
+  <section className="relative overflow-hidden bg-slate-900 py-16 text-white">
+    <div className="pointer-events-none absolute -left-24 top-10 h-52 w-52 rounded-full bg-[#0b2e6f]/40 blur-3xl" />
+    <div className="pointer-events-none absolute -right-16 bottom-0 h-44 w-44 rounded-full bg-sky-300/30 blur-3xl" />
+    <div className="mx-auto max-w-6xl px-4">
+      <div className="reveal-on-scroll flex flex-col items-start justify-between gap-6 rounded-[32px] bg-white/5 p-8 shadow-xl ring-1 ring-white/10 md:flex-row md:items-center md:p-12">
+        <div className="space-y-3 md:max-w-3xl">
+          {block.badge && (
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-200">{block.badge}</p>
+          )}
+          <h3 className="text-3xl font-semibold">{block.title}</h3>
+          {block.subtitle && <p className="text-base leading-relaxed text-slate-100">{block.subtitle}</p>}
+          {block.body && <p className="text-sm leading-relaxed text-slate-100">{block.body}</p>}
+        </div>
+        <a
+          className="pressable-button inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:-translate-y-1"
+          href={block.buttonLink || "/comparatif-des-offres"}
+        >
+          {block.buttonLabel || "Découvrir"}
+          <span aria-hidden className="text-[#0b2e6f]">→</span>
+        </a>
+      </div>
+    </div>
+  </section>
+);
 
 const HomePage: React.FC = () => {
   const { settings, isLoading } = useHomepageSettings();
@@ -158,6 +400,40 @@ const HomePage: React.FC = () => {
     setActivePinnedIndex(index);
   };
 
+  const blocks: HomepageContentBlock[] = settings.blocks && settings.blocks.length ? settings.blocks : [];
+
+  const renderBlock = (block: HomepageContentBlock) => {
+    switch (block.kind) {
+      case "identity":
+        return (
+          <IdentitySection
+            key={block.id}
+            block={block}
+            settings={settings as HomepageSettingsType}
+            heroVisualUrl={heroVisualUrl}
+          />
+        );
+      case "experience":
+        return <ExperienceSection key={block.id} block={block} heroVisualUrl={heroVisualUrl} />;
+      case "story":
+        return (
+          <StorySection
+            key={block.id}
+            block={block}
+            storyPoints={storyPoints}
+            activePinnedIndex={activePinnedIndex}
+            onStoryVisible={onStoryVisible}
+          />
+        );
+      case "feature-grid":
+        return <FeatureGridSection key={block.id} block={block} features={features} />;
+      case "cta":
+        return <CtaSection key={block.id} block={block} />;
+      default:
+        return null;
+    }
+  };
+
   if (isLoading && !settings) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-white">
@@ -257,152 +533,7 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      <section id="experience" className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50 to-white">
-        <div className="absolute inset-x-8 top-10 h-[1px] bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-        <div className="mx-auto flex max-w-6xl flex-col gap-12 px-4 py-20 md:flex-row md:items-start">
-          <div className="reveal-on-scroll space-y-4 md:max-w-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Expérience immersive</p>
-            <h2 className="text-3xl font-semibold text-slate-900 md:text-4xl">Un scroll à la Apple</h2>
-            <p className="text-base leading-relaxed text-slate-600">
-              Animations synchronisées au scroll, sections qui se dévoilent et transitions douces pour une lecture fluide. Les visuels
-              restent nets et optimisés, même sur mobile.
-            </p>
-            <div className="grid gap-4 pt-2 text-sm text-slate-600">
-              <div className="flex items-center gap-3 rounded-2xl bg-white/80 p-3 ring-1 ring-slate-100">
-                <span className="h-2 w-2 rounded-full bg-[#0b2e6f]" />
-                Intersection Observer pour révéler le contenu au bon moment.
-              </div>
-              <div className="flex items-center gap-3 rounded-2xl bg-white/80 p-3 ring-1 ring-slate-100">
-                <span className="h-2 w-2 rounded-full bg-[#0b2e6f]" />
-                Sections épurées, typographie lisible et responsive.
-              </div>
-            </div>
-          </div>
-
-          <div className="relative flex-1 overflow-hidden rounded-[32px] bg-gradient-to-br from-slate-900 to-[#0b2e6f] p-8 text-white shadow-2xl">
-            <div className="reveal-on-scroll space-y-6">
-              <h3 className="text-2xl font-semibold">Synchronisé avec votre back-office</h3>
-              <p className="text-sm leading-relaxed text-slate-100">
-                Les logos, visuels et liens sont chargés dynamiquement depuis vos réglages. La page d'accueil reste alignée avec vos
-                campagnes sans repasser par le code.
-              </p>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-2xl bg-white/10 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-200">Logos et visuels</p>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-50">
-                    Hero, sections et cartes supportent des images haute définition en provenance du back-office.
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-white/10 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-200">Compatibilité</p>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-50">
-                    Le markup reste accessible sans JavaScript : le contenu reste lisible, même sans animations.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="pointer-events-none absolute -left-24 bottom-8 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
-            <div className="pointer-events-none absolute -right-16 top-8 h-32 w-32 rounded-full bg-sky-300/20 blur-3xl" />
-          </div>
-        </div>
-      </section>
-
-      <section className="relative overflow-hidden bg-white py-24">
-        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-50 via-white to-white" aria-hidden />
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 md:grid-cols-[1.05fr_0.95fr] md:gap-14">
-          <div className="space-y-6">
-            <div className="reveal-on-scroll space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Sections ancrées</p>
-              <h2 className="text-3xl font-semibold text-slate-900 md:text-4xl">Une histoire en défilement</h2>
-              <p className="text-base leading-relaxed text-slate-600">
-                Les points forts de ComptaMatch se découvrent au fil du scroll. Chaque bloc déclenche une évolution visuelle qui reste
-                épinglée pour un effet premium inspiré des pages macOS.
-              </p>
-            </div>
-
-            <div className="grid gap-4">
-              {storyPoints.map((section, index) => (
-                <StoryPoint key={`${section.title}-${index}`} section={section} index={index} onVisible={onStoryVisible} />
-              ))}
-            </div>
-          </div>
-
-          <div className="relative">
-            <div className="sticky top-28 overflow-hidden rounded-[32px] bg-gradient-to-br from-slate-50 via-white to-slate-100 p-6 shadow-[0_32px_80px_rgba(15,23,42,0.12)] ring-1 ring-slate-100">
-              <div className="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-slate-100/60" />
-              {storyPoints.map((section, index) => (
-                <div
-                  key={`${section.illustrationUrl}-${index}`}
-                  className={`transition-all duration-700 ease-out ${
-                    activePinnedIndex === index ? "opacity-100 translate-y-0" : "pointer-events-none -translate-y-4 opacity-0"
-                  } absolute inset-0`}
-                  aria-hidden={activePinnedIndex !== index}
-                >
-                  {section.illustrationUrl ? (
-                    <img
-                      src={section.illustrationUrl}
-                      alt={section.title}
-                      className="h-full w-full object-contain drop-shadow-2xl"
-                      loading={index === 0 ? "eager" : "lazy"}
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center rounded-[28px] bg-gradient-to-br from-[#0b2e6f]/10 via-white to-slate-100 text-sm font-semibold text-slate-700">
-                      Visuel synchronisé ({index + 1})
-                    </div>
-                  )}
-                </div>
-              ))}
-              <div className="aspect-[4/3]" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {features.length > 0 && (
-        <section className="bg-gradient-to-b from-white via-slate-50 to-white py-20">
-          <div className="mx-auto max-w-6xl space-y-10 px-4">
-            <div className="reveal-on-scroll space-y-3 text-center">
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">Fonctionnalités clés</p>
-              <h2 className="text-3xl font-semibold text-slate-900 md:text-4xl">Pensé pour les dirigeants exigeants</h2>
-              <p className="text-base text-slate-600 md:text-lg">
-                Grille modulaire, responsive, et synchronisée avec les données du back-office pour mettre en avant vos nouveautés.
-              </p>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-3">
-              {features.map((feature) => (
-                <FeatureCard key={`${feature.title}-${feature.iconUrl}`} feature={feature} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      <section className="relative overflow-hidden bg-slate-900 py-16 text-white">
-        <div className="pointer-events-none absolute -left-24 top-10 h-52 w-52 rounded-full bg-[#0b2e6f]/40 blur-3xl" />
-        <div className="pointer-events-none absolute -right-16 bottom-0 h-44 w-44 rounded-full bg-sky-300/30 blur-3xl" />
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="reveal-on-scroll flex flex-col items-start justify-between gap-6 rounded-[32px] bg-white/5 p-8 shadow-xl ring-1 ring-white/10 md:flex-row md:items-center md:p-12">
-            <div className="space-y-3 md:max-w-3xl">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-200">Prêt à commencer</p>
-              <h3 className="text-3xl font-semibold">Page d'accueil premium, compatible back-office</h3>
-              <p className="text-base leading-relaxed text-slate-100">
-                Une expérience inspirée d'Apple, des animations fluides, et des visuels pilotés par vos réglages. Vos logos et images sont prêts à être intégrés, sans compromis sur la performance ni l'accessibilité.
-              </p>
-            </div>
-            <a
-              className="pressable-button inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:-translate-y-1"
-              href={settings.heroButtonLink || "/comparatif-des-offres"}
-            >
-              Lancer ComptaMatch
-              <span aria-hidden className="text-[#0b2e6f]">
-                →
-              </span>
-            </a>
-          </div>
-        </div>
-      </section>
+      {blocks.map(renderBlock)}
     </main>
   );
 };
