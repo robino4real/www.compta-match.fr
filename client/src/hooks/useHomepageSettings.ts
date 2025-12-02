@@ -39,7 +39,7 @@ const FALLBACK_SETTINGS: HomepageSettings = {
   heroSubtitle:
     "Outils et contenus pour aider les TPE, micro-entreprises et indépendants à piloter leur comptabilité.",
   heroButtonLabel: "Découvrir nos offres",
-  heroButtonLink: "/offres",
+  heroButtonLink: "/comparatif-des-offres",
   heroImageUrl: null,
   heroBackgroundImageUrl: null,
   siteLogoUrl: null,

@@ -91,7 +91,8 @@ const App: React.FC = () => {
       <Routes>
         <Route element={<MainLayoutWrapper />}>
           <Route path="/" element={<HomePage />} />
-          <Route path="/offres" element={<CompareOffersPage />} />
+          <Route path="/comparatif-des-offres" element={<CompareOffersPage />} />
+          <Route path="/offres" element={<Navigate to="/comparatif-des-offres" replace />} />
           <Route path="/logiciels" element={<DownloadableProductsPage />} />
           <Route path="/comptapro" element={<ComptaProSubscriptionPage />} />
           <Route path="/comptapro/:planSlug" element={<ComptaProPlanDetailPage />} />

@@ -104,7 +104,7 @@ const Header: React.FC = () => {
             <NavLink to="/" end className={navLinkClass}>
               Accueil
             </NavLink>
-            <NavLink to="/offres" className={navLinkClass}>
+            <NavLink to="/comparatif-des-offres" className={navLinkClass}>
               Comparer les offres
             </NavLink>
             <NavLink to="/telechargements" className={navLinkClass}>
