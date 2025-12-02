@@ -9,13 +9,48 @@ const CARD_WIDTH = 320;
 const CARD_GAP = 28;
 const VISIBLE_CARDS = 3;
 
-const buildImageList = (product: DownloadableProduct | null) => {
+type DetailSlide = { imageUrl?: string | null; description?: string | null };
+
+const buildDetailSlides = (
+  product: DownloadableProduct | null
+): DetailSlide[] => {
   if (!product) return [];
+
+  if (Array.isArray(product.detailSlides) && product.detailSlides.length) {
+    return product.detailSlides
+      .map((slide) => ({
+        imageUrl: slide?.imageUrl || undefined,
+        description:
+          slide?.description ??
+          product.longDescription ??
+          product.shortDescription ??
+          "",
+      }))
+      .filter((slide) => slide.imageUrl || slide.description);
+  }
+
+  const fallbackDescription =
+    product.longDescription || product.shortDescription || "";
+
   const urls = [product.heroImageUrl, ...(product.galleryUrls || [])].filter(
     (url): url is string => Boolean(url)
   );
 
-  return Array.from(new Set(urls));
+  const uniqueUrls = Array.from(new Set(urls));
+
+  if (uniqueUrls.length) {
+    return uniqueUrls.map((url) => ({
+      imageUrl: url,
+      description: fallbackDescription,
+    }));
+  }
+
+  return [
+    {
+      imageUrl: undefined,
+      description: fallbackDescription,
+    },
+  ];
 };
 
 export const DownloadableProductsSection: React.FC = () => {
@@ -78,13 +113,29 @@ export const DownloadableProductsSection: React.FC = () => {
     };
   }, []);
 
-  const currentImages = useMemo(() => buildImageList(selectedProduct), [
-    selectedProduct,
-  ]);
+  const detailSlides = useMemo(
+    () => buildDetailSlides(selectedProduct),
+    [selectedProduct]
+  );
 
   useEffect(() => {
     setImageIndex(0);
-  }, [selectedProduct?.id]);
+  }, [selectedProduct?.id, detailSlides.length]);
+
+  useEffect(() => {
+    if (imageIndex > Math.max(detailSlides.length - 1, 0)) {
+      setImageIndex(0);
+    }
+  }, [imageIndex, detailSlides.length]);
+
+  const currentSlide =
+    detailSlides[imageIndex] || detailSlides[0] || { imageUrl: null, description: null };
+  const currentImageUrl = currentSlide.imageUrl || null;
+  const currentDescription =
+    currentSlide.description ||
+    selectedProduct?.longDescription ||
+    selectedProduct?.shortDescription ||
+    "";
 
   const maxIndex = Math.max(products.length - VISIBLE_CARDS, 0);
 
@@ -100,7 +151,7 @@ export const DownloadableProductsSection: React.FC = () => {
 
   useEffect(() => {
     setIsFading(true);
-    const timeout = window.setTimeout(() => setIsFading(false), 50);
+    const timeout = window.setTimeout(() => setIsFading(false), 180);
 
     return () => window.clearTimeout(timeout);
   }, [imageIndex, selectedProduct?.id]);
@@ -163,6 +214,19 @@ export const DownloadableProductsSection: React.FC = () => {
         }`}
       >
         <div className="flex flex-col items-center gap-3">
+          <div className="flex h-32 w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-100">
+            {product.cardImageUrl ? (
+              <img
+                src={product.cardImageUrl}
+                alt={product.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Visuel à venir
+              </span>
+            )}
+          </div>
           <h3 className="text-2xl font-semibold text-slate-900">{product.name}</h3>
           <p className="text-sm leading-relaxed text-slate-600">
             {product.shortDescription}
@@ -173,19 +237,13 @@ export const DownloadableProductsSection: React.FC = () => {
             </span>
           )}
           <div className="flex items-center gap-2 text-slate-900">
-            <span className="text-4xl font-semibold">{formatPrice(product.priceTtc)}</span>
-            <span className="text-sm font-semibold text-slate-500">{product.currency}</span>
+            <span className="text-4xl font-semibold leading-none">
+              {formatPrice(product.priceTtc)}
+            </span>
+            <span className="text-sm font-semibold uppercase text-slate-500">
+              {product.priceDisplayMode === "HT" ? "HT" : "TTC"}
+            </span>
           </div>
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              handleAddToCart(product);
-            }}
-            className="pressable-button mt-2 inline-flex w-full items-center justify-center rounded-full bg-black px-4 py-3 text-sm font-semibold text-white hover:bg-slate-900"
-          >
-            Ajouter au panier
-          </button>
         </div>
       </article>
     ));
@@ -220,8 +278,7 @@ export const DownloadableProductsSection: React.FC = () => {
     }
 
     const features = selectedProduct.tags || [];
-    const images = currentImages;
-    const currentImageUrl = images[imageIndex] || null;
+    const priceLabel = selectedProduct.priceDisplayMode === "HT" ? "HT" : "TTC";
 
     return (
       <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
@@ -230,8 +287,12 @@ export const DownloadableProductsSection: React.FC = () => {
             <h3 className="text-3xl font-semibold text-slate-900 md:text-4xl">
               {selectedProduct.name}
             </h3>
-            <p className="text-base leading-relaxed text-slate-700">
-              {selectedProduct.longDescription}
+            <p
+              className={`text-base leading-relaxed text-slate-700 transition-opacity duration-500 ${
+                isFading ? "opacity-0" : "opacity-100"
+              }`}
+            >
+              {currentDescription}
             </p>
           </div>
 
@@ -253,7 +314,7 @@ export const DownloadableProductsSection: React.FC = () => {
 
           <div className="mt-6 flex flex-wrap items-center gap-4">
             <div className="text-2xl font-semibold text-slate-900">
-              {formatPrice(selectedProduct.priceTtc)} TTC
+              {formatPrice(selectedProduct.priceTtc)} {priceLabel}
             </div>
             <button
               type="button"
@@ -283,11 +344,11 @@ export const DownloadableProductsSection: React.FC = () => {
             )}
           </div>
 
-          {images.length > 1 && (
+          {detailSlides.length > 1 && (
             <div className="mt-4 flex items-center justify-center gap-3">
-              {images.map((imageUrl, idx) => (
+              {detailSlides.map((slide, idx) => (
                 <button
-                  key={imageUrl}
+                  key={slide.imageUrl ?? `slide-${idx}`}
                   type="button"
                   aria-label={`Afficher l’aperçu ${idx + 1}`}
                   onClick={() => setImageIndex(idx)}
@@ -312,15 +373,13 @@ export const DownloadableProductsSection: React.FC = () => {
 
   return (
     <section className="space-y-8">
-      <div className="flex flex-col gap-3 text-center">
-        <p className="text-base font-semibold text-slate-900">Sélectionnez un logiciel</p>
-        <p className="text-sm text-slate-600">Choisissez un logiciel pour afficher la description détaillée et l’ajouter à votre panier.</p>
-        {error && (
-          <div className="mx-auto mt-2 w-fit rounded-full bg-red-50 px-4 py-2 text-xs font-semibold text-red-700">
+      {error && (
+        <div className="flex justify-center">
+          <div className="rounded-full bg-red-50 px-4 py-2 text-xs font-semibold text-red-700">
             {error}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="space-y-6">
         <div className="relative">
@@ -351,7 +410,10 @@ export const DownloadableProductsSection: React.FC = () => {
             </>
           )}
 
-          <div className="mx-auto overflow-hidden" style={{ maxWidth: viewportWidth }}>
+          <div
+            className="mx-auto overflow-hidden"
+            style={{ maxWidth: viewportWidth, width: "100%" }}
+          >
             <div
               className={`flex gap-7 py-2 transition-transform duration-500 ease-out ${
                 showNavigation ? "" : "flex-wrap justify-center"
@@ -360,10 +422,6 @@ export const DownloadableProductsSection: React.FC = () => {
                 showNavigation
                   ? {
                       transform: `translateX(-${translateX}px)`,
-                      maskImage:
-                        "linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%)",
-                      WebkitMaskImage:
-                        "linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%)",
                     }
                   : undefined
               }

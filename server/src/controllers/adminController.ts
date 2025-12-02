@@ -1,6 +1,46 @@
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
 
+type DetailSlideInput = {
+  imageUrl?: string | null;
+  description?: string | null;
+};
+
+function parseDetailSlides(raw: unknown): DetailSlideInput[] | undefined {
+  if (Array.isArray(raw)) {
+    const slides = raw
+      .map((entry) => {
+        if (entry && typeof entry === "object") {
+          const { imageUrl, description } = entry as DetailSlideInput;
+          if (typeof imageUrl === "string" && imageUrl.trim().length > 0) {
+            return {
+              imageUrl: imageUrl.trim(),
+              description:
+                typeof description === "string"
+                  ? description.trim()
+                  : description ?? null,
+            };
+          }
+        }
+        return null;
+      })
+      .filter(Boolean) as DetailSlideInput[];
+
+    return slides.length ? slides : undefined;
+  }
+
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      return parseDetailSlides(parsed);
+    } catch (error) {
+      console.warn("Impossible de parser detailSlides", error);
+    }
+  }
+
+  return undefined;
+}
+
 export async function listUsers(req: Request, res: Response) {
   try {
     const users = await prisma.user.findMany({
@@ -32,9 +72,11 @@ export async function createDownloadableProduct(req: Request, res: Response) {
       priceCents,
       shortDescription,
       longDescription,
+      cardImageUrl,
       thumbnailUrl,
       featureBullets,
       detailHtml,
+      detailSlides,
     } = req.body;
 
     if (!file) {
@@ -82,14 +124,18 @@ export async function createDownloadableProduct(req: Request, res: Response) {
       }
     }
 
+    const parsedDetailSlides = parseDetailSlides(detailSlides);
+
     const product = await prisma.downloadableProduct.create({
       data: {
         slug: finalSlug,
         name,
         shortDescription: shortDescription || null,
         longDescription: longDescription || null,
+        cardImageUrl: cardImageUrl || null,
         thumbnailUrl: thumbnailUrl || null,
         featureBullets: parsedFeatureBullets,
+        detailSlides: parsedDetailSlides ?? [],
         detailHtml: detailHtml || null,
         priceCents: Math.round(price),
         currency: "EUR",
