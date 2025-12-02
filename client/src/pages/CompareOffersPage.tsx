@@ -162,12 +162,12 @@ const CompareOffersPage: React.FC = () => {
   return (
     <main className="min-h-screen bg-white pb-16">
       <section className="bg-white">
-        <div className="px-4 py-12 lg:px-12 lg:py-16">
+        <div className="px-4 py-12 text-center lg:px-12 lg:py-16">
           <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Comparatif</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
             Comparatif des offres comptables en ligne
           </h1>
-          <p className="mt-4 max-w-3xl text-base text-slate-600">
+          <p className="mt-4 mx-auto max-w-3xl text-base text-slate-600">
             Sélectionnez une solution concurrente dans le menu latéral : le tableau se met à jour automatiquement
             pour afficher les différences concrètes avec ComptaPro.
           </p>
@@ -180,7 +180,7 @@ const CompareOffersPage: React.FC = () => {
 
       <section className="mt-6 lg:mt-10">
         <div className="grid lg:grid-cols-[300px,1fr] lg:gap-0">
-          <aside className="border-y border-r border-slate-200 bg-slate-50/70 px-4 py-6 shadow-sm lg:sticky lg:top-20 lg:min-h-[70vh] lg:px-6 lg:py-8">
+          <aside className="border-r border-slate-200 bg-white px-4 py-6 shadow-sm lg:sticky lg:top-20 lg:min-h-[70vh] lg:px-6 lg:py-8">
             <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Menu comparatif</p>
             <h3 className="mt-2 text-lg font-semibold text-slate-900">Choisissez une alternative</h3>
             <p className="mt-2 text-sm text-slate-600">Chaque clic met à jour instantanément le tableau principal.</p>
@@ -192,10 +192,10 @@ const CompareOffersPage: React.FC = () => {
                     key={option.id}
                     type="button"
                     onClick={() => setActiveComparisonId(option.id)}
-                    className={`w-full rounded-2xl border px-4 py-3 text-left transition focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
+                    className={`w-full rounded-2xl border px-4 py-3 text-left transition focus:outline-none focus:ring-2 focus:ring-slate-900/60 ${
                       isActive
-                        ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                        : "border-slate-200 bg-white text-slate-800 hover:border-emerald-200"
+                        ? "border-slate-900 bg-white shadow-[0_0_0_1px_rgba(15,23,42,0.12)]"
+                        : "border-slate-200 bg-white text-slate-800 hover:border-slate-900"
                     }`}
                   >
                     <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{option.competitor}</p>
@@ -209,7 +209,7 @@ const CompareOffersPage: React.FC = () => {
             </div>
           </aside>
 
-          <div className="px-4 py-6 lg:border-y lg:border-slate-200 lg:px-12 lg:py-10">
+          <div className="px-4 py-6 lg:px-12 lg:py-10">
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div>
