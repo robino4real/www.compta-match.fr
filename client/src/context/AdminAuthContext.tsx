@@ -70,7 +70,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({
       if (redirectTo) {
         window.location.href = redirectTo;
       } else {
-        window.location.href = "/admin/login";
+        window.location.href = "/auth/login?admin=1";
       }
     }
   }, []);

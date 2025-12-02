@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import AdminLayout from "./layouts/AdminLayout";
 
@@ -26,7 +26,6 @@ import AdminSeoPage from "./pages/admin/AdminSeoPage";
 import AdminPagesPage from "./pages/admin/AdminPagesPage";
 import AdminPageDetailPage from "./pages/admin/AdminPageDetailPage";
 import AnalyticsTracker from "./components/AnalyticsTracker";
-import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import DownloadableProductsPage from "./pages/DownloadableProductsPage";
 import ComptaProSubscriptionPage from "./pages/ComptaProSubscriptionPage";
 import CompareOffersPage from "./pages/CompareOffersPage";
@@ -46,6 +45,7 @@ import AuthLoginPage from "./pages/AuthLoginPage";
 
 const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { admin, isLoading } = useAdminAuth();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -56,7 +56,13 @@ const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   }
 
   if (!admin) {
-    return <AdminLoginPage />;
+    return (
+      <Navigate
+        to="/auth/login"
+        state={{ from: location, adminAccess: true }}
+        replace
+      />
+    );
   }
 
   return <>{children}</>;
