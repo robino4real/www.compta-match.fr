@@ -20,6 +20,7 @@ export type HomepageSettings = {
   heroButtonLabel: string;
   heroButtonLink: string;
   heroImageUrl?: string | null;
+  heroIllustrationUrl?: string | null;
   heroBackgroundImageUrl?: string | null;
   siteLogoUrl?: string | null;
   navbarLogoUrl?: string | null;
@@ -41,6 +42,7 @@ const FALLBACK_SETTINGS: HomepageSettings = {
   heroButtonLabel: "Découvrir nos offres",
   heroButtonLink: "/comparatif-des-offres",
   heroImageUrl: null,
+  heroIllustrationUrl: null,
   heroBackgroundImageUrl: null,
   siteLogoUrl: null,
   navbarLogoUrl: null,
@@ -123,6 +125,13 @@ function normalizeSettings(incoming: HomepageSettings | undefined): HomepageSett
   return {
     ...FALLBACK_SETTINGS,
     ...incoming,
+    heroIllustrationUrl:
+      typeof incoming.heroIllustrationUrl === "string"
+        ? incoming.heroIllustrationUrl
+        : typeof incoming.heroImageUrl === "string"
+          ? incoming.heroImageUrl
+          : FALLBACK_SETTINGS.heroIllustrationUrl,
+    heroImageUrl: typeof incoming.heroImageUrl === "string" ? incoming.heroImageUrl : FALLBACK_SETTINGS.heroImageUrl,
     features: normalizedFeatures.length ? normalizedFeatures : FALLBACK_SETTINGS.features,
     heroSections: normalizedHeroSections,
     testimonials: parseTestimonials(incoming.testimonials),
@@ -170,7 +179,7 @@ async function fetchPublicHomepage(forceRefresh = false): Promise<HookState> {
 export function useHomepageSettings() {
   const [settings, setSettings] = useState<HomepageSettings>(cachedState?.settings ?? FALLBACK_SETTINGS);
   const [highlightedProducts, setHighlightedProducts] = useState<HighlightedProduct[]>(
-    cachedState?.highlightedProducts ?? []
+    cachedState?.highlightedProducts ?? [],
   );
   const [structuredData, setStructuredData] = useState<any[] | null>(cachedState?.structuredData ?? null);
   const [isLoading, setIsLoading] = useState(!cachedState);
