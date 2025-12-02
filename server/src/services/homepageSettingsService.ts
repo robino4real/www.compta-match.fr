@@ -24,6 +24,8 @@ export type HomepageContentBlock = {
   badge?: string;
   imageUrl?: string;
   mutedText?: string;
+  imagePosition?: "left" | "right";
+  revealAnimation?: boolean;
 };
 
 export const DEFAULT_HOMEPAGE_BLOCKS: HomepageContentBlock[] = [
@@ -36,6 +38,8 @@ export const DEFAULT_HOMEPAGE_BLOCKS: HomepageContentBlock[] = [
     buttonLabel: "Mettre à jour la charte",
     buttonLink: "/admin/homepage",
     bullets: ["Logo de navigation", "Favicon et visuels secondaires"],
+    imagePosition: "right",
+    revealAnimation: true,
   },
   {
     id: "experience",
@@ -47,7 +51,9 @@ export const DEFAULT_HOMEPAGE_BLOCKS: HomepageContentBlock[] = [
       "Intersection Observer pour révéler le contenu au bon moment.",
       "Sections épurées, typographie lisible et responsive.",
     ],
-    badge: "Expérience", 
+    badge: "Expérience",
+    imagePosition: "right",
+    revealAnimation: true,
   },
   {
     id: "story",
@@ -56,6 +62,8 @@ export const DEFAULT_HOMEPAGE_BLOCKS: HomepageContentBlock[] = [
     subtitle: "Les points forts de ComptaMatch se découvrent au fil du scroll.",
     body: "Chaque bloc déclenche une évolution visuelle qui reste épinglée pour un effet premium inspiré des pages macOS.",
     badge: "Parcours",
+    imagePosition: "right",
+    revealAnimation: true,
   },
   {
     id: "features",
@@ -64,6 +72,8 @@ export const DEFAULT_HOMEPAGE_BLOCKS: HomepageContentBlock[] = [
     subtitle: "Fonctionnalités clés",
     body: "Grille modulaire, responsive, et synchronisée avec les données du back-office pour mettre en avant vos nouveautés.",
     badge: "Fonctionnalités",
+    imagePosition: "right",
+    revealAnimation: true,
   },
   {
     id: "cta",
@@ -76,6 +86,8 @@ export const DEFAULT_HOMEPAGE_BLOCKS: HomepageContentBlock[] = [
     buttonLabel: "Lancer ComptaMatch",
     buttonLink: "/comparatif-des-offres",
     badge: "Action",
+    imagePosition: "right",
+    revealAnimation: true,
   },
 ];
 
@@ -243,6 +255,13 @@ function sanitizeBlocks(value: unknown): HomepageContentBlock[] | undefined {
             .filter((item): item is string => Boolean(item))
         : [];
 
+      const imagePositionCandidate = sanitize((entry as any)?.imagePosition);
+      const imagePosition: "left" | "right" = imagePositionCandidate === "left" ? "left" : "right";
+      const revealAnimation =
+        typeof (entry as any)?.revealAnimation === "boolean"
+          ? Boolean((entry as any)?.revealAnimation)
+          : true;
+
       return {
         id: sanitize((entry as any)?.id) || `block-${index}-${Date.now()}`,
         kind,
@@ -255,6 +274,8 @@ function sanitizeBlocks(value: unknown): HomepageContentBlock[] | undefined {
         badge: sanitize((entry as any)?.badge) || "",
         imageUrl: sanitize((entry as any)?.imageUrl) || "",
         mutedText: sanitize((entry as any)?.mutedText) || "",
+        imagePosition,
+        revealAnimation,
       } as HomepageContentBlock;
     })
     .filter((entry) => entry.title || entry.subtitle || entry.body || entry.kind === "identity");

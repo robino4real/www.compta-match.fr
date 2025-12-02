@@ -6,6 +6,7 @@ import {
   getOrCreateHomepageSettings,
   updateHomepageSettings,
 } from "../services/homepageSettingsService";
+import { homepageStreamHandler, notifyHomepageUpdated } from "../utils/homepageStream";
 
 export type HomepageSettingsDTO = {
   heroTitle: string;
@@ -141,6 +142,13 @@ function parseBlocks(settings: HomepageSettings | null): HomepageContentBlock[] 
             .filter((item): item is string => Boolean(item))
         : [];
 
+      const imagePositionCandidate = sanitize(block?.imagePosition);
+      const imagePosition: "left" | "right" = imagePositionCandidate === "left" ? "left" : "right";
+      const revealAnimation =
+        typeof block?.revealAnimation === "boolean"
+          ? Boolean(block?.revealAnimation)
+          : true;
+
       return {
         id: sanitize(block?.id) || `block-${index}`,
         kind,
@@ -153,6 +161,8 @@ function parseBlocks(settings: HomepageSettings | null): HomepageContentBlock[] 
         badge: sanitize(block?.badge) || "",
         imageUrl: sanitize(block?.imageUrl) || "",
         mutedText: sanitize(block?.mutedText) || "",
+        imagePosition,
+        revealAnimation,
       } satisfies HomepageContentBlock;
     })
     .filter((block) => block.title || block.subtitle || block.body || block.kind === "identity");
@@ -196,6 +206,7 @@ export async function adminGetHomepageSettings(_req: Request, res: Response) {
 export async function adminSaveHomepageSettings(req: Request, res: Response) {
   try {
     const settings = await updateHomepageSettings(req.body || {});
+    notifyHomepageUpdated();
     return res.json(toDto(settings));
   } catch (error) {
     console.error("Erreur lors de la sauvegarde de la home", error);
@@ -215,4 +226,8 @@ export async function publicGetHomepage(_req: Request, res: Response) {
       .status(500)
       .json({ message: "Impossible de charger la page d'accueil." });
   }
+}
+
+export function publicHomepageStream(req: Request, res: Response) {
+  homepageStreamHandler(req, res);
 }

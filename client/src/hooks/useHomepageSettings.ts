@@ -76,6 +76,8 @@ const FALLBACK_SETTINGS: HomepageSettings = {
       buttonLabel: "Mettre à jour la charte",
       buttonLink: "/admin/homepage",
       bullets: ["Logo de navigation", "Favicon et visuels secondaires"],
+      imagePosition: "right",
+      revealAnimation: true,
     },
     {
       id: "experience",
@@ -88,6 +90,8 @@ const FALLBACK_SETTINGS: HomepageSettings = {
         "Sections épurées, typographie lisible et responsive.",
       ],
       badge: "Expérience",
+      imagePosition: "right",
+      revealAnimation: true,
     },
     {
       id: "story",
@@ -96,6 +100,8 @@ const FALLBACK_SETTINGS: HomepageSettings = {
       subtitle: "Les points forts de ComptaMatch se découvrent au fil du scroll.",
       body: "Chaque bloc déclenche une évolution visuelle qui reste épinglée pour un effet premium inspiré des pages macOS.",
       badge: "Parcours",
+      imagePosition: "right",
+      revealAnimation: true,
     },
     {
       id: "features",
@@ -104,6 +110,8 @@ const FALLBACK_SETTINGS: HomepageSettings = {
       subtitle: "Fonctionnalités clés",
       body: "Grille modulaire, responsive, et synchronisée avec les données du back-office pour mettre en avant vos nouveautés.",
       badge: "Fonctionnalités",
+      imagePosition: "right",
+      revealAnimation: true,
     },
     {
       id: "cta",
@@ -116,6 +124,8 @@ const FALLBACK_SETTINGS: HomepageSettings = {
       buttonLabel: "Lancer ComptaMatch",
       buttonLink: "/comparatif-des-offres",
       badge: "Action",
+      imagePosition: "right",
+      revealAnimation: true,
     },
   ],
   highlightedProductIds: [],
@@ -142,6 +152,7 @@ type HookState = {
 
 let cachedState: HookState | null = null;
 let inflightRequest: Promise<HookState> | null = null;
+let homepageEventSource: EventSource | null = null;
 
 function parseTestimonials(value: unknown): Testimonial[] {
   if (!Array.isArray(value)) return [];
@@ -190,6 +201,14 @@ function normalizeBlocks(value: unknown): HomepageContentBlock[] {
         badge: typeof (block as any)?.badge === "string" ? (block as any)?.badge : "",
         imageUrl: typeof (block as any)?.imageUrl === "string" ? (block as any)?.imageUrl : "",
         mutedText: typeof (block as any)?.mutedText === "string" ? (block as any)?.mutedText : "",
+        imagePosition:
+          typeof (block as any)?.imagePosition === "string" && (block as any)?.imagePosition === "left"
+            ? "left"
+            : "right",
+        revealAnimation:
+          typeof (block as any)?.revealAnimation === "boolean"
+            ? Boolean((block as any)?.revealAnimation)
+            : true,
       } satisfies HomepageContentBlock;
     })
     .filter((block) => block.title || block.subtitle || block.body || block.kind === "identity");
@@ -250,7 +269,7 @@ async function fetchPublicHomepage(forceRefresh = false): Promise<HookState> {
 
   inflightRequest = (async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/public/homepage`);
+      const response = await fetch(`${API_BASE_URL}/public/homepage`, { cache: "no-store" });
       const data = (await response.json().catch(() => ({}))) as PublicHomepagePayload;
       if (!response.ok) {
         throw new Error(data?.message || "Impossible de charger la page d'accueil.");
@@ -307,6 +326,44 @@ export function useHomepageSettings() {
     });
     return () => {
       inflightRequest = null;
+    };
+  }, [load]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof EventSource === "undefined") return;
+
+    const streamUrl = `${API_BASE_URL}/public/homepage/stream`;
+    if (!homepageEventSource) {
+      homepageEventSource = new EventSource(streamUrl);
+    }
+
+    const source = homepageEventSource;
+
+    const handleMessage = () => {
+      load(true).catch(() => {
+        /* handled in load */
+      });
+    };
+
+    source.addEventListener("message", handleMessage);
+
+    source.onerror = () => {
+      source.removeEventListener("message", handleMessage);
+      source.close();
+      homepageEventSource = null;
+      setTimeout(() => {
+        load(true).catch(() => {
+          /* handled in load */
+        });
+      }, 1500);
+    };
+
+    return () => {
+      source.removeEventListener("message", handleMessage);
+      source.close();
+      if (homepageEventSource === source) {
+        homepageEventSource = null;
+      }
     };
   }, [load]);
 

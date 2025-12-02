@@ -60,6 +60,8 @@ const DEFAULT_SETTINGS: HomepageSettings = {
       buttonLabel: "Mettre à jour la charte",
       buttonLink: "/admin/homepage",
       bullets: ["Logo de navigation", "Favicon"],
+      imagePosition: "right",
+      revealAnimation: true,
     },
     {
       id: "experience",
@@ -72,6 +74,8 @@ const DEFAULT_SETTINGS: HomepageSettings = {
         "Sections épurées, typographie lisible et responsive.",
       ],
       badge: "Expérience",
+      imagePosition: "right",
+      revealAnimation: true,
     },
     {
       id: "story",
@@ -80,6 +84,8 @@ const DEFAULT_SETTINGS: HomepageSettings = {
       subtitle: "Les points forts de ComptaMatch se découvrent au fil du scroll.",
       body: "Chaque bloc déclenche une évolution visuelle qui reste épinglée pour un effet premium inspiré des pages macOS.",
       badge: "Parcours",
+      imagePosition: "right",
+      revealAnimation: true,
     },
     {
       id: "features",
@@ -88,6 +94,8 @@ const DEFAULT_SETTINGS: HomepageSettings = {
       subtitle: "Fonctionnalités clés",
       body: "Grille modulaire, responsive, et synchronisée avec les données du back-office pour mettre en avant vos nouveautés.",
       badge: "Fonctionnalités",
+      imagePosition: "right",
+      revealAnimation: true,
     },
     {
       id: "cta",
@@ -100,6 +108,8 @@ const DEFAULT_SETTINGS: HomepageSettings = {
       buttonLabel: "Lancer ComptaMatch",
       buttonLink: "/comparatif-des-offres",
       badge: "Action",
+      imagePosition: "right",
+      revealAnimation: true,
     },
   ],
 };
@@ -112,6 +122,13 @@ const AdminHomepagePage: React.FC = () => {
   const [success, setSuccess] = React.useState<string | null>(null);
   const [uploadingKey, setUploadingKey] = React.useState<string | null>(null);
   const [uploadError, setUploadError] = React.useState<string | null>(null);
+
+  const normalizeBlocks = (blocks: HomepageContentBlock[]) =>
+    blocks.map((block) => ({
+      ...block,
+      imagePosition: block.imagePosition === "left" ? "left" : "right",
+      revealAnimation: block.revealAnimation ?? true,
+    }));
 
   React.useEffect(() => {
     const load = async () => {
@@ -135,8 +152,8 @@ const AdminHomepagePage: React.FC = () => {
             ? (data as HomepageSettings).heroSections
             : [],
           blocks: Array.isArray((data as HomepageSettings).blocks)
-            ? (data as HomepageSettings).blocks
-            : DEFAULT_SETTINGS.blocks,
+            ? normalizeBlocks((data as HomepageSettings).blocks)
+            : normalizeBlocks(DEFAULT_SETTINGS.blocks),
         });
       } catch (err: any) {
         console.error("Erreur chargement homepage settings", err);
@@ -223,6 +240,9 @@ const AdminHomepagePage: React.FC = () => {
       buttonLink: settings.heroButtonLink,
       bullets: [],
       badge: "",
+      imageUrl: "",
+      imagePosition: "right" as const,
+      revealAnimation: true,
     } satisfies HomepageContentBlock;
 
     switch (kind) {
@@ -363,8 +383,8 @@ const AdminHomepagePage: React.FC = () => {
           ? (data as HomepageSettings).heroSections
           : [],
         blocks: Array.isArray((data as HomepageSettings).blocks)
-          ? (data as HomepageSettings).blocks
-          : DEFAULT_SETTINGS.blocks,
+          ? normalizeBlocks((data as HomepageSettings).blocks)
+          : normalizeBlocks(DEFAULT_SETTINGS.blocks),
       });
       setSuccess("Page d'accueil mise à jour.");
     } catch (err: any) {
@@ -753,6 +773,56 @@ const AdminHomepagePage: React.FC = () => {
                         onChange={(e) => updateBlock(block.id, { imageUrl: e.target.value })}
                         placeholder="https://.../visuel.png"
                       />
+                    </label>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) =>
+                        handleAssetUpload(
+                          e,
+                          (url) => updateBlock(block.id, { imageUrl: url }),
+                          `block-image-${block.id}`
+                        )
+                      }
+                      className="text-[11px]"
+                    />
+                    {uploadingKey === `block-image-${block.id}` && <span>Import en cours...</span>}
+                    {block.imageUrl && (
+                      <img
+                        src={block.imageUrl}
+                        alt={`Visuel du bloc ${index + 1}`}
+                        className="h-10 w-10 rounded object-contain ring-1 ring-slate-200"
+                      />
+                    )}
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <label className="text-xs font-medium text-slate-600">
+                      Position de l'image
+                      <select
+                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                        value={block.imagePosition || "right"}
+                        onChange={(e) =>
+                          updateBlock(block.id, {
+                            imagePosition: (e.target.value as HomepageContentBlock["imagePosition"]) || "right",
+                          })
+                        }
+                      >
+                        <option value="left">Image à gauche du texte</option>
+                        <option value="right">Image à droite du texte</option>
+                      </select>
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4"
+                        checked={block.revealAnimation ?? true}
+                        onChange={(e) => updateBlock(block.id, { revealAnimation: e.target.checked })}
+                      />
+                      <span className="text-slate-700">Activer l'animation de dévoilement au scroll</span>
                     </label>
                   </div>
 

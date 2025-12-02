@@ -25,6 +25,8 @@ export type HomepageContentBlock = {
   badge?: string;
   imageUrl?: string;
   mutedText?: string;
+  imagePosition?: "left" | "right";
+  revealAnimation?: boolean;
 };
 
 export type HomepageSettingsDTO = {

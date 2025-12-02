@@ -1,6 +1,69 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useHomepageSettings } from "../hooks/useHomepageSettings";
 import { HomepageContentBlock, HomepageFeature, HomepageHeroSection } from "../types/homepage";
+
+const ScrollRevealSection: React.FC<{
+  enabled?: boolean;
+  className?: string;
+  children: React.ReactNode;
+  id?: string;
+}> = ({ enabled, className, children, id }) => {
+  const ref = useRef<HTMLElement | null>(null);
+  const [isVisible, setIsVisible] = useState(!enabled);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const node = ref.current;
+    if (!node || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.2 },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [enabled]);
+
+  return (
+    <section
+      ref={ref}
+      id={id}
+      className={`transition duration-700 ease-out ${className ?? ""} ${
+        enabled ? "translate-y-8 opacity-0" : ""
+      } ${isVisible ? "translate-y-0 opacity-100" : ""}`}
+    >
+      {children}
+    </section>
+  );
+};
+
+const TwoColumnSection: React.FC<{
+  block: HomepageContentBlock;
+  visual: React.ReactNode;
+  children: React.ReactNode;
+  id?: string;
+}> = ({ block, visual, children, id }) => {
+  const imageOnLeft = block.imagePosition === "left";
+  const textOrder = imageOnLeft ? "md:order-2" : "md:order-1";
+  const visualOrder = imageOnLeft ? "md:order-1" : "md:order-2";
+
+  return (
+    <ScrollRevealSection enabled={block.revealAnimation} className="bg-white py-16" id={id}>
+      <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 md:grid-cols-2">
+        <div className={`space-y-4 ${textOrder}`}>{children}</div>
+        <div className={`flex justify-center ${visualOrder}`}>{visual}</div>
+      </div>
+    </ScrollRevealSection>
+  );
+};
 
 const FeatureCard: React.FC<{ feature: HomepageFeature }> = ({ feature }) => (
   <article className="space-y-2">
@@ -15,61 +78,45 @@ const FeatureCard: React.FC<{ feature: HomepageFeature }> = ({ feature }) => (
 const IdentitySection: React.FC<{
   block: HomepageContentBlock;
   heroVisualUrl: string;
-}> = ({ block, heroVisualUrl }) => (
-  <section className="bg-white py-16">
-    <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 md:grid-cols-2">
-      <div className="space-y-4">
-        <h2 className="text-3xl font-semibold text-black md:text-4xl">{block.title}</h2>
-        {(block.subtitle || block.body) && (
-          <p className="text-base leading-relaxed text-black/70">{block.subtitle || block.body}</p>
-        )}
-      </div>
-
-      <div className="flex justify-center">
-        {block.imageUrl || heroVisualUrl ? (
-          <img
-            src={block.imageUrl || heroVisualUrl}
-            alt={block.title}
-            className="max-h-96 w-full object-contain"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex h-72 w-full items-center justify-center bg-black/5 text-sm text-black/60">
-            Ajoutez une image pour ce bloc
-          </div>
-        )}
-      </div>
+}> = ({ block, heroVisualUrl }) => {
+  const visualUrl = block.imageUrl || heroVisualUrl;
+  const visual = visualUrl ? (
+    <img src={visualUrl} alt={block.title} className="max-h-96 w-full object-contain" loading="lazy" />
+  ) : (
+    <div className="flex h-72 w-full items-center justify-center bg-black/5 text-sm text-black/60">
+      Ajoutez une image pour ce bloc
     </div>
-  </section>
-);
+  );
 
-const ExperienceSection: React.FC<{ block: HomepageContentBlock; heroVisualUrl: string }> = ({ block, heroVisualUrl }) => (
-  <section id="experience" className="bg-white py-16">
-    <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 md:grid-cols-2">
-      <div className="space-y-4">
-        <h2 className="text-3xl font-semibold text-black md:text-4xl">{block.title}</h2>
-        {(block.subtitle || block.body) && (
-          <p className="text-base leading-relaxed text-black/70">{block.subtitle || block.body}</p>
-        )}
-      </div>
+  return (
+    <TwoColumnSection block={block} visual={visual}>
+      <h2 className="text-3xl font-semibold text-black md:text-4xl">{block.title}</h2>
+      {(block.subtitle || block.body) && (
+        <p className="text-base leading-relaxed text-black/70">{block.subtitle || block.body}</p>
+      )}
+    </TwoColumnSection>
+  );
+};
 
-      <div className="flex justify-center">
-        {block.imageUrl || heroVisualUrl ? (
-          <img
-            src={block.imageUrl || heroVisualUrl}
-            alt={block.title}
-            className="max-h-96 w-full object-contain"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex h-72 w-full items-center justify-center bg-black/5 text-sm text-black/60">
-            Ajoutez une image pour ce bloc
-          </div>
-        )}
-      </div>
+const ExperienceSection: React.FC<{ block: HomepageContentBlock; heroVisualUrl: string }> = ({ block, heroVisualUrl }) => {
+  const visualUrl = block.imageUrl || heroVisualUrl;
+  const visual = visualUrl ? (
+    <img src={visualUrl} alt={block.title} className="max-h-96 w-full object-contain" loading="lazy" />
+  ) : (
+    <div className="flex h-72 w-full items-center justify-center bg-black/5 text-sm text-black/60">
+      Ajoutez une image pour ce bloc
     </div>
-  </section>
-);
+  );
+
+  return (
+    <TwoColumnSection block={block} visual={visual} id="experience">
+      <h2 className="text-3xl font-semibold text-black md:text-4xl">{block.title}</h2>
+      {(block.subtitle || block.body) && (
+        <p className="text-base leading-relaxed text-black/70">{block.subtitle || block.body}</p>
+      )}
+    </TwoColumnSection>
+  );
+};
 
 const StorySection: React.FC<{
   block: HomepageContentBlock;
@@ -81,24 +128,21 @@ const StorySection: React.FC<{
   const title = block.title || storyPoints[0]?.title;
 
   return (
-    <section className="bg-white py-16">
-      <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 md:grid-cols-2">
-        <div className="space-y-4">
-          <h2 className="text-3xl font-semibold text-black md:text-4xl">{title}</h2>
-          {text && <p className="text-base leading-relaxed text-black/70">{text}</p>}
-        </div>
-
-        <div className="flex justify-center">
-          {illustration ? (
-            <img src={illustration} alt={title} className="max-h-96 w-full object-contain" loading="lazy" />
-          ) : (
-            <div className="flex h-72 w-full items-center justify-center bg-black/5 text-sm text-black/60">
-              Visuel synchronisé
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
+    <TwoColumnSection
+      block={block}
+      visual={
+        illustration ? (
+          <img src={illustration} alt={title} className="max-h-96 w-full object-contain" loading="lazy" />
+        ) : (
+          <div className="flex h-72 w-full items-center justify-center bg-black/5 text-sm text-black/60">
+            Visuel synchronisé
+          </div>
+        )
+      }
+    >
+      <h2 className="text-3xl font-semibold text-black md:text-4xl">{title}</h2>
+      {text && <p className="text-base leading-relaxed text-black/70">{text}</p>}
+    </TwoColumnSection>
   );
 };
 
@@ -106,7 +150,7 @@ const FeatureGridSection: React.FC<{
   block: HomepageContentBlock;
   features: HomepageFeature[];
 }> = ({ block, features }) => (
-  <section className="bg-white py-16">
+  <ScrollRevealSection enabled={block.revealAnimation} className="bg-white py-16">
     <div className="mx-auto max-w-6xl space-y-8 px-4">
       <div className="space-y-3 text-center">
         <h2 className="text-3xl font-semibold text-black md:text-4xl">{block.title}</h2>
@@ -125,7 +169,7 @@ const FeatureGridSection: React.FC<{
         </div>
       )}
     </div>
-  </section>
+  </ScrollRevealSection>
 );
 
 const HomePage: React.FC = () => {
