@@ -13,7 +13,7 @@ export function MainNavbar() {
     () => [
       { to: "/", label: "Accueil", exact: true },
       { to: "/offres", label: "Comparer les offres" },
-      { to: "/tarifs", label: "Nos logiciels" },
+    { to: "/logiciels", label: "Nos logiciels" },
       { to: "/comptapro", label: "ComptaPro" },
     ],
     []

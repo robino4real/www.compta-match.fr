@@ -67,7 +67,7 @@ const BLOCK_DEFAULTS: Record<BlockType, () => any> = {
     title: "Titre principal de la page",
     subtitle: "Sous-titre ou phrase d'accroche.",
     buttonLabel: "En savoir plus",
-    buttonUrl: "/tarifs",
+    buttonUrl: "/logiciels",
     align: "center",
   }),
   TEXT_IMAGE: () => ({
