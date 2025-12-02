@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { API_BASE_URL } from "../config/api";
-import { HomepageFeature, HomepageHeroSection } from "../types/homepage";
+import { HomepageContentBlock, HomepageFeature, HomepageHeroSection } from "../types/homepage";
 
 export type Testimonial = { name: string; role: string; text: string };
 
@@ -31,6 +31,7 @@ export type HomepageSettings = {
   testimonials?: Testimonial[];
   contentBlockTitle?: string | null;
   contentBlockBody?: string | null;
+  blocks?: HomepageContentBlock[];
   seoTitle?: string | null;
   seoDescription?: string | null;
 };
@@ -65,6 +66,58 @@ const FALLBACK_SETTINGS: HomepageSettings = {
     },
   ],
   heroSections: [],
+  blocks: [
+    {
+      id: "identity",
+      kind: "identity",
+      title: "Identité visuelle synchronisée",
+      subtitle: "Logos, favicon et visuels importés depuis le back-office.",
+      body: "Chaque élément graphique est instantanément répercuté sur la page publique pour rester cohérent avec votre marque.",
+      buttonLabel: "Mettre à jour la charte",
+      buttonLink: "/admin/homepage",
+      bullets: ["Logo de navigation", "Favicon et visuels secondaires"],
+    },
+    {
+      id: "experience",
+      kind: "experience",
+      title: "Expérience immersive",
+      subtitle: "Un scroll à la Apple",
+      body: "Animations synchronisées, sections qui se dévoilent et transitions douces pour une lecture fluide.",
+      bullets: [
+        "Intersection Observer pour révéler le contenu au bon moment.",
+        "Sections épurées, typographie lisible et responsive.",
+      ],
+      badge: "Expérience",
+    },
+    {
+      id: "story",
+      kind: "story",
+      title: "Une histoire en défilement",
+      subtitle: "Les points forts de ComptaMatch se découvrent au fil du scroll.",
+      body: "Chaque bloc déclenche une évolution visuelle qui reste épinglée pour un effet premium inspiré des pages macOS.",
+      badge: "Parcours",
+    },
+    {
+      id: "features",
+      kind: "feature-grid",
+      title: "Pensé pour les dirigeants exigeants",
+      subtitle: "Fonctionnalités clés",
+      body: "Grille modulaire, responsive, et synchronisée avec les données du back-office pour mettre en avant vos nouveautés.",
+      badge: "Fonctionnalités",
+    },
+    {
+      id: "cta",
+      kind: "cta",
+      title: "Page d'accueil premium, compatible back-office",
+      subtitle:
+        "Une expérience inspirée d'Apple, des animations fluides, et des visuels pilotés par vos réglages.",
+      body:
+        "Vos logos et images sont prêts à être intégrés, sans compromis sur la performance ni l'accessibilité.",
+      buttonLabel: "Lancer ComptaMatch",
+      buttonLink: "/comparatif-des-offres",
+      badge: "Action",
+    },
+  ],
   highlightedProductIds: [],
   testimonials: [],
   contentBlockTitle: "Une approche pragmatique",
@@ -101,6 +154,49 @@ function parseTestimonials(value: unknown): Testimonial[] {
     .filter((item) => item.name || item.role || item.text);
 }
 
+function normalizeBlocks(value: unknown): HomepageContentBlock[] {
+  const incoming = Array.isArray(value) ? (value as unknown[]) : [];
+
+  const sanitized = incoming
+    .map((block, index) => {
+      const kindCandidate = typeof (block as any)?.kind === "string" ? (block as any)?.kind : "";
+      const kind: HomepageContentBlock["kind"] =
+        kindCandidate === "experience" ||
+        kindCandidate === "story" ||
+        kindCandidate === "feature-grid" ||
+        kindCandidate === "cta" ||
+        kindCandidate === "identity"
+          ? (kindCandidate as HomepageContentBlock["kind"])
+          : "experience";
+
+      const bullets = Array.isArray((block as any)?.bullets)
+        ? ((block as any)?.bullets as unknown[])
+            .map((item) => (typeof item === "string" ? item : ""))
+            .filter(Boolean)
+        : [];
+
+      return {
+        id:
+          typeof (block as any)?.id === "string" && (block as any)?.id
+            ? (block as any)?.id
+            : `block-${index}`,
+        kind,
+        title: typeof (block as any)?.title === "string" ? (block as any)?.title : "",
+        subtitle: typeof (block as any)?.subtitle === "string" ? (block as any)?.subtitle : "",
+        body: typeof (block as any)?.body === "string" ? (block as any)?.body : "",
+        buttonLabel: typeof (block as any)?.buttonLabel === "string" ? (block as any)?.buttonLabel : "",
+        buttonLink: typeof (block as any)?.buttonLink === "string" ? (block as any)?.buttonLink : "",
+        bullets,
+        badge: typeof (block as any)?.badge === "string" ? (block as any)?.badge : "",
+        imageUrl: typeof (block as any)?.imageUrl === "string" ? (block as any)?.imageUrl : "",
+        mutedText: typeof (block as any)?.mutedText === "string" ? (block as any)?.mutedText : "",
+      } satisfies HomepageContentBlock;
+    })
+    .filter((block) => block.title || block.subtitle || block.body || block.kind === "identity");
+
+  return sanitized.length ? sanitized : FALLBACK_SETTINGS.blocks ?? [];
+}
+
 function normalizeSettings(incoming: HomepageSettings | undefined): HomepageSettings {
   if (!incoming) return FALLBACK_SETTINGS;
   const normalizedFeatures = Array.isArray(incoming.features)
@@ -134,6 +230,7 @@ function normalizeSettings(incoming: HomepageSettings | undefined): HomepageSett
     heroImageUrl: typeof incoming.heroImageUrl === "string" ? incoming.heroImageUrl : FALLBACK_SETTINGS.heroImageUrl,
     features: normalizedFeatures.length ? normalizedFeatures : FALLBACK_SETTINGS.features,
     heroSections: normalizedHeroSections,
+    blocks: normalizeBlocks(incoming.blocks),
     testimonials: parseTestimonials(incoming.testimonials),
     highlightedProductIds: Array.isArray(incoming.highlightedProductIds)
       ? (incoming.highlightedProductIds as unknown[])

@@ -437,6 +437,7 @@ model HomepageSettings {
   testimonials           Json?
   contentBlockTitle      String?
   contentBlockBody       String?
+  blocks                 Json?    @default("[]")
   seoTitle               String?
   seoDescription         String?
   createdAt              DateTime @default(now())
