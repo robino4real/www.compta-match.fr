@@ -1,11 +1,12 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
 import {
   PaidServiceComparison,
   PaidServicePlan,
   PaidServiceSection,
 } from "../types/paidServices";
+import { useAuth } from "../context/AuthContext";
 
 const formatPrice = (value: number, currency: string) => {
   return new Intl.NumberFormat("fr-FR", {
@@ -22,6 +23,8 @@ const formatPrice = (value: number, currency: string) => {
 const PRO_APP_URL = import.meta.env.VITE_PRO_APP_URL || "about:blank";
 
 const ComptaProSubscriptionPage: React.FC = () => {
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
   const [plans, setPlans] = React.useState<PaidServicePlan[]>([]);
   const [comparison, setComparison] = React.useState<PaidServiceComparison | null>(null);
@@ -66,6 +69,17 @@ const ComptaProSubscriptionPage: React.FC = () => {
 
   const handleSubscribeClick = (slug: string) => {
     navigate(`/contact?plan=${encodeURIComponent(slug)}`);
+  };
+
+  const handleProAccessClick = () => {
+    if (isAuthLoading) return;
+
+    if (!user) {
+      navigate("/auth/login", { state: { from: location } });
+      return;
+    }
+
+    window.open(PRO_APP_URL, "_blank", "noopener,noreferrer");
   };
 
   const renderPlanCard = (plan: PaidServicePlan) => (
@@ -127,14 +141,14 @@ const ComptaProSubscriptionPage: React.FC = () => {
               Déjà abonné ? Retrouvez votre espace dédié dans un nouvel onglet pour gérer vos outils en ligne.
             </p>
           </div>
-          <a
-            href={PRO_APP_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-3 text-center text-sm font-semibold text-slate-900 shadow-md transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:mt-0 md:w-auto"
+          <button
+            type="button"
+            onClick={handleProAccessClick}
+            disabled={isAuthLoading}
+            className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-3 text-center text-sm font-semibold text-slate-900 shadow-md transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-70 md:mt-0 md:w-auto"
           >
             Accéder à mon espace Pro
-          </a>
+          </button>
         </section>
 
         <section className="bg-white rounded-3xl border border-slate-100 shadow-[0_24px_60px_rgba(15,23,42,0.06)] px-6 py-8 md:px-10 md:py-10 space-y-10">
