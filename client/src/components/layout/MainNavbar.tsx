@@ -2,12 +2,14 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
+import { useHomepageSettings } from "../../hooks/useHomepageSettings";
 
 export function MainNavbar() {
   const { user, isLoading } = useAuth();
   const { items } = useCart();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const { settings: homepageSettings } = useHomepageSettings();
 
   const menuItems = React.useMemo(
     () => [
@@ -23,14 +25,20 @@ export function MainNavbar() {
     setIsMenuOpen(false);
   }, [location.pathname]);
 
+  const navbarLogoUrl = homepageSettings.navbarLogoUrl?.trim();
+
   return (
     <header className="w-full bg-white">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:h-20 md:px-0">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-black text-xs font-semibold text-white">
-            CM
-          </div>
+          {navbarLogoUrl ? (
+            <img src={navbarLogoUrl} alt="Logo ComptaMatch" className="h-9 w-auto" />
+          ) : (
+            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-black text-xs font-semibold text-white">
+              CM
+            </div>
+          )}
           <span className="text-base font-semibold tracking-tight text-slate-900 md:text-lg">
             COMPTAMATCH
           </span>

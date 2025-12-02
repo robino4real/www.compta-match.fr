@@ -23,6 +23,8 @@ export type HomepageSettingsDTO = {
   heroTitleTag: string;
   heroSubtitleTag: string;
   heroButtonStyle: string;
+  navbarLogoUrl?: string;
+  faviconUrl?: string;
 };
 
 const FALLBACK_DTO: HomepageSettingsDTO = {
@@ -45,6 +47,8 @@ const FALLBACK_DTO: HomepageSettingsDTO = {
   heroTitleTag: "h1",
   heroSubtitleTag: "p",
   heroButtonStyle: "primary",
+  navbarLogoUrl: "",
+  faviconUrl: "",
 };
 
 function toDto(settings: HomepageSettings | null): HomepageSettingsDTO {
@@ -69,6 +73,8 @@ function toDto(settings: HomepageSettings | null): HomepageSettingsDTO {
     heroTitleTag: safe.heroTitleTag || FALLBACK_DTO.heroTitleTag,
     heroSubtitleTag: safe.heroSubtitleTag || FALLBACK_DTO.heroSubtitleTag,
     heroButtonStyle: safe.heroButtonStyle || FALLBACK_DTO.heroButtonStyle,
+    navbarLogoUrl: safe.navbarLogoUrl || FALLBACK_DTO.navbarLogoUrl,
+    faviconUrl: safe.faviconUrl || FALLBACK_DTO.faviconUrl,
   };
 }
 

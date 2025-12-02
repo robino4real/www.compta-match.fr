@@ -19,6 +19,11 @@ const FALLBACK_SETTINGS: HomepageSettingsDTO = {
   feature3Icon: "☎",
   feature3Title: "Support dédié & réactif",
   feature3Text: "Une équipe qui répond vite pour vous accompagner.",
+  heroTitleTag: "h1",
+  heroSubtitleTag: "p",
+  heroButtonStyle: "primary",
+  navbarLogoUrl: null,
+  faviconUrl: null,
 };
 
 export function useHomepageContent() {

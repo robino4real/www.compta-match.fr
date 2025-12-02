@@ -13,4 +13,9 @@ export type HomepageSettingsDTO = {
   feature3Icon: string;
   feature3Title: string;
   feature3Text: string;
+  heroTitleTag?: string;
+  heroSubtitleTag?: string;
+  heroButtonStyle?: string;
+  navbarLogoUrl?: string | null;
+  faviconUrl?: string | null;
 };

@@ -125,7 +125,7 @@ async function fetchPublicHomepage(): Promise<HookState> {
 
   inflightRequest = (async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/public/homepage-settings`);
+      const response = await fetch(`${API_BASE_URL}/public/homepage`);
       const data = (await response.json().catch(() => ({}))) as PublicHomepagePayload;
       if (!response.ok) {
         throw new Error(data?.message || "Impossible de charger la page d'accueil.");
