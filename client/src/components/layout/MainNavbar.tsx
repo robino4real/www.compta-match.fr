@@ -1,9 +1,11 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useCart } from "../../context/CartContext";
 
 export function MainNavbar() {
   const { user, isLoading } = useAuth();
+  const { items } = useCart();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -11,10 +13,8 @@ export function MainNavbar() {
     () => [
       { to: "/", label: "Accueil", exact: true },
       { to: "/comptapro", label: "Comparer les offres" },
-      { to: "/tarifs", label: "Tarifs" },
       { to: "/tarifs", label: "Nos logiciels" },
       { to: "/comptapro", label: "ComptaPro" },
-      { to: "/contact", label: "Contact" },
     ],
     []
   );
@@ -54,22 +54,38 @@ export function MainNavbar() {
           ))}
         </nav>
 
-        {/* Bouton contact / compte */}
+        {/* Bouton connexion + panier */}
         <div className="hidden items-center gap-2 md:flex">
           <Link
             className="flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            to="/contact"
+            to={user ? "/compte" : "/auth/login"}
           >
-            <span>Contact</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/40 text-xs font-semibold text-slate-900">
+              {!isLoading && user?.email ? user.email.charAt(0).toUpperCase() : "➜"}
+            </div>
+            <span>{user ? "Mon compte" : "Se connecter"}</span>
           </Link>
           <Link
-            className="flex items-center gap-2 rounded-full bg-black px-4 py-2 text-sm font-medium text-white hover:bg-slate-900"
-            to="/compte"
+            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-800 transition hover:border-slate-300 hover:bg-slate-50"
+            to="/panier"
+            aria-label="Panier"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white">
-              {!isLoading && user?.email ? user.email.charAt(0).toUpperCase() : ""}
-            </div>
-            <span>Mon compte</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              className="h-5 w-5"
+            >
+              <circle cx="9" cy="21" r="1" />
+              <circle cx="20" cy="21" r="1" />
+              <path d="M1 1h4l2.68 12.39a1 1 0 0 0 .98.8h8.72a1 1 0 0 0 .98-.8L21 6H6" strokeWidth={1.6} />
+            </svg>
+            {items.length > 0 && (
+              <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-black px-1 text-[10px] font-semibold text-white">
+                {items.length}
+              </span>
+            )}
           </Link>
         </div>
 
@@ -116,21 +132,37 @@ export function MainNavbar() {
               </Link>
             ))}
           </nav>
-          <div className="flex flex-col gap-2 border-t border-slate-100 px-4 py-3">
+          <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-3">
             <Link
-              className="w-full rounded-full border border-slate-200 px-4 py-2 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              to="/contact"
+              className="flex flex-1 items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              to={user ? "/compte" : "/auth/login"}
             >
-              Contact
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/40 text-xs font-semibold text-slate-900">
+                {!isLoading && user?.email ? user.email.charAt(0).toUpperCase() : "➜"}
+              </div>
+              <span>{user ? "Mon compte" : "Se connecter"}</span>
             </Link>
             <Link
-              className="flex items-center justify-center gap-2 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900"
-              to="/compte"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-800 transition hover:border-slate-300 hover:bg-slate-50"
+              to="/panier"
+              aria-label="Panier"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white">
-                {!isLoading && user?.email ? user.email.charAt(0).toUpperCase() : ""}
-              </div>
-              <span>Mon compte</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                className="h-5 w-5"
+              >
+                <circle cx="9" cy="21" r="1" />
+                <circle cx="20" cy="21" r="1" />
+                <path d="M1 1h4l2.68 12.39a1 1 0 0 0 .98.8h8.72a1 1 0 0 0 .98-.8L21 6H6" strokeWidth={1.6} />
+              </svg>
+              {items.length > 0 && (
+                <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-black px-1 text-[10px] font-semibold text-white">
+                  {items.length}
+                </span>
+              )}
             </Link>
           </div>
         </div>
