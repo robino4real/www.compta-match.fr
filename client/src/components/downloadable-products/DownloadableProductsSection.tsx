@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { DownloadableProduct } from "../../types/downloadableProduct";
+import {
+  DownloadableCategory,
+  DownloadableProduct,
+} from "../../types/downloadableProduct";
 import { formatPrice } from "../../lib/formatPrice";
 import { useCart } from "../../context/CartContext";
 import { API_BASE_URL } from "../../config/api";
@@ -68,8 +71,10 @@ const buildDetailSlides = (
 export const DownloadableProductsSection: React.FC = () => {
   const { addDownloadableProduct } = useCart();
   const [products, setProducts] = useState<DownloadableProduct[]>([]);
+  const [categories, setCategories] = useState<DownloadableCategory[]>([]);
   const [selectedProduct, setSelectedProduct] =
     useState<DownloadableProduct | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [imageIndex, setImageIndex] = useState(0);
@@ -97,10 +102,16 @@ export const DownloadableProductsSection: React.FC = () => {
         const incoming: DownloadableProduct[] = Array.isArray(json?.products)
           ? json.products
           : [];
+        const incomingCategories: DownloadableCategory[] = Array.isArray(
+          json?.categories
+        )
+          ? json.categories
+          : [];
 
         if (!isMounted) return;
 
         setProducts(incoming);
+        setCategories(incomingCategories);
         setSelectedProduct(incoming[0] ?? null);
         setImageIndex(0);
         setCurrentIndex(0);
@@ -143,6 +154,22 @@ export const DownloadableProductsSection: React.FC = () => {
   }, [selectedProduct?.id, detailSlides.length]);
 
   useEffect(() => {
+    if (
+      selectedCategoryId &&
+      !categories.some((category) => category.id === selectedCategoryId)
+    ) {
+      setSelectedCategoryId("");
+    }
+  }, [categories, selectedCategoryId]);
+
+  const filteredProducts = useMemo(() => {
+    if (!selectedCategoryId) return products;
+    return products.filter(
+      (product) => product.category?.id === selectedCategoryId
+    );
+  }, [products, selectedCategoryId]);
+
+  useEffect(() => {
     if (imageIndex > Math.max(detailSlides.length - 1, 0)) {
       setImageIndex(0);
     }
@@ -156,17 +183,28 @@ export const DownloadableProductsSection: React.FC = () => {
     selectedProduct?.shortDescription ||
     "";
 
-  const maxIndex = Math.max(products.length - VISIBLE_CARDS, 0);
+  const maxIndex = Math.max(filteredProducts.length - VISIBLE_CARDS, 0);
 
   useEffect(() => {
     setCurrentIndex(0);
-  }, [products.length]);
+  }, [filteredProducts.length]);
 
   useEffect(() => {
     if (currentIndex > maxIndex) {
       setCurrentIndex(maxIndex);
     }
   }, [currentIndex, maxIndex]);
+
+  useEffect(() => {
+    if (
+      selectedProduct &&
+      filteredProducts.some((product) => product.id === selectedProduct.id)
+    ) {
+      return;
+    }
+
+    setSelectedProduct(filteredProducts[0] ?? null);
+  }, [filteredProducts, selectedProduct]);
 
   useEffect(() => {
     setIsFading(true);
@@ -226,15 +264,17 @@ export const DownloadableProductsSection: React.FC = () => {
       ));
     }
 
-    if (!products.length) {
+    if (!filteredProducts.length) {
       return (
         <div className="flex min-h-[160px] w-full flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white px-6 py-8 text-center text-sm text-slate-600 shadow-[0_24px_60px_rgba(15,23,42,0.05)]">
-          Aucun logiciel n’est disponible pour le moment. Veuillez revenir plus tard.
+          {products.length
+            ? "Aucun logiciel n’est disponible dans cette catégorie pour le moment."
+            : "Aucun logiciel n’est disponible pour le moment. Veuillez revenir plus tard."}
         </div>
       );
     }
 
-    return products.map((product) => (
+    return filteredProducts.map((product) => (
       <article
         key={product.id}
         role="button"
@@ -482,7 +522,7 @@ export const DownloadableProductsSection: React.FC = () => {
     );
   };
 
-  const showNavigation = !loading && products.length > VISIBLE_CARDS;
+  const showNavigation = !loading && filteredProducts.length > VISIBLE_CARDS;
   const translateX = showNavigation ? currentIndex * (CARD_WIDTH + CARD_GAP) : 0;
   const viewportWidth = useMemo(
     () => VISIBLE_CARDS * CARD_WIDTH + CARD_GAP * (VISIBLE_CARDS - 1),
@@ -495,6 +535,37 @@ export const DownloadableProductsSection: React.FC = () => {
         <div className="flex justify-center">
           <div className="rounded-full bg-red-50 px-4 py-2 text-xs font-semibold text-red-700">
             {error}
+          </div>
+        </div>
+      )}
+
+      {!!categories.length && (
+        <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-3 rounded-3xl border border-slate-100 bg-white px-6 py-5 shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/90 text-white">↺</span>
+            <span>Filtrer par catégorie</span>
+          </div>
+          <div className="relative w-full max-w-lg">
+            <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-r from-slate-50 via-white to-slate-50" aria-hidden />
+            <select
+              value={selectedCategoryId}
+              onChange={(event) => {
+                setSelectedCategoryId(event.target.value);
+                setCurrentIndex(0);
+              }}
+              className="relative z-10 w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-[0_14px_36px_rgba(15,23,42,0.08)] transition focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/20"
+            >
+              <option value="">Toutes les catégories</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                  {typeof category.productCount === "number"
+                    ? ` (${category.productCount})`
+                    : ""}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-500">▾</div>
           </div>
         </div>
       )}

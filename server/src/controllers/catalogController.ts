@@ -41,6 +41,14 @@ type PublicDownloadableProductV2DTO = {
   detailSlides?: { imageUrl: string; description?: string | null }[];
   priceDisplayMode: "HT" | "TTC";
   isPublished: boolean;
+  category?: DownloadableCategoryDTO | null;
+};
+
+type DownloadableCategoryDTO = {
+  id: string;
+  name: string;
+  slug: string;
+  productCount?: number;
 };
 
 type DetailSlideDTO = { imageUrl: string; description?: string | null };
@@ -225,17 +233,35 @@ export async function publicListDownloadableProducts(_req: Request, res: Respons
 
 export async function publicListDownloadableProductsV2(_req: Request, res: Response) {
   try {
-    const [products, companySettings] = await Promise.all([
+    const [products, companySettings, categories] = await Promise.all([
       prisma.downloadableProduct.findMany({
         where: { isActive: true, isArchived: false },
         orderBy: { createdAt: "desc" },
+        include: { category: true },
       }),
       getOrCreateCompanySettings(),
+      prisma.downloadableCategory.findMany({
+        orderBy: { name: "asc" },
+        include: {
+          products: {
+            where: { isActive: true, isArchived: false },
+            select: { id: true },
+          },
+        },
+      }),
     ]);
 
     const priceDisplayMode = resolvePriceDisplayMode(companySettings?.vatRegime);
 
     const response: PublicDownloadableProductV2DTO[] = products.map((product) => {
+      const category = product.category
+        ? {
+            id: product.category.id,
+            name: product.category.name,
+            slug: product.category.slug,
+          }
+        : null;
+
       const galleryUrls: string[] = [];
       if (product.thumbnailUrl) {
         galleryUrls.push(product.thumbnailUrl);
@@ -267,10 +293,20 @@ export async function publicListDownloadableProductsV2(_req: Request, res: Respo
         detailSlides,
         priceDisplayMode,
         isPublished: product.isActive && !product.isArchived,
+        category,
       };
     });
 
-    return res.json({ products: response });
+    const publicCategories: DownloadableCategoryDTO[] = categories
+      .map((category) => ({
+        id: category.id,
+        name: category.name,
+        slug: category.slug,
+        productCount: category.products.length,
+      }))
+      .filter((category) => category.productCount && category.productCount > 0);
+
+    return res.json({ products: response, categories: publicCategories });
   } catch (error) {
     console.error("Erreur lors du chargement public des téléchargements v2", error);
     return res

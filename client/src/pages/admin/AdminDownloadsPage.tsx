@@ -18,6 +18,14 @@ interface DownloadableProduct {
   shortDescription?: string | null;
   featureBullets?: string[] | null;
   thumbnailUrl?: string | null;
+  category?: DownloadableCategory | null;
+}
+
+interface DownloadableCategory {
+  id: string;
+  name: string;
+  slug: string;
+  productCount?: number;
 }
 
 const formatFileSize = (bytes?: number) => {
@@ -39,12 +47,20 @@ const AdminDownloadsPage: React.FC = () => {
   const [name, setName] = React.useState("");
   const [slug, setSlug] = React.useState("");
   const [slugEdited, setSlugEdited] = React.useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = React.useState("");
   const [priceEuros, setPriceEuros] = React.useState("");
   const [shortDescription, setShortDescription] = React.useState("");
   const [longDescription, setLongDescription] = React.useState("");
   const [thumbnailUrl, setThumbnailUrl] = React.useState("");
   const [isUploadingThumbnail, setIsUploadingThumbnail] = React.useState(false);
   const [thumbnailUploadError, setThumbnailUploadError] = React.useState<string | null>(null);
+  const [categories, setCategories] = React.useState<DownloadableCategory[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = React.useState(false);
+  const [categoriesError, setCategoriesError] = React.useState<string | null>(null);
+  const [categorySuccess, setCategorySuccess] = React.useState<string | null>(null);
+  const [newCategoryName, setNewCategoryName] = React.useState("");
+  const [newCategorySlug, setNewCategorySlug] = React.useState("");
+  const [isSavingCategory, setIsSavingCategory] = React.useState(false);
   const [featureBullets, setFeatureBullets] = React.useState<string[]>([]);
   const [featureInput, setFeatureInput] = React.useState("");
   const [detailHtml, setDetailHtml] = React.useState("");
@@ -104,6 +120,40 @@ const AdminDownloadsPage: React.FC = () => {
     }
   }, [statusFilter]);
 
+  const fetchCategories = React.useCallback(async () => {
+    try {
+      setIsLoadingCategories(true);
+      setCategoriesError(null);
+
+      const response = await fetch(`${API_BASE_URL}/admin/downloadable-categories`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          (data as { message?: string }).message ||
+            "Impossible de récupérer les catégories."
+        );
+      }
+
+      const list = Array.isArray((data as { categories?: unknown }).categories)
+        ? ((data as { categories?: DownloadableCategory[] }).categories as DownloadableCategory[])
+        : [];
+      setCategories(list);
+    } catch (err: any) {
+      console.error("Erreur lors du chargement des catégories :", err);
+      setCategoriesError(
+        err?.message ||
+          "Une erreur est survenue lors du chargement des catégories."
+      );
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  }, []);
+
   React.useEffect(() => {
     if (!slugEdited && name.trim()) {
       setSlug(slugify(name));
@@ -111,8 +161,27 @@ const AdminDownloadsPage: React.FC = () => {
   }, [name, slugEdited]);
 
   React.useEffect(() => {
+    if (newCategoryName.trim() && !newCategorySlug.trim()) {
+      setNewCategorySlug(slugify(newCategoryName));
+    }
+  }, [newCategoryName, newCategorySlug]);
+
+  React.useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  React.useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  React.useEffect(() => {
+    if (
+      selectedCategoryId &&
+      !categories.some((category) => category.id === selectedCategoryId)
+    ) {
+      setSelectedCategoryId("");
+    }
+  }, [categories, selectedCategoryId]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selected = event.target.files?.[0] ?? null;
@@ -155,6 +224,96 @@ const AdminDownloadsPage: React.FC = () => {
         ? prev.filter((entry) => entry !== platform)
         : [...prev, platform]
     );
+  };
+
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) {
+      setCategoriesError("Le nom de la catégorie est requis.");
+      return;
+    }
+
+    setIsSavingCategory(true);
+    setCategoriesError(null);
+    setCategorySuccess(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/downloadable-categories`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: newCategoryName.trim(),
+          slug: newCategorySlug.trim() || undefined,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          (data as { message?: string }).message ||
+            "Impossible de créer cette catégorie."
+        );
+      }
+
+      const created = (data as { category?: DownloadableCategory }).category;
+
+      if (created) {
+        setCategories((prev) =>
+          [...prev, created].sort((a, b) => a.name.localeCompare(b.name))
+        );
+        setSelectedCategoryId((current) => current || created.id);
+      }
+
+      setNewCategoryName("");
+      setNewCategorySlug("");
+      setCategorySuccess("Catégorie ajoutée.");
+    } catch (err: any) {
+      console.error("Erreur lors de la création de catégorie :", err);
+      setCategoriesError(
+        err?.message ||
+          "Une erreur est survenue lors de la création de la catégorie."
+      );
+    } finally {
+      setIsSavingCategory(false);
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    setCategoriesError(null);
+    setCategorySuccess(null);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/admin/downloadable-categories/${categoryId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(
+          (data as { message?: string }).message ||
+            "Impossible de supprimer cette catégorie."
+        );
+      }
+
+      setCategories((prev) => prev.filter((category) => category.id !== categoryId));
+      if (selectedCategoryId === categoryId) {
+        setSelectedCategoryId("");
+      }
+      setCategorySuccess("Catégorie supprimée.");
+    } catch (err: any) {
+      console.error("Erreur lors de la suppression de catégorie", err);
+      setCategoriesError(
+        err?.message ||
+          "Impossible de supprimer cette catégorie pour le moment."
+      );
+    }
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -206,6 +365,9 @@ const AdminDownloadsPage: React.FC = () => {
     if (slug.trim()) {
       formData.append("slug", slug.trim());
     }
+    if (selectedCategoryId) {
+      formData.append("categoryId", selectedCategoryId);
+    }
     formData.append("priceCents", String(priceCents));
     if (shortDescription.trim()) {
       formData.append("shortDescription", shortDescription.trim());
@@ -251,6 +413,7 @@ const AdminDownloadsPage: React.FC = () => {
         setPlatforms([]);
         setLicenseType("perpetual");
         setSupportContact("support@compta-match.fr");
+        setSelectedCategoryId("");
         setFile(null);
         event.currentTarget.reset();
         await fetchProducts();
@@ -410,6 +573,30 @@ const AdminDownloadsPage: React.FC = () => {
                     Copier
                   </button>
                 </div>
+              </div>
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-slate-800">Catégorie</label>
+                <select
+                  value={selectedCategoryId}
+                  onChange={(e) => setSelectedCategoryId(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                >
+                  <option value="">Aucune catégorie</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+                {isLoadingCategories && (
+                  <p className="text-[11px] text-slate-500">Chargement des catégories...</p>
+                )}
+                {categoriesError && (
+                  <p className="text-[11px] text-red-600">{categoriesError}</p>
+                )}
+                <p className="text-[11px] text-slate-500">
+                  Sélectionnez une catégorie pour organiser la vitrine Logiciels.
+                </p>
               </div>
               <div className="space-y-1">
                 <label className="block text-[11px] font-medium text-slate-800">Vignette / visuel</label>
@@ -817,6 +1004,7 @@ const AdminDownloadsPage: React.FC = () => {
                   <tr>
                     <th className="px-3 py-2 text-left font-semibold text-slate-500">Produit</th>
                     <th className="px-3 py-2 text-left font-semibold text-slate-500">Slug</th>
+                    <th className="px-3 py-2 text-left font-semibold text-slate-500">Catégorie</th>
                     <th className="px-3 py-2 text-left font-semibold text-slate-500">Tarif</th>
                     <th className="px-3 py-2 text-left font-semibold text-slate-500">Argumentaire</th>
                     <th className="px-3 py-2 text-left font-semibold text-slate-500">Fichier</th>
@@ -858,6 +1046,9 @@ const AdminDownloadsPage: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-3 py-3 align-top text-slate-700">{product.slug}</td>
+                        <td className="px-3 py-3 align-top text-slate-700">
+                          {product.category?.name || "—"}
+                        </td>
                         <td className="px-3 py-3 align-top text-slate-700">{priceEuros.toFixed(2)} €</td>
                         <td className="px-3 py-3 align-top text-slate-700">
                           {product.featureBullets && product.featureBullets.length > 0 ? (
@@ -924,6 +1115,95 @@ const AdminDownloadsPage: React.FC = () => {
               </table>
             </div>
           )}
+        </div>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-3">
+        <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-start-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-black">Catégories des téléchargements</h3>
+              <p className="text-xs text-slate-600">
+                Créez, supprimez et rafraîchissez les catégories utilisées sur la page Logiciels.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={fetchCategories}
+              className="rounded-full border border-slate-200 px-3 py-1 text-[11px] font-semibold text-slate-700 transition hover:border-black hover:text-black"
+            >
+              Rafraîchir
+            </button>
+          </div>
+
+          {categoriesError && (
+            <p className="text-[11px] text-red-600">{categoriesError}</p>
+          )}
+          {categorySuccess && (
+            <p className="text-[11px] text-emerald-700">{categorySuccess}</p>
+          )}
+
+          <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">
+              Nouvelle catégorie
+            </p>
+            <input
+              type="text"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+              placeholder="Ex : Comptabilité en ligne"
+            />
+            <input
+              type="text"
+              value={newCategorySlug}
+              onChange={(e) => setNewCategorySlug(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+              placeholder="Slug personnalisé (optionnel)"
+            />
+            <button
+              type="button"
+              onClick={handleCreateCategory}
+              disabled={isSavingCategory}
+              className="w-full rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition hover:bg-white hover:text-black hover:border hover:border-black disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSavingCategory ? "Enregistrement..." : "Créer la catégorie"}
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">
+              Liste des catégories
+            </p>
+            {isLoadingCategories ? (
+              <p className="text-[11px] text-slate-500">Chargement en cours...</p>
+            ) : categories.length === 0 ? (
+              <p className="text-[11px] text-slate-500">Aucune catégorie définie pour le moment.</p>
+            ) : (
+              <ul className="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+                {categories.map((category) => {
+                  const isProtected = Boolean(category.productCount && category.productCount > 0);
+                  return (
+                    <li key={category.id} className="flex items-center justify-between gap-2 px-3 py-2">
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-semibold text-slate-900">{category.name}</p>
+                        <p className="text-[11px] text-slate-500">{category.slug} • {category.productCount ?? 0} produit(s)</p>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={isProtected}
+                        onClick={() => handleDeleteCategory(category.id)}
+                        className="rounded-full border border-slate-200 px-3 py-1 text-[11px] font-semibold text-slate-700 transition hover:border-black hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+                        aria-label={`Supprimer ${category.name}`}
+                      >
+                        {isProtected ? "Utilisée" : "Supprimer"}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
         </div>
       </section>
     </div>

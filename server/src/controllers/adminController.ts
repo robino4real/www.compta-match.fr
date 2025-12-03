@@ -77,6 +77,7 @@ export async function createDownloadableProduct(req: Request, res: Response) {
       featureBullets,
       detailHtml,
       detailSlides,
+      categoryId,
     } = req.body;
 
     if (!file) {
@@ -126,6 +127,19 @@ export async function createDownloadableProduct(req: Request, res: Response) {
 
     const parsedDetailSlides = parseDetailSlides(detailSlides);
 
+    let validCategoryId: string | null = null;
+    if (typeof categoryId === "string" && categoryId.trim()) {
+      const existingCategory = await prisma.downloadableCategory.findUnique({
+        where: { id: categoryId.trim() },
+      });
+
+      if (!existingCategory) {
+        return res.status(400).json({ message: "Catégorie introuvable." });
+      }
+
+      validCategoryId = existingCategory.id;
+    }
+
     const product = await prisma.downloadableProduct.create({
       data: {
         slug: finalSlug,
@@ -140,6 +154,7 @@ export async function createDownloadableProduct(req: Request, res: Response) {
         priceCents: Math.round(price),
         currency: "EUR",
         isActive: true,
+        categoryId: validCategoryId,
         fileName: file.originalname,
         fileSize: file.size,
         fileMimeType: file.mimetype || null,

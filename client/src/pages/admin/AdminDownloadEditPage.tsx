@@ -13,6 +13,14 @@ interface AdminDownloadProduct {
   currency: string;
   isActive: boolean;
   detailSlides?: { imageUrl?: string | null; description?: string | null }[];
+  category?: DownloadableCategory | null;
+  categoryId?: string | null;
+}
+
+interface DownloadableCategory {
+  id: string;
+  name: string;
+  slug: string;
 }
 
 interface DetailSlideFormValue {
@@ -38,6 +46,10 @@ const AdminDownloadEditPage: React.FC = () => {
   const [thumbnailUrl, setThumbnailUrl] = React.useState("");
   const [thumbnailError, setThumbnailError] = React.useState<string | null>(null);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = React.useState(false);
+  const [categories, setCategories] = React.useState<DownloadableCategory[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = React.useState("");
+  const [categoriesError, setCategoriesError] = React.useState<string | null>(null);
+  const [isLoadingCategories, setIsLoadingCategories] = React.useState(false);
   const [detailSlides, setDetailSlides] = React.useState<DetailSlideFormValue[]>(
     []
   );
@@ -55,6 +67,39 @@ const AdminDownloadEditPage: React.FC = () => {
 
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
+  const loadCategories = React.useCallback(async () => {
+    try {
+      setIsLoadingCategories(true);
+      setCategoriesError(null);
+
+      const response = await fetch(`${API_BASE_URL}/admin/downloadable-categories`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          (data as { message?: string }).message ||
+            "Impossible de récupérer les catégories."
+        );
+      }
+
+      const list = Array.isArray((data as { categories?: unknown }).categories)
+        ? ((data as { categories?: DownloadableCategory[] }).categories as DownloadableCategory[])
+        : [];
+      setCategories(list);
+    } catch (err: any) {
+      console.error("Erreur lors du chargement des catégories", err);
+      setCategoriesError(
+        err?.message || "Impossible de charger les catégories pour le moment."
+      );
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  }, []);
 
   React.useEffect(() => {
     if (!id) return;
@@ -85,6 +130,7 @@ const AdminDownloadEditPage: React.FC = () => {
         setLongDescription(prod.longDescription ?? "");
         setCardImageUrl(prod.cardImageUrl ?? "");
         setThumbnailUrl(prod.thumbnailUrl ?? "");
+        setSelectedCategoryId(prod.category?.id || prod.categoryId || "");
         setDetailSlides(
           Array.isArray(prod.detailSlides)
             ? prod.detailSlides.map((slide) => ({
@@ -111,7 +157,17 @@ const AdminDownloadEditPage: React.FC = () => {
     };
 
     fetchProduct();
-  }, [id]);
+    loadCategories();
+  }, [id, loadCategories]);
+
+  React.useEffect(() => {
+    if (
+      selectedCategoryId &&
+      !categories.some((category) => category.id === selectedCategoryId)
+    ) {
+      setSelectedCategoryId("");
+    }
+  }, [categories, selectedCategoryId]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,6 +197,7 @@ const AdminDownloadEditPage: React.FC = () => {
           .filter((slide) => slide.imageUrl),
         priceCents: Math.round(parsedPrice * 100),
         isActive,
+        categoryId: selectedCategoryId || null,
       };
 
       const response = await fetch(`${API_BASE_URL}/admin/downloads/${id}`, {
@@ -387,6 +444,31 @@ const AdminDownloadEditPage: React.FC = () => {
               className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
               rows={6}
             />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-700">Catégorie</label>
+            <select
+              value={selectedCategoryId}
+              onChange={(event) => setSelectedCategoryId(event.target.value)}
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+            >
+              <option value="">Aucune catégorie</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+            {isLoadingCategories && (
+              <p className="text-[11px] text-slate-500">Chargement des catégories...</p>
+            )}
+            {categoriesError && (
+              <p className="text-[11px] text-red-600">{categoriesError}</p>
+            )}
+            <p className="text-[11px] text-slate-500">
+              Utilisée pour filtrer les logiciels sur la page publique.
+            </p>
           </div>
 
           <div className="space-y-2">

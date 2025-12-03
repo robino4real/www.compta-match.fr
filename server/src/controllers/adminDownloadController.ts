@@ -77,6 +77,7 @@ export async function listAdminDownloadableProducts(req: Request, res: Response)
     const products = await prisma.downloadableProduct.findMany({
       where,
       orderBy: [{ createdAt: "desc" }],
+      include: { category: true },
     });
 
     return res.status(200).json({ products });
@@ -98,6 +99,7 @@ export async function getDownloadableProductById(req: Request, res: Response) {
 
     const product = await prisma.downloadableProduct.findUnique({
       where: { id },
+      include: { category: true },
     });
 
     if (!product) {
@@ -146,6 +148,7 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
       detailSlides,
       detailHtml,
       isArchived,
+      categoryId,
     } = req.body as {
       name?: string;
       slug?: string;
@@ -164,10 +167,12 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
       detailSlides?: unknown;
       detailHtml?: string | null;
       isArchived?: boolean;
+      categoryId?: string | null;
     };
 
     const existing = await prisma.downloadableProduct.findUnique({
       where: { id },
+      include: { category: true },
     });
 
     if (!existing) {
@@ -242,6 +247,22 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
         thumbnailUrl === null ? null : String(thumbnailUrl).trim();
     }
 
+    if (typeof categoryId !== "undefined") {
+      if (categoryId === null || categoryId === "") {
+        updateData.categoryId = null;
+      } else if (typeof categoryId === "string") {
+        const category = await prisma.downloadableCategory.findUnique({
+          where: { id: categoryId },
+        });
+
+        if (!category) {
+          return res.status(400).json({ message: "Catégorie introuvable." });
+        }
+
+        updateData.categoryId = category.id;
+      }
+    }
+
     const parsedFeatureBullets = parseFeatureBullets(featureBullets);
     if (parsedFeatureBullets) {
       updateData.featureBullets = parsedFeatureBullets;
@@ -270,6 +291,7 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
     const updated = await prisma.downloadableProduct.update({
       where: { id },
       data: updateData,
+      include: { category: true },
     });
 
     return res.status(200).json({ product: updated });

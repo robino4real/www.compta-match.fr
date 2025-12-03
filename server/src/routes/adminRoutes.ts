@@ -13,6 +13,11 @@ import {
   restoreDownloadableProduct,
 } from "../controllers/adminDownloadController";
 import {
+  adminCreateDownloadableCategory,
+  adminDeleteDownloadableCategory,
+  adminListDownloadableCategories,
+} from "../controllers/downloadableCategoryController";
+import {
   getStripeSettings,
   updateStripeSettings,
 } from "../controllers/stripeSettingsController";
@@ -179,6 +184,27 @@ router.post(
   attachUserToRequest,
   requireAdmin,
   restoreDownloadableProduct
+);
+
+router.get(
+  "/downloadable-categories",
+  attachUserToRequest,
+  requireAdmin,
+  adminListDownloadableCategories
+);
+
+router.post(
+  "/downloadable-categories",
+  attachUserToRequest,
+  requireAdmin,
+  adminCreateDownloadableCategory
+);
+
+router.delete(
+  "/downloadable-categories/:id",
+  attachUserToRequest,
+  requireAdmin,
+  adminDeleteDownloadableCategory
 );
 
 // Paramétrages Stripe (réservés à l'administrateur)
