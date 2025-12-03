@@ -52,6 +52,8 @@ const DEFAULT_HOME_SETTINGS: Pick<
   | "heroButtonStyle"
   | "navbarLogoUrl"
   | "faviconUrl"
+  | "seoTitle"
+  | "seoDescription"
 > & {
     heroPrimaryCtaLabel: string;
     heroPrimaryCtaHref: string;
@@ -83,6 +85,9 @@ const DEFAULT_HOME_SETTINGS: Pick<
   heroPrimaryCtaHref: "/offres",
   navbarLogoUrl: "",
   faviconUrl: "",
+  seoTitle: "ComptaMatch | Solutions comptables pour petites entreprises",
+  seoDescription:
+    "Logiciels et contenus pour simplifier la comptabilité des TPE, indépendants et micro-entrepreneurs.",
   features: [],
   heroSections: [],
   blocks: DEFAULT_HOMEPAGE_BLOCKS,
@@ -109,6 +114,8 @@ type HomepageEditableFields = Pick<
   | "heroButtonStyle"
   | "navbarLogoUrl"
   | "faviconUrl"
+  | "seoTitle"
+  | "seoDescription"
 > & {
   features?: FeatureCard[];
   heroSections?: HeroSection[];
@@ -280,6 +287,8 @@ export async function getOrCreateHomepageSettings(): Promise<HomepageSettings> {
       heroIllustrationUrl: DEFAULT_HOME_SETTINGS.heroIllustrationUrl,
       navbarLogoUrl: DEFAULT_HOME_SETTINGS.navbarLogoUrl,
       faviconUrl: DEFAULT_HOME_SETTINGS.faviconUrl,
+      seoTitle: DEFAULT_HOME_SETTINGS.seoTitle,
+      seoDescription: DEFAULT_HOME_SETTINGS.seoDescription,
       feature1Icon: DEFAULT_HOME_SETTINGS.feature1Icon,
       feature1Title: DEFAULT_HOME_SETTINGS.feature1Title,
       feature1Text: DEFAULT_HOME_SETTINGS.feature1Text,
@@ -332,6 +341,15 @@ export async function updateHomepageSettings(
     existing.faviconUrl ?? DEFAULT_HOME_SETTINGS.faviconUrl ?? ""
   );
 
+  const seoTitle = withDefault(
+    payload.seoTitle,
+    existing.seoTitle ?? DEFAULT_HOME_SETTINGS.seoTitle ?? ""
+  );
+  const seoDescription = withDefault(
+    payload.seoDescription,
+    existing.seoDescription ?? DEFAULT_HOME_SETTINGS.seoDescription ?? ""
+  );
+
   const normalizedFeatures = sanitizeFeatureList(payload.features) ?? normalizeFeatures(undefined, existing);
   const normalizedHeroSections = sanitizeHeroSections(payload.heroSections) ?? normalizeHeroSections(undefined, existing);
   const normalizedBlocks = sanitizeBlocks(payload.blocks) ?? normalizeBlocks(undefined, existing);
@@ -349,6 +367,8 @@ export async function updateHomepageSettings(
       heroIllustrationUrl,
       navbarLogoUrl,
       faviconUrl,
+      seoTitle,
+      seoDescription,
       features: normalizedFeatures,
       heroSections: normalizedHeroSections,
       blocks: normalizedBlocks,

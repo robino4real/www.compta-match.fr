@@ -6,6 +6,10 @@ import {
   getOrCreateHomepageSettings,
   updateHomepageSettings,
 } from "../services/homepageSettingsService";
+import {
+  getCustomPageWithStructureByKeyOrRoute,
+  getPublishedCustomPageByRoute,
+} from "../services/pageBuilderService";
 import { homepageStreamHandler, notifyHomepageUpdated } from "../utils/homepageStream";
 
 export type HomepageSettingsDTO = {
@@ -28,6 +32,8 @@ export type HomepageSettingsDTO = {
   heroButtonStyle: string;
   navbarLogoUrl?: string;
   faviconUrl?: string;
+  seoTitle?: string;
+  seoDescription?: string;
   blocks: HomepageContentBlock[];
 };
 
@@ -46,6 +52,8 @@ const FALLBACK_DTO: HomepageSettingsDTO = {
   heroButtonStyle: "primary",
   navbarLogoUrl: "",
   faviconUrl: "",
+  seoTitle: "",
+  seoDescription: "",
   blocks: DEFAULT_HOMEPAGE_BLOCKS,
 };
 
@@ -171,6 +179,8 @@ function toDto(settings: HomepageSettings | null): HomepageSettingsDTO {
     heroButtonStyle: safe.heroButtonStyle || FALLBACK_DTO.heroButtonStyle,
     navbarLogoUrl: safe.navbarLogoUrl || FALLBACK_DTO.navbarLogoUrl,
     faviconUrl: safe.faviconUrl || FALLBACK_DTO.faviconUrl,
+    seoTitle: safe.seoTitle || FALLBACK_DTO.seoTitle,
+    seoDescription: safe.seoDescription || FALLBACK_DTO.seoDescription,
     blocks: parseBlocks(settings),
   };
 }
@@ -188,6 +198,55 @@ export async function adminGetHomepageSettings(_req: Request, res: Response) {
       .status(500)
       .json({ message: "Impossible de charger les réglages de la home." });
   }
+}
+
+function toPublicBlock(block: any) {
+  const data = (block?.data ?? {}) as Record<string, any>;
+
+  const mergedData = typeof data === "object" && data !== null ? data : {};
+
+  return {
+    id: String(block?.id ?? ""),
+    kind: String(block?.type ?? "unknown"),
+    order: typeof block?.order === "number" ? block.order : 0,
+    title: mergedData.title ?? null,
+    subtitle: mergedData.subtitle ?? null,
+    body: mergedData.body ?? mergedData.text ?? null,
+    imageUrl: mergedData.imageUrl ?? mergedData.heroImageUrl ?? null,
+    buttonLabel: mergedData.buttonLabel ?? mergedData.ctaLabel ?? null,
+    buttonHref: mergedData.buttonUrl ?? mergedData.buttonHref ?? mergedData.ctaUrl ?? null,
+    iconName: mergedData.icon ?? mergedData.iconName ?? null,
+    value: mergedData.value ?? null,
+    data: mergedData,
+  };
+}
+
+function toPublicSection(section: any) {
+  const settings =
+    typeof section?.settings === "object" && section?.settings !== null ? section.settings : undefined;
+
+  return {
+    id: String(section?.id ?? ""),
+    type: typeof section?.type === "string" ? section.type : "custom",
+    order: typeof section?.order === "number" ? section.order : 0,
+    label: typeof section?.label === "string" ? section.label : null,
+    backgroundStyle:
+      typeof settings?.variant === "string"
+        ? settings.variant
+        : section?.backgroundImageUrl
+          ? "image"
+          : section?.backgroundColor
+            ? "color"
+            : undefined,
+    backgroundColor:
+      typeof section?.backgroundColor === "string" ? section.backgroundColor : settings?.backgroundColor,
+    backgroundImageUrl:
+      typeof section?.backgroundImageUrl === "string"
+        ? section.backgroundImageUrl
+        : settings?.backgroundImageUrl,
+    settings,
+    blocks: Array.isArray(section?.blocks) ? section.blocks.map(toPublicBlock) : [],
+  };
 }
 
 export async function adminSaveHomepageSettings(req: Request, res: Response) {
@@ -212,8 +271,46 @@ export async function publicGetHomepage(_req: Request, res: Response) {
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
     res.setHeader("Pragma", "no-cache");
 
-    const settings = await getOrCreateHomepageSettings();
-    return res.json(toDto(settings));
+    const [page, settings] = await Promise.all([
+      getCustomPageWithStructureByKeyOrRoute("HOME").then(
+        (value) => value ?? getPublishedCustomPageByRoute("/")
+      ),
+      getOrCreateHomepageSettings().catch(() => null),
+    ]);
+
+    const seo = settings
+      ? {
+          title: settings.seoTitle || undefined,
+          description: settings.seoDescription || undefined,
+          ogImageUrl: settings.heroIllustrationUrl || settings.navbarLogoUrl || undefined,
+        }
+      : undefined;
+
+    if (!page) {
+      return res.json({
+        slug: "home",
+        seo,
+        branding: {
+          navbarLogoUrl: settings?.navbarLogoUrl || null,
+          faviconUrl: settings?.faviconUrl || null,
+        },
+        sections: [],
+        isEmpty: true,
+      });
+    }
+
+    const sections = Array.isArray(page.sections) ? page.sections.map(toPublicSection) : [];
+
+    return res.json({
+      slug: page.route === "/" ? "home" : page.key?.toLowerCase?.() || "home",
+      seo,
+      branding: {
+        navbarLogoUrl: settings?.navbarLogoUrl || null,
+        faviconUrl: settings?.faviconUrl || null,
+      },
+      sections,
+      isEmpty: sections.length === 0,
+    });
   } catch (error) {
     console.error("Erreur lors du chargement public de la home", error);
     return res
