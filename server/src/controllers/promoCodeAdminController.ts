@@ -10,6 +10,15 @@ interface PromoCodePayload {
   isActive?: boolean;
   startsAt?: string | null;
   endsAt?: string | null;
+  isReferral?: boolean;
+  sponsorName?: string;
+  sponsorEmail?: string;
+  sponsorPhone?: string;
+  sponsorAddress?: string;
+  sponsorBankName?: string;
+  sponsorIban?: string;
+  sponsorBic?: string;
+  referralRate?: number | null;
 }
 
 /**
@@ -58,6 +67,15 @@ export async function createPromoCode(req: Request, res: Response) {
       isActive,
       startsAt,
       endsAt,
+      isReferral,
+      sponsorName,
+      sponsorEmail,
+      sponsorPhone,
+      sponsorAddress,
+      sponsorBankName,
+      sponsorIban,
+      sponsorBic,
+      referralRate,
     } = req.body as PromoCodePayload;
 
     if (!code || typeof code !== "string" || !code.trim()) {
@@ -99,6 +117,50 @@ export async function createPromoCode(req: Request, res: Response) {
 
     let parsedStartsAt: Date | null = null;
     let parsedEndsAt: Date | null = null;
+    const referralEnabled = Boolean(isReferral);
+
+    let parsedReferralRate: number | null = null;
+    let trimmedIban: string | null = null;
+    let trimmedBic: string | null = null;
+
+    if (referralEnabled) {
+      if (!sponsorName || !sponsorName.trim()) {
+        return res.status(400).json({
+          message:
+          "Le nom ou la dénomination du parrain est obligatoire pour un code parrainage.",
+        });
+      }
+
+      trimmedIban = sponsorIban?.replace(/\s+/g, "") || null;
+      trimmedBic = sponsorBic?.replace(/\s+/g, "") || null;
+
+      if (!trimmedIban || trimmedIban.length < 14) {
+        return res.status(400).json({
+          message: "Le RIB/IBAN du parrain est obligatoire et doit être valide.",
+        });
+      }
+
+      if (!trimmedBic || trimmedBic.length < 8) {
+        return res.status(400).json({
+          message: "Le code BIC du parrain est obligatoire et doit être valide.",
+        });
+      }
+
+      if (typeof referralRate === "number") {
+        const rate = Number(referralRate);
+        if (!Number.isFinite(rate) || rate <= 0 || rate > 100) {
+          return res.status(400).json({
+            message:
+              "Le pourcentage de redevance doit être un nombre entre 0 et 100.",
+          });
+        }
+        parsedReferralRate = Math.round(rate);
+      } else {
+        return res.status(400).json({
+          message: "Le pourcentage de redevance est obligatoire pour un parrainage.",
+        });
+      }
+    }
 
     if (typeof startsAt === "string" && startsAt.trim()) {
       const d = new Date(startsAt);
@@ -130,6 +192,15 @@ export async function createPromoCode(req: Request, res: Response) {
         isActive: typeof isActive === "boolean" ? isActive : true,
         startsAt: parsedStartsAt,
         endsAt: parsedEndsAt,
+        isReferral: referralEnabled,
+        sponsorName: referralEnabled ? sponsorName?.trim() || null : null,
+        sponsorEmail: referralEnabled ? sponsorEmail?.trim() || null : null,
+        sponsorPhone: referralEnabled ? sponsorPhone?.trim() || null : null,
+        sponsorAddress: referralEnabled ? sponsorAddress?.trim() || null : null,
+        sponsorBankName: referralEnabled ? sponsorBankName?.trim() || null : null,
+        sponsorIban: referralEnabled ? trimmedIban : null,
+        sponsorBic: referralEnabled ? trimmedBic : null,
+        referralRate: referralEnabled ? parsedReferralRate : null,
       },
     });
 
@@ -226,6 +297,15 @@ export async function updatePromoCode(req: Request, res: Response) {
       isActive,
       startsAt,
       endsAt,
+      isReferral,
+      sponsorName,
+      sponsorEmail,
+      sponsorPhone,
+      sponsorAddress,
+      sponsorBankName,
+      sponsorIban,
+      sponsorBic,
+      referralRate,
     } = req.body as PromoCodePayload;
 
     const data: any = {};
@@ -302,6 +382,92 @@ export async function updatePromoCode(req: Request, res: Response) {
       }
     }
 
+    const referralFlag =
+      typeof isReferral !== "undefined" ? Boolean(isReferral) : existing.isReferral;
+
+    if (typeof isReferral !== "undefined") {
+      data.isReferral = referralFlag;
+    }
+
+    if (referralFlag) {
+      const finalSponsorName =
+        typeof sponsorName !== "undefined" ? sponsorName : existing.sponsorName;
+
+      if (!finalSponsorName || !finalSponsorName.trim()) {
+        return res.status(400).json({
+          message:
+            "Le nom ou la dénomination du parrain est obligatoire pour un code parrainage.",
+        });
+      }
+
+      const finalReferralRate =
+        typeof referralRate !== "undefined" ? referralRate : existing.referralRate;
+
+      const finalIban =
+        typeof sponsorIban !== "undefined"
+          ? sponsorIban?.replace(/\s+/g, "") || null
+          : existing.sponsorIban;
+
+      const finalBic =
+        typeof sponsorBic !== "undefined"
+          ? sponsorBic?.replace(/\s+/g, "") || null
+          : existing.sponsorBic;
+
+      if (
+        typeof finalReferralRate !== "number" ||
+        !Number.isFinite(finalReferralRate) ||
+        finalReferralRate <= 0 ||
+        finalReferralRate > 100
+      ) {
+        return res.status(400).json({
+          message: "Le pourcentage de redevance doit être un nombre entre 0 et 100.",
+        });
+      }
+
+      data.sponsorName = finalSponsorName.trim();
+      data.sponsorEmail =
+        typeof sponsorEmail !== "undefined"
+          ? sponsorEmail?.trim() || null
+          : existing.sponsorEmail;
+      data.sponsorPhone =
+        typeof sponsorPhone !== "undefined"
+          ? sponsorPhone?.trim() || null
+          : existing.sponsorPhone;
+      data.sponsorAddress =
+        typeof sponsorAddress !== "undefined"
+          ? sponsorAddress?.trim() || null
+          : existing.sponsorAddress;
+      data.sponsorBankName =
+        typeof sponsorBankName !== "undefined"
+          ? sponsorBankName?.trim() || null
+          : existing.sponsorBankName;
+
+      if (!finalIban || finalIban.length < 14) {
+        return res.status(400).json({
+          message: "Le RIB/IBAN du parrain est obligatoire et doit être valide.",
+        });
+      }
+
+      if (!finalBic || finalBic.length < 8) {
+        return res.status(400).json({
+          message: "Le code BIC du parrain est obligatoire et doit être valide.",
+        });
+      }
+
+      data.sponsorIban = finalIban;
+      data.sponsorBic = finalBic;
+      data.referralRate = Math.round(finalReferralRate);
+    } else if (typeof isReferral !== "undefined") {
+      data.sponsorName = null;
+      data.sponsorEmail = null;
+      data.sponsorPhone = null;
+      data.sponsorAddress = null;
+      data.sponsorBankName = null;
+      data.sponsorIban = null;
+      data.sponsorBic = null;
+      data.referralRate = null;
+    }
+
     if (Object.keys(data).length === 0) {
       return res.status(400).json({
         message: "Aucune donnée valide à mettre à jour.",
@@ -318,6 +484,157 @@ export async function updatePromoCode(req: Request, res: Response) {
     console.error("Erreur lors de la mise à jour d'un code promo :", error);
     return res.status(500).json({
       message: "Erreur lors de la mise à jour du code promo.",
+    });
+  }
+}
+
+export async function getPromoCodeStats(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    const { startDate, endDate, groupBy } = req.query as Record<string, string>;
+
+    if (!id) {
+      return res
+        .status(400)
+        .json({ message: "Identifiant du code promo manquant." });
+    }
+
+    const promo = await prisma.promoCode.findUnique({ where: { id } });
+
+    if (!promo) {
+      return res.status(404).json({ message: "Code promo introuvable." });
+    }
+
+    let parsedStartDate: Date | undefined;
+    let parsedEndDate: Date | undefined;
+
+    if (typeof startDate === "string" && startDate.trim()) {
+      const d = new Date(startDate);
+      if (Number.isNaN(d.getTime())) {
+        return res
+          .status(400)
+          .json({ message: "La date de début fournie est invalide." });
+      }
+      parsedStartDate = d;
+    }
+
+    if (typeof endDate === "string" && endDate.trim()) {
+      const d = new Date(endDate);
+      if (Number.isNaN(d.getTime())) {
+        return res
+          .status(400)
+          .json({ message: "La date de fin fournie est invalide." });
+      }
+      parsedEndDate = d;
+    }
+
+    const where: any = {
+      promoCodeId: id,
+      status: "PAID",
+    };
+
+    if (parsedStartDate || parsedEndDate) {
+      where.createdAt = {
+        ...(parsedStartDate ? { gte: parsedStartDate } : {}),
+        ...(parsedEndDate ? { lte: parsedEndDate } : {}),
+      };
+    }
+
+    const orders = await prisma.order.findMany({
+      where,
+      select: {
+        id: true,
+        createdAt: true,
+        totalBeforeDiscount: true,
+        discountAmount: true,
+        totalPaid: true,
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const totals = orders.reduce(
+      (acc, order) => {
+        acc.totalBeforeDiscountCents += order.totalBeforeDiscount;
+        acc.totalDiscountCents += order.discountAmount;
+        acc.totalRevenueCents += order.totalPaid;
+        return acc;
+      },
+      {
+        totalBeforeDiscountCents: 0,
+        totalDiscountCents: 0,
+        totalRevenueCents: 0,
+      }
+    );
+
+    const commission =
+      promo.isReferral && promo.referralRate
+        ? Math.round((totals.totalRevenueCents * promo.referralRate) / 100)
+        : 0;
+
+    const grouping = groupBy === "day" || groupBy === "month" ? groupBy : null;
+    let groups: Array<{
+      period: string;
+      uses: number;
+      totalRevenueCents: number;
+      totalDiscountCents: number;
+      totalBeforeDiscountCents: number;
+      referralCommissionCents: number;
+    }> = [];
+
+    if (grouping) {
+      const map = new Map<string, (typeof groups)[number]>();
+
+      for (const order of orders) {
+        const date = order.createdAt;
+        const key =
+          grouping === "month"
+            ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
+            : date.toISOString().slice(0, 10);
+
+        const current = map.get(key) || {
+          period: key,
+          uses: 0,
+          totalRevenueCents: 0,
+          totalDiscountCents: 0,
+          totalBeforeDiscountCents: 0,
+          referralCommissionCents: 0,
+        };
+
+        current.uses += 1;
+        current.totalRevenueCents += order.totalPaid;
+        current.totalDiscountCents += order.discountAmount;
+        current.totalBeforeDiscountCents += order.totalBeforeDiscount;
+
+        if (promo.isReferral && promo.referralRate) {
+          current.referralCommissionCents += Math.round(
+            (order.totalPaid * promo.referralRate) / 100
+          );
+        }
+
+        map.set(key, current);
+      }
+
+      groups = Array.from(map.values()).sort((a, b) =>
+        a.period.localeCompare(b.period)
+      );
+    }
+
+    return res.status(200).json({
+      promoId: id,
+      totalUses: orders.length,
+      ...totals,
+      referralCommissionCents: commission,
+      groupBy: grouping,
+      period: {
+        startDate: parsedStartDate ? parsedStartDate.toISOString() : null,
+        endDate: parsedEndDate ? parsedEndDate.toISOString() : null,
+      },
+      groups,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des statistiques promo :", error);
+    return res.status(500).json({
+      message: "Erreur lors de la récupération des statistiques du code promo.",
     });
   }
 }
