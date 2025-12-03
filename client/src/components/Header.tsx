@@ -12,7 +12,7 @@ const Header: React.FC = () => {
   const { user, isLoading, logout } = useClientAuth();
   const { items } = useCart();
   const [isNavOpen, setIsNavOpen] = React.useState(false);
-  const navbarLogo = "/logo.png";
+  const navbarLogo = "/images/logo.png";
 
   const handleLogout = async () => {
     await logout("/");
@@ -22,10 +22,10 @@ const Header: React.FC = () => {
   return (
     <header className="border-b bg-white shadow-sm">
       <div className="max-w-6xl mx-auto px-4 py-3">
-        <div className="flex items-center justify-between gap-3">
-          <Link to="/" className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center justify-between gap-4">
+          <Link to="/" className="flex items-center gap-4 min-w-0">
             <div className="leading-tight min-w-0">
-              <div className="text-2xl font-semibold tracking-tight text-black truncate md:text-3xl">
+              <div className="text-4xl font-semibold tracking-tight text-black truncate md:text-6xl">
                 COMPTAMATCH
               </div>
               <div className="text-xs text-slate-500 truncate">
@@ -35,7 +35,7 @@ const Header: React.FC = () => {
             <img
               src={navbarLogo}
               alt="Logo ComptaMatch"
-              className="h-12 w-auto flex-shrink-0 md:h-14"
+              className="h-24 w-auto flex-shrink-0 md:h-28"
             />
           </Link>
 
