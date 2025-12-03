@@ -1,3 +1,10 @@
+export type DownloadableCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  productCount?: number;
+};
+
 export type DownloadableProduct = {
   id: string;
   slug: string;
@@ -14,4 +21,5 @@ export type DownloadableProduct = {
   galleryUrls?: string[];
   detailSlides?: { imageUrl?: string | null; description?: string | null }[];
   isPublished?: boolean;
+  category?: DownloadableCategory | null;
 };

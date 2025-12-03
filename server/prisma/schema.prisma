@@ -108,6 +108,8 @@ model DownloadableProduct {
   index            Boolean  @default(true)
   follow           Boolean  @default(true)
   ogImageUrl       String?
+  categoryId       String?
+  category         DownloadableCategory? @relation(fields: [categoryId], references: [id])
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -126,6 +128,16 @@ model DownloadableProduct {
   items OrderItem[]
   downloadLinks DownloadLink[]
   productAnalyticsEvents ProductAnalyticsEvent[]
+}
+
+model DownloadableCategory {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products DownloadableProduct[]
 }
 
 enum DownloadLinkStatus {
