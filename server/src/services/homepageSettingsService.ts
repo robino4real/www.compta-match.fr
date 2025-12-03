@@ -28,68 +28,7 @@ export type HomepageContentBlock = {
   revealAnimation?: boolean;
 };
 
-export const DEFAULT_HOMEPAGE_BLOCKS: HomepageContentBlock[] = [
-  {
-    id: "identity",
-    kind: "identity",
-    title: "Identité visuelle synchronisée",
-    subtitle: "Logos, favicon et visuels importés depuis le back-office.",
-    body: "Chaque élément graphique est instantanément répercuté sur la page publique pour rester cohérent avec votre marque.",
-    buttonLabel: "Mettre à jour la charte",
-    buttonLink: "/admin/homepage",
-    bullets: ["Logo de navigation", "Favicon et visuels secondaires"],
-    imagePosition: "right",
-    revealAnimation: true,
-  },
-  {
-    id: "experience",
-    kind: "experience",
-    title: "Expérience immersive",
-    subtitle: "Un scroll à la Apple",
-    body: "Animations synchronisées, sections qui se dévoilent et transitions douces pour une lecture fluide.",
-    bullets: [
-      "Intersection Observer pour révéler le contenu au bon moment.",
-      "Sections épurées, typographie lisible et responsive.",
-    ],
-    badge: "Expérience",
-    imagePosition: "right",
-    revealAnimation: true,
-  },
-  {
-    id: "story",
-    kind: "story",
-    title: "Une histoire en défilement",
-    subtitle: "Les points forts de ComptaMatch se découvrent au fil du scroll.",
-    body: "Chaque bloc déclenche une évolution visuelle qui reste épinglée pour un effet premium inspiré des pages macOS.",
-    badge: "Parcours",
-    imagePosition: "right",
-    revealAnimation: true,
-  },
-  {
-    id: "features",
-    kind: "feature-grid",
-    title: "Pensé pour les dirigeants exigeants",
-    subtitle: "Fonctionnalités clés",
-    body: "Grille modulaire, responsive, et synchronisée avec les données du back-office pour mettre en avant vos nouveautés.",
-    badge: "Fonctionnalités",
-    imagePosition: "right",
-    revealAnimation: true,
-  },
-  {
-    id: "cta",
-    kind: "cta",
-    title: "Page d'accueil premium, compatible back-office",
-    subtitle:
-      "Une expérience inspirée d'Apple, des animations fluides, et des visuels pilotés par vos réglages.",
-    body:
-      "Vos logos et images sont prêts à être intégrés, sans compromis sur la performance ni l'accessibilité.",
-    buttonLabel: "Lancer ComptaMatch",
-    buttonLink: "/comparatif-des-offres",
-    badge: "Action",
-    imagePosition: "right",
-    revealAnimation: true,
-  },
-];
+export const DEFAULT_HOMEPAGE_BLOCKS: HomepageContentBlock[] = [];
 
 const DEFAULT_HOME_SETTINGS: Pick<
   HomepageSettings,
@@ -116,9 +55,9 @@ const DEFAULT_HOME_SETTINGS: Pick<
 > & {
     heroPrimaryCtaLabel: string;
     heroPrimaryCtaHref: string;
-    features: FeatureCard[];
-    heroSections: HeroSection[];
-    blocks: HomepageContentBlock[];
+  features: FeatureCard[];
+  heroSections: HeroSection[];
+  blocks: HomepageContentBlock[];
   } = {
   heroTitle: "L’aide à la comptabilité des TPE au meilleur prix.",
   heroSubtitle:
@@ -144,23 +83,7 @@ const DEFAULT_HOME_SETTINGS: Pick<
   heroPrimaryCtaHref: "/offres",
   navbarLogoUrl: "",
   faviconUrl: "",
-  features: [
-    {
-      title: "Outils simples & complets",
-      text: "Des outils intuitifs pour suivre votre comptabilité au quotidien.",
-      iconUrl: "",
-    },
-    {
-      title: "Tarifs transparents",
-      text: "Des offres claires et sans surprise, adaptées aux TPE.",
-      iconUrl: "",
-    },
-    {
-      title: "Support dédié & réactif",
-      text: "Une équipe qui répond vite pour vous accompagner.",
-      iconUrl: "",
-    },
-  ],
+  features: [],
   heroSections: [],
   blocks: DEFAULT_HOMEPAGE_BLOCKS,
 };
@@ -280,7 +203,6 @@ function sanitizeBlocks(value: unknown): HomepageContentBlock[] | undefined {
     })
     .filter((entry) => entry.title || entry.subtitle || entry.body || entry.kind === "identity");
 
-  if (!cleaned.length) return undefined;
   return cleaned;
 }
 
@@ -337,9 +259,9 @@ function normalizeBlocks(
 ): HomepageContentBlock[] {
   if (incoming) return incoming;
   if (Array.isArray(existing.blocks)) {
-    return sanitizeBlocks(existing.blocks) ?? DEFAULT_HOMEPAGE_BLOCKS;
+    return sanitizeBlocks(existing.blocks) ?? [];
   }
-  return DEFAULT_HOMEPAGE_BLOCKS;
+  return [];
 }
 
 export async function getOrCreateHomepageSettings(): Promise<HomepageSettings> {

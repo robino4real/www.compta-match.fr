@@ -1,278 +1,281 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo } from "react";
 import { useHomepageSettings } from "../hooks/useHomepageSettings";
 import { HomepageContentBlock, HomepageFeature, HomepageHeroSection } from "../types/homepage";
 
-const ScrollRevealSection: React.FC<{
-  enabled?: boolean;
-  className?: string;
-  children: React.ReactNode;
-  id?: string;
-}> = ({ enabled, className, children, id }) => {
-  const ref = useRef<HTMLElement | null>(null);
-  const [isVisible, setIsVisible] = useState(!enabled);
+const Placeholder: React.FC<{ label: string }> = ({ label }) => (
+  <div className="flex h-48 w-full items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm text-slate-500">
+    {label}
+  </div>
+);
 
-  useEffect(() => {
-    if (!enabled) return;
-    const node = ref.current;
-    if (!node || typeof IntersectionObserver === "undefined") return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setIsVisible(true);
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.2 },
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [enabled]);
+const HeroSection: React.FC<{
+  title: string;
+  subtitle: string;
+  ctaLabel?: string;
+  ctaLink?: string;
+  visualUrl?: string | null;
+  titleTag?: keyof JSX.IntrinsicElements;
+  subtitleTag?: keyof JSX.IntrinsicElements;
+}> = ({ title, subtitle, ctaLabel, ctaLink, visualUrl, titleTag = "h1", subtitleTag = "p" }) => {
+  const TitleTag = titleTag;
+  const SubtitleTag = subtitleTag;
 
   return (
-    <section
-      ref={ref}
-      id={id}
-      className={`transition duration-700 ease-out ${className ?? ""} ${
-        enabled ? "translate-y-8 opacity-0" : ""
-      } ${isVisible ? "translate-y-0 opacity-100" : ""}`}
-    >
-      {children}
+    <section className="bg-gradient-to-b from-slate-50 to-white">
+      <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-16 lg:grid-cols-2 lg:py-24">
+        <div className="space-y-6">
+          <TitleTag className="text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">{title}</TitleTag>
+          <SubtitleTag className="text-lg leading-relaxed text-slate-600 sm:text-xl">{subtitle}</SubtitleTag>
+          <div className="flex flex-wrap gap-3">
+            {ctaLabel && (
+              <a
+                href={ctaLink || "#"}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-black"
+              >
+                {ctaLabel}
+                <span aria-hidden>→</span>
+              </a>
+            )}
+            <a
+              href="#homepage-blocks"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:bg-white"
+            >
+              Découvrir le contenu
+            </a>
+          </div>
+        </div>
+
+        <div className="flex justify-center">
+          {visualUrl ? (
+            <img
+              src={visualUrl}
+              alt={title}
+              className="max-h-[420px] w-full rounded-2xl bg-white object-contain shadow-sm"
+              loading="eager"
+            />
+          ) : (
+            <Placeholder label="Ajoutez un visuel depuis le back-office" />
+          )}
+        </div>
+      </div>
     </section>
   );
 };
 
-const TwoColumnSection: React.FC<{
-  block: HomepageContentBlock;
-  visual: React.ReactNode;
-  children: React.ReactNode;
-  id?: string;
-}> = ({ block, visual, children, id }) => {
-  const imageOnLeft = block.imagePosition === "left";
-  const textOrder = imageOnLeft ? "md:order-2" : "md:order-1";
-  const visualOrder = imageOnLeft ? "md:order-1" : "md:order-2";
-
-  return (
-    <ScrollRevealSection enabled={block.revealAnimation} className="bg-white py-16" id={id}>
-      <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 md:grid-cols-2">
-        <div className={`space-y-4 ${textOrder}`}>{children}</div>
-        <div className={`flex justify-center ${visualOrder}`}>{visual}</div>
-      </div>
-    </ScrollRevealSection>
-  );
-};
-
-const FeatureCard: React.FC<{ feature: HomepageFeature }> = ({ feature }) => (
-  <article className="space-y-2">
-    {feature.iconUrl && (
-      <img src={feature.iconUrl} alt={feature.title} className="h-12 w-12 object-contain" loading="lazy" />
-    )}
-    <h3 className="text-lg font-semibold text-black">{feature.title}</h3>
-    <p className="text-sm leading-relaxed text-black/70">{feature.text}</p>
-  </article>
-);
-
-const IdentitySection: React.FC<{
-  block: HomepageContentBlock;
-  heroVisualUrl: string;
-}> = ({ block, heroVisualUrl }) => {
-  const visualUrl = block.imageUrl || heroVisualUrl;
-  const visual = visualUrl ? (
-    <img src={visualUrl} alt={block.title} className="max-h-96 w-full object-contain" loading="lazy" />
-  ) : (
-    <div className="flex h-72 w-full items-center justify-center bg-black/5 text-sm text-black/60">
-      Ajoutez une image pour ce bloc
-    </div>
-  );
-
-  return (
-    <TwoColumnSection block={block} visual={visual}>
-      <h2 className="text-3xl font-semibold text-black md:text-4xl">{block.title}</h2>
-      {(block.subtitle || block.body) && (
-        <p className="text-base leading-relaxed text-black/70">{block.subtitle || block.body}</p>
-      )}
-    </TwoColumnSection>
-  );
-};
-
-const ExperienceSection: React.FC<{ block: HomepageContentBlock; heroVisualUrl: string }> = ({ block, heroVisualUrl }) => {
-  const visualUrl = block.imageUrl || heroVisualUrl;
-  const visual = visualUrl ? (
-    <img src={visualUrl} alt={block.title} className="max-h-96 w-full object-contain" loading="lazy" />
-  ) : (
-    <div className="flex h-72 w-full items-center justify-center bg-black/5 text-sm text-black/60">
-      Ajoutez une image pour ce bloc
-    </div>
-  );
-
-  return (
-    <TwoColumnSection block={block} visual={visual} id="experience">
-      <h2 className="text-3xl font-semibold text-black md:text-4xl">{block.title}</h2>
-      {(block.subtitle || block.body) && (
-        <p className="text-base leading-relaxed text-black/70">{block.subtitle || block.body}</p>
-      )}
-    </TwoColumnSection>
-  );
-};
-
-const StorySection: React.FC<{
-  block: HomepageContentBlock;
-  storyPoints: HomepageHeroSection[];
-  heroVisualUrl: string;
-}> = ({ block, storyPoints, heroVisualUrl }) => {
-  const illustration = storyPoints[0]?.illustrationUrl || heroVisualUrl;
-  const text = block.body || block.subtitle || storyPoints[0]?.subtitle;
-  const title = block.title || storyPoints[0]?.title;
-
-  return (
-    <TwoColumnSection
-      block={block}
-      visual={
-        illustration ? (
-          <img src={illustration} alt={title} className="max-h-96 w-full object-contain" loading="lazy" />
-        ) : (
-          <div className="flex h-72 w-full items-center justify-center bg-black/5 text-sm text-black/60">
-            Visuel synchronisé
-          </div>
-        )
-      }
-    >
-      <h2 className="text-3xl font-semibold text-black md:text-4xl">{title}</h2>
-      {text && <p className="text-base leading-relaxed text-black/70">{text}</p>}
-    </TwoColumnSection>
-  );
-};
-
-const FeatureGridSection: React.FC<{
-  block: HomepageContentBlock;
-  features: HomepageFeature[];
-}> = ({ block, features }) => (
-  <ScrollRevealSection enabled={block.revealAnimation} className="bg-white py-16">
-    <div className="mx-auto max-w-6xl space-y-8 px-4">
+const FeatureGrid: React.FC<{ block: HomepageContentBlock; features: HomepageFeature[] }> = ({ block, features }) => (
+  <section className="bg-white py-16">
+    <div className="mx-auto max-w-6xl space-y-8 px-6">
       <div className="space-y-3 text-center">
-        <h2 className="text-3xl font-semibold text-black md:text-4xl">{block.title}</h2>
-        {block.body && <p className="text-base text-black/70 md:text-lg">{block.body}</p>}
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{block.badge || "Fonctionnalités"}</p>
+        <h2 className="text-3xl font-semibold text-slate-900 sm:text-4xl">{block.title}</h2>
+        {block.body && <p className="text-base text-slate-600 sm:text-lg">{block.body}</p>}
       </div>
 
       {features.length > 0 ? (
-        <div className="grid gap-8 md:grid-cols-3">
-          {features.map((feature) => (
-            <FeatureCard key={`${feature.title}-${feature.iconUrl}`} feature={feature} />
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {features.map((feature, index) => (
+            <article key={`${feature.title}-${index}`} className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50 p-6 shadow-sm">
+              {feature.iconUrl && (
+                <img src={feature.iconUrl} alt="" className="h-10 w-10 object-contain" loading="lazy" />
+              )}
+              <h3 className="text-lg font-semibold text-slate-900">{feature.title}</h3>
+              <p className="text-sm leading-relaxed text-slate-600">{feature.text}</p>
+            </article>
           ))}
         </div>
       ) : (
-        <div className="flex items-center justify-center bg-black/5 px-4 py-10 text-sm text-black/60">
-          Configurez vos cartes de mise en avant dans le back-office pour remplir cette grille.
-        </div>
+        <Placeholder label="Aucune carte configurée pour cette grille" />
       )}
     </div>
-  </ScrollRevealSection>
+  </section>
 );
 
+const TwoColumnBlock: React.FC<{
+  block: HomepageContentBlock;
+  children: React.ReactNode;
+  visualUrl?: string;
+}> = ({ block, children, visualUrl }) => {
+  const imageOnLeft = block.imagePosition === "left";
+
+  return (
+    <section className="bg-white py-16" id={block.id}>
+      <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 lg:grid-cols-2">
+        <div className={`${imageOnLeft ? "lg:order-2" : ""} space-y-3`}>
+          {block.badge && <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{block.badge}</p>}
+          <h2 className="text-3xl font-semibold text-slate-900 sm:text-4xl">{block.title}</h2>
+          {block.subtitle && <p className="text-base text-slate-600">{block.subtitle}</p>}
+          {block.body && <p className="text-base leading-relaxed text-slate-600">{block.body}</p>}
+          {block.bullets && block.bullets.length > 0 && (
+            <ul className="list-disc space-y-2 pl-5 text-sm text-slate-600">
+              {block.bullets.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          )}
+          {(block.buttonLabel || block.buttonLink) && (
+            <a
+              href={block.buttonLink || "#"}
+              className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:bg-slate-50"
+            >
+              {block.buttonLabel || "En savoir plus"}
+              <span aria-hidden>→</span>
+            </a>
+          )}
+          {block.mutedText && <p className="text-xs text-slate-500">{block.mutedText}</p>}
+        </div>
+
+        <div className={`${imageOnLeft ? "lg:order-1" : ""} flex justify-center`}>
+          {visualUrl ? (
+            <img src={visualUrl} alt={block.title} className="max-h-96 w-full rounded-2xl border border-slate-100 bg-white object-contain shadow-sm" />
+          ) : (
+            <Placeholder label="Ajoutez une image à ce bloc" />
+          )}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const StickyTimeline: React.FC<{ items: HomepageHeroSection[]; visualUrl?: string | null }> = ({ items, visualUrl }) => {
+  if (!items.length) return null;
+
+  return (
+    <section className="bg-slate-50 py-16">
+      <div className="mx-auto grid max-w-6xl gap-10 px-6 lg:grid-cols-[320px,1fr]">
+        <div className="space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Parcours</p>
+          <h2 className="text-2xl font-semibold text-slate-900">Sections épinglées</h2>
+          <p className="text-sm text-slate-600">
+            Ajoutez, réordonnez ou supprimez des étapes depuis le back-office. La page publique s'actualise dès qu'une mise à jour est enregistrée.
+          </p>
+        </div>
+        <div className="space-y-8">
+          {items.map((section, index) => (
+            <article key={`${section.title}-${index}`} className="flex flex-col gap-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm lg:flex-row lg:items-center">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white">
+                {index + 1}
+              </div>
+              <div className="flex-1 space-y-2">
+                <h3 className="text-lg font-semibold text-slate-900">{section.title}</h3>
+                <p className="text-sm text-slate-600">{section.subtitle}</p>
+                {(section.buttonLabel || section.buttonLink) && (
+                  <a href={section.buttonLink || "#"} className="text-sm font-semibold text-slate-900 underline">
+                    {section.buttonLabel || "Découvrir"}
+                  </a>
+                )}
+              </div>
+              <div className="min-w-[180px] lg:max-w-xs">
+                {(section.illustrationUrl || visualUrl) ? (
+                  <img
+                    src={section.illustrationUrl || visualUrl || ""}
+                    alt={section.title}
+                    className="h-28 w-full rounded-xl border border-slate-100 object-cover"
+                  />
+                ) : (
+                  <div className="flex h-28 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-xs text-slate-500">
+                    Illustration optionnelle
+                  </div>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const renderContentBlock = (
+  block: HomepageContentBlock,
+  features: HomepageFeature[],
+  heroVisualUrl: string,
+): React.ReactNode => {
+  switch (block.kind) {
+    case "feature-grid":
+      return <FeatureGrid key={block.id} block={block} features={features} />;
+    case "identity":
+    case "experience":
+    case "story":
+    case "cta":
+    default:
+      return (
+        <TwoColumnBlock key={block.id} block={block} visualUrl={block.imageUrl || heroVisualUrl}>
+          {null}
+        </TwoColumnBlock>
+      );
+  }
+};
+
 const HomePage: React.FC = () => {
-  const { settings, isLoading } = useHomepageSettings();
+  const { settings, isLoading, error } = useHomepageSettings();
 
-  const TitleTag = (settings.heroTitleTag || "h1") as keyof JSX.IntrinsicElements;
-  const SubtitleTag = (settings.heroSubtitleTag || "p") as keyof JSX.IntrinsicElements;
-  const heroSections = settings.heroSections || [];
-  const features = settings.features || [];
+  const heroVisualUrl = useMemo(
+    () =>
+      settings.heroIllustrationUrl ||
+      settings.heroImageUrl ||
+      settings.heroBackgroundImageUrl ||
+      settings.navbarLogoUrl ||
+      "",
+    [settings.heroIllustrationUrl, settings.heroImageUrl, settings.heroBackgroundImageUrl, settings.navbarLogoUrl],
+  );
 
-  const heroVisualUrl =
-    settings.heroIllustrationUrl || settings.heroImageUrl || settings.heroBackgroundImageUrl || settings.navbarLogoUrl || "";
-
-  const storyPoints: HomepageHeroSection[] = useMemo(() => {
-    if (heroSections.length > 0) return heroSections;
-
-    return [
-      {
-        title: "Vue claire sur vos obligations",
-        subtitle: "Un tableau de bord qui met en avant vos échéances et vos pièces comptables, sans distraction.",
-        buttonLabel: settings.heroButtonLabel || "Explorer",
-        buttonLink: settings.heroButtonLink || "/comparatif-des-offres",
-        illustrationUrl: heroVisualUrl,
-        align: "left",
-      },
-    ];
-  }, [heroSections, heroVisualUrl, settings.heroButtonLabel, settings.heroButtonLink]);
-
-  const blocks: HomepageContentBlock[] = settings.blocks && settings.blocks.length ? settings.blocks : [];
-
-  const renderBlock = (block: HomepageContentBlock) => {
-    switch (block.kind) {
-      case "identity":
-        return (
-          <IdentitySection
-            key={block.id}
-            block={block}
-            heroVisualUrl={heroVisualUrl}
-          />
-        );
-      case "experience":
-        return <ExperienceSection key={block.id} block={block} heroVisualUrl={heroVisualUrl} />;
-      case "story":
-        return <StorySection key={block.id} block={block} storyPoints={storyPoints} heroVisualUrl={heroVisualUrl} />;
-      case "feature-grid":
-        return <FeatureGridSection key={block.id} block={block} features={features} />;
-      default:
-        return null;
-    }
-  };
+  const hasBlocks = settings.blocks && settings.blocks.length > 0;
 
   if (isLoading && !settings) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-white">
-        <p className="text-sm text-black/70">Chargement…</p>
+        <p className="text-sm text-slate-500">Chargement…</p>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-white">
+        <div className="space-y-3 text-center">
+          <p className="text-base font-semibold text-slate-900">Impossible de charger la page d'accueil</p>
+          <p className="text-sm text-slate-500">{error}</p>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="bg-white text-black">
-      <section className="relative flex min-h-screen items-center bg-white">
-        <div className="absolute inset-0" aria-hidden />
+    <main className="bg-slate-50 text-slate-900">
+      <HeroSection
+        title={settings.heroTitle}
+        subtitle={settings.heroSubtitle}
+        ctaLabel={settings.heroButtonLabel}
+        ctaLink={settings.heroButtonLink}
+        visualUrl={heroVisualUrl}
+        titleTag={(settings.heroTitleTag || "h1") as keyof JSX.IntrinsicElements}
+        subtitleTag={(settings.heroSubtitleTag || "p") as keyof JSX.IntrinsicElements}
+      />
 
-        <div className="relative mx-auto flex max-w-6xl flex-col items-center gap-12 px-4 py-16 md:flex-row md:items-center md:gap-12 md:py-20">
-          <div className="max-w-xl space-y-6">
-            <TitleTag className="text-4xl font-semibold leading-tight text-black md:text-5xl">{settings.heroTitle}</TitleTag>
-            <SubtitleTag className="text-lg leading-relaxed text-black/70 md:text-xl">{settings.heroSubtitle}</SubtitleTag>
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              <a
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-7 py-3 text-sm font-semibold text-white transition hover:-translate-y-1"
-                href={settings.heroButtonLink || "/comparatif-des-offres"}
-              >
-                {settings.heroButtonLabel || "Découvrir nos offres"}
-                <span aria-hidden>→</span>
-              </a>
-              <a
-                className="inline-flex items-center gap-2 rounded-full border border-black px-5 py-3 text-sm font-semibold text-black transition hover:-translate-y-1"
-                href="#experience"
-              >
-                Voir l'expérience
-              </a>
-            </div>
-          </div>
+      <StickyTimeline items={settings.heroSections || []} visualUrl={heroVisualUrl} />
 
-          <div className="flex flex-1 items-center justify-center">
-            {heroVisualUrl ? (
-              <img
-                src={heroVisualUrl}
-                alt={settings.heroTitle}
-                className="max-h-[480px] w-full object-contain"
-                loading="eager"
-              />
-            ) : (
-              <div className="flex h-80 w-full items-center justify-center bg-black/5 text-lg font-semibold text-black/70">
-                Visuel ComptaMatch
+      <div id="homepage-blocks">
+        {hasBlocks ? (
+          settings.blocks.map((block) => renderContentBlock(block, settings.features || [], heroVisualUrl))
+        ) : (
+          <section className="bg-white py-16">
+            <div className="mx-auto max-w-4xl space-y-4 px-6 text-center">
+              <h2 className="text-2xl font-semibold text-slate-900">Aucune section configurée</h2>
+              <p className="text-sm text-slate-600">
+                Créez vos blocs depuis le back-office pour structurer librement la page d'accueil. Les changements sont diffusés en temps réel dès qu'ils sont enregistrés.
+              </p>
+              <div className="flex items-center justify-center">
+                <a
+                  href="/admin/homepage"
+                  className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-black"
+                >
+                  Ouvrir le back-office
+                </a>
               </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {blocks.map(renderBlock)}
+            </div>
+          </section>
+        )}
+      </div>
     </main>
   );
 };

@@ -48,91 +48,13 @@ const FALLBACK_SETTINGS: HomepageSettings = {
   siteLogoUrl: null,
   navbarLogoUrl: null,
   faviconUrl: null,
-  features: [
-    {
-      title: "Simplicité",
-      text: "Une interface claire pour suivre vos obligations et vos documents sans jargon inutile.",
-      iconUrl: "",
-    },
-    {
-      title: "Souplesse",
-      text: "Choisissez entre outils téléchargeables et ressources en ligne.",
-      iconUrl: "",
-    },
-    {
-      title: "Support",
-      text: "Une équipe disponible et des guides pour vous accompagner au quotidien.",
-      iconUrl: "",
-    },
-  ],
+  features: [],
   heroSections: [],
-  blocks: [
-    {
-      id: "identity",
-      kind: "identity",
-      title: "Identité visuelle synchronisée",
-      subtitle: "Logos, favicon et visuels importés depuis le back-office.",
-      body: "Chaque élément graphique est instantanément répercuté sur la page publique pour rester cohérent avec votre marque.",
-      buttonLabel: "Mettre à jour la charte",
-      buttonLink: "/admin/homepage",
-      bullets: ["Logo de navigation", "Favicon et visuels secondaires"],
-      imagePosition: "right",
-      revealAnimation: true,
-    },
-    {
-      id: "experience",
-      kind: "experience",
-      title: "Expérience immersive",
-      subtitle: "Un scroll à la Apple",
-      body: "Animations synchronisées, sections qui se dévoilent et transitions douces pour une lecture fluide.",
-      bullets: [
-        "Intersection Observer pour révéler le contenu au bon moment.",
-        "Sections épurées, typographie lisible et responsive.",
-      ],
-      badge: "Expérience",
-      imagePosition: "right",
-      revealAnimation: true,
-    },
-    {
-      id: "story",
-      kind: "story",
-      title: "Une histoire en défilement",
-      subtitle: "Les points forts de ComptaMatch se découvrent au fil du scroll.",
-      body: "Chaque bloc déclenche une évolution visuelle qui reste épinglée pour un effet premium inspiré des pages macOS.",
-      badge: "Parcours",
-      imagePosition: "right",
-      revealAnimation: true,
-    },
-    {
-      id: "features",
-      kind: "feature-grid",
-      title: "Pensé pour les dirigeants exigeants",
-      subtitle: "Fonctionnalités clés",
-      body: "Grille modulaire, responsive, et synchronisée avec les données du back-office pour mettre en avant vos nouveautés.",
-      badge: "Fonctionnalités",
-      imagePosition: "right",
-      revealAnimation: true,
-    },
-    {
-      id: "cta",
-      kind: "cta",
-      title: "Page d'accueil premium, compatible back-office",
-      subtitle:
-        "Une expérience inspirée d'Apple, des animations fluides, et des visuels pilotés par vos réglages.",
-      body:
-        "Vos logos et images sont prêts à être intégrés, sans compromis sur la performance ni l'accessibilité.",
-      buttonLabel: "Lancer ComptaMatch",
-      buttonLink: "/comparatif-des-offres",
-      badge: "Action",
-      imagePosition: "right",
-      revealAnimation: true,
-    },
-  ],
+  blocks: [],
   highlightedProductIds: [],
   testimonials: [],
-  contentBlockTitle: "Une approche pragmatique",
-  contentBlockBody:
-    "ComptaMatch privilégie des outils sobres, des explications concrètes et des téléchargements fiables pour vos logiciels.",
+  contentBlockTitle: "",
+  contentBlockBody: "",
   seoTitle: "ComptaMatch | Solutions comptables pour petites entreprises",
   seoDescription:
     "Logiciels et contenus pour simplifier la comptabilité des TPE, indépendants et micro-entrepreneurs.",
@@ -152,7 +74,6 @@ type HookState = {
 
 let cachedState: HookState | null = null;
 let inflightRequest: Promise<HookState> | null = null;
-let homepageEventSource: EventSource | null = null;
 
 function parseTestimonials(value: unknown): Testimonial[] {
   if (!Array.isArray(value)) return [];
@@ -247,7 +168,7 @@ function normalizeSettings(incoming: HomepageSettings | undefined): HomepageSett
           ? incoming.heroImageUrl
           : FALLBACK_SETTINGS.heroIllustrationUrl,
     heroImageUrl: typeof incoming.heroImageUrl === "string" ? incoming.heroImageUrl : FALLBACK_SETTINGS.heroImageUrl,
-    features: normalizedFeatures.length ? normalizedFeatures : FALLBACK_SETTINGS.features,
+    features: normalizedFeatures,
     heroSections: normalizedHeroSections,
     blocks: normalizeBlocks(incoming.blocks),
     testimonials: parseTestimonials(incoming.testimonials),
@@ -336,36 +257,51 @@ export function useHomepageSettings() {
     if (typeof window === "undefined" || typeof EventSource === "undefined") return;
 
     const streamUrl = `${API_BASE_URL}/public/homepage/stream`;
-    if (!homepageEventSource) {
-      homepageEventSource = new EventSource(streamUrl);
-    }
+    let source: EventSource | null = null;
+    let retryTimer: NodeJS.Timeout | null = null;
+    let isActive = true;
 
-    const source = homepageEventSource;
+    const attach = () => {
+      if (!isActive) return;
+      if (source) {
+        source.close();
+      }
 
-    const handleMessage = () => {
-      load(true).catch(() => {
-        /* handled in load */
-      });
-    };
+      source = new EventSource(streamUrl);
 
-    source.addEventListener("message", handleMessage);
-
-    source.onerror = () => {
-      source.removeEventListener("message", handleMessage);
-      source.close();
-      homepageEventSource = null;
-      setTimeout(() => {
+      const handleMessage = () => {
         load(true).catch(() => {
           /* handled in load */
         });
-      }, 1500);
+      };
+
+      source.addEventListener("message", handleMessage);
+
+      source.onerror = () => {
+        source?.removeEventListener("message", handleMessage);
+        source?.close();
+        source = null;
+        if (retryTimer) {
+          clearTimeout(retryTimer);
+        }
+        retryTimer = setTimeout(() => {
+          load(true).catch(() => {
+            /* handled in load */
+          });
+          attach();
+        }, 1500);
+      };
     };
 
+    attach();
+
     return () => {
-      source.removeEventListener("message", handleMessage);
-      source.close();
-      if (homepageEventSource === source) {
-        homepageEventSource = null;
+      isActive = false;
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+      }
+      if (source) {
+        source.close();
       }
     };
   }, [load]);

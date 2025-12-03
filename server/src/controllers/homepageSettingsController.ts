@@ -39,23 +39,7 @@ const FALLBACK_DTO: HomepageSettingsDTO = {
   heroButtonLink: "/offres",
   heroIllustrationUrl:
     "https://images.unsplash.com/photo-1521791055366-0d553872125f?auto=format&fit=crop&w=1200&q=80",
-  features: [
-    {
-      iconUrl: "check",
-      title: "Outils simples & complets",
-      text: "Des outils intuitifs pour suivre votre comptabilité au quotidien.",
-    },
-    {
-      iconUrl: "layers",
-      title: "Tarifs transparents",
-      text: "Des offres claires et sans surprise, adaptées aux TPE.",
-    },
-    {
-      iconUrl: "support",
-      title: "Support dédié & réactif",
-      text: "Une équipe qui répond vite pour vous accompagner.",
-    },
-  ],
+  features: [],
   heroSections: [],
   heroTitleTag: "h1",
   heroSubtitleTag: "p",
