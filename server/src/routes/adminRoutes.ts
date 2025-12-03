@@ -42,6 +42,7 @@ import {
   createPromoCode,
   getPromoCodeById,
   updatePromoCode,
+  getPromoCodeStats,
   archivePromoCode,
 } from "../controllers/promoCodeAdminController";
 import {
@@ -249,6 +250,13 @@ router.put(
   attachUserToRequest,
   requireAdmin,
   updatePromoCode
+);
+
+router.get(
+  "/promo-codes/:id/stats",
+  attachUserToRequest,
+  requireAdmin,
+  getPromoCodeStats
 );
 
 router.delete(

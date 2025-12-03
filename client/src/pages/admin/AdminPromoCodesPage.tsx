@@ -9,6 +9,15 @@ interface PromoCode {
   description?: string | null;
   discountType: DiscountType | string;
   discountValue: number;
+  isReferral?: boolean;
+  sponsorName?: string | null;
+  sponsorEmail?: string | null;
+  sponsorPhone?: string | null;
+  sponsorAddress?: string | null;
+  sponsorBankName?: string | null;
+  sponsorIban?: string | null;
+  sponsorBic?: string | null;
+  referralRate?: number | null;
   maxUses?: number | null;
   currentUses: number;
   isActive: boolean;
@@ -16,6 +25,28 @@ interface PromoCode {
   endsAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
+}
+
+interface PromoCodeStats {
+  promoId: string;
+  totalUses: number;
+  totalBeforeDiscountCents: number;
+  totalDiscountCents: number;
+  totalRevenueCents: number;
+  referralCommissionCents: number;
+  groupBy: "day" | "month" | null;
+  period: {
+    startDate: string | null;
+    endDate: string | null;
+  };
+  groups: Array<{
+    period: string;
+    uses: number;
+    totalRevenueCents: number;
+    totalDiscountCents: number;
+    totalBeforeDiscountCents: number;
+    referralCommissionCents: number;
+  }>;
 }
 
 const AdminPromoCodesPage: React.FC = () => {
@@ -33,6 +64,15 @@ const AdminPromoCodesPage: React.FC = () => {
   const [newStartsAt, setNewStartsAt] = React.useState("");
   const [newEndsAt, setNewEndsAt] = React.useState("");
   const [newIsActive, setNewIsActive] = React.useState(true);
+  const [newIsReferral, setNewIsReferral] = React.useState(false);
+  const [newSponsorName, setNewSponsorName] = React.useState("");
+  const [newSponsorEmail, setNewSponsorEmail] = React.useState("");
+  const [newSponsorPhone, setNewSponsorPhone] = React.useState("");
+  const [newSponsorAddress, setNewSponsorAddress] = React.useState("");
+  const [newSponsorBankName, setNewSponsorBankName] = React.useState("");
+  const [newSponsorIban, setNewSponsorIban] = React.useState("");
+  const [newSponsorBic, setNewSponsorBic] = React.useState("");
+  const [newReferralRate, setNewReferralRate] = React.useState("");
   const [isCreating, setIsCreating] = React.useState(false);
   const [createError, setCreateError] = React.useState<string | null>(null);
   const [createSuccess, setCreateSuccess] = React.useState<string | null>(null);
@@ -47,6 +87,15 @@ const AdminPromoCodesPage: React.FC = () => {
   const [editStartsAt, setEditStartsAt] = React.useState("");
   const [editEndsAt, setEditEndsAt] = React.useState("");
   const [editIsActive, setEditIsActive] = React.useState(true);
+  const [editIsReferral, setEditIsReferral] = React.useState(false);
+  const [editSponsorName, setEditSponsorName] = React.useState("");
+  const [editSponsorEmail, setEditSponsorEmail] = React.useState("");
+  const [editSponsorPhone, setEditSponsorPhone] = React.useState("");
+  const [editSponsorAddress, setEditSponsorAddress] = React.useState("");
+  const [editSponsorBankName, setEditSponsorBankName] = React.useState("");
+  const [editSponsorIban, setEditSponsorIban] = React.useState("");
+  const [editSponsorBic, setEditSponsorBic] = React.useState("");
+  const [editReferralRate, setEditReferralRate] = React.useState("");
   const [isSavingEdit, setIsSavingEdit] = React.useState(false);
   const [editError, setEditError] = React.useState<string | null>(null);
   const [editSuccess, setEditSuccess] = React.useState<string | null>(null);
@@ -55,6 +104,16 @@ const AdminPromoCodesPage: React.FC = () => {
   const [archiveSuccess, setArchiveSuccess] = React.useState<string | null>(
     null
   );
+
+  const [statsPromo, setStatsPromo] = React.useState<PromoCode | null>(null);
+  const [statsData, setStatsData] = React.useState<PromoCodeStats | null>(null);
+  const [statsError, setStatsError] = React.useState<string | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = React.useState(false);
+  const [statsGroupBy, setStatsGroupBy] = React.useState<"month" | "day">(
+    "month"
+  );
+  const [statsStartDate, setStatsStartDate] = React.useState("");
+  const [statsEndDate, setStatsEndDate] = React.useState("");
 
   const fetchPromos = React.useCallback(async () => {
     try {
@@ -109,6 +168,37 @@ const AdminPromoCodesPage: React.FC = () => {
         );
       }
 
+      let parsedReferralRate: number | null = null;
+      if (newIsReferral) {
+        if (!newSponsorName.trim()) {
+          throw new Error(
+            "Le nom ou la dénomination du parrain est obligatoire en mode parrainage."
+          );
+        }
+
+        const rate = Number(newReferralRate.replace(",", "."));
+        if (!Number.isFinite(rate) || rate <= 0 || rate > 100) {
+          throw new Error(
+            "Le pourcentage de redevance doit être un nombre entre 0 et 100."
+          );
+        }
+        parsedReferralRate = Math.round(rate);
+
+        const trimmedIban = newSponsorIban.replace(/\s+/g, "");
+        if (!trimmedIban || trimmedIban.length < 14) {
+          throw new Error(
+            "Le RIB/IBAN du parrain est obligatoire et doit être valide."
+          );
+        }
+
+        const trimmedBic = newSponsorBic.replace(/\s+/g, "");
+        if (!trimmedBic || trimmedBic.length < 8) {
+          throw new Error(
+            "Le code BIC du parrain est obligatoire et doit être valide."
+          );
+        }
+      }
+
       let parsedMaxUses: number | null = null;
       if (newMaxUses.trim()) {
         const m = Number(newMaxUses);
@@ -129,6 +219,15 @@ const AdminPromoCodesPage: React.FC = () => {
         isActive: newIsActive,
         startsAt: newStartsAt.trim() || null,
         endsAt: newEndsAt.trim() || null,
+        isReferral: newIsReferral,
+        sponsorName: newIsReferral ? newSponsorName.trim() : null,
+        sponsorEmail: newIsReferral ? newSponsorEmail.trim() || null : null,
+        sponsorPhone: newIsReferral ? newSponsorPhone.trim() || null : null,
+        sponsorAddress: newIsReferral ? newSponsorAddress.trim() || null : null,
+        sponsorBankName: newIsReferral ? newSponsorBankName.trim() || null : null,
+        sponsorIban: newIsReferral ? newSponsorIban.replace(/\s+/g, "") : null,
+        sponsorBic: newIsReferral ? newSponsorBic.replace(/\s+/g, "") : null,
+        referralRate: newIsReferral ? parsedReferralRate : null,
       };
 
       const response = await fetch(`${API_BASE_URL}/admin/promo-codes`, {
@@ -157,6 +256,15 @@ const AdminPromoCodesPage: React.FC = () => {
       setNewStartsAt("");
       setNewEndsAt("");
       setNewIsActive(true);
+      setNewIsReferral(false);
+      setNewSponsorName("");
+      setNewSponsorEmail("");
+      setNewSponsorPhone("");
+      setNewSponsorAddress("");
+      setNewSponsorBankName("");
+      setNewSponsorIban("");
+      setNewSponsorBic("");
+      setNewReferralRate("");
 
       await fetchPromos();
     } catch (err: any) {
@@ -183,6 +291,17 @@ const AdminPromoCodesPage: React.FC = () => {
     setEditStartsAt(promo.startsAt ?? "");
     setEditEndsAt(promo.endsAt ?? "");
     setEditIsActive(promo.isActive);
+    setEditIsReferral(Boolean(promo.isReferral));
+    setEditSponsorName(promo.sponsorName ?? "");
+    setEditSponsorEmail(promo.sponsorEmail ?? "");
+    setEditSponsorPhone(promo.sponsorPhone ?? "");
+    setEditSponsorAddress(promo.sponsorAddress ?? "");
+    setEditSponsorBankName(promo.sponsorBankName ?? "");
+    setEditSponsorIban(promo.sponsorIban ?? "");
+    setEditSponsorBic(promo.sponsorBic ?? "");
+    setEditReferralRate(
+      typeof promo.referralRate === "number" ? promo.referralRate.toString() : ""
+    );
     setEditError(null);
     setEditSuccess(null);
   };
@@ -195,6 +314,15 @@ const AdminPromoCodesPage: React.FC = () => {
     setEditStartsAt("");
     setEditEndsAt("");
     setEditIsActive(true);
+    setEditIsReferral(false);
+    setEditSponsorName("");
+    setEditSponsorEmail("");
+    setEditSponsorPhone("");
+    setEditSponsorAddress("");
+    setEditSponsorBankName("");
+    setEditSponsorIban("");
+    setEditSponsorBic("");
+    setEditReferralRate("");
     setEditError(null);
     setEditSuccess(null);
   };
@@ -226,6 +354,37 @@ const AdminPromoCodesPage: React.FC = () => {
         parsedMaxUses = m;
       }
 
+      let parsedReferralRate: number | null = null;
+      if (editIsReferral) {
+        if (!editSponsorName.trim()) {
+          throw new Error(
+            "Le nom ou la dénomination du parrain est obligatoire en mode parrainage."
+          );
+        }
+
+        const rate = Number(editReferralRate.replace(",", "."));
+        if (!Number.isFinite(rate) || rate <= 0 || rate > 100) {
+          throw new Error(
+            "Le pourcentage de redevance doit être un nombre entre 0 et 100."
+          );
+        }
+        parsedReferralRate = Math.round(rate);
+
+        const trimmedIban = editSponsorIban.replace(/\s+/g, "");
+        if (!trimmedIban || trimmedIban.length < 14) {
+          throw new Error(
+            "Le RIB/IBAN du parrain est obligatoire et doit être valide."
+          );
+        }
+
+        const trimmedBic = editSponsorBic.replace(/\s+/g, "");
+        if (!trimmedBic || trimmedBic.length < 8) {
+          throw new Error(
+            "Le code BIC du parrain est obligatoire et doit être valide."
+          );
+        }
+      }
+
       const payload: any = {
         description: editDescription.trim() || null,
         discountType: editDiscountType,
@@ -234,6 +393,19 @@ const AdminPromoCodesPage: React.FC = () => {
         isActive: editIsActive,
         startsAt: editStartsAt.trim() || null,
         endsAt: editEndsAt.trim() || null,
+        isReferral: editIsReferral,
+        sponsorName: editIsReferral ? editSponsorName.trim() : null,
+        sponsorEmail: editIsReferral ? editSponsorEmail.trim() || null : null,
+        sponsorPhone: editIsReferral ? editSponsorPhone.trim() || null : null,
+        sponsorAddress: editIsReferral ? editSponsorAddress.trim() || null : null,
+        sponsorBankName: editIsReferral
+          ? editSponsorBankName.trim() || null
+          : null,
+        sponsorIban: editIsReferral
+          ? editSponsorIban.replace(/\s+/g, "")
+          : null,
+        sponsorBic: editIsReferral ? editSponsorBic.replace(/\s+/g, "") : null,
+        referralRate: editIsReferral ? parsedReferralRate : null,
       };
 
       const response = await fetch(
@@ -322,6 +494,68 @@ const AdminPromoCodesPage: React.FC = () => {
     return `Du ${s} au ${e}`;
   };
 
+  const formatCurrency = (valueCents: number): string => {
+    return `${(valueCents / 100).toFixed(2)} €`;
+  };
+
+  const fetchPromoStats = async (
+    promo: PromoCode,
+    group: "month" | "day",
+    start: string,
+    end: string
+  ) => {
+    try {
+      setIsLoadingStats(true);
+      setStatsError(null);
+
+      const params = new URLSearchParams();
+      params.set("groupBy", group);
+      if (start.trim()) params.set("startDate", start.trim());
+      if (end.trim()) params.set("endDate", end.trim());
+
+      const response = await fetch(
+        `${API_BASE_URL}/admin/promo-codes/${promo.id}/stats?${params.toString()}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Impossible de récupérer les statistiques."
+        );
+      }
+
+      setStatsData(data as PromoCodeStats);
+    } catch (err: any) {
+      console.error("Erreur GET /admin/promo-codes/:id/stats :", err);
+      setStatsError(
+        err?.message || "Impossible de charger les statistiques pour ce code."
+      );
+    } finally {
+      setIsLoadingStats(false);
+    }
+  };
+
+  const openStatsModal = (promo: PromoCode) => {
+    const defaultStart = promo.startsAt ? promo.startsAt.slice(0, 10) : "";
+    const defaultEnd = promo.endsAt ? promo.endsAt.slice(0, 10) : "";
+    setStatsPromo(promo);
+    setStatsStartDate(defaultStart);
+    setStatsEndDate(defaultEnd);
+    fetchPromoStats(promo, statsGroupBy, defaultStart, defaultEnd);
+  };
+
+  const closeStatsModal = () => {
+    setStatsPromo(null);
+    setStatsData(null);
+    setStatsError(null);
+    setIsLoadingStats(false);
+  };
+
   return (
     <div className="space-y-6">
       <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
@@ -402,6 +636,130 @@ const AdminPromoCodesPage: React.FC = () => {
               rows={2}
             />
           </div>
+
+          <div className="flex items-center gap-2 pt-1">
+            <input
+              id="new-is-referral"
+              type="checkbox"
+              checked={newIsReferral}
+              onChange={(e) => setNewIsReferral(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-black focus:ring-black"
+            />
+            <label
+              htmlFor="new-is-referral"
+              className="text-xs font-semibold text-slate-700"
+            >
+              Code de parrainage
+            </label>
+          </div>
+
+          {newIsReferral && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border border-slate-200 rounded-xl p-3 bg-slate-50">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  Nom ou dénomination du parrain
+                </label>
+                <input
+                  type="text"
+                  value={newSponsorName}
+                  onChange={(e) => setNewSponsorName(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                  placeholder="Entreprise partenaire"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  Pourcentage de redevance
+                </label>
+                <input
+                  type="text"
+                  value={newReferralRate}
+                  onChange={(e) => setNewReferralRate(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                  placeholder="10 (pour 10%)"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  Contact email
+                </label>
+                <input
+                  type="email"
+                  value={newSponsorEmail}
+                  onChange={(e) => setNewSponsorEmail(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                  placeholder="contact@parrain.com"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  Téléphone
+                </label>
+                <input
+                  type="text"
+                  value={newSponsorPhone}
+                  onChange={(e) => setNewSponsorPhone(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                  placeholder="06 01 02 03 04"
+                />
+              </div>
+
+              <div className="md:col-span-2 space-y-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  Adresse
+                </label>
+                <input
+                  type="text"
+                  value={newSponsorAddress}
+                  onChange={(e) => setNewSponsorAddress(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                  placeholder="12 rue du Parrain, 75000 Paris"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  Banque (optionnel)
+                </label>
+                <input
+                  type="text"
+                  value={newSponsorBankName}
+                  onChange={(e) => setNewSponsorBankName(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                  placeholder="Nom de la banque"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  IBAN (RIB)
+                </label>
+                <input
+                  type="text"
+                  value={newSponsorIban}
+                  onChange={(e) => setNewSponsorIban(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                  placeholder="FR76 3000 6000 ..."
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  BIC
+                </label>
+                <input
+                  type="text"
+                  value={newSponsorBic}
+                  onChange={(e) => setNewSponsorBic(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                  placeholder="AGRIFRPP"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-1">
@@ -549,6 +907,11 @@ const AdminPromoCodesPage: React.FC = () => {
                               {promo.description}
                             </p>
                           )}
+                          {promo.isReferral && (
+                            <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 border border-blue-200">
+                              Parrainage
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-3 py-2 align-top text-slate-700">
@@ -589,6 +952,13 @@ const AdminPromoCodesPage: React.FC = () => {
                               Désactiver
                             </button>
                           )}
+                          <button
+                            type="button"
+                            onClick={() => openStatsModal(promo)}
+                            className="rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:border-black hover:text-black transition"
+                          >
+                            Statistiques
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -678,6 +1048,130 @@ const AdminPromoCodesPage: React.FC = () => {
               />
             </div>
 
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                id="edit-is-referral"
+                type="checkbox"
+                checked={editIsReferral}
+                onChange={(e) => setEditIsReferral(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-black focus:ring-black"
+              />
+              <label
+                htmlFor="edit-is-referral"
+                className="text-xs font-semibold text-slate-700"
+              >
+                Code de parrainage
+              </label>
+            </div>
+
+            {editIsReferral && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border border-slate-200 rounded-xl p-3 bg-slate-50">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">
+                    Nom ou dénomination du parrain
+                  </label>
+                  <input
+                    type="text"
+                    value={editSponsorName}
+                    onChange={(e) => setEditSponsorName(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                    placeholder="Entreprise partenaire"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">
+                    Pourcentage de redevance
+                  </label>
+                  <input
+                    type="text"
+                    value={editReferralRate}
+                    onChange={(e) => setEditReferralRate(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                    placeholder="10 (pour 10%)"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">
+                    Contact email
+                  </label>
+                  <input
+                    type="email"
+                    value={editSponsorEmail}
+                    onChange={(e) => setEditSponsorEmail(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                    placeholder="contact@parrain.com"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">
+                    Téléphone
+                  </label>
+                  <input
+                    type="text"
+                    value={editSponsorPhone}
+                    onChange={(e) => setEditSponsorPhone(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                    placeholder="06 01 02 03 04"
+                  />
+                </div>
+
+                <div className="md:col-span-2 space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">
+                    Adresse
+                  </label>
+                  <input
+                    type="text"
+                    value={editSponsorAddress}
+                    onChange={(e) => setEditSponsorAddress(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                    placeholder="12 rue du Parrain, 75000 Paris"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">
+                    Banque (optionnel)
+                  </label>
+                  <input
+                    type="text"
+                    value={editSponsorBankName}
+                    onChange={(e) => setEditSponsorBankName(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                    placeholder="Nom de la banque"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">
+                    IBAN (RIB)
+                  </label>
+                  <input
+                    type="text"
+                    value={editSponsorIban}
+                    onChange={(e) => setEditSponsorIban(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                    placeholder="FR76 3000 6000 ..."
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">
+                    BIC
+                  </label>
+                  <input
+                    type="text"
+                    value={editSponsorBic}
+                    onChange={(e) => setEditSponsorBic(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                    placeholder="AGRIFRPP"
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-slate-700">
@@ -742,6 +1236,203 @@ const AdminPromoCodesPage: React.FC = () => {
         </section>
       )}
     </div>
+
+      {statsPromo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+          <div className="w-full max-w-4xl bg-white rounded-2xl shadow-lg border border-slate-200 p-5 space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">
+                  Statistiques
+                </p>
+                <h3 className="text-lg font-semibold text-black">
+                  Code {statsPromo.code}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={closeStatsModal}
+                className="rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:border-black hover:text-black transition"
+              >
+                Fermer
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div className="rounded-xl border border-slate-200 p-3 bg-slate-50">
+                <p className="text-[11px] text-slate-600">Utilisations</p>
+                <p className="text-lg font-semibold text-black">
+                  {statsData?.totalUses ?? 0}
+                </p>
+              </div>
+              <div className="rounded-xl border border-slate-200 p-3 bg-slate-50">
+                <p className="text-[11px] text-slate-600">Chiffre réalisé</p>
+                <p className="text-lg font-semibold text-black">
+                  {formatCurrency(statsData?.totalRevenueCents ?? 0)}
+                </p>
+              </div>
+              <div className="rounded-xl border border-slate-200 p-3 bg-slate-50">
+                <p className="text-[11px] text-slate-600">Chiffre perdu</p>
+                <p className="text-lg font-semibold text-black">
+                  {formatCurrency(statsData?.totalDiscountCents ?? 0)}
+                </p>
+              </div>
+              <div className="rounded-xl border border-slate-200 p-3 bg-slate-50">
+                <p className="text-[11px] text-slate-600">Tarif normal</p>
+                <p className="text-lg font-semibold text-black">
+                  {formatCurrency(statsData?.totalBeforeDiscountCents ?? 0)}
+                </p>
+              </div>
+            </div>
+
+            {statsPromo.isReferral && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="rounded-xl border border-slate-200 p-3 bg-blue-50">
+                  <p className="text-[11px] text-blue-700 font-semibold">
+                    Redevance ({statsPromo.referralRate ?? 0}%)
+                  </p>
+                  <p className="text-lg font-semibold text-blue-900">
+                    {formatCurrency(statsData?.referralCommissionCents ?? 0)}
+                  </p>
+                  {statsPromo.sponsorName && (
+                    <p className="text-[11px] text-blue-800 mt-1">
+                      Parrain : {statsPromo.sponsorName}
+                    </p>
+                  )}
+                </div>
+                <div className="rounded-xl border border-slate-200 p-3 bg-blue-50">
+                  <p className="text-[11px] text-blue-700 font-semibold">
+                    Coordonnées parrain
+                  </p>
+                  <div className="text-[11px] text-blue-900 space-y-1">
+                    {statsPromo.sponsorEmail && <p>{statsPromo.sponsorEmail}</p>}
+                    {statsPromo.sponsorPhone && <p>{statsPromo.sponsorPhone}</p>}
+                    {statsPromo.sponsorAddress && <p>{statsPromo.sponsorAddress}</p>}
+                    {statsPromo.sponsorBankName && (
+                      <p>Banque : {statsPromo.sponsorBankName}</p>
+                    )}
+                    {statsPromo.sponsorIban && (
+                      <p>IBAN : {statsPromo.sponsorIban}</p>
+                    )}
+                    {statsPromo.sponsorBic && <p>BIC : {statsPromo.sponsorBic}</p>}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-semibold text-slate-700">
+                  Date de début
+                </label>
+                <input
+                  type="date"
+                  value={statsStartDate}
+                  onChange={(e) => setStatsStartDate(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                />
+              </div>
+
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-semibold text-slate-700">
+                  Date de fin
+                </label>
+                <input
+                  type="date"
+                  value={statsEndDate}
+                  onChange={(e) => setStatsEndDate(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  Regroupement
+                </label>
+                <select
+                  value={statsGroupBy}
+                  onChange={(e) =>
+                    setStatsGroupBy(e.target.value === "day" ? "day" : "month")
+                  }
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                >
+                  <option value="month">Par mois</option>
+                  <option value="day">Par jour</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  statsPromo &&
+                  fetchPromoStats(statsPromo, statsGroupBy, statsStartDate, statsEndDate)
+                }
+                className="rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:border-black hover:text-black transition"
+                disabled={isLoadingStats}
+              >
+                {isLoadingStats ? "Chargement..." : "Actualiser"}
+              </button>
+            </div>
+
+            {statsError && <p className="text-xs text-red-600">{statsError}</p>}
+
+            {!isLoadingStats && statsData?.groups?.length === 0 && (
+              <p className="text-xs text-slate-600">
+                Pas encore de données pour cette période.
+              </p>
+            )}
+
+            {isLoadingStats && (
+              <p className="text-xs text-slate-600">Chargement des données...</p>
+            )}
+
+            {!isLoadingStats && statsData?.groups && statsData.groups.length > 0 && (
+              <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                <table className="w-full text-xs border-collapse">
+                  <thead className="bg-slate-50 text-slate-600">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-semibold">Période</th>
+                      <th className="px-3 py-2 text-left font-semibold">Utilisations</th>
+                      <th className="px-3 py-2 text-left font-semibold">Tarif normal</th>
+                      <th className="px-3 py-2 text-left font-semibold">Promotion</th>
+                      <th className="px-3 py-2 text-left font-semibold">Chiffre réalisé</th>
+                      {statsPromo.isReferral && (
+                        <th className="px-3 py-2 text-left font-semibold">Redevance</th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {statsData.groups.map((group) => (
+                      <tr key={group.period} className="odd:bg-white even:bg-slate-50">
+                        <td className="px-3 py-2 text-slate-800 font-semibold">
+                          {group.period}
+                        </td>
+                        <td className="px-3 py-2 text-slate-700">{group.uses}</td>
+                        <td className="px-3 py-2 text-slate-700">
+                          {formatCurrency(group.totalBeforeDiscountCents)}
+                        </td>
+                        <td className="px-3 py-2 text-slate-700">
+                          {formatCurrency(group.totalDiscountCents)}
+                        </td>
+                        <td className="px-3 py-2 text-slate-700">
+                          {formatCurrency(group.totalRevenueCents)}
+                        </td>
+                        {statsPromo.isReferral && (
+                          <td className="px-3 py-2 text-slate-700">
+                            {formatCurrency(group.referralCommissionCents)}
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
   );
 };
 

@@ -190,6 +190,19 @@ model PromoCode {
   discountType  String
   discountValue Int
 
+  /// Indique si le code est utilisé dans le cadre d'un parrainage
+  isReferral Boolean @default(false)
+
+  /// Informations de parrainage
+  sponsorName    String?
+  sponsorEmail   String?
+  sponsorPhone   String?
+  sponsorAddress String?
+  sponsorBankName String?
+  sponsorIban     String?
+  sponsorBic      String?
+  referralRate   Int?
+
   maxUses     Int?
   currentUses Int      @default(0)
 
