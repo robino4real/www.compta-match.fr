@@ -1,10 +1,11 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../config/api";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import useCartProducts from "../hooks/useCartProducts";
 import { formatPrice } from "../lib/formatPrice";
+import { applyPromoCode, removePromoCode } from "../services/cartApi";
+import { createDownloadCheckoutSession } from "../services/paymentsApi";
 
 interface BillingFormState {
   firstName: string;
@@ -77,12 +78,19 @@ const CheckoutPage: React.FC = () => {
     }));
   }, [user]);
 
-  const itemsPayload = React.useMemo(
+  React.useEffect(() => {
+    if (!appliedPromo) return;
+    setAppliedPromo(null);
+    setPromoCode("");
+    setPromoFeedback(null);
+  }, [cartSignature]);
+
+  const cartSignature = React.useMemo(
     () =>
-      enrichedItems.map((item) => ({
-        productId: item.id,
-        quantity: item.quantity,
-      })),
+      enrichedItems
+        .map((item) => `${item.id}:${item.quantity}`)
+        .sort()
+        .join("|"),
     [enrichedItems]
   );
 
@@ -102,72 +110,56 @@ const CheckoutPage: React.FC = () => {
       return;
     }
 
+    if (!enrichedItems.length) {
+      setPromoFeedback("Votre panier est vide ou invalide.");
+      return;
+    }
+
     setPromoLoading(true);
     setPromoFeedback(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/cart/apply-promo`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          code: promoCode.trim(),
-          items: itemsPayload,
-        }),
+      const data = await applyPromoCode(promoCode, enrichedItems);
+      setAppliedPromo({
+        code: data.code,
+        discountCents: data.discountAmount,
+        newTotalCents: data.newTotal,
+        message: data.message,
       });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (response.ok && data?.ok) {
-        setAppliedPromo({
-          code: data.code,
-          discountCents: data.discountAmount,
-          newTotalCents: data.newTotal,
-          message: data.message,
-        });
-        setPromoFeedback(data.message || "Réduction appliquée.");
-      } else {
-        setAppliedPromo(null);
-        setPromoFeedback(
-          data?.message || "Ce code promo est invalide ou expiré."
-        );
-      }
+      setPromoFeedback(data?.message || "Réduction appliquée avec succès.");
     } catch (err) {
       console.error("Erreur lors de l'application du code promo", err);
-      setPromoFeedback("Impossible de vérifier ce code pour le moment.");
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Impossible de vérifier ce code pour le moment.";
+      setPromoFeedback(message);
     } finally {
       setPromoLoading(false);
     }
   };
 
   const handleRemovePromo = async () => {
+    if (!enrichedItems.length) {
+      setPromoFeedback("Votre panier est vide ou invalide.");
+      return;
+    }
+
     setPromoLoading(true);
     setPromoFeedback(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/cart/remove-promo`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          items: itemsPayload,
-        }),
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (response.ok) {
-        setAppliedPromo(null);
-        setPromoCode("");
-        setPromoFeedback(data?.message || "Code promo retiré.");
-      } else {
-        setPromoFeedback(
-          data?.message || "Impossible de retirer le code promo pour le moment."
-        );
-      }
+      const data = await removePromoCode(enrichedItems);
+      setAppliedPromo(null);
+      setPromoCode("");
+      setPromoFeedback(data?.message || "Code promo retiré.");
     } catch (err) {
       console.error("Erreur lors du retrait du code promo", err);
-      setPromoFeedback("Impossible de retirer le code promo pour le moment.");
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Impossible de retirer le code promo pour le moment.";
+      setPromoFeedback(message);
     } finally {
       setPromoLoading(false);
     }
@@ -176,7 +168,7 @@ const CheckoutPage: React.FC = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!itemsPayload.length) {
+    if (!enrichedItems.length) {
       navigate("/panier");
       return;
     }
@@ -199,32 +191,15 @@ const CheckoutPage: React.FC = () => {
     setSubmitting(true);
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/payments/downloads/checkout-session`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            items: itemsPayload,
-            promoCode: appliedPromo?.code || undefined,
-            billing,
-            acceptedTerms,
-            acceptedLicense,
-          }),
-        }
-      );
+      const data = await createDownloadCheckoutSession({
+        items: enrichedItems,
+        promoCode: appliedPromo?.code || undefined,
+        billing,
+        acceptedTerms,
+        acceptedLicense,
+      });
 
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok || !data?.url) {
-        if (response.status === 401) {
-          setSubmitError(
-            "Connectez-vous à votre compte pour poursuivre le paiement."
-          );
-          return;
-        }
-
+      if (!data?.url) {
         setSubmitError(
           data?.message || "Impossible de créer la session de paiement Stripe."
         );
@@ -234,9 +209,11 @@ const CheckoutPage: React.FC = () => {
       window.location.href = data.url as string;
     } catch (err) {
       console.error("Erreur lors de la création de la session de paiement", err);
-      setSubmitError(
-        "Une erreur est survenue lors de la préparation du paiement. Merci de réessayer."
-      );
+      const message =
+        (err as any)?.status === 401
+          ? "Connectez-vous à votre compte pour poursuivre le paiement."
+          : "Une erreur est survenue lors de la préparation du paiement. Merci de réessayer.";
+      setSubmitError(message);
     } finally {
       setSubmitting(false);
     }
@@ -547,7 +524,7 @@ const CheckoutPage: React.FC = () => {
                   !acceptedTerms ||
                   !acceptedLicense ||
                   !!missingProductIds.length ||
-                  !itemsPayload.length
+                  !enrichedItems.length
                 }
                 className="w-full rounded-full bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:bg-slate-300"
               >

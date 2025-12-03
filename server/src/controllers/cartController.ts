@@ -1,53 +1,6 @@
 import { Request, Response } from "express";
-import { prisma } from "../config/prisma";
-import { buildCategoryKey, validatePromoCodeForTotal } from "../services/promoService";
-
-interface CartItemInput {
-  productId: string;
-  quantity?: number;
-}
-
-async function computeCartTotal(items: CartItemInput[]) {
-  const normalized = items.map((raw) => ({
-    productId: String(raw.productId),
-    quantity: raw.quantity && Number(raw.quantity) > 0 ? Number(raw.quantity) : 1,
-  }));
-
-  const productIds = normalized.map((it) => it.productId);
-  const products = await prisma.downloadableProduct.findMany({
-    where: {
-      id: { in: productIds },
-      isActive: true,
-    },
-  });
-
-  if (products.length !== normalized.length) {
-    throw new Error("INVALID_PRODUCTS");
-  }
-
-  const productMap = products.reduce<Record<string, (typeof products)[number]>>(
-    (acc, p) => {
-      acc[p.id] = p;
-      return acc;
-    },
-    {}
-  );
-
-  const totalsByCategory = normalized.reduce<Record<string, number>>((acc, it) => {
-    const product = productMap[it.productId];
-    if (!product) return acc;
-    const key = buildCategoryKey(product.categoryId);
-    acc[key] = (acc[key] || 0) + product.priceCents * it.quantity;
-    return acc;
-  }, {});
-
-  const totalCents = Object.values(totalsByCategory).reduce(
-    (sum, value) => sum + value,
-    0
-  );
-
-  return { totalCents, productMap, totalsByCategory };
-}
+import { validatePromoCodeForTotal } from "../services/promoService";
+import { computeCartTotals, CartItemInput } from "../services/cartService";
 
 export async function applyPromoToCart(req: Request, res: Response) {
   try {
@@ -61,7 +14,7 @@ export async function applyPromoToCart(req: Request, res: Response) {
       });
     }
 
-    const { totalCents, totalsByCategory } = await computeCartTotal(items);
+    const { totalCents, totalsByCategory } = await computeCartTotals(items);
 
     const promoResult = await validatePromoCodeForTotal(code || "", totalCents, {
       context: "PRODUCT",
@@ -109,7 +62,7 @@ export async function removePromoFromCart(req: Request, res: Response) {
       });
     }
 
-    const { totalCents } = await computeCartTotal(items);
+    const { totalCents } = await computeCartTotals(items);
 
     return res.status(200).json({
       ok: true,
