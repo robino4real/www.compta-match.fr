@@ -2,7 +2,6 @@ import React from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useClientAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
-import { useHomepageSettings } from "../hooks/useHomepageSettings";
 
 const Header: React.FC = () => {
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -12,10 +11,8 @@ const Header: React.FC = () => {
 
   const { user, isLoading, logout } = useClientAuth();
   const { items } = useCart();
-  const { data } = useHomepageSettings();
   const [isNavOpen, setIsNavOpen] = React.useState(false);
-
-  const navbarLogo = data.branding?.navbarLogoUrl?.trim();
+  const navbarLogo = "/logo.png";
 
   const handleLogout = async () => {
     await logout("/");
@@ -27,23 +24,19 @@ const Header: React.FC = () => {
       <div className="max-w-6xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <Link to="/" className="flex items-center gap-3 min-w-0">
-            {navbarLogo ? (
-              <img
-                src={navbarLogo}
-                alt="Logo ComptaMatch"
-                className="h-8 w-auto flex-shrink-0"
-              />
-            ) : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-black text-xs font-semibold text-white">
-                CM
-              </div>
-            )}
             <div className="leading-tight min-w-0">
-              <div className="text-sm font-semibold tracking-wide text-black truncate">COMPTAMATCH</div>
+              <div className="text-2xl font-semibold tracking-tight text-black truncate md:text-3xl">
+                COMPTAMATCH
+              </div>
               <div className="text-xs text-slate-500 truncate">
                 L'aide à la comptabilité des TPE au meilleur prix.
               </div>
             </div>
+            <img
+              src={navbarLogo}
+              alt="Logo ComptaMatch"
+              className="h-12 w-auto flex-shrink-0 md:h-14"
+            />
           </Link>
 
         <div className="flex items-center gap-2 md:hidden">

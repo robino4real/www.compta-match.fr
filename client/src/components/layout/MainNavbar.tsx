@@ -2,7 +2,6 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
-import { useHomepageSettings } from "../../hooks/useHomepageSettings";
 
 export function MainNavbar() {
   const { user, isLoading } = useAuth();
@@ -10,7 +9,7 @@ export function MainNavbar() {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isCartBouncing, setIsCartBouncing] = React.useState(false);
-  const { data } = useHomepageSettings();
+  const navbarLogoUrl = "/logo.png";
 
   const menuItems = React.useMemo(
     () => [
@@ -35,8 +34,6 @@ export function MainNavbar() {
     return () => window.clearTimeout(timeout);
   }, [lastAdditionTimestamp]);
 
-  const navbarLogoUrl = data.branding?.navbarLogoUrl?.trim();
-
   const cartLinkClasses =
     "relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-800 transition hover:border-slate-300 hover:bg-white" +
     (isCartBouncing ? " cart-icon-bounce" : "");
@@ -46,16 +43,14 @@ export function MainNavbar() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:h-20 md:px-0">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3">
-          {navbarLogoUrl ? (
-            <img src={navbarLogoUrl} alt="Logo ComptaMatch" className="h-9 w-auto" />
-          ) : (
-            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-black text-xs font-semibold text-white">
-              CM
-            </div>
-          )}
-          <span className="text-base font-semibold tracking-tight text-slate-900 md:text-lg">
+          <span className="text-2xl font-semibold tracking-tight text-slate-900 md:text-3xl">
             COMPTAMATCH
           </span>
+          <img
+            src={navbarLogoUrl}
+            alt="Logo ComptaMatch"
+            className="h-12 w-auto md:h-14"
+          />
         </Link>
 
         {/* Menu principal */}
