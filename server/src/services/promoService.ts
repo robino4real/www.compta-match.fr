@@ -1,13 +1,25 @@
 import { PromoCode } from "@prisma/client";
 import { prisma } from "../config/prisma";
 
+export const NO_CATEGORY_KEY = "__NO_CATEGORY__";
+
+export function buildCategoryKey(categoryId?: string | null) {
+  return categoryId ?? NO_CATEGORY_KEY;
+}
+
 export async function validatePromoCodeForTotal(
   rawCode: string,
-  totalCents: number
+  totalCents: number,
+  options?: {
+    context?: "PRODUCT" | "SUBSCRIPTION";
+    categoryTotals?: Record<string, number>;
+  }
 ): Promise<{ promo: PromoCode; discountCents: number } | null> {
   if (!rawCode || !rawCode.trim() || totalCents <= 0) {
     return null;
   }
+
+  const context = options?.context || "PRODUCT";
 
   const normalizedCode = rawCode.trim().toUpperCase();
 
@@ -16,6 +28,19 @@ export async function validatePromoCodeForTotal(
   });
 
   if (!promo || !promo.isActive) {
+    return null;
+  }
+
+  const targetType =
+    promo.targetType === "SUBSCRIPTION" || promo.targetType === "PRODUCT"
+      ? promo.targetType
+      : "PRODUCT";
+
+  if (targetType === "PRODUCT" && context !== "PRODUCT") {
+    return null;
+  }
+
+  if (targetType === "SUBSCRIPTION" && context !== "SUBSCRIPTION") {
     return null;
   }
 
@@ -39,8 +64,21 @@ export async function validatePromoCodeForTotal(
 
   let discountCents = 0;
 
+  let eligibleBase = totalCents;
+
+  if (targetType === "PRODUCT") {
+    const categoryTotals = options?.categoryTotals;
+    eligibleBase = promo.productCategoryId
+      ? categoryTotals?.[promo.productCategoryId] || 0
+      : totalCents;
+  }
+
+  if (eligibleBase <= 0) {
+    return null;
+  }
+
   if (promo.discountType === "PERCENT") {
-    discountCents = Math.floor((totalCents * promo.discountValue) / 100);
+    discountCents = Math.floor((eligibleBase * promo.discountValue) / 100);
   } else if (promo.discountType === "AMOUNT") {
     discountCents = promo.discountValue;
   }

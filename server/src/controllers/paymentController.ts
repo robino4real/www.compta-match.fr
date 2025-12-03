@@ -4,7 +4,7 @@ import { prisma } from "../config/prisma";
 import { stripe } from "../config/stripeClient";
 import { createInvoiceForOrder } from "../services/invoiceService";
 import { generateDownloadLinksForOrder } from "../services/downloadLinkService";
-import { validatePromoCodeForTotal } from "../services/promoService";
+import { buildCategoryKey, validatePromoCodeForTotal } from "../services/promoService";
 import {
   sendInvoiceAvailableEmail,
   sendOrderConfirmationEmail,
@@ -171,11 +171,21 @@ export async function createDownloadCheckoutSession(
       return acc;
     }, {});
 
-    const totalCents = normalizedItems.reduce((sum, it) => {
-      const product = productMap[it.productId];
-      if (!product) return sum;
-      return sum + product.priceCents * it.quantity;
-    }, 0);
+    const totalsByCategory = normalizedItems.reduce<Record<string, number>>(
+      (acc, it) => {
+        const product = productMap[it.productId];
+        if (!product) return acc;
+        const key = buildCategoryKey(product.categoryId);
+        acc[key] = (acc[key] || 0) + product.priceCents * it.quantity;
+        return acc;
+      },
+      {}
+    );
+
+    const totalCents = Object.values(totalsByCategory).reduce(
+      (sum, value) => sum + value,
+      0
+    );
 
     if (totalCents <= 0) {
       return res.status(400).json({
@@ -187,7 +197,10 @@ export async function createDownloadCheckoutSession(
     let promoDiscountCents = 0;
 
     if (promoCode && promoCode.trim()) {
-      const result = await validatePromoCodeForTotal(promoCode, totalCents);
+      const result = await validatePromoCodeForTotal(promoCode, totalCents, {
+        context: "PRODUCT",
+        categoryTotals: totalsByCategory,
+      });
 
       if (!result) {
         return res.status(400).json({
