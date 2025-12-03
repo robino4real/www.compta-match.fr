@@ -557,10 +557,11 @@ const AdminPromoCodesPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-        <h1 className="text-xl font-semibold text-black">Codes promo</h1>
-        <p className="text-xs text-slate-600">
+    <>
+      <div className="space-y-6">
+        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <h1 className="text-xl font-semibold text-black">Codes promo</h1>
+          <p className="text-xs text-slate-600">
           Créez et gérez des codes de réduction utilisables sur les logiciels
           téléchargeables. Les codes peuvent être limités dans le temps et en
           nombre d&apos;utilisations.
@@ -1235,7 +1236,7 @@ const AdminPromoCodesPage: React.FC = () => {
           </form>
         </section>
       )}
-    </div>
+      </div>
 
       {statsPromo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
@@ -1433,6 +1434,7 @@ const AdminPromoCodesPage: React.FC = () => {
           </div>
         </div>
       )}
+    </>
   );
 };
 
