@@ -10,7 +10,7 @@ export function MainNavbar() {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isCartBouncing, setIsCartBouncing] = React.useState(false);
-  const { settings: homepageSettings } = useHomepageSettings();
+  const { data } = useHomepageSettings();
 
   const menuItems = React.useMemo(
     () => [
@@ -35,7 +35,7 @@ export function MainNavbar() {
     return () => window.clearTimeout(timeout);
   }, [lastAdditionTimestamp]);
 
-  const navbarLogoUrl = homepageSettings.navbarLogoUrl?.trim();
+  const navbarLogoUrl = data.branding?.navbarLogoUrl?.trim();
 
   const cartLinkClasses =
     "relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-800 transition hover:border-slate-300 hover:bg-white" +

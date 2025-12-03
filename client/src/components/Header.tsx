@@ -12,10 +12,10 @@ const Header: React.FC = () => {
 
   const { user, isLoading, logout } = useClientAuth();
   const { items } = useCart();
-  const { settings: homepageSettings } = useHomepageSettings();
+  const { data } = useHomepageSettings();
   const [isNavOpen, setIsNavOpen] = React.useState(false);
 
-  const navbarLogo = homepageSettings?.navbarLogoUrl?.trim();
+  const navbarLogo = data.branding?.navbarLogoUrl?.trim();
 
   const handleLogout = async () => {
     await logout("/");

@@ -8,10 +8,10 @@ interface MainLayoutProps {
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
-  const { settings } = useHomepageSettings();
+  const { data } = useHomepageSettings();
 
   React.useEffect(() => {
-    const faviconCandidate = settings.faviconUrl?.trim() || settings.navbarLogoUrl?.trim();
+    const faviconCandidate = data.branding?.faviconUrl?.trim() || data.branding?.navbarLogoUrl?.trim();
     if (!faviconCandidate) return;
 
     let link = document.querySelector<HTMLLinkElement>("link[rel='icon']");
@@ -22,7 +22,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     }
 
     link.href = faviconCandidate;
-  }, [settings.faviconUrl, settings.navbarLogoUrl]);
+  }, [data.branding?.faviconUrl, data.branding?.navbarLogoUrl]);
 
   return (
     <div className="min-h-screen bg-white flex flex-col">

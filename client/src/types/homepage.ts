@@ -1,46 +1,43 @@
-export type HomepageFeature = {
-  title: string;
-  text: string;
-  iconUrl?: string;
+export type HomepageSeo = {
+  title?: string | null;
+  description?: string | null;
+  ogImageUrl?: string | null;
 };
 
-export type HomepageHeroSection = {
-  title: string;
-  subtitle: string;
-  buttonLabel: string;
-  buttonLink: string;
-  illustrationUrl: string;
-  align?: "left" | "right";
-};
-
-export type HomepageContentBlock = {
+export type HomepageBlock = {
   id: string;
-  kind: "identity" | "experience" | "story" | "feature-grid" | "cta";
-  title: string;
-  subtitle?: string;
-  body?: string;
-  buttonLabel?: string;
-  buttonLink?: string;
-  bullets?: string[];
-  badge?: string;
-  imageUrl?: string;
-  mutedText?: string;
-  imagePosition?: "left" | "right";
-  revealAnimation?: boolean;
+  kind: string;
+  order: number;
+  title?: string | null;
+  subtitle?: string | null;
+  body?: string | null;
+  imageUrl?: string | null;
+  buttonLabel?: string | null;
+  buttonHref?: string | null;
+  iconName?: string | null;
+  value?: string | null;
+  data?: Record<string, unknown>;
 };
 
-export type HomepageSettingsDTO = {
-  heroTitle: string;
-  heroSubtitle: string;
-  heroButtonLabel: string;
-  heroButtonLink: string;
-  heroIllustrationUrl: string;
-  features: HomepageFeature[];
-  heroSections: HomepageHeroSection[];
-  blocks: HomepageContentBlock[];
-  heroTitleTag?: string;
-  heroSubtitleTag?: string;
-  heroButtonStyle?: string;
-  navbarLogoUrl?: string | null;
-  faviconUrl?: string | null;
+export type HomepageSection = {
+  id: string;
+  type: string;
+  order: number;
+  label?: string | null;
+  backgroundStyle?: string | null;
+  backgroundColor?: string | null;
+  backgroundImageUrl?: string | null;
+  settings?: Record<string, unknown>;
+  blocks: HomepageBlock[];
+};
+
+export type HomepageResponse = {
+  slug: string;
+  seo?: HomepageSeo;
+  branding?: {
+    navbarLogoUrl?: string | null;
+    faviconUrl?: string | null;
+  };
+  sections: HomepageSection[];
+  isEmpty?: boolean;
 };
