@@ -4,16 +4,12 @@ import { API_BASE_URL } from "../../config/api";
 import { uploadAdminImage } from "../../lib/adminUpload";
 
 interface HomepageSettings {
-  navbarLogoUrl: string;
-  faviconUrl: string;
   seoTitle: string;
   seoDescription: string;
   seoImageUrl?: string;
 }
 
 const EMPTY_SETTINGS: HomepageSettings = {
-  navbarLogoUrl: "",
-  faviconUrl: "",
   seoTitle: "",
   seoDescription: "",
   seoImageUrl: "",
@@ -85,8 +81,6 @@ const AdminHomepagePage: React.FC = () => {
 
         setSettings({
           ...EMPTY_SETTINGS,
-          navbarLogoUrl: (data as any).navbarLogoUrl || "",
-          faviconUrl: (data as any).faviconUrl || "",
           seoTitle: (data as any).seoTitle || "",
           seoDescription: (data as any).seoDescription || "",
           seoImageUrl: (data as any).heroIllustrationUrl || "",
@@ -128,8 +122,6 @@ const AdminHomepagePage: React.FC = () => {
       setError(null);
       setSuccess(null);
       const payload = {
-        navbarLogoUrl: settings.navbarLogoUrl,
-        faviconUrl: settings.faviconUrl,
         seoTitle: settings.seoTitle,
         seoDescription: settings.seoDescription,
         heroIllustrationUrl: settings.seoImageUrl,
@@ -146,8 +138,6 @@ const AdminHomepagePage: React.FC = () => {
       }
       setSettings({
         ...EMPTY_SETTINGS,
-        navbarLogoUrl: (data as any).navbarLogoUrl || "",
-        faviconUrl: (data as any).faviconUrl || "",
         seoTitle: (data as any).seoTitle || "",
         seoDescription: (data as any).seoDescription || "",
         seoImageUrl: (data as any).heroIllustrationUrl || "",
@@ -216,55 +206,6 @@ const AdminHomepagePage: React.FC = () => {
         </div>
       ) : (
         <form onSubmit={save} className="space-y-6">
-          <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">Identité visuelle</p>
-                <p className="text-xs text-slate-500">Logos utilisés dans l'en-tête public.</p>
-              </div>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="text-xs font-medium text-slate-700">
-                Logo de navigation (URL)
-                <input
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                  value={settings.navbarLogoUrl}
-                  onChange={(e) => setSettings((prev) => ({ ...prev, navbarLogoUrl: e.target.value }))}
-                  placeholder="https://.../logo.png"
-                />
-                <div className="mt-2 flex items-center gap-3 text-[11px] text-slate-500">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleUpload(e, (url) => setSettings((prev) => ({ ...prev, navbarLogoUrl: url })), "navbar")}
-                    className="text-[11px]"
-                  />
-                  {uploadingKey === "navbar" && <span>Import en cours…</span>}
-                  {settings.navbarLogoUrl && <img src={settings.navbarLogoUrl} alt="Logo" className="h-8 w-8 rounded object-contain" />}
-                </div>
-              </label>
-              <label className="text-xs font-medium text-slate-700">
-                Favicon (URL)
-                <input
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                  value={settings.faviconUrl}
-                  onChange={(e) => setSettings((prev) => ({ ...prev, faviconUrl: e.target.value }))}
-                  placeholder="https://.../favicon.ico"
-                />
-                <div className="mt-2 flex items-center gap-3 text-[11px] text-slate-500">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleUpload(e, (url) => setSettings((prev) => ({ ...prev, faviconUrl: url })), "favicon")}
-                    className="text-[11px]"
-                  />
-                  {uploadingKey === "favicon" && <span>Import en cours…</span>}
-                  {settings.faviconUrl && <img src={settings.faviconUrl} alt="Favicon" className="h-6 w-6 rounded object-contain" />}
-                </div>
-              </label>
-            </div>
-          </section>
-
           <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
             <div className="flex items-center justify-between">
               <div>

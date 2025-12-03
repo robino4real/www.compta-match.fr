@@ -9,7 +9,7 @@ export function MainNavbar() {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isCartBouncing, setIsCartBouncing] = React.useState(false);
-  const navbarLogoUrl = "/logo.png";
+  const navbarLogoUrl = "/images/logo.png";
 
   const menuItems = React.useMemo(
     () => [
@@ -40,16 +40,16 @@ export function MainNavbar() {
 
   return (
     <header className="w-full bg-white">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:h-20 md:px-0">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 md:px-0 md:py-6">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3">
-          <span className="text-2xl font-semibold tracking-tight text-slate-900 md:text-3xl">
+          <span className="text-4xl font-semibold tracking-tight text-slate-900 md:text-6xl">
             COMPTAMATCH
           </span>
           <img
             src={navbarLogoUrl}
             alt="Logo ComptaMatch"
-            className="h-12 w-auto md:h-14"
+            className="h-24 w-auto md:h-28"
           />
         </Link>
 
