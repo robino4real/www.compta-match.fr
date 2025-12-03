@@ -132,6 +132,9 @@ const AdminPagesPage: React.FC = () => {
     );
   };
 
+  const homepagePage = pages.find((page) => page.key === "HOME" || page.route === "/");
+  const listedPages = pages.filter((page) => page.key !== "HOME" && page.route !== "/");
+
   return (
     <div className="space-y-6">
       <section className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
@@ -178,6 +181,16 @@ const AdminPagesPage: React.FC = () => {
         {isLoading && <p className="text-xs text-slate-600">Chargement des pages...</p>}
         {error && <p className="text-xs text-red-600">{error}</p>}
         {actionMessage && <p className="text-xs text-emerald-600">{actionMessage}</p>}
+        {homepagePage && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
+            La page d'accueil se gère depuis l'onglet dédié.
+            <Link to="/admin/homepage" className="font-semibold underline">
+              {" "}
+              Page d'accueil
+            </Link>
+             permet d'ouvrir son builder.
+          </div>
+        )}
 
         {!isLoading && !error && (
           <div className="overflow-x-auto">
@@ -193,7 +206,7 @@ const AdminPagesPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {pages.map((page) => (
+                {listedPages.map((page) => (
                   <tr key={page.id} className="border-t border-slate-100 hover:bg-white">
                     <td className="px-3 py-2 font-semibold text-black">{page.name}</td>
                     <td className="px-3 py-2 text-xs text-slate-600">{page.route}</td>
@@ -210,10 +223,10 @@ const AdminPagesPage: React.FC = () => {
                     </td>
                   </tr>
                 ))}
-                {pages.length === 0 && (
+                {listedPages.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-3 py-4 text-center text-xs text-slate-600">
-                      Aucune page pour le moment.
+                      Aucune page personnalisée à afficher ici. Gérez la page d'accueil depuis l'onglet dédié.
                     </td>
                   </tr>
                 )}

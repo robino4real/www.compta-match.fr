@@ -128,9 +128,64 @@ a {
   transform: translateY(0);
 }
 
+.page-section-animated {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 700ms ease, transform 700ms ease;
+}
+
+.page-section-animated.animate-fade {
+  transform: translateY(12px);
+}
+
+.page-section-animated.animate-slide-up {
+  transform: translateY(26px);
+}
+
+.page-section-animated.animate-slide-left {
+  transform: translateX(-22px);
+}
+
+.page-section-animated.animate-staggered {
+  transform: translateY(18px);
+}
+
+.page-section-animated.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page-section-animated.is-visible.animate-slide-left {
+  transform: translateX(0);
+}
+
+.section-anim-item {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 650ms ease, transform 650ms ease;
+}
+
+.page-section-animated.animate-slide-left .section-anim-item {
+  transform: translateX(-16px);
+}
+
+.page-section-animated.is-visible .section-anim-item,
+.page-section-animated.is-visible.animate-slide-left .section-anim-item {
+  opacity: 1;
+  transform: translate(0);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .scroll-animations-ready .reveal-on-scroll,
   .scroll-animations-ready .reveal-on-scroll.is-visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .page-section-animated,
+  .page-section-animated.is-visible,
+  .section-anim-item {
     opacity: 1;
     transform: none;
     transition: none;
