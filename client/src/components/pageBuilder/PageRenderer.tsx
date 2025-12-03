@@ -8,6 +8,34 @@ interface PageRendererProps {
 }
 
 const PageRenderer: React.FC<PageRendererProps> = ({ page, sections }) => {
+  React.useEffect(() => {
+    const animatedSections = Array.from(
+      document.querySelectorAll<HTMLElement>(".page-section-animated"),
+    );
+
+    if (animatedSections.length > 0) {
+      document.body.classList.add("scroll-animations-ready");
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+          }
+        });
+      },
+      { threshold: 0.15 },
+    );
+
+    animatedSections.forEach((section) => observer.observe(section));
+
+    return () => {
+      observer.disconnect();
+      document.body.classList.remove("scroll-animations-ready");
+    };
+  }, [sections]);
+
   return (
     <div className="flex flex-col gap-12">
       {sections

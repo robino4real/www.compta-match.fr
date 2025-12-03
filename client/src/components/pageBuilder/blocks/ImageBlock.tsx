@@ -13,7 +13,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ data }) => {
       <img
         src={imageUrl}
         alt={alt || "Image"}
-        className="max-h-[480px] w-full max-w-4xl rounded-2xl object-cover shadow-md"
+        className="max-h-[480px] w-full max-w-4xl object-contain"
       />
     </div>
   );

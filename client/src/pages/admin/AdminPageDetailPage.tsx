@@ -1,6 +1,8 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
+import { TEXT_ALIGNMENT_OPTIONS, TEXT_TEMPLATE_OPTIONS } from "../../components/pageBuilder/blocks/textTemplates";
+import { uploadAdminImage } from "../../lib/adminUpload";
 
 type SectionType =
   | "FULL_WIDTH"
@@ -62,6 +64,8 @@ const BLOCK_DEFAULTS: Record<BlockType, () => any> = {
   TEXT: () => ({
     title: "Titre de section",
     body: "<p>Votre texte ici...</p>",
+    textStyle: "balanced",
+    textAlign: "left",
   }),
   HERO: () => ({
     title: "Titre principal de la page",
@@ -69,12 +73,16 @@ const BLOCK_DEFAULTS: Record<BlockType, () => any> = {
     buttonLabel: "En savoir plus",
     buttonUrl: "/logiciels",
     align: "center",
+    textStyle: "display",
+    textAlign: "center",
   }),
   TEXT_IMAGE: () => ({
     title: "Titre",
     body: "<p>Texte de présentation...</p>",
     imageUrl: "",
     imagePosition: "right",
+    textStyle: "balanced",
+    textAlign: "left",
   }),
   IMAGE: () => ({
     imageUrl: "",
@@ -85,6 +93,8 @@ const BLOCK_DEFAULTS: Record<BlockType, () => any> = {
     body: "Texte de description de l'offre.",
     buttonLabel: "Je commence",
     buttonUrl: "/achat",
+    textStyle: "balanced",
+    textAlign: "center",
   }),
   FEATURES_LIST: () => ({
     title: "Pourquoi ComptaMatch ?",
@@ -142,6 +152,14 @@ const BLOCK_TYPES: { label: string; value: BlockType }[] = [
   { label: "Espace", value: "SPACER" },
 ];
 
+const SECTION_ANIMATION_OPTIONS: { label: string; value: string }[] = [
+  { value: "none", label: "Aucune animation" },
+  { value: "fade", label: "Apparition douce" },
+  { value: "slide-up", label: "Glisser vers le haut" },
+  { value: "slide-left", label: "Glisser depuis la gauche" },
+  { value: "staggered", label: "Apparition progressive (stagger)" },
+];
+
 const clone = (value: any) => JSON.parse(JSON.stringify(value));
 
 const AdminPageDetailPage: React.FC = () => {
@@ -163,11 +181,14 @@ const AdminPageDetailPage: React.FC = () => {
     type: string;
     backgroundColor: string;
     backgroundImageUrl: string;
+    animation: string;
   } | null>(null);
   const [sectionCreation, setSectionCreation] = React.useState({
     label: "",
     type: "FULL_WIDTH" as SectionType,
     backgroundColor: "",
+    backgroundImageUrl: "",
+    animation: "none",
   });
   const [isCreatingSection, setIsCreatingSection] = React.useState(false);
   const [isUpdatingSection, setIsUpdatingSection] = React.useState(false);
@@ -178,6 +199,7 @@ const AdminPageDetailPage: React.FC = () => {
 
   const [productOptions, setProductOptions] = React.useState<ProductOption[]>([]);
   const [articleOptions, setArticleOptions] = React.useState<ArticleOption[]>([]);
+  const [uploadingKey, setUploadingKey] = React.useState<string | null>(null);
 
   const selectedSection = sections.find((section) => section.id === selectedSectionId);
   const selectedBlock = selectedSection?.blocks.find((block) => block.id === selectedBlockId);
@@ -221,6 +243,7 @@ const AdminPageDetailPage: React.FC = () => {
         type: selectedSection.type,
         backgroundColor: selectedSection.backgroundColor || "",
         backgroundImageUrl: selectedSection.backgroundImageUrl || "",
+        animation: (selectedSection.settings as any)?.animation || "none",
       });
     } else {
       setSectionForm(null);
@@ -387,6 +410,8 @@ const AdminPageDetailPage: React.FC = () => {
           label: sectionCreation.label.trim(),
           type: sectionCreation.type,
           backgroundColor: sectionCreation.backgroundColor || null,
+          backgroundImageUrl: sectionCreation.backgroundImageUrl || null,
+          settings: { animation: sectionCreation.animation || "none" },
         }),
       });
 
@@ -402,7 +427,13 @@ const AdminPageDetailPage: React.FC = () => {
       setSections(newList);
       setSelectedSectionId(newSection.id);
       setSelectedBlockId(newSection.blocks?.[0]?.id ?? null);
-      setSectionCreation({ label: "", type: "FULL_WIDTH", backgroundColor: "" });
+      setSectionCreation({
+        label: "",
+        type: "FULL_WIDTH",
+        backgroundColor: "",
+        backgroundImageUrl: "",
+        animation: "none",
+      });
       setActionMessage("Section ajoutée.");
     } catch (err: any) {
       console.error("Erreur lors de la création de la section", err);
@@ -419,6 +450,13 @@ const AdminPageDetailPage: React.FC = () => {
     setActionMessage(null);
 
     try {
+      const mergedSettings = {
+        ...(typeof selectedSection.settings === "object" && selectedSection.settings !== null
+          ? (selectedSection.settings as Record<string, any>)
+          : {}),
+        animation: sectionForm.animation || "none",
+      };
+
       const response = await fetch(`${API_BASE_URL}/admin/sections/${selectedSection.id}`, {
         method: "PUT",
         credentials: "include",
@@ -428,6 +466,7 @@ const AdminPageDetailPage: React.FC = () => {
           type: sectionForm.type,
           backgroundColor: sectionForm.backgroundColor || null,
           backgroundImageUrl: sectionForm.backgroundImageUrl || null,
+          settings: mergedSettings,
         }),
       });
 
@@ -666,6 +705,29 @@ const AdminPageDetailPage: React.FC = () => {
     });
   };
 
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+    onDone: (url: string) => void,
+    key: string,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setUploadingKey(key);
+    setError(null);
+    setActionMessage(null);
+    try {
+      const upload = await uploadAdminImage(file);
+      onDone(upload.url);
+      setActionMessage("Image importée avec succès.");
+    } catch (err: any) {
+      console.error("Erreur import image", err);
+      setError(err?.message || "Impossible d'importer l'image.");
+    } finally {
+      setUploadingKey(null);
+      event.target.value = "";
+    }
+  };
+
   const blockPreview = (block: PageBlock) => {
     if (block.type === "TEXT" && block.data?.title) return block.data.title;
     if (block.type === "HERO" && block.data?.title) return block.data.title;
@@ -684,10 +746,51 @@ const AdminPageDetailPage: React.FC = () => {
       return <p className="text-xs text-slate-600">Sélectionnez un bloc pour l'éditer.</p>;
     }
 
+    const typographySelectors = (
+      alignmentLabel = "Position du texte",
+      defaultAlignment = "left",
+      onAlignmentChange?: (value: string) => void,
+    ) => (
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-slate-700">Template d'écriture</label>
+          <select
+            value={blockDraft.textStyle || "balanced"}
+            onChange={(e) => handleBlockDraftChange("textStyle", e.target.value)}
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
+          >
+            {TEXT_TEMPLATE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-slate-700">{alignmentLabel}</label>
+          <select
+            value={blockDraft.textAlign || defaultAlignment}
+            onChange={(e) => {
+              handleBlockDraftChange("textAlign", e.target.value);
+              if (onAlignmentChange) onAlignmentChange(e.target.value);
+            }}
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
+          >
+            {TEXT_ALIGNMENT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    );
+
     switch (selectedBlock.type) {
       case "TEXT":
         return (
           <div className="space-y-3">
+            {typographySelectors("Position du bloc", "left")}
             <div className="space-y-1">
               <label className="text-xs font-semibold text-slate-700">Titre</label>
               <input
@@ -719,11 +822,11 @@ const AdminPageDetailPage: React.FC = () => {
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
               />
             </div>
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700">Sous-titre</label>
-              <textarea
-                value={blockDraft.subtitle || ""}
-                onChange={(e) => handleBlockDraftChange("subtitle", e.target.value)}
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-700">Sous-titre</label>
+            <textarea
+              value={blockDraft.subtitle || ""}
+              onChange={(e) => handleBlockDraftChange("subtitle", e.target.value)}
                 className="h-24 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
               />
             </div>
@@ -743,24 +846,17 @@ const AdminPageDetailPage: React.FC = () => {
                   type="text"
                   value={blockDraft.buttonUrl || ""}
                   onChange={(e) => handleBlockDraftChange("buttonUrl", e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
-                />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700">Alignement</label>
-              <select
-                value={blockDraft.align || "center"}
-                onChange={(e) => handleBlockDraftChange("align", e.target.value)}
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
-              >
-                <option value="left">Gauche</option>
-                <option value="center">Centre</option>
-                <option value="right">Droite</option>
-              </select>
+              />
             </div>
           </div>
-        );
+          {typographySelectors(
+            "Position et alignement",
+            blockDraft.textAlign || blockDraft.align || "center",
+            (value) => handleBlockDraftChange("align", value),
+          )}
+        </div>
+      );
       case "TEXT_IMAGE":
         return (
           <div className="space-y-3">
@@ -781,15 +877,33 @@ const AdminPageDetailPage: React.FC = () => {
                 className="h-28 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
               />
             </div>
+            {typographySelectors("Alignement du texte", blockDraft.textAlign || "left")}
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700">Image URL</label>
-                <input
-                  type="text"
-                  value={blockDraft.imageUrl || ""}
-                  onChange={(e) => handleBlockDraftChange("imageUrl", e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
-                />
+                <label className="text-xs font-semibold text-slate-700">Image</label>
+                <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                  <input
+                    type="text"
+                    value={blockDraft.imageUrl || ""}
+                    onChange={(e) => handleBlockDraftChange("imageUrl", e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                  />
+                  <label
+                    htmlFor={`${selectedBlock.id}-text-image-upload`}
+                    className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-black hover:text-black"
+                  >
+                    <input
+                      id={`${selectedBlock.id}-text-image-upload`}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) =>
+                        handleImageUpload(e, (url) => handleBlockDraftChange("imageUrl", url), `${selectedBlock.id}-text-image`)
+                      }
+                    />
+                    {uploadingKey === `${selectedBlock.id}-text-image` ? "Import..." : "Importer"}
+                  </label>
+                </div>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-slate-700">Position</label>
@@ -809,13 +923,30 @@ const AdminPageDetailPage: React.FC = () => {
         return (
           <div className="space-y-3">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700">Image URL</label>
-              <input
-                type="text"
-                value={blockDraft.imageUrl || ""}
-                onChange={(e) => handleBlockDraftChange("imageUrl", e.target.value)}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
-              />
+              <label className="text-xs font-semibold text-slate-700">Image</label>
+              <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                <input
+                  type="text"
+                  value={blockDraft.imageUrl || ""}
+                  onChange={(e) => handleBlockDraftChange("imageUrl", e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                />
+                <label
+                  htmlFor={`${selectedBlock.id}-image-upload`}
+                  className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-black hover:text-black"
+                >
+                  <input
+                    id={`${selectedBlock.id}-image-upload`}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) =>
+                      handleImageUpload(e, (url) => handleBlockDraftChange("imageUrl", url), `${selectedBlock.id}-image`)
+                    }
+                  />
+                  {uploadingKey === `${selectedBlock.id}-image` ? "Import..." : "Importer"}
+                </label>
+              </div>
             </div>
             <div className="space-y-1">
               <label className="text-xs font-semibold text-slate-700">Alt</label>
@@ -831,6 +962,7 @@ const AdminPageDetailPage: React.FC = () => {
       case "CTA":
         return (
           <div className="space-y-3">
+            {typographySelectors("Position du contenu", blockDraft.textAlign || "center")}
             <div className="space-y-1">
               <label className="text-xs font-semibold text-slate-700">Titre</label>
               <input
@@ -1305,6 +1437,47 @@ const AdminPageDetailPage: React.FC = () => {
                   placeholder="Couleur de fond (optionnel)"
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
                 />
+                <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                  <input
+                    type="text"
+                    value={sectionCreation.backgroundImageUrl}
+                    onChange={(e) => setSectionCreation({ ...sectionCreation, backgroundImageUrl: e.target.value })}
+                    placeholder="Image de fond (URL optionnelle)"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                  />
+                  <label
+                    htmlFor="section-create-bg-upload"
+                    className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-[11px] font-semibold text-slate-700 hover:border-black hover:text-black"
+                  >
+                    <input
+                      id="section-create-bg-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) =>
+                        handleImageUpload(
+                          e,
+                          (url) => setSectionCreation({ ...sectionCreation, backgroundImageUrl: url }),
+                          "section-create-bg",
+                        )
+                      }
+                    />
+                    {uploadingKey === "section-create-bg" ? "Import..." : "Importer"}
+                  </label>
+                </div>
+              </div>
+              <div className="grid gap-2 md:grid-cols-[1.2fr,1fr]">
+                <select
+                  value={sectionCreation.animation}
+                  onChange={(e) => setSectionCreation({ ...sectionCreation, animation: e.target.value })}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                >
+                  {SECTION_ANIMATION_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
                 <button
                   type="submit"
                   disabled={isCreatingSection}
@@ -1424,23 +1597,60 @@ const AdminPageDetailPage: React.FC = () => {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-700">Image de fond (URL)</label>
-                  <input
-                    type="text"
-                    value={sectionForm.backgroundImageUrl}
-                    onChange={(e) => setSectionForm({ ...sectionForm, backgroundImageUrl: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
-                  />
+                  <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                    <input
+                      type="text"
+                      value={sectionForm.backgroundImageUrl}
+                      onChange={(e) => setSectionForm({ ...sectionForm, backgroundImageUrl: e.target.value })}
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                    />
+                    <label
+                      htmlFor={`section-bg-${selectedSection.id}`}
+                      className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-[11px] font-semibold text-slate-700 hover:border-black hover:text-black"
+                    >
+                      <input
+                        id={`section-bg-${selectedSection.id}`}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) =>
+                          handleImageUpload(
+                            e,
+                            (url) => setSectionForm({ ...sectionForm, backgroundImageUrl: url }),
+                            `section-bg-${selectedSection.id}`,
+                          )
+                        }
+                      />
+                      {uploadingKey === `section-bg-${selectedSection.id}` ? "Import..." : "Importer"}
+                    </label>
+                  </div>
                 </div>
               </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={updateSection}
-                  disabled={isUpdatingSection}
-                  className="rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-900 disabled:opacity-50"
-                >
-                  {isUpdatingSection ? "Mise à jour..." : "Mettre à jour la section"}
-                </button>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Animation</label>
+                  <select
+                    value={sectionForm.animation}
+                    onChange={(e) => setSectionForm({ ...sectionForm, animation: e.target.value })}
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                  >
+                    {SECTION_ANIMATION_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-end justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={updateSection}
+                    disabled={isUpdatingSection}
+                    className="rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-900 disabled:opacity-50"
+                  >
+                    {isUpdatingSection ? "Mise à jour..." : "Mettre à jour la section"}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-3">
