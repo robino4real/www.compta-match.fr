@@ -4,7 +4,8 @@ import { prisma } from "../config/prisma";
 import { stripe } from "../config/stripeClient";
 import { createInvoiceForOrder } from "../services/invoiceService";
 import { generateDownloadLinksForOrder } from "../services/downloadLinkService";
-import { buildCategoryKey, validatePromoCodeForTotal } from "../services/promoService";
+import { validatePromoCodeForTotal } from "../services/promoService";
+import { computeCartTotals, CartItemInput } from "../services/cartService";
 import {
   sendInvoiceAvailableEmail,
   sendOrderConfirmationEmail,
@@ -16,11 +17,6 @@ interface AuthenticatedRequest extends Request {
     email?: string;
     role?: string;
   };
-}
-
-interface CheckoutItemInput {
-  productId: string;
-  quantity?: number;
 }
 
 interface BillingInfo {
@@ -113,7 +109,7 @@ export async function createDownloadCheckoutSession(
 
     const { items, promoCode, billing, acceptedTerms, acceptedLicense } =
       req.body as {
-        items?: CheckoutItemInput[];
+        items?: CartItemInput[];
         promoCode?: string;
         billing?: BillingInfo;
         acceptedTerms?: boolean;
@@ -140,52 +136,21 @@ export async function createDownloadCheckoutSession(
       });
     }
 
-    const normalizedItems = items.map((raw) => ({
-      productId: String(raw.productId),
-      quantity:
-        raw.quantity && Number(raw.quantity) > 0
-          ? Number(raw.quantity)
-          : 1,
-    }));
+    let cartComputation;
+    try {
+      cartComputation = await computeCartTotals(items);
+    } catch (error) {
+      const isInvalidProducts =
+        error instanceof Error && error.message === "INVALID_PRODUCTS";
 
-    const productIds = normalizedItems.map((it) => it.productId);
-
-    const products = await prisma.downloadableProduct.findMany({
-      where: {
-        id: { in: productIds },
-        isActive: true,
-      },
-    });
-
-    if (products.length !== normalizedItems.length) {
-      return res.status(400).json({
-        message:
-          "Certains produits demandés sont introuvables ou ne sont plus disponibles.",
+      return res.status(isInvalidProducts ? 400 : 500).json({
+        message: isInvalidProducts
+          ? "Certains produits demandés sont introuvables ou ne sont plus disponibles."
+          : "Impossible de calculer le panier pour le paiement.",
       });
     }
 
-    const productMap = products.reduce<
-      Record<string, (typeof products)[number]>
-    >((acc, p) => {
-      acc[p.id] = p;
-      return acc;
-    }, {});
-
-    const totalsByCategory = normalizedItems.reduce<Record<string, number>>(
-      (acc, it) => {
-        const product = productMap[it.productId];
-        if (!product) return acc;
-        const key = buildCategoryKey(product.categoryId);
-        acc[key] = (acc[key] || 0) + product.priceCents * it.quantity;
-        return acc;
-      },
-      {}
-    );
-
-    const totalCents = Object.values(totalsByCategory).reduce(
-      (sum, value) => sum + value,
-      0
-    );
+    const { totalCents, totalsByCategory, normalizedItems } = cartComputation;
 
     if (totalCents <= 0) {
       return res.status(400).json({

@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
+import { fetchDownloadConfirmation } from "../services/paymentsApi";
 
 const ONE_HOUR_SECONDS = 3600;
 
@@ -53,34 +54,16 @@ const PaymentSuccessPage: React.FC = () => {
 
     const fetchConfirmation = async () => {
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/payments/downloads/confirmation?session_id=${encodeURIComponent(
-            sessionId
-          )}`,
-          {
-            method: "GET",
-            credentials: "include",
-            signal: controller.signal,
-          }
-        );
-
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          setError(
-            data?.message ||
-              "Impossible de confirmer le paiement Stripe. Merci de réessayer."
-          );
-          return;
-        }
-
+        const data = await fetchDownloadConfirmation(sessionId, controller.signal);
         setConfirmation(data);
       } catch (err) {
         if (controller.signal.aborted) return;
         console.error("Erreur lors de la récupération de la confirmation", err);
-        setError(
-          "Impossible de charger la confirmation de paiement. Merci de réessayer."
-        );
+        const message =
+          err instanceof Error && err.message
+            ? err.message
+            : "Impossible de charger la confirmation de paiement. Merci de réessayer.";
+        setError(message);
       } finally {
         setLoading(false);
       }
