@@ -20,6 +20,10 @@ export function homepageStreamHandler(_req: Request, res: Response) {
   res.setHeader("Connection", "keep-alive");
   res.setHeader("X-Accel-Buffering", "no");
 
+  if (typeof res.flushHeaders === "function") {
+    res.flushHeaders();
+  }
+
   res.write(formatEvent({ version, ready: true }));
 
   const listener = (payload: unknown) => {

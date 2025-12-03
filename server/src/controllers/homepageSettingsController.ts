@@ -193,6 +193,9 @@ function toDto(settings: HomepageSettings | null): HomepageSettingsDTO {
 
 export async function adminGetHomepageSettings(_req: Request, res: Response) {
   try {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+
     const settings = await getOrCreateHomepageSettings();
     return res.json(toDto(settings));
   } catch (error) {
@@ -207,6 +210,10 @@ export async function adminSaveHomepageSettings(req: Request, res: Response) {
   try {
     const settings = await updateHomepageSettings(req.body || {});
     notifyHomepageUpdated();
+
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+
     return res.json(toDto(settings));
   } catch (error) {
     console.error("Erreur lors de la sauvegarde de la home", error);
@@ -218,6 +225,9 @@ export async function adminSaveHomepageSettings(req: Request, res: Response) {
 
 export async function publicGetHomepage(_req: Request, res: Response) {
   try {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+
     const settings = await getOrCreateHomepageSettings();
     return res.json(toDto(settings));
   } catch (error) {
