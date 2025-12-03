@@ -218,8 +218,7 @@ export async function createDownloadCheckoutSession(
       acceptedLicense: acceptedLicense ? "true" : "false",
     };
 
-    const currency =
-      products[0]?.currency?.toLowerCase() || process.env.CURRENCY || "eur";
+    const currency = (process.env.CURRENCY || "eur").toLowerCase();
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
