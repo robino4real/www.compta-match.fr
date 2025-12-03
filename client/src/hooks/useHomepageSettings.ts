@@ -269,7 +269,10 @@ async function fetchPublicHomepage(forceRefresh = false): Promise<HookState> {
 
   inflightRequest = (async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/public/homepage`, { cache: "no-store" });
+      const cacheBuster = forceRefresh ? `?_=${Date.now()}` : "";
+      const response = await fetch(`${API_BASE_URL}/public/homepage${cacheBuster}`, {
+        cache: "no-store",
+      });
       const data = (await response.json().catch(() => ({}))) as PublicHomepagePayload;
       if (!response.ok) {
         throw new Error(data?.message || "Impossible de charger la page d'accueil.");
