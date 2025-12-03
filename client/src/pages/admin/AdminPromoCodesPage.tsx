@@ -2,6 +2,12 @@ import React from "react";
 import { API_BASE_URL } from "../../config/api";
 
 type DiscountType = "PERCENT" | "AMOUNT";
+type PromoTargetType = "PRODUCT" | "SUBSCRIPTION";
+
+interface DownloadableCategory {
+  id: string;
+  name: string;
+}
 
 interface PromoCode {
   id: string;
@@ -9,6 +15,8 @@ interface PromoCode {
   description?: string | null;
   discountType: DiscountType | string;
   discountValue: number;
+  targetType?: PromoTargetType | string;
+  productCategoryId?: string | null;
   isReferral?: boolean;
   sponsorName?: string | null;
   sponsorEmail?: string | null;
@@ -53,6 +61,8 @@ const AdminPromoCodesPage: React.FC = () => {
   const [promos, setPromos] = React.useState<PromoCode[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [categories, setCategories] = React.useState<DownloadableCategory[]>([]);
+  const [categoriesError, setCategoriesError] = React.useState<string | null>(null);
 
   // Création
   const [newCode, setNewCode] = React.useState("");
@@ -60,6 +70,9 @@ const AdminPromoCodesPage: React.FC = () => {
   const [newDiscountType, setNewDiscountType] =
     React.useState<DiscountType>("PERCENT");
   const [newDiscountValue, setNewDiscountValue] = React.useState("");
+  const [newTargetType, setNewTargetType] =
+    React.useState<PromoTargetType>("PRODUCT");
+  const [newProductCategoryId, setNewProductCategoryId] = React.useState("");
   const [newMaxUses, setNewMaxUses] = React.useState("");
   const [newStartsAt, setNewStartsAt] = React.useState("");
   const [newEndsAt, setNewEndsAt] = React.useState("");
@@ -86,6 +99,9 @@ const AdminPromoCodesPage: React.FC = () => {
   const [editMaxUses, setEditMaxUses] = React.useState("");
   const [editStartsAt, setEditStartsAt] = React.useState("");
   const [editEndsAt, setEditEndsAt] = React.useState("");
+  const [editTargetType, setEditTargetType] =
+    React.useState<PromoTargetType>("PRODUCT");
+  const [editProductCategoryId, setEditProductCategoryId] = React.useState("");
   const [editIsActive, setEditIsActive] = React.useState(true);
   const [editIsReferral, setEditIsReferral] = React.useState(false);
   const [editSponsorName, setEditSponsorName] = React.useState("");
@@ -146,9 +162,44 @@ const AdminPromoCodesPage: React.FC = () => {
     }
   }, []);
 
+  const fetchCategories = React.useCallback(async () => {
+    try {
+      setCategoriesError(null);
+
+      const response = await fetch(
+        `${API_BASE_URL}/admin/downloadable-categories`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Impossible de récupérer les catégories."
+        );
+      }
+
+      const list: DownloadableCategory[] = Array.isArray(data.categories)
+        ? data.categories
+        : [];
+
+      setCategories(list);
+    } catch (err: any) {
+      console.error("Erreur GET /admin/downloadable-categories :", err);
+      setCategoriesError(
+        err?.message ||
+          "Une erreur est survenue lors du chargement des catégories."
+      );
+    }
+  }, []);
+
   React.useEffect(() => {
     fetchPromos();
-  }, [fetchPromos]);
+    fetchCategories();
+  }, [fetchPromos, fetchCategories]);
 
   const handleCreatePromo = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -215,6 +266,11 @@ const AdminPromoCodesPage: React.FC = () => {
         description: newDescription.trim() || undefined,
         discountType: newDiscountType,
         discountValue: value,
+        targetType: newTargetType,
+        productCategoryId:
+          newTargetType === "PRODUCT" && newProductCategoryId
+            ? newProductCategoryId
+            : null,
         maxUses: parsedMaxUses,
         isActive: newIsActive,
         startsAt: newStartsAt.trim() || null,
@@ -252,6 +308,8 @@ const AdminPromoCodesPage: React.FC = () => {
       setNewDescription("");
       setNewDiscountType("PERCENT");
       setNewDiscountValue("");
+      setNewTargetType("PRODUCT");
+      setNewProductCategoryId("");
       setNewMaxUses("");
       setNewStartsAt("");
       setNewEndsAt("");
@@ -290,6 +348,10 @@ const AdminPromoCodesPage: React.FC = () => {
     );
     setEditStartsAt(promo.startsAt ?? "");
     setEditEndsAt(promo.endsAt ?? "");
+    setEditTargetType(
+      promo.targetType === "SUBSCRIPTION" ? "SUBSCRIPTION" : "PRODUCT"
+    );
+    setEditProductCategoryId(promo.productCategoryId ?? "");
     setEditIsActive(promo.isActive);
     setEditIsReferral(Boolean(promo.isReferral));
     setEditSponsorName(promo.sponsorName ?? "");
@@ -313,6 +375,8 @@ const AdminPromoCodesPage: React.FC = () => {
     setEditMaxUses("");
     setEditStartsAt("");
     setEditEndsAt("");
+    setEditTargetType("PRODUCT");
+    setEditProductCategoryId("");
     setEditIsActive(true);
     setEditIsReferral(false);
     setEditSponsorName("");
@@ -389,6 +453,11 @@ const AdminPromoCodesPage: React.FC = () => {
         description: editDescription.trim() || null,
         discountType: editDiscountType,
         discountValue: value,
+        targetType: editTargetType,
+        productCategoryId:
+          editTargetType === "PRODUCT" && editProductCategoryId
+            ? editProductCategoryId
+            : null,
         maxUses: parsedMaxUses,
         isActive: editIsActive,
         startsAt: editStartsAt.trim() || null,
@@ -496,6 +565,21 @@ const AdminPromoCodesPage: React.FC = () => {
 
   const formatCurrency = (valueCents: number): string => {
     return `${(valueCents / 100).toFixed(2)} €`;
+  };
+
+  const getCategoryLabel = React.useCallback(
+    (id?: string | null) => {
+      if (!id) return "Toutes les catégories";
+      const found = categories.find((cat) => cat.id === id);
+      return found ? found.name : "Catégorie inconnue";
+    },
+    [categories]
+  );
+
+  const formatTargetScope = (promo: PromoCode): string => {
+    if (promo.targetType === "SUBSCRIPTION") return "Abonnements";
+    const label = getCategoryLabel(promo.productCategoryId);
+    return `Produits - ${label}`;
   };
 
   const fetchPromoStats = async (
@@ -636,6 +720,49 @@ const AdminPromoCodesPage: React.FC = () => {
               className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
               rows={2}
             />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700">
+                S&apos;applique à
+              </label>
+              <select
+                value={newTargetType}
+                onChange={(e) =>
+                  setNewTargetType(
+                    e.target.value === "SUBSCRIPTION" ? "SUBSCRIPTION" : "PRODUCT"
+                  )
+                }
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+              >
+                <option value="PRODUCT">Produits (téléchargements)</option>
+                <option value="SUBSCRIPTION">Abonnements</option>
+              </select>
+            </div>
+
+            {newTargetType === "PRODUCT" && (
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  Catégorie de produit
+                </label>
+                <select
+                  value={newProductCategoryId}
+                  onChange={(e) => setNewProductCategoryId(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                >
+                  <option value="">Toutes les catégories</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+                {categoriesError && (
+                  <p className="text-[11px] text-red-600">{categoriesError}</p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2 pt-1">
@@ -875,6 +1002,9 @@ const AdminPromoCodesPage: React.FC = () => {
                     Réduction
                   </th>
                   <th className="px-3 py-2 text-left font-semibold text-slate-500">
+                    Portée
+                  </th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-500">
                     Utilisations
                   </th>
                   <th className="px-3 py-2 text-left font-semibold text-slate-500">
@@ -917,6 +1047,9 @@ const AdminPromoCodesPage: React.FC = () => {
                       </td>
                       <td className="px-3 py-2 align-top text-slate-700">
                         {formatDiscount(promo)}
+                      </td>
+                      <td className="px-3 py-2 align-top text-slate-700">
+                        {formatTargetScope(promo)}
                       </td>
                       <td className="px-3 py-2 align-top text-slate-700">
                         {usesText}
@@ -1047,6 +1180,51 @@ const AdminPromoCodesPage: React.FC = () => {
                 className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
                 rows={2}
               />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  S&apos;applique à
+                </label>
+                <select
+                  value={editTargetType}
+                  onChange={(e) =>
+                    setEditTargetType(
+                      e.target.value === "SUBSCRIPTION"
+                        ? "SUBSCRIPTION"
+                        : "PRODUCT"
+                    )
+                  }
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                >
+                  <option value="PRODUCT">Produits (téléchargements)</option>
+                  <option value="SUBSCRIPTION">Abonnements</option>
+                </select>
+              </div>
+
+              {editTargetType === "PRODUCT" && (
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">
+                    Catégorie de produit
+                  </label>
+                  <select
+                    value={editProductCategoryId}
+                    onChange={(e) => setEditProductCategoryId(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-black"
+                  >
+                    <option value="">Toutes les catégories</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                  {categoriesError && (
+                    <p className="text-[11px] text-red-600">{categoriesError}</p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-2 pt-1">

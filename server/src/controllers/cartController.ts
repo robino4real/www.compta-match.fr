@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
-import { validatePromoCodeForTotal } from "../services/promoService";
+import { buildCategoryKey, validatePromoCodeForTotal } from "../services/promoService";
 
 interface CartItemInput {
   productId: string;
@@ -33,13 +33,20 @@ async function computeCartTotal(items: CartItemInput[]) {
     {}
   );
 
-  const totalCents = normalized.reduce((sum, it) => {
+  const totalsByCategory = normalized.reduce<Record<string, number>>((acc, it) => {
     const product = productMap[it.productId];
-    if (!product) return sum;
-    return sum + product.priceCents * it.quantity;
-  }, 0);
+    if (!product) return acc;
+    const key = buildCategoryKey(product.categoryId);
+    acc[key] = (acc[key] || 0) + product.priceCents * it.quantity;
+    return acc;
+  }, {});
 
-  return { totalCents, productMap };
+  const totalCents = Object.values(totalsByCategory).reduce(
+    (sum, value) => sum + value,
+    0
+  );
+
+  return { totalCents, productMap, totalsByCategory };
 }
 
 export async function applyPromoToCart(req: Request, res: Response) {
@@ -54,9 +61,12 @@ export async function applyPromoToCart(req: Request, res: Response) {
       });
     }
 
-    const { totalCents } = await computeCartTotal(items);
+    const { totalCents, totalsByCategory } = await computeCartTotal(items);
 
-    const promoResult = await validatePromoCodeForTotal(code || "", totalCents);
+    const promoResult = await validatePromoCodeForTotal(code || "", totalCents, {
+      context: "PRODUCT",
+      categoryTotals: totalsByCategory,
+    });
 
     if (!promoResult) {
       return res.status(400).json({

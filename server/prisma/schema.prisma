@@ -138,6 +138,7 @@ model DownloadableCategory {
   updatedAt DateTime @updatedAt
 
   products DownloadableProduct[]
+  promoCodes PromoCode[]
 }
 
 enum DownloadLinkStatus {
@@ -190,6 +191,13 @@ model PromoCode {
   discountType  String
   discountValue Int
 
+  /// Cible du code promo (produit ou abonnement)
+  targetType PromoTargetType @default(PRODUCT)
+
+  /// Limite éventuelle à une catégorie de produits téléchargeables
+  productCategoryId String?
+  productCategory   DownloadableCategory? @relation(fields: [productCategoryId], references: [id])
+
   /// Indique si le code est utilisé dans le cadre d'un parrainage
   isReferral Boolean @default(false)
 
@@ -215,6 +223,11 @@ model PromoCode {
   updatedAt DateTime @updatedAt
 
   orders Order[]
+}
+
+enum PromoTargetType {
+  PRODUCT
+  SUBSCRIPTION
 }
 
 model CompanySettings {
