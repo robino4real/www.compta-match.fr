@@ -162,6 +162,19 @@ const SECTION_ANIMATION_OPTIONS: { label: string; value: string }[] = [
   { value: "staggered", label: "Apparition progressive (stagger)" },
 ];
 
+const BACKGROUND_SIZE_OPTIONS = [
+  { value: "cover", label: "Recadrer pour couvrir" },
+  { value: "contain", label: "Adapter sans recadrage" },
+  { value: "auto", label: "Conserver les dimensions" },
+];
+
+const IMAGE_SIZE_OPTIONS = [
+  { value: "small", label: "Petite" },
+  { value: "medium", label: "Moyenne" },
+  { value: "large", label: "Grande" },
+  { value: "full", label: "Très grande" },
+];
+
 const clone = (value: any) => JSON.parse(JSON.stringify(value));
 
 const AdminPageDetailPage: React.FC = () => {
@@ -184,6 +197,7 @@ const AdminPageDetailPage: React.FC = () => {
     backgroundColor: string;
     backgroundImageUrl: string;
     animation: string;
+    backgroundSize: string;
   } | null>(null);
   const [sectionCreation, setSectionCreation] = React.useState({
     label: "",
@@ -191,6 +205,7 @@ const AdminPageDetailPage: React.FC = () => {
     backgroundColor: "",
     backgroundImageUrl: "",
     animation: "none",
+    backgroundSize: "cover",
   });
   const [isCreatingSection, setIsCreatingSection] = React.useState(false);
   const [isUpdatingSection, setIsUpdatingSection] = React.useState(false);
@@ -246,6 +261,7 @@ const AdminPageDetailPage: React.FC = () => {
         backgroundColor: selectedSection.backgroundColor || "",
         backgroundImageUrl: selectedSection.backgroundImageUrl || "",
         animation: (selectedSection.settings as any)?.animation || "none",
+        backgroundSize: (selectedSection.settings as any)?.backgroundSize || "cover",
       });
     } else {
       setSectionForm(null);
@@ -413,7 +429,10 @@ const AdminPageDetailPage: React.FC = () => {
           type: sectionCreation.type,
           backgroundColor: sectionCreation.backgroundColor || null,
           backgroundImageUrl: sectionCreation.backgroundImageUrl || null,
-          settings: { animation: sectionCreation.animation || "none" },
+          settings: {
+            animation: sectionCreation.animation || "none",
+            backgroundSize: sectionCreation.backgroundSize || "cover",
+          },
         }),
       });
 
@@ -435,6 +454,7 @@ const AdminPageDetailPage: React.FC = () => {
         backgroundColor: "",
         backgroundImageUrl: "",
         animation: "none",
+        backgroundSize: "cover",
       });
       setActionMessage("Section ajoutée.");
     } catch (err: any) {
@@ -457,6 +477,7 @@ const AdminPageDetailPage: React.FC = () => {
           ? (selectedSection.settings as Record<string, any>)
           : {}),
         animation: sectionForm.animation || "none",
+        backgroundSize: sectionForm.backgroundSize || "cover",
       };
 
       const response = await fetch(`${API_BASE_URL}/admin/sections/${selectedSection.id}`, {
@@ -905,6 +926,18 @@ const AdminPageDetailPage: React.FC = () => {
                     />
                     {uploadingKey === `${selectedBlock.id}-text-image` ? "Import..." : "Importer"}
                   </label>
+                  <select
+                    value={blockDraft.imageSize || "large"}
+                    onChange={(e) => handleBlockDraftChange("imageSize", e.target.value)}
+                    aria-label="Taille de l'image"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none md:w-auto"
+                  >
+                    {IMAGE_SIZE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div className="space-y-1">
@@ -918,19 +951,6 @@ const AdminPageDetailPage: React.FC = () => {
                   <option value="right">Image à droite</option>
                 </select>
               </div>
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700">Taille de l'image</label>
-              <select
-                value={blockDraft.imageSize || "large"}
-                onChange={(e) => handleBlockDraftChange("imageSize", e.target.value)}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
-              >
-                <option value="small">Petite</option>
-                <option value="medium">Moyenne</option>
-                <option value="large">Grande</option>
-                <option value="full">Très grande</option>
-              </select>
             </div>
           </div>
         );
@@ -961,6 +981,18 @@ const AdminPageDetailPage: React.FC = () => {
                   />
                   {uploadingKey === `${selectedBlock.id}-image` ? "Import..." : "Importer"}
                 </label>
+                <select
+                  value={blockDraft.imageSize || "large"}
+                  onChange={(e) => handleBlockDraftChange("imageSize", e.target.value)}
+                  aria-label="Taille de l'image"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none md:w-auto"
+                >
+                  {IMAGE_SIZE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             <div className="space-y-1">
@@ -971,19 +1003,6 @@ const AdminPageDetailPage: React.FC = () => {
                 onChange={(e) => handleBlockDraftChange("alt", e.target.value)}
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
               />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700">Taille de l'image</label>
-              <select
-                value={blockDraft.imageSize || "large"}
-                onChange={(e) => handleBlockDraftChange("imageSize", e.target.value)}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
-              >
-                <option value="small">Petite</option>
-                <option value="medium">Moyenne</option>
-                <option value="large">Grande</option>
-                <option value="full">Très grande</option>
-              </select>
             </div>
           </div>
         );
@@ -1457,7 +1476,7 @@ const AdminPageDetailPage: React.FC = () => {
                   ))}
                 </select>
               </div>
-              <div className="grid gap-2 md:grid-cols-[1.2fr,1fr]">
+              <div className="grid gap-2 md:grid-cols-[1.2fr,1.6fr]">
                 <input
                   type="text"
                   value={sectionCreation.backgroundColor}
@@ -1492,6 +1511,18 @@ const AdminPageDetailPage: React.FC = () => {
                     />
                     {uploadingKey === "section-create-bg" ? "Import..." : "Importer"}
                   </label>
+                  <select
+                    value={sectionCreation.backgroundSize}
+                    onChange={(e) => setSectionCreation({ ...sectionCreation, backgroundSize: e.target.value })}
+                    aria-label="Taille d'affichage de l'image de fond"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none md:w-auto"
+                  >
+                    {BACKGROUND_SIZE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div className="grid gap-2 md:grid-cols-[1.2fr,1fr]">
@@ -1651,6 +1682,18 @@ const AdminPageDetailPage: React.FC = () => {
                       />
                       {uploadingKey === `section-bg-${selectedSection.id}` ? "Import..." : "Importer"}
                     </label>
+                    <select
+                      value={sectionForm.backgroundSize}
+                      onChange={(e) => setSectionForm({ ...sectionForm, backgroundSize: e.target.value })}
+                      aria-label="Taille d'affichage de l'image de fond"
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none md:w-auto"
+                    >
+                      {BACKGROUND_SIZE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>

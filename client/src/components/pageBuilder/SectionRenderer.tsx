@@ -10,10 +10,11 @@ interface SectionRendererProps {
 const SectionRenderer: React.FC<SectionRendererProps> = ({ section, page }) => {
   const bgClass = section.backgroundColor || "bg-transparent";
   const hasBackgroundImage = Boolean(section.backgroundImageUrl);
+  const backgroundSize = (section.settings as any)?.backgroundSize || "cover";
   const style = hasBackgroundImage
     ? {
         backgroundImage: `url(${section.backgroundImageUrl})`,
-        backgroundSize: "cover",
+        backgroundSize,
         backgroundPosition: "center",
       }
     : undefined;
