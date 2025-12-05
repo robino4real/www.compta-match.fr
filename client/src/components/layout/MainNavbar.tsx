@@ -40,17 +40,17 @@ export function MainNavbar() {
 
   return (
     <header className="w-full bg-white">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 md:px-0 md:py-6">
+      <div className="mx-auto flex w-full items-center justify-between px-3 py-4 sm:px-4 md:px-6 md:py-6">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3">
-          <span className="text-4xl font-semibold tracking-tight text-slate-900 md:text-6xl">
-            COMPTAMATCH
-          </span>
           <img
             src={navbarLogoUrl}
             alt="Logo ComptaMatch"
             className="h-24 w-auto md:h-28"
           />
+          <span className="text-xl font-semibold tracking-tight text-slate-900 md:text-4xl">
+            COMPTAMATCH
+          </span>
         </Link>
 
         {/* Menu principal */}
