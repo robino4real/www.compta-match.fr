@@ -20,12 +20,12 @@ const PageRenderer: React.FC<PageRendererProps> = ({ page, sections }) => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
             entry.target.classList.add("is-visible");
           }
         });
       },
-      { threshold: 0.15 },
+      { threshold: 0.5 },
     );
 
     animatedSections.forEach((section) => observer.observe(section));
