@@ -40,7 +40,7 @@ export function MainNavbar() {
 
   return (
     <header className="w-full bg-white">
-      <div className="mx-auto flex w-full items-center justify-between px-3 py-4 sm:px-4 md:px-6 md:py-6">
+      <div className="flex w-full items-center justify-between px-2 py-4 sm:px-3 md:px-4 md:py-6">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 md:gap-3">
           <img
@@ -147,7 +147,7 @@ export function MainNavbar() {
 
       {isMenuOpen && (
         <div className="bg-white shadow-sm md:hidden">
-          <nav className="grid gap-1 px-4 py-3 text-sm font-medium text-slate-700">
+          <nav className="grid gap-1 px-3 py-3 text-sm font-medium text-slate-700">
             {menuItems.map((item) => (
               <Link
                 key={item.to}
@@ -159,7 +159,7 @@ export function MainNavbar() {
               </Link>
             ))}
           </nav>
-          <div className="flex items-center justify-between gap-3 px-4 py-3">
+          <div className="flex items-center justify-between gap-3 px-3 py-3">
             <Link
               className="flex flex-1 items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-white"
               to={user ? "/compte" : "/auth/login"}
