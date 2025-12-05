@@ -80,6 +80,7 @@ const BLOCK_DEFAULTS: Record<BlockType, () => any> = {
     title: "Titre",
     body: "<p>Texte de présentation...</p>",
     imageUrl: "",
+    imageSize: "large",
     imagePosition: "right",
     textStyle: "balanced",
     textAlign: "left",
@@ -87,6 +88,7 @@ const BLOCK_DEFAULTS: Record<BlockType, () => any> = {
   IMAGE: () => ({
     imageUrl: "",
     alt: "Description de l'image",
+    imageSize: "large",
   }),
   CTA: () => ({
     title: "Titre d'appel à l'action",
@@ -917,6 +919,19 @@ const AdminPageDetailPage: React.FC = () => {
                 </select>
               </div>
             </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700">Taille de l'image</label>
+              <select
+                value={blockDraft.imageSize || "large"}
+                onChange={(e) => handleBlockDraftChange("imageSize", e.target.value)}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
+              >
+                <option value="small">Petite</option>
+                <option value="medium">Moyenne</option>
+                <option value="large">Grande</option>
+                <option value="full">Très grande</option>
+              </select>
+            </div>
           </div>
         );
       case "IMAGE":
@@ -956,6 +971,19 @@ const AdminPageDetailPage: React.FC = () => {
                 onChange={(e) => handleBlockDraftChange("alt", e.target.value)}
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
               />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700">Taille de l'image</label>
+              <select
+                value={blockDraft.imageSize || "large"}
+                onChange={(e) => handleBlockDraftChange("imageSize", e.target.value)}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
+              >
+                <option value="small">Petite</option>
+                <option value="medium">Moyenne</option>
+                <option value="large">Grande</option>
+                <option value="full">Très grande</option>
+              </select>
             </div>
           </div>
         );

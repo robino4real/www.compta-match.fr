@@ -6,7 +6,15 @@ interface TextImageBlockProps {
 }
 
 const TextImageBlock: React.FC<TextImageBlockProps> = ({ data }) => {
-  const { title, body, imageUrl, imagePosition = "right", textStyle, textAlign } = data || {};
+  const {
+    title,
+    body,
+    imageUrl,
+    imagePosition = "right",
+    imageSize = "large",
+    textStyle,
+    textAlign,
+  } = data || {};
   const imageFirst = imagePosition === "left";
   const template = resolveTextTemplate(textStyle);
   const alignment = resolveTextAlignment(textAlign);
@@ -25,7 +33,14 @@ const TextImageBlock: React.FC<TextImageBlockProps> = ({ data }) => {
       ? "ml-auto text-right"
       : "text-left";
 
-  const imageClasses = "max-h-72 w-full max-w-md object-contain";
+  const sizeClasses: Record<string, string> = {
+    small: "max-h-52 max-w-xs",
+    medium: "max-h-64 max-w-sm",
+    large: "max-h-72 max-w-md",
+    full: "max-h-96 max-w-full",
+  };
+
+  const imageClasses = `${sizeClasses[imageSize] || sizeClasses.large} w-full object-contain`;
 
   return (
     <div className="grid items-center gap-8 md:grid-cols-2">
