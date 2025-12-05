@@ -42,13 +42,13 @@ export function MainNavbar() {
     <header className="w-full bg-white">
       <div className="mx-auto flex w-full items-center justify-between px-3 py-4 sm:px-4 md:px-6 md:py-6">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3">
+        <Link to="/" className="flex items-center gap-2 md:gap-3">
           <img
             src={navbarLogoUrl}
             alt="Logo ComptaMatch"
-            className="h-24 w-auto md:h-28"
+            className="h-12 w-auto md:h-14"
           />
-          <span className="text-xl font-semibold tracking-tight text-slate-900 md:text-4xl">
+          <span className="text-lg font-semibold tracking-tight text-slate-900 md:text-2xl">
             COMPTAMATCH
           </span>
         </Link>
