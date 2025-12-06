@@ -202,28 +202,55 @@ const CompareOffersPage: React.FC = () => {
                 <p className="mt-2 text-sm text-slate-600">{activeComparison.summary}</p>
               </div>
 
-              <div className="mt-6 overflow-hidden rounded-2xl border border-slate-100">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-slate-200 text-sm">
-                    <thead className="bg-slate-50">
-                      <tr className="text-left text-slate-600">
-                        <th className="px-4 py-3 font-semibold text-slate-700">Critère</th>
-                        <th className="px-4 py-3 font-semibold text-slate-700">ComptaPro</th>
-                        <th className="px-4 py-3 font-semibold text-slate-700">{activeComparison.competitor}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {activeComparison.rows.map((row) => (
-                        <tr key={row.label} className="align-top text-slate-800">
-                          <th scope="row" className="bg-slate-50 px-4 py-4 text-left text-sm font-semibold text-slate-900">
-                            {row.label}
-                          </th>
-                          <td className="px-4 py-4 text-slate-700">{row.comptapro}</td>
-                          <td className="px-4 py-4 text-slate-700">{row.competitor}</td>
+              <div className="mt-6 space-y-4 lg:space-y-0">
+                <div className="grid gap-3 lg:hidden">
+                  {activeComparison.rows.map((row) => (
+                    <article
+                      key={row.label}
+                      className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        {row.label}
+                      </p>
+                      <div className="mt-3 space-y-2">
+                        <div className="rounded-xl bg-slate-900/90 p-3 text-left text-white">
+                          <p className="text-[13px] font-semibold">ComptaPro</p>
+                          <p className="mt-1 text-sm leading-relaxed text-slate-100/90">{row.comptapro}</p>
+                        </div>
+                        <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 text-left">
+                          <p className="text-[13px] font-semibold text-slate-900">
+                            {activeComparison.competitor}
+                          </p>
+                          <p className="mt-1 text-sm leading-relaxed text-slate-700">{row.competitor}</p>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+
+                <div className="hidden overflow-hidden rounded-2xl border border-slate-100 lg:block">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-slate-200 text-sm">
+                      <thead className="bg-slate-50">
+                        <tr className="text-left text-slate-600">
+                          <th className="px-4 py-3 font-semibold text-slate-700">Critère</th>
+                          <th className="px-4 py-3 font-semibold text-slate-700">ComptaPro</th>
+                          <th className="px-4 py-3 font-semibold text-slate-700">{activeComparison.competitor}</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {activeComparison.rows.map((row) => (
+                          <tr key={row.label} className="align-top text-slate-800">
+                            <th scope="row" className="bg-slate-50 px-4 py-4 text-left text-sm font-semibold text-slate-900">
+                              {row.label}
+                            </th>
+                            <td className="px-4 py-4 text-slate-700">{row.comptapro}</td>
+                            <td className="px-4 py-4 text-slate-700">{row.competitor}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
