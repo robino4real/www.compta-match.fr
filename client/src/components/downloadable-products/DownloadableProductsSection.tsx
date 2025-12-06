@@ -75,6 +75,7 @@ export const DownloadableProductsSection: React.FC = () => {
   const [categories, setCategories] = useState<DownloadableCategory[]>([]);
   const [selectedProduct, setSelectedProduct] =
     useState<DownloadableProduct | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -135,6 +136,19 @@ export const DownloadableProductsSection: React.FC = () => {
     return () => {
       isMounted = false;
     };
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 768px)");
+
+    const updateIsMobile = () => {
+      setIsMobile(mediaQuery.matches);
+    };
+
+    updateIsMobile();
+    mediaQuery.addEventListener("change", updateIsMobile);
+
+    return () => mediaQuery.removeEventListener("change", updateIsMobile);
   }, []);
 
   const { slides: detailSlides, fromBackOffice: slidesFromBackOffice } = useMemo(
@@ -253,8 +267,10 @@ export const DownloadableProductsSection: React.FC = () => {
       return skeletonItems.map((_, idx) => (
         <div
           key={`skeleton-${idx}`}
-          style={{ width: CARD_WIDTH }}
-          className="flex-shrink-0 rounded-3xl border border-slate-100 bg-white px-7 py-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)]"
+          style={{ width: isMobile ? "100%" : CARD_WIDTH }}
+          className={`rounded-3xl border border-slate-100 bg-white px-7 py-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] ${
+            isMobile ? "" : "flex-shrink-0"
+          }`}
         >
           <div className="h-5 w-2/3 animate-pulse rounded-full bg-slate-200" />
           <div className="mt-3 h-4 w-full animate-pulse rounded-full bg-slate-200" />
@@ -280,12 +296,12 @@ export const DownloadableProductsSection: React.FC = () => {
         key={product.id}
         role="button"
         onClick={() => handleSelect(product)}
-        style={{ width: CARD_WIDTH }}
-        className={`group flex-shrink-0 cursor-pointer rounded-3xl px-7 py-6 text-center transition-all duration-200 ${
+        style={{ width: isMobile ? "100%" : CARD_WIDTH }}
+        className={`group cursor-pointer rounded-3xl px-7 py-6 text-center transition-all duration-200 ${
           selectedProduct?.id === product.id
             ? "bg-slate-50 shadow-[0_20px_50px_rgba(15,23,42,0.12)]"
             : "bg-white hover:-translate-y-1 hover:bg-slate-50 hover:shadow-[0_18px_44px_rgba(15,23,42,0.1)]"
-        }`}
+        } ${isMobile ? "" : "flex-shrink-0"}`}
       >
         <div className="flex flex-col items-center gap-3">
           <div className="flex w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-100 aspect-square">
@@ -529,14 +545,18 @@ export const DownloadableProductsSection: React.FC = () => {
     );
   };
 
-  const showNavigation = !loading && filteredProducts.length > VISIBLE_CARDS;
-  const translateX = showNavigation ? currentIndex * (CARD_WIDTH + CARD_GAP) : 0;
+  const showNavigation =
+    !loading && !isMobile && filteredProducts.length > VISIBLE_CARDS;
+  const translateX =
+    showNavigation && !isMobile ? currentIndex * (CARD_WIDTH + CARD_GAP) : 0;
   const viewportWidth = useMemo(
     () =>
-      VISIBLE_CARDS * CARD_WIDTH +
-      CARD_GAP * (VISIBLE_CARDS - 1) +
-      CARD_EDGE_PADDING * 2,
-    []
+      isMobile
+        ? undefined
+        : VISIBLE_CARDS * CARD_WIDTH +
+          CARD_GAP * (VISIBLE_CARDS - 1) +
+          CARD_EDGE_PADDING * 2,
+    [isMobile]
   );
 
   return (
@@ -614,13 +634,17 @@ export const DownloadableProductsSection: React.FC = () => {
             style={{
               maxWidth: viewportWidth,
               width: "100%",
-              paddingLeft: CARD_EDGE_PADDING,
-              paddingRight: CARD_EDGE_PADDING,
+              paddingLeft: isMobile ? 0 : CARD_EDGE_PADDING,
+              paddingRight: isMobile ? 0 : CARD_EDGE_PADDING,
             }}
           >
             <div
-              className={`flex gap-7 py-2 transition-transform duration-500 ease-out ${
-                showNavigation ? "" : "flex-wrap justify-center"
+              className={`flex py-2 transition-transform duration-500 ease-out ${
+                showNavigation
+                  ? "gap-7"
+                  : isMobile
+                  ? "flex-col gap-4"
+                  : "flex-wrap justify-center gap-7"
               }`}
               style={
                 showNavigation
