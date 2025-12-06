@@ -40,7 +40,7 @@ export function MainNavbar() {
 
   return (
     <header className="w-full bg-white">
-      <div className="flex w-full items-center justify-between px-2 py-4 sm:px-3 md:px-4 md:py-6">
+      <div className="flex w-full items-center justify-between px-4 py-4 sm:px-5 md:px-6 md:py-6">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 md:gap-3">
           <img
