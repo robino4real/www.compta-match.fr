@@ -6,18 +6,7 @@ import {
   PaidServicePlan,
   PaidServiceSection,
 } from "../types/paidServices";
-
-const formatPrice = (value: number, currency: string) => {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })
-    .format(value)
-    .replace("\u00a0", " ")
-    .replace(currency === "EUR" ? "€" : currency, "€");
-};
+import { formatPaidServicePrice } from "../lib/formatPaidServicePrice";
 
 const ComptaProPlanDetailPage: React.FC = () => {
   const navigate = useNavigate();
@@ -113,7 +102,10 @@ const ComptaProPlanDetailPage: React.FC = () => {
             <div className="text-right">
               {selectedPlan && (
                 <p className="text-xl font-semibold text-white">
-                  {formatPrice(Number(selectedPlan.priceAmount), selectedPlan.priceCurrency)}
+                  {formatPaidServicePrice(
+                    Number(selectedPlan.priceAmount),
+                    selectedPlan.priceCurrency,
+                  )}
                   <span className="text-sm text-slate-200"> /{selectedPlan.pricePeriod === "month" ? "mois" : "an"}</span>
                 </p>
               )}

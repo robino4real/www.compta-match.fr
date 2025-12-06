@@ -7,18 +7,7 @@ import {
   PaidServiceSection,
 } from "../types/paidServices";
 import { useAuth } from "../context/AuthContext";
-
-const formatPrice = (value: number, currency: string) => {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })
-    .format(value)
-    .replace("\u00a0", " ")
-    .replace(currency === "EUR" ? "€" : currency, "€");
-};
+import { formatPaidServicePrice } from "../lib/formatPaidServicePrice";
 
 const ComptaProSubscriptionPage: React.FC = () => {
   const { isLoading: isAuthLoading } = useAuth();
@@ -82,7 +71,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
       <header className="flex items-start justify-between gap-4">
         <h2 className="text-lg font-semibold text-slate-900">{plan.name}</h2>
         <p className="text-right text-base font-semibold text-slate-900">
-          {formatPrice(Number(plan.priceAmount), plan.priceCurrency)}
+          {formatPaidServicePrice(Number(plan.priceAmount), plan.priceCurrency)}
           <span className="text-sm text-slate-500"> /{plan.pricePeriod === "month" ? "mois" : "an"}</span>
         </p>
       </header>
