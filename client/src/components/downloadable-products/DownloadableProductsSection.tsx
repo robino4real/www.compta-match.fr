@@ -420,8 +420,8 @@ export const DownloadableProductsSection: React.FC = () => {
           </div>
         </div>
 
-        <div className="overflow-visible rounded-3xl bg-white p-6">
-          <div className="relative overflow-hidden rounded-2xl bg-white shadow-[0_16px_60px_rgba(15,23,42,0.08)]">
+        <div className="overflow-visible rounded-3xl p-6">
+          <div className="relative overflow-hidden rounded-2xl bg-transparent shadow-none">
             <div
               className="flex transition-transform duration-500 ease-out"
               style={{ transform: `translateX(-${imageIndex * 100}%)` }}
@@ -487,20 +487,22 @@ export const DownloadableProductsSection: React.FC = () => {
                     type="button"
                     aria-label={`Afficher l’aperçu ${idx + 1}`}
                     onClick={() => setImageIndex(idx)}
-                    className={`group relative h-16 w-16 overflow-hidden rounded-2xl border transition duration-150 ${
+                    className={`group relative h-16 w-16 rounded-2xl border transition duration-150 ${
                       isActiveSlide
                         ? "border-slate-900 shadow-[0_14px_36px_rgba(15,23,42,0.16)]"
                         : "border-slate-200 hover:border-slate-400"
                     }`}
                   >
                     {slide.imageUrl ? (
-                      <img
-                        src={slide.imageUrl}
-                        alt=""
-                        className={`h-full w-full object-cover transition-opacity duration-300 ${
-                          isActiveSlide ? "opacity-100" : "opacity-80 group-hover:opacity-100"
-                        }`}
-                      />
+                      <div className="h-full w-full overflow-hidden rounded-2xl">
+                        <img
+                          src={slide.imageUrl}
+                          alt=""
+                          className={`h-full w-full object-cover transition-opacity duration-300 ${
+                            isActiveSlide ? "opacity-100" : "opacity-80 group-hover:opacity-100"
+                          }`}
+                        />
+                      </div>
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                         Visuel
