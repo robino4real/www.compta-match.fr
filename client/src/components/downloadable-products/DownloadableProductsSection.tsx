@@ -432,15 +432,17 @@ export const DownloadableProductsSection: React.FC = () => {
                 return (
                   <div key={slide.imageUrl ?? `slide-${idx}`} className="w-full flex-shrink-0">
                     {slide.imageUrl ? (
-                      <img
-                        src={slide.imageUrl}
-                        alt={selectedProduct.name}
-                        className={`block aspect-[4/3] w-full object-cover transition-opacity duration-500 ease-out ${
-                          isActiveSlide && isFading ? "opacity-0" : "opacity-100"
-                        }`}
-                      />
+                      <div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
+                        <img
+                          src={slide.imageUrl}
+                          alt={selectedProduct.name}
+                          className={`h-full w-full object-contain transition-opacity duration-500 ease-out ${
+                            isActiveSlide && isFading ? "opacity-0" : "opacity-100"
+                          }`}
+                        />
+                      </div>
                     ) : (
-                      <div className="flex aspect-[4/3] w-full items-center justify-center text-sm font-semibold text-slate-500">
+                      <div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl bg-white p-4 text-sm font-semibold text-slate-500 shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
                         Visuel à venir
                       </div>
                     )}
