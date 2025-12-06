@@ -21,6 +21,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
       { label: "Commandes", href: "/admin/orders" },
       { label: "Factures", href: "/admin/invoices" },
       { label: "Services payants", href: "/admin/paid-services" },
+      { label: "Services ComptAsso", href: "/admin/paid-services-comptasso" },
     ],
   },
   {

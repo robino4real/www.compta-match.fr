@@ -1,4 +1,4 @@
-import { PaidServicePlan, Prisma } from "@prisma/client";
+import { PaidServicePlan, PaidServiceType, Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma";
 
 function sanitizeString(value: unknown) {
@@ -52,19 +52,21 @@ export function serializePlan(plan: PaidServicePlan) {
     isPublished: plan.isPublished,
     sortOrder: plan.sortOrder,
     stripePriceId: plan.stripePriceId,
+    serviceType: plan.serviceType,
   };
 }
 
-export async function listPublishedPlans() {
+export async function listPublishedPlans(serviceType: PaidServiceType = "COMPTAPRO") {
   const plans = await prisma.paidServicePlan.findMany({
-    where: { isPublished: true },
+    where: { isPublished: true, serviceType },
     orderBy: { sortOrder: "asc" },
   });
   return plans.map(serializePlan);
 }
 
-export async function listAllPlans() {
+export async function listAllPlans(serviceType: PaidServiceType = "COMPTAPRO") {
   const plans = await prisma.paidServicePlan.findMany({
+    where: { serviceType },
     orderBy: { sortOrder: "asc" },
   });
   return plans.map(serializePlan);
@@ -81,6 +83,7 @@ export async function createPlan(data: {
   isPublished?: boolean;
   sortOrder?: number;
   stripePriceId?: string | null;
+  serviceType?: PaidServiceType;
 }) {
   const payload = {
     name: data.name.trim(),
@@ -93,6 +96,7 @@ export async function createPlan(data: {
     isPublished: normalizeBoolean(data.isPublished, false),
     sortOrder: normalizeInt(data.sortOrder, 0),
     stripePriceId: sanitizeString(data.stripePriceId),
+    serviceType: data.serviceType || PaidServiceType.COMPTAPRO,
   };
 
   const created = await prisma.paidServicePlan.create({ data: payload });
@@ -112,6 +116,7 @@ export async function updatePlan(
     isPublished: boolean;
     sortOrder: number;
     stripePriceId: string | null;
+    serviceType: PaidServiceType;
   }>
 ) {
   const existing = await prisma.paidServicePlan.findUnique({ where: { id } });
@@ -146,6 +151,7 @@ export async function updatePlan(
       typeof data.stripePriceId === "undefined"
         ? existing.stripePriceId
         : sanitizeString(data.stripePriceId),
+    serviceType: data.serviceType || existing.serviceType,
   };
 
   const updated = await prisma.paidServicePlan.update({
@@ -159,8 +165,9 @@ export async function deletePlan(id: string) {
   await prisma.paidServicePlan.delete({ where: { id } });
 }
 
-export async function listFeatureRows() {
+export async function listFeatureRows(serviceType: PaidServiceType = "COMPTAPRO") {
   return prisma.paidServiceFeatureRow.findMany({
+    where: { serviceType },
     orderBy: { sortOrder: "asc" },
   });
 }
@@ -173,6 +180,7 @@ export async function createFeatureRow(data: {
   planAIncluded?: boolean;
   planBIncluded?: boolean;
   sortOrder?: number;
+  serviceType?: PaidServiceType;
 }) {
   return prisma.paidServiceFeatureRow.create({
     data: {
@@ -183,6 +191,7 @@ export async function createFeatureRow(data: {
       planAIncluded: normalizeBoolean(data.planAIncluded, false),
       planBIncluded: normalizeBoolean(data.planBIncluded, false),
       sortOrder: normalizeInt(data.sortOrder, 0),
+      serviceType: data.serviceType || PaidServiceType.COMPTAPRO,
     },
   });
 }
@@ -197,6 +206,7 @@ export async function updateFeatureRow(
     planAIncluded: boolean;
     planBIncluded: boolean;
     sortOrder: number;
+    serviceType: PaidServiceType;
   }>
 ) {
   const existing = await prisma.paidServiceFeatureRow.findUnique({ where: { id } });
@@ -224,6 +234,7 @@ export async function updateFeatureRow(
         typeof data.sortOrder === "undefined"
           ? existing.sortOrder
           : normalizeInt(data.sortOrder, existing.sortOrder),
+      serviceType: data.serviceType || existing.serviceType,
     },
   });
 }
@@ -232,15 +243,16 @@ export async function deleteFeatureRow(id: string) {
   await prisma.paidServiceFeatureRow.delete({ where: { id } });
 }
 
-export async function listPublishedSections() {
+export async function listPublishedSections(serviceType: PaidServiceType = "COMPTAPRO") {
   return prisma.paidServiceSection.findMany({
-    where: { isPublished: true },
+    where: { isPublished: true, serviceType },
     orderBy: { sortOrder: "asc" },
   });
 }
 
-export async function listAllSections() {
+export async function listAllSections(serviceType: PaidServiceType = "COMPTAPRO") {
   return prisma.paidServiceSection.findMany({
+    where: { serviceType },
     orderBy: { sortOrder: "asc" },
   });
 }
@@ -251,6 +263,7 @@ export async function createSection(data: {
   imageUrl?: string | null;
   sortOrder?: number;
   isPublished?: boolean;
+  serviceType?: PaidServiceType;
 }) {
   return prisma.paidServiceSection.create({
     data: {
@@ -259,13 +272,14 @@ export async function createSection(data: {
       imageUrl: sanitizeString(data.imageUrl),
       sortOrder: normalizeInt(data.sortOrder, 0),
       isPublished: normalizeBoolean(data.isPublished, true),
+      serviceType: data.serviceType || PaidServiceType.COMPTAPRO,
     },
   });
 }
 
 export async function updateSection(
   id: string,
-  data: Partial<{ title: string; body: string; imageUrl: string | null; sortOrder: number; isPublished: boolean }>
+  data: Partial<{ title: string; body: string; imageUrl: string | null; sortOrder: number; isPublished: boolean; serviceType: PaidServiceType }>
 ) {
   const existing = await prisma.paidServiceSection.findUnique({ where: { id } });
   if (!existing) return null;
@@ -287,6 +301,7 @@ export async function updateSection(
         typeof data.isPublished === "undefined"
           ? existing.isPublished
           : normalizeBoolean(data.isPublished, existing.isPublished),
+      serviceType: data.serviceType || existing.serviceType,
     },
   });
 }

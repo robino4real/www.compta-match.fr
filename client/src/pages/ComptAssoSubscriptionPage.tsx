@@ -1,17 +1,9 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
-import {
-  PaidServiceComparison,
-  PaidServicePlan,
-  PaidServiceSection,
-} from "../types/paidServices";
-import { useAuth } from "../context/AuthContext";
+import { PaidServiceComparison, PaidServicePlan, PaidServiceSection } from "../types/paidServices";
 import { formatPaidServicePrice } from "../lib/formatPaidServicePrice";
 
-const ComptaProSubscriptionPage: React.FC = () => {
-  const { isLoading: isAuthLoading } = useAuth();
-  const navigate = useNavigate();
+const ComptAssoSubscriptionPage: React.FC = () => {
   const [plans, setPlans] = React.useState<PaidServicePlan[]>([]);
   const [comparison, setComparison] = React.useState<PaidServiceComparison | null>(null);
   const [sections, setSections] = React.useState<PaidServiceSection[]>([]);
@@ -26,9 +18,9 @@ const ComptaProSubscriptionPage: React.FC = () => {
       setError(null);
       try {
         const [plansRes, comparisonRes, sectionsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/paid-services/public/plans?serviceType=COMPTAPRO`),
-          fetch(`${API_BASE_URL}/paid-services/public/comparison?serviceType=COMPTAPRO`),
-          fetch(`${API_BASE_URL}/paid-services/public/sections?serviceType=COMPTAPRO`),
+          fetch(`${API_BASE_URL}/paid-services/public/plans?serviceType=COMPTASSO`),
+          fetch(`${API_BASE_URL}/paid-services/public/comparison?serviceType=COMPTASSO`),
+          fetch(`${API_BASE_URL}/paid-services/public/sections?serviceType=COMPTASSO`),
         ]);
 
         if (!plansRes.ok) throw new Error("plans_error");
@@ -43,7 +35,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
         setComparison(comparisonData);
         setSections(sectionsData);
       } catch (err) {
-        console.error("Erreur lors du chargement de la page ComptaPro", err);
+        console.error("Erreur lors du chargement de la page ComptAsso", err);
         setError("Une erreur est survenue, veuillez réessayer plus tard.");
       } finally {
         setIsLoading(false);
@@ -52,16 +44,6 @@ const ComptaProSubscriptionPage: React.FC = () => {
 
     fetchData();
   }, []);
-
-  const handlePlanDetailClick = (slug: string) => {
-    navigate(`/comptapro/${encodeURIComponent(slug)}`);
-  };
-
-  const handleProAccessClick = () => {
-    if (isAuthLoading) return;
-
-    navigate("/mon-espace-pro");
-  };
 
   const renderPlanCard = (plan: PaidServicePlan) => (
     <article
@@ -77,10 +59,11 @@ const ComptaProSubscriptionPage: React.FC = () => {
       </header>
       {plan.subtitle && <p className="mt-2 text-sm text-slate-600">{plan.subtitle}</p>}
       <button
-        className="mt-6 inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-medium text-white hover:bg-slate-900"
-        onClick={() => handlePlanDetailClick(plan.slug)}
+        className="mt-6 inline-flex items-center justify-center rounded-full bg-slate-200 px-6 py-3 text-sm font-medium text-slate-600 cursor-not-allowed"
+        disabled
+        type="button"
       >
-        En savoir plus
+        Bientôt disponible
       </button>
     </article>
   );
@@ -107,28 +90,26 @@ const ComptaProSubscriptionPage: React.FC = () => {
       <div className="max-w-5xl mx-auto px-4 lg:px-8 space-y-10">
         <section className="text-center space-y-4">
           <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-slate-900">
-            Abonnement à la web app <span className="block">COMPTAMATCH</span>
+            Abonnement à la web app <span className="block">ComptAsso</span>
           </h1>
           <p className="max-w-2xl mx-auto text-sm md:text-base text-slate-600">
-            Profitez de toute la puissance de COMPTAMATCH directement en ligne : choisissez l’abonnement qui vous convient et
-            pilotez votre comptabilité en toute sérénité.
+            Découvrez les services SaaS ComptAsso pour gérer vos associations avec la même simplicité que ComptaPro.
           </p>
         </section>
 
         <section className="rounded-3xl border border-slate-200 bg-slate-900 px-6 py-6 shadow-lg md:flex md:items-center md:justify-between md:px-10 md:py-8">
           <div className="space-y-2 text-white md:max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-200">Accéder à mon espace Pro</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-200">Accès ComptAsso</p>
             <p className="text-sm md:text-base text-slate-100">
-              Déjà abonné ? Retrouvez votre espace dédié dans un nouvel onglet pour gérer vos outils en ligne.
+              Les espaces ComptAsso seront bientôt accessibles pour gérer vos outils en ligne dédiés aux associations.
             </p>
           </div>
           <button
             type="button"
-            onClick={handleProAccessClick}
-            disabled={isAuthLoading}
-            className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-3 text-center text-sm font-semibold text-slate-900 shadow-md transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-70 md:mt-0 md:w-auto"
+            disabled
+            className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-white/60 px-6 py-3 text-center text-sm font-semibold text-slate-900 shadow-md transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-70 md:mt-0 md:w-auto"
           >
-            Accéder à mon espace Pro
+            Bientôt disponible
           </button>
         </section>
 
@@ -141,14 +122,12 @@ const ComptaProSubscriptionPage: React.FC = () => {
 
           {!error && !isLoading && !hasPlans && (
             <div className="rounded-2xl border border-slate-200 bg-white px-4 py-6 text-center text-sm text-slate-700">
-              Les abonnements à la web app COMPTAMATCH seront disponibles prochainement.
+              Les abonnements ComptAsso seront disponibles prochainement.
             </div>
           )}
 
           <div className="grid gap-6 md:grid-cols-2">
-            {isLoading
-              ? planSkeletons.map((_, index) => renderPlanSkeleton(index))
-              : plans.map(renderPlanCard)}
+            {isLoading ? planSkeletons.map((_, index) => renderPlanSkeleton(index)) : plans.map(renderPlanCard)}
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-slate-100">
@@ -220,4 +199,4 @@ const ComptaProSubscriptionPage: React.FC = () => {
   );
 };
 
-export default ComptaProSubscriptionPage;
+export default ComptAssoSubscriptionPage;

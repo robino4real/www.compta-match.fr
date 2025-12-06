@@ -535,6 +535,7 @@ model PaidServicePlan {
   isPublished   Boolean  @default(false)
   sortOrder     Int      @default(0)
   stripePriceId String?
+  serviceType   PaidServiceType @default(COMPTAPRO)
 
   planARows PaidServiceFeatureRow[] @relation("PlanA")
   planBRows PaidServiceFeatureRow[] @relation("PlanB")
@@ -591,6 +592,7 @@ model PaidServiceFeatureRow {
   label       String
   description String?
   sortOrder   Int     @default(0)
+  serviceType PaidServiceType @default(COMPTAPRO)
 
   planAId       String?
   planBId       String?
@@ -608,4 +610,10 @@ model PaidServiceSection {
   imageUrl    String?
   sortOrder   Int     @default(0)
   isPublished Boolean @default(true)
+  serviceType PaidServiceType @default(COMPTAPRO)
+}
+
+enum PaidServiceType {
+  COMPTAPRO
+  COMPTASSO
 }

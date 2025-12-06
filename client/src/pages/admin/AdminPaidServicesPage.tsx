@@ -1,6 +1,6 @@
 import React from "react";
 import { API_BASE_URL } from "../../config/api";
-import { PaidServicePlan, PaidServiceSection } from "../../types/paidServices";
+import { PaidServicePlan, PaidServiceSection, PaidServiceType } from "../../types/paidServices";
 
 interface FeatureRow {
   id: string;
@@ -11,9 +11,10 @@ interface FeatureRow {
   sortOrder: number;
   planAId?: string | null;
   planBId?: string | null;
+  serviceType?: PaidServiceType;
 }
 
-const emptyPlan: Partial<PaidServicePlan> = {
+const buildEmptyPlan = (serviceType: PaidServiceType): Partial<PaidServicePlan> => ({
   name: "",
   slug: "",
   subtitle: "",
@@ -23,18 +24,29 @@ const emptyPlan: Partial<PaidServicePlan> = {
   isPublished: false,
   isHighlighted: false,
   sortOrder: 0,
-};
+  serviceType,
+});
 
-const AdminPaidServicesPage: React.FC = () => {
+type AdminPaidServicesPageProps = {
+  serviceType?: PaidServiceType;
+};
+const AdminPaidServicesPage: React.FC<AdminPaidServicesPageProps> = ({ serviceType = "COMPTAPRO" }) => {
   const [plans, setPlans] = React.useState<PaidServicePlan[]>([]);
   const [features, setFeatures] = React.useState<FeatureRow[]>([]);
   const [sections, setSections] = React.useState<PaidServiceSection[]>([]);
-  const [newPlan, setNewPlan] = React.useState<Partial<PaidServicePlan>>(emptyPlan);
-  const [newFeature, setNewFeature] = React.useState<Partial<FeatureRow>>({ planAIncluded: false, planBIncluded: false, sortOrder: 0 });
-  const [newSection, setNewSection] = React.useState<Partial<PaidServiceSection>>({ title: "", body: "", imageUrl: "", sortOrder: 0, isPublished: true });
+  const [newPlan, setNewPlan] = React.useState<Partial<PaidServicePlan>>(buildEmptyPlan(serviceType));
+  const [newFeature, setNewFeature] = React.useState<Partial<FeatureRow>>({ planAIncluded: false, planBIncluded: false, sortOrder: 0, serviceType });
+  const [newSection, setNewSection] = React.useState<Partial<PaidServiceSection>>({ title: "", body: "", imageUrl: "", sortOrder: 0, isPublished: true, serviceType });
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
+  const serviceLabel = serviceType === "COMPTASSO" ? "ComptAsso" : "ComptaPro";
+
+  React.useEffect(() => {
+    setNewPlan(buildEmptyPlan(serviceType));
+    setNewFeature({ planAIncluded: false, planBIncluded: false, sortOrder: 0, serviceType });
+    setNewSection({ title: "", body: "", imageUrl: "", sortOrder: 0, isPublished: true, serviceType });
+  }, [serviceType]);
 
   const fetchAll = React.useCallback(async () => {
     setIsLoading(true);
@@ -42,9 +54,9 @@ const AdminPaidServicesPage: React.FC = () => {
     setSuccess(null);
     try {
       const [plansRes, featuresRes, sectionsRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/paid-services/admin/plans`, { credentials: "include" }),
-        fetch(`${API_BASE_URL}/paid-services/admin/features`, { credentials: "include" }),
-        fetch(`${API_BASE_URL}/paid-services/admin/sections`, { credentials: "include" }),
+        fetch(`${API_BASE_URL}/paid-services/admin/plans?serviceType=${serviceType}`, { credentials: "include" }),
+        fetch(`${API_BASE_URL}/paid-services/admin/features?serviceType=${serviceType}`, { credentials: "include" }),
+        fetch(`${API_BASE_URL}/paid-services/admin/sections?serviceType=${serviceType}`, { credentials: "include" }),
       ]);
 
       if (!plansRes.ok || !featuresRes.ok || !sectionsRes.ok) {
@@ -64,7 +76,7 @@ const AdminPaidServicesPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [serviceType]);
 
   React.useEffect(() => {
     fetchAll();
@@ -101,18 +113,20 @@ const AdminPaidServicesPage: React.FC = () => {
       return;
     }
 
+    const payload = { ...newPlan, serviceType };
+
     const response = await fetch(`${API_BASE_URL}/paid-services/admin/plans`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newPlan),
+      body: JSON.stringify(payload),
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       setError((data as { message?: string }).message || "Impossible de créer le plan.");
       return;
     }
-    setNewPlan(emptyPlan);
+    setNewPlan(buildEmptyPlan(serviceType));
     setSuccess("Plan créé.");
     fetchAll();
   };
@@ -174,7 +188,7 @@ const AdminPaidServicesPage: React.FC = () => {
       return;
     }
     setSuccess("Fonctionnalité ajoutée.");
-    setNewFeature({ planAIncluded: false, planBIncluded: false, sortOrder: 0 });
+    setNewFeature({ planAIncluded: false, planBIncluded: false, sortOrder: 0, serviceType });
     fetchAll();
   };
 
@@ -235,7 +249,7 @@ const AdminPaidServicesPage: React.FC = () => {
       return;
     }
     setSuccess("Section ajoutée.");
-    setNewSection({ title: "", body: "", imageUrl: "", sortOrder: 0, isPublished: true });
+    setNewSection({ title: "", body: "", imageUrl: "", sortOrder: 0, isPublished: true, serviceType });
     fetchAll();
   };
 
@@ -258,8 +272,8 @@ const AdminPaidServicesPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Services payants</h1>
-          <p className="text-sm text-slate-600">Gérez les plans ComptaPro, le tableau comparatif et les sections descriptives.</p>
+          <h1 className="text-xl font-semibold text-slate-900">Services payants {serviceLabel}</h1>
+          <p className="text-sm text-slate-600">Gérez les plans {serviceLabel}, le tableau comparatif et les sections descriptives.</p>
         </div>
         <button
           type="button"

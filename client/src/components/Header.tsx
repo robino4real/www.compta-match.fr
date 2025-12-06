@@ -97,11 +97,14 @@ const Header: React.FC = () => {
             <NavLink to="/" end className={navLinkClass}>
               Accueil
             </NavLink>
-            <NavLink to="/comparatif-des-offres" className={navLinkClass}>
-              Comparer les offres
-            </NavLink>
-            <NavLink to="/telechargements" className={navLinkClass}>
+            <NavLink to="/logiciels" className={navLinkClass}>
               Nos logiciels
+            </NavLink>
+            <NavLink to="/comptapro" className={navLinkClass}>
+              ComptaPro
+            </NavLink>
+            <NavLink to="/comptasso" className={navLinkClass}>
+              ComptAsso
             </NavLink>
           </nav>
 

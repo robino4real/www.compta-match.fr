@@ -11,6 +11,9 @@ const Footer: React.FC = () => {
           © {currentYear} COMPTAMATCH. Tous droits réservés.
         </p>
         <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600">
+          <Link to="/comparatif-des-offres" className="hover:text-black underline-offset-2 hover:underline">
+            Comparer les offres
+          </Link>
           <Link to="/faq" className="hover:text-black underline-offset-2 hover:underline">
             FAQ
           </Link>
