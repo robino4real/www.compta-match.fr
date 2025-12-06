@@ -1,3 +1,5 @@
+export type PaidServiceType = "COMPTAPRO" | "COMPTASSO";
+
 export type PaidServicePlan = {
   id: string;
   slug: string;
@@ -8,6 +10,7 @@ export type PaidServicePlan = {
   pricePeriod: string;
   isHighlighted: boolean;
   sortOrder?: number;
+  serviceType?: PaidServiceType;
 };
 
 export type PaidServiceComparison = {
@@ -28,4 +31,5 @@ export type PaidServiceSection = {
   imageUrl?: string | null;
   sortOrder?: number;
   isPublished?: boolean;
+  serviceType?: PaidServiceType;
 };

@@ -27,9 +27,9 @@ const ComptaProPlanDetailPage: React.FC = () => {
 
       try {
         const [plansRes, comparisonRes, sectionsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/paid-services/public/plans`),
-          fetch(`${API_BASE_URL}/paid-services/public/comparison`),
-          fetch(`${API_BASE_URL}/paid-services/public/sections`),
+          fetch(`${API_BASE_URL}/paid-services/public/plans?serviceType=COMPTAPRO`),
+          fetch(`${API_BASE_URL}/paid-services/public/comparison?serviceType=COMPTAPRO`),
+          fetch(`${API_BASE_URL}/paid-services/public/sections?serviceType=COMPTAPRO`),
         ]);
 
         if (!plansRes.ok) throw new Error("plans_error");

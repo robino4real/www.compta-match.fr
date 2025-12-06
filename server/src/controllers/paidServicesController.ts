@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { PaidServiceType, Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import {
   createFeatureRow,
@@ -43,9 +43,19 @@ function parsePrice(value: unknown) {
   return null;
 }
 
+function parseServiceType(value: unknown): PaidServiceType {
+  if (typeof value === "string") {
+    const upper = value.toUpperCase();
+    if (upper === "COMPTASSO") return "COMPTASSO";
+  }
+  if (value === "COMPTASSO") return "COMPTASSO";
+  return "COMPTAPRO";
+}
+
 export async function publicListPaidServicePlans(req: Request, res: Response) {
   try {
-    const plans = await listPublishedPlans();
+    const serviceType = parseServiceType(req.query.serviceType);
+    const plans = await listPublishedPlans(serviceType);
     return res.json(plans);
   } catch (error) {
     console.error("Erreur lors du chargement des plans publics", error);
@@ -55,7 +65,8 @@ export async function publicListPaidServicePlans(req: Request, res: Response) {
 
 export async function publicGetPaidServiceComparison(req: Request, res: Response) {
   try {
-    const [plans, rows] = await Promise.all([listPublishedPlans(), listFeatureRows()]);
+    const serviceType = parseServiceType(req.query.serviceType);
+    const [plans, rows] = await Promise.all([listPublishedPlans(serviceType), listFeatureRows(serviceType)]);
     const columns = plans.slice(0, 2).map((plan) => ({ id: plan.id, name: plan.name, slug: plan.slug }));
 
     return res.json({
@@ -76,7 +87,8 @@ export async function publicGetPaidServiceComparison(req: Request, res: Response
 
 export async function publicListPaidServiceSections(req: Request, res: Response) {
   try {
-    const sections = await listPublishedSections();
+    const serviceType = parseServiceType(req.query.serviceType);
+    const sections = await listPublishedSections(serviceType);
     return res.json(
       sections.map((section) => ({
         id: section.id,
@@ -93,7 +105,8 @@ export async function publicListPaidServiceSections(req: Request, res: Response)
 
 export async function adminListPaidServicePlans(req: Request, res: Response) {
   try {
-    const plans = await listAllPlans();
+    const serviceType = parseServiceType(req.query.serviceType);
+    const plans = await listAllPlans(serviceType);
     return res.json({ plans });
   } catch (error) {
     console.error("Erreur lors de la récupération des plans", error);
@@ -131,6 +144,7 @@ export async function adminCreatePaidServicePlan(req: Request, res: Response) {
       isPublished: parseBoolean(req.body.isPublished, false),
       sortOrder: parseNumber(req.body.sortOrder, 0),
       stripePriceId: req.body.stripePriceId,
+      serviceType: parseServiceType(req.body.serviceType),
     });
 
     return res.status(201).json({ plan, message: "Plan créé." });
@@ -167,6 +181,7 @@ export async function adminUpdatePaidServicePlan(req: Request, res: Response) {
         typeof req.body.isPublished === "undefined" ? undefined : parseBoolean(req.body.isPublished, false),
       sortOrder: typeof req.body.sortOrder === "undefined" ? undefined : parseNumber(req.body.sortOrder, 0),
       stripePriceId: req.body.stripePriceId,
+      serviceType: typeof req.body.serviceType === "undefined" ? undefined : parseServiceType(req.body.serviceType),
     });
 
     if (!plan) {
@@ -200,7 +215,8 @@ export async function adminDeletePaidServicePlan(req: Request, res: Response) {
 
 export async function adminListPaidServiceFeatures(req: Request, res: Response) {
   try {
-    const [plans, rows] = await Promise.all([listAllPlans(), listFeatureRows()]);
+    const serviceType = parseServiceType(req.query.serviceType);
+    const [plans, rows] = await Promise.all([listAllPlans(serviceType), listFeatureRows(serviceType)]);
     return res.json({ plans, rows });
   } catch (error) {
     console.error("Erreur lors du chargement des fonctionnalités", error);
@@ -222,6 +238,7 @@ export async function adminCreatePaidServiceFeature(req: Request, res: Response)
       planAIncluded: parseBoolean(req.body.planAIncluded, false),
       planBIncluded: parseBoolean(req.body.planBIncluded, false),
       sortOrder: parseNumber(req.body.sortOrder, 0),
+      serviceType: parseServiceType(req.body.serviceType),
     });
 
     return res.status(201).json({ feature, message: "Fonctionnalité créée." });
@@ -245,6 +262,7 @@ export async function adminUpdatePaidServiceFeature(req: Request, res: Response)
       planBIncluded:
         typeof req.body.planBIncluded === "undefined" ? undefined : parseBoolean(req.body.planBIncluded, false),
       sortOrder: typeof req.body.sortOrder === "undefined" ? undefined : parseNumber(req.body.sortOrder, 0),
+      serviceType: typeof req.body.serviceType === "undefined" ? undefined : parseServiceType(req.body.serviceType),
     });
 
     if (!feature) {
@@ -275,7 +293,8 @@ export async function adminDeletePaidServiceFeature(req: Request, res: Response)
 
 export async function adminListPaidServiceSections(req: Request, res: Response) {
   try {
-    const sections = await listAllSections();
+    const serviceType = parseServiceType(req.query.serviceType);
+    const sections = await listAllSections(serviceType);
     return res.json({ sections });
   } catch (error) {
     console.error("Erreur lors du chargement des sections", error);
@@ -298,6 +317,7 @@ export async function adminCreatePaidServiceSection(req: Request, res: Response)
       imageUrl: req.body.imageUrl,
       sortOrder: parseNumber(req.body.sortOrder, 0),
       isPublished: parseBoolean(req.body.isPublished, true),
+      serviceType: parseServiceType(req.body.serviceType),
     });
 
     return res.status(201).json({ section, message: "Section créée." });
@@ -318,6 +338,7 @@ export async function adminUpdatePaidServiceSection(req: Request, res: Response)
       sortOrder: typeof req.body.sortOrder === "undefined" ? undefined : parseNumber(req.body.sortOrder, 0),
       isPublished:
         typeof req.body.isPublished === "undefined" ? undefined : parseBoolean(req.body.isPublished, true),
+      serviceType: typeof req.body.serviceType === "undefined" ? undefined : parseServiceType(req.body.serviceType),
     });
 
     if (!section) {
