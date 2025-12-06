@@ -11,6 +11,7 @@ const skeletonItems = Array.from({ length: 3 });
 const CARD_WIDTH = 320;
 const CARD_GAP = 28;
 const VISIBLE_CARDS = 3;
+const CARD_EDGE_PADDING = 16;
 
 type DetailSlide = { imageUrl?: string | null; description?: string | null };
 
@@ -529,7 +530,10 @@ export const DownloadableProductsSection: React.FC = () => {
   const showNavigation = !loading && filteredProducts.length > VISIBLE_CARDS;
   const translateX = showNavigation ? currentIndex * (CARD_WIDTH + CARD_GAP) : 0;
   const viewportWidth = useMemo(
-    () => VISIBLE_CARDS * CARD_WIDTH + CARD_GAP * (VISIBLE_CARDS - 1),
+    () =>
+      VISIBLE_CARDS * CARD_WIDTH +
+      CARD_GAP * (VISIBLE_CARDS - 1) +
+      CARD_EDGE_PADDING * 2,
     []
   );
 
@@ -605,7 +609,12 @@ export const DownloadableProductsSection: React.FC = () => {
 
           <div
             className="mx-auto overflow-x-hidden overflow-y-visible pb-10"
-            style={{ maxWidth: viewportWidth, width: "100%" }}
+            style={{
+              maxWidth: viewportWidth,
+              width: "100%",
+              paddingLeft: CARD_EDGE_PADDING,
+              paddingRight: CARD_EDGE_PADDING,
+            }}
           >
             <div
               className={`flex gap-7 py-2 transition-transform duration-500 ease-out ${
