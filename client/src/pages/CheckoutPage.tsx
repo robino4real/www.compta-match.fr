@@ -40,6 +40,15 @@ const CheckoutPage: React.FC = () => {
     refresh,
   } = useCartProducts(items);
 
+  const cartSignature = React.useMemo(
+    () =>
+      enrichedItems
+        .map((item) => `${item.id}:${item.quantity}`)
+        .sort()
+        .join("|"),
+    [enrichedItems]
+  );
+
   const [billing, setBilling] = React.useState<BillingFormState>({
     firstName: "",
     lastName: "",
@@ -84,15 +93,6 @@ const CheckoutPage: React.FC = () => {
     setPromoCode("");
     setPromoFeedback(null);
   }, [cartSignature]);
-
-  const cartSignature = React.useMemo(
-    () =>
-      enrichedItems
-        .map((item) => `${item.id}:${item.quantity}`)
-        .sort()
-        .join("|"),
-    [enrichedItems]
-  );
 
   const discountCents = appliedPromo?.discountCents || 0;
   const payableCents = appliedPromo?.newTotalCents || baseTotalCents;
