@@ -422,40 +422,42 @@ export const DownloadableProductsSection: React.FC = () => {
         </div>
 
         <div className="overflow-visible rounded-3xl p-6">
-          <div className="relative overflow-hidden rounded-2xl bg-transparent shadow-none">
-            <div
-              className="flex transition-transform duration-500 ease-out"
-              style={{ transform: `translateX(-${imageIndex * 100}%)` }}
-            >
-              {detailSlides.map((slide, idx) => {
-                const isActiveSlide = idx === imageIndex;
+          <div className="relative overflow-visible rounded-2xl bg-transparent shadow-none">
+            <div className="overflow-hidden rounded-2xl bg-transparent shadow-none">
+              <div
+                className="flex transition-transform duration-500 ease-out"
+                style={{ transform: `translateX(-${imageIndex * 100}%)` }}
+              >
+                {detailSlides.map((slide, idx) => {
+                  const isActiveSlide = idx === imageIndex;
 
-                return (
-                  <div key={slide.imageUrl ?? `slide-${idx}`} className="w-full flex-shrink-0">
-                    {slide.imageUrl ? (
-                      <div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
-                        <img
-                          src={slide.imageUrl}
-                          alt={selectedProduct.name}
-                          className={`h-full w-full object-contain transition-opacity duration-500 ease-out ${
-                            isActiveSlide && isFading ? "opacity-0" : "opacity-100"
-                          }`}
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl bg-white p-4 text-sm font-semibold text-slate-500 shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
-                        Visuel à venir
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                  return (
+                    <div key={slide.imageUrl ?? `slide-${idx}`} className="w-full flex-shrink-0">
+                      {slide.imageUrl ? (
+                        <div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
+                          <img
+                            src={slide.imageUrl}
+                            alt={selectedProduct.name}
+                            className={`h-full w-full object-contain transition-opacity duration-500 ease-out ${
+                              isActiveSlide && isFading ? "opacity-0" : "opacity-100"
+                            }`}
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl bg-white p-4 text-sm font-semibold text-slate-500 shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
+                          Visuel à venir
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {hasMultipleDetailSlides && (
               <>
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white via-transparent to-white opacity-70" aria-hidden />
-                <div className="absolute inset-y-0 left-0 flex items-center px-3">
+                <div className="absolute inset-y-0 left-0 flex -translate-x-full items-center pl-3 pr-1 sm:-translate-x-[60%]">
                   <button
                     type="button"
                     onClick={handleSlidePrev}
@@ -465,7 +467,7 @@ export const DownloadableProductsSection: React.FC = () => {
                     ←
                   </button>
                 </div>
-                <div className="absolute inset-y-0 right-0 flex items-center px-3">
+                <div className="absolute inset-y-0 right-0 flex translate-x-full items-center pl-1 pr-3 sm:translate-x-[60%]">
                   <button
                     type="button"
                     onClick={handleSlideNext}
@@ -479,8 +481,8 @@ export const DownloadableProductsSection: React.FC = () => {
             )}
           </div>
 
-            {hasBackOfficeSlideSet && (
-              <div className="mt-5 flex items-center justify-center gap-3">
+          {hasBackOfficeSlideSet && (
+            <div className="mt-5 flex items-center justify-center gap-3">
               {detailSlides.map((slide, idx) => {
                 const isActiveSlide = idx === imageIndex;
 
