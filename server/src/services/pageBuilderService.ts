@@ -3,6 +3,16 @@ import { prisma } from "../config/prisma";
 
 const ALLOWED_STATUSES = ["ACTIVE", "DRAFT", "ARCHIVED"] as const;
 type CustomPageStatus = (typeof ALLOWED_STATUSES)[number];
+const WHY_CHOOSE_SECTION_TYPE = "WHY_CHOOSE_COMPTAMATCH";
+
+const PAGE_SECTION_RELATIONS = {
+  blocks: {
+    orderBy: { order: "asc" as const },
+  },
+  whyChooseItems: {
+    orderBy: { order: "asc" as const },
+  },
+};
 
 function normalizeKey(value?: string | null) {
   if (!value) return "";
@@ -62,11 +72,7 @@ export async function getCustomPageWithStructureById(id: string) {
     include: {
       sections: {
         orderBy: { order: "asc" },
-        include: {
-          blocks: {
-            orderBy: { order: "asc" },
-          },
-        },
+        include: PAGE_SECTION_RELATIONS,
       },
     },
   });
@@ -80,11 +86,7 @@ export async function getCustomPageWithStructureByKeyOrRoute(value: string) {
     include: {
       sections: {
         orderBy: { order: "asc" },
-        include: {
-          blocks: {
-            orderBy: { order: "asc" },
-          },
-        },
+        include: PAGE_SECTION_RELATIONS,
       },
     },
   });
@@ -101,11 +103,7 @@ export async function getPublishedCustomPageByRoute(route: string) {
     include: {
       sections: {
         orderBy: { order: "asc" },
-        include: {
-          blocks: {
-            orderBy: { order: "asc" },
-          },
-        },
+        include: PAGE_SECTION_RELATIONS,
       },
     },
   });
@@ -395,6 +393,124 @@ export async function reorderPageBlocks(sectionId: string, blockIds: string[]) {
 
   const updates = blockIds.map((id, index) =>
     prisma.pageBlock.update({ where: { id }, data: { order: index + 1 } })
+  );
+
+  await prisma.$transaction(updates);
+}
+
+async function assertWhyChooseSection(sectionId: string) {
+  const section = await prisma.pageSection.findUnique({
+    where: { id: sectionId },
+    select: { id: true, type: true },
+  });
+
+  if (!section) {
+    throw new Error("Section introuvable.");
+  }
+
+  if (section.type !== WHY_CHOOSE_SECTION_TYPE) {
+    throw new Error("La section ne correspond pas au template Pourquoi choisir.");
+  }
+
+  return section;
+}
+
+export async function createWhyChooseItem(
+  sectionId: string,
+  data: {
+    iconType?: string | null;
+    title?: string | null;
+    description?: string | null;
+    order?: number;
+  }
+) {
+  await assertWhyChooseSection(sectionId);
+
+  const maxOrder = await prisma.whyChooseItem.aggregate({
+    where: { sectionId },
+    _max: { order: true },
+  });
+
+  const nextOrder = (maxOrder._max.order ?? 0) + 1;
+
+  return prisma.whyChooseItem.create({
+    data: {
+      sectionId,
+      order: data.order ?? nextOrder,
+      iconType: data.iconType?.trim() || "",
+      title: data.title?.trim() || "",
+      description: data.description?.trim() || "",
+    },
+  });
+}
+
+export async function updateWhyChooseItem(
+  itemId: string,
+  data: { iconType?: string | null; title?: string | null; description?: string | null }
+) {
+  const existing = await prisma.whyChooseItem.findUnique({
+    where: { id: itemId },
+    include: { section: { select: { id: true, type: true } } },
+  });
+
+  if (!existing) return null;
+
+  if (existing.section.type !== WHY_CHOOSE_SECTION_TYPE) {
+    throw new Error("Cet élément n'appartient pas à une section Pourquoi choisir.");
+  }
+
+  return prisma.whyChooseItem.update({
+    where: { id: itemId },
+    data: {
+      iconType:
+        typeof data.iconType === "undefined"
+          ? existing.iconType
+          : data.iconType?.trim() || "",
+      title:
+        typeof data.title === "undefined" ? existing.title : data.title?.trim() || "",
+      description:
+        typeof data.description === "undefined"
+          ? existing.description
+          : data.description?.trim() || "",
+    },
+  });
+}
+
+export async function deleteWhyChooseItem(itemId: string) {
+  const existing = await prisma.whyChooseItem.findUnique({
+    where: { id: itemId },
+    include: { section: { select: { type: true } } },
+  });
+
+  if (!existing) return null;
+
+  if (existing.section.type !== WHY_CHOOSE_SECTION_TYPE) {
+    throw new Error("Cet élément n'appartient pas à une section Pourquoi choisir.");
+  }
+
+  await prisma.whyChooseItem.delete({ where: { id: itemId } });
+  return existing;
+}
+
+export async function reorderWhyChooseItems(sectionId: string, itemIds: string[]) {
+  await assertWhyChooseSection(sectionId);
+
+  const existingItems = await prisma.whyChooseItem.findMany({
+    where: { sectionId },
+    orderBy: { order: "asc" },
+    select: { id: true },
+  });
+
+  const existingIds = existingItems.map((item) => item.id);
+  const allIdsProvided =
+    itemIds.length === existingIds.length && itemIds.every((id) => existingIds.includes(id));
+
+  if (!allIdsProvided) {
+    throw new Error("Les éléments fournis ne correspondent pas à la section.");
+  }
+
+  const updates = itemIds.map((id, index) =>
+    prisma.whyChooseItem.update({ where: { id }, data: { order: index + 1 } })
   );
 
   await prisma.$transaction(updates);

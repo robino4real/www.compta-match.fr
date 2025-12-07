@@ -87,6 +87,10 @@ import {
   adminDeletePageSection,
   adminGetCustomPage,
   adminListCustomPages,
+  adminCreateWhyChooseItem,
+  adminUpdateWhyChooseItem,
+  adminDeleteWhyChooseItem,
+  adminReorderWhyChooseItems,
   adminReorderPageBlocks,
   adminReorderPageSections,
   adminUpdateCustomPage,
@@ -456,6 +460,35 @@ router.delete(
   attachUserToRequest,
   requireAdmin,
   adminDeletePageBlock
+);
+
+// Page Builder - Pourquoi choisir ComptaMatch
+router.post(
+  "/sections/:sectionId/why-choose-items",
+  attachUserToRequest,
+  requireAdmin,
+  adminCreateWhyChooseItem
+);
+
+router.post(
+  "/sections/:sectionId/why-choose-items/reorder",
+  attachUserToRequest,
+  requireAdmin,
+  adminReorderWhyChooseItems
+);
+
+router.put(
+  "/why-choose-items/:itemId",
+  attachUserToRequest,
+  requireAdmin,
+  adminUpdateWhyChooseItem
+);
+
+router.delete(
+  "/why-choose-items/:itemId",
+  attachUserToRequest,
+  requireAdmin,
+  adminDeleteWhyChooseItem
 );
 
 router.get(

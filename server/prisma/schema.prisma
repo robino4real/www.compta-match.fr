@@ -509,7 +509,8 @@ model PageSection {
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
-  blocks PageBlock[]
+  blocks         PageBlock[]
+  whyChooseItems WhyChooseItem[]
 }
 
 model PageBlock {
@@ -521,6 +522,18 @@ model PageBlock {
   data      Json
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
+}
+
+model WhyChooseItem {
+  id          String      @id @default(cuid())
+  sectionId   String
+  section     PageSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  order       Int         @default(0)
+  iconType    String
+  title       String
+  description String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
 model PaidServicePlan {

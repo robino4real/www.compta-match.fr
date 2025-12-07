@@ -9,6 +9,10 @@ import {
   getAllCustomPages,
   getCustomPageWithStructureById,
   getPublishedCustomPageByRoute,
+  createWhyChooseItem,
+  updateWhyChooseItem,
+  deleteWhyChooseItem,
+  reorderWhyChooseItems,
   reorderPageBlocks,
   reorderPageSections,
   updateCustomPage,
@@ -264,6 +268,83 @@ export async function adminReorderPageBlocks(req: Request, res: Response) {
   } catch (error: any) {
     console.error("[page-builder] Impossible de réordonner les blocs", error);
     return res.status(400).json({ message: error?.message || "Réordonnancement impossible." });
+  }
+}
+
+export async function adminCreateWhyChooseItem(req: Request, res: Response) {
+  const { sectionId } = req.params;
+  const { iconType, title, description, order } = req.body ?? {};
+
+  try {
+    const item = await createWhyChooseItem(sectionId, {
+      iconType,
+      title,
+      description,
+      order,
+    });
+
+    return res.status(201).json({ item });
+  } catch (error: any) {
+    console.error("[page-builder] Impossible de créer l'élément Pourquoi choisir", error);
+    return res
+      .status(400)
+      .json({ message: error?.message || "Création de l'élément impossible." });
+  }
+}
+
+export async function adminUpdateWhyChooseItem(req: Request, res: Response) {
+  const { itemId } = req.params;
+  const { iconType, title, description } = req.body ?? {};
+
+  try {
+    const item = await updateWhyChooseItem(itemId, { iconType, title, description });
+
+    if (!item) {
+      return res.status(404).json({ message: "Élément introuvable." });
+    }
+
+    return res.json({ item });
+  } catch (error: any) {
+    console.error("[page-builder] Impossible de mettre à jour l'élément Pourquoi choisir", error);
+    return res
+      .status(400)
+      .json({ message: error?.message || "Mise à jour de l'élément impossible." });
+  }
+}
+
+export async function adminDeleteWhyChooseItem(req: Request, res: Response) {
+  const { itemId } = req.params;
+
+  try {
+    const item = await deleteWhyChooseItem(itemId);
+
+    if (!item) {
+      return res.status(404).json({ message: "Élément introuvable." });
+    }
+
+    return res.json({ message: "Élément supprimé", item });
+  } catch (error) {
+    console.error("[page-builder] Impossible de supprimer l'élément Pourquoi choisir", error);
+    return res.status(500).json({ message: "Suppression impossible." });
+  }
+}
+
+export async function adminReorderWhyChooseItems(req: Request, res: Response) {
+  const { sectionId } = req.params;
+  const { itemIds } = req.body ?? {};
+
+  if (!Array.isArray(itemIds) || itemIds.length === 0) {
+    return res.status(400).json({ message: "Le nouvel ordre est invalide." });
+  }
+
+  try {
+    await reorderWhyChooseItems(sectionId, itemIds);
+    return res.json({ success: true });
+  } catch (error: any) {
+    console.error("[page-builder] Impossible de réordonner les éléments Pourquoi choisir", error);
+    return res
+      .status(400)
+      .json({ message: error?.message || "Réordonnancement impossible." });
   }
 }
 
