@@ -1,239 +1,215 @@
 import React from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { API_BASE_URL } from "../config/api";
-import { PaidServiceComparison, PaidServicePlan, PaidServiceSection } from "../types/paidServices";
-import { formatPaidServicePrice } from "../lib/formatPaidServicePrice";
 
-const ComptAssoPlanDetailPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { planSlug } = useParams<{ planSlug: string }>();
+const partnerLogos = [
+  "HelloAsso",
+  "Banque Populaire",
+  "Crédit Mutuel",
+  "Université de Bordeaux",
+  "Ville de Lyon",
+  "Fondation Étudiante",
+];
 
-  const [plans, setPlans] = React.useState<PaidServicePlan[]>([]);
-  const [comparison, setComparison] = React.useState<PaidServiceComparison | null>(null);
-  const [sections, setSections] = React.useState<PaidServiceSection[]>([]);
-  const [isLoading, setIsLoading] = React.useState<boolean>(false);
-  const [error, setError] = React.useState<string | null>(null);
+const navigationLinks = [
+  "Home",
+  "Fonctionnalités",
+  "Tarifs",
+  "Pour qui ?",
+  "Contact",
+];
 
-  const sectionSkeletons = React.useMemo(() => Array.from({ length: 2 }), []);
-
-  React.useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const [plansRes, comparisonRes, sectionsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/paid-services/public/plans?serviceType=COMPTASSO`),
-          fetch(`${API_BASE_URL}/paid-services/public/comparison?serviceType=COMPTASSO`),
-          fetch(`${API_BASE_URL}/paid-services/public/sections?serviceType=COMPTASSO`),
-        ]);
-
-        if (!plansRes.ok) throw new Error("plans_error");
-        if (!comparisonRes.ok) throw new Error("comparison_error");
-        if (!sectionsRes.ok) throw new Error("sections_error");
-
-        const plansData = (await plansRes.json()) as PaidServicePlan[];
-        const comparisonData = (await comparisonRes.json()) as PaidServiceComparison;
-        const sectionsData = (await sectionsRes.json()) as PaidServiceSection[];
-
-        setPlans(plansData);
-        setComparison(comparisonData);
-        setSections(sectionsData);
-      } catch (err) {
-        console.error("Erreur lors du chargement de la page offre ComptAsso", err);
-        setError("Une erreur est survenue, veuillez réessayer plus tard.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  const selectedPlan = React.useMemo(
-    () => plans.find((plan) => plan.slug === planSlug),
-    [plans, planSlug],
-  );
-
-  const comparisonPlanIndex = React.useMemo(() => {
-    if (!comparison || !planSlug) return -1;
-    return comparison.plans.findIndex((plan) => plan.slug === planSlug);
-  }, [comparison, planSlug]);
-
-  const includedFeatures = React.useMemo(() => {
-    if (!comparison || comparisonPlanIndex === -1) return [];
-
-    const inclusionKey = comparisonPlanIndex === 0 ? "planAIncluded" : "planBIncluded";
-
-    return comparison.rows.filter((row) => row[inclusionKey]);
-  }, [comparison, comparisonPlanIndex]);
-
-  const handleSubscribeClick = () => {
-    if (!planSlug) return;
-    navigate(`/contact?plan=${encodeURIComponent(planSlug)}`);
-  };
-
-  const handleBackToPlans = () => {
-    navigate("/comptasso");
-  };
-
-  const renderSectionSkeleton = (index: number) => (
-    <div key={`section-skeleton-${index}`} className="h-56 rounded-3xl bg-white/10 border border-white/10 animate-pulse" />
-  );
-
-  const hasPlan = Boolean(selectedPlan);
-
+const ComptAssoLanding: React.FC = () => {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#070312] text-white">
+    <div className="relative min-h-screen overflow-hidden bg-[#080810] text-white">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-10 top-10 h-72 w-72 rounded-full bg-pink-500/20 blur-[120px]" />
-        <div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-purple-700/30 blur-[140px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_10%,#FE3CE7,rgba(5,5,11,0)_45%)] opacity-60" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(124,58,237,0.45),rgba(8,8,16,0)_40%)]" />
+        <div className="absolute right-10 top-16 h-[520px] w-[520px] rounded-full border border-white/5" />
+        <div className="absolute right-24 top-24 h-[640px] w-[640px] rounded-full border border-white/5" />
+        <div className="absolute right-40 top-32 h-[780px] w-[780px] rounded-full border border-white/5" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,0.06)_0,rgba(255,255,255,0)_55%)] opacity-40 mix-blend-screen" />
       </div>
 
-      <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-12 lg:px-8 lg:pb-20 lg:pt-16 space-y-10">
-        <section className="flex flex-col gap-6 rounded-[28px] border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-white/5 px-6 py-8 shadow-[0_35px_120px_rgba(0,0,0,0.45)] backdrop-blur md:px-10 md:py-10">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div className="space-y-2">
-              <p className="inline-flex rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-emerald-100 ring-1 ring-emerald-300/40">
-                Offre ComptAsso
-              </p>
-              <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                {selectedPlan?.name || "Offre introuvable"}
-              </h1>
-              {selectedPlan?.subtitle && <p className="text-sm md:text-base text-white/80">{selectedPlan.subtitle}</p>}
-            </div>
-            <div className="text-right">
-              {selectedPlan && (
-                <p className="text-2xl font-semibold text-white">
-                  {formatPaidServicePrice(Number(selectedPlan.priceAmount), selectedPlan.priceCurrency)}
-                  <span className="text-sm text-white/70"> /{selectedPlan.pricePeriod === "month" ? "mois" : "an"}</span>
-                </p>
-              )}
-            </div>
+      <div className="relative mx-auto max-w-6xl px-6 pb-16 pt-10 sm:px-8 lg:px-12">
+        <nav className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 rounded-full bg-gradient-to-r from-[#FE3CE7] via-[#D946EF] to-[#7C3AED] px-4 py-4 shadow-[0_20px_40px_rgba(0,0,0,0.6)] sm:px-6">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#FE3CE7] via-[#D946EF] to-[#7C3AED] text-lg font-semibold text-white shadow-lg shadow-pink-500/40">
+              ★
+            </span>
+            <span className="text-lg font-medium">ComptAsso</span>
           </div>
 
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
+          <div className="hidden items-center gap-2 md:flex">
+            {navigationLinks.map((link, index) => (
+              <button
+                key={link}
+                type="button"
+                className={`rounded-full px-4 py-2 text-sm font-medium transition duration-200 hover:bg-white/30 hover:text-white ${
+                  index === 0 ? "bg-white/25 text-white" : "text-white/80"
+                }`}
+              >
+                {link}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={handleSubscribeClick}
-              className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-pink-500/30 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-70"
-              disabled={!hasPlan}
+              className="hidden rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:bg-white/10 sm:inline-flex"
             >
-              Souscrire à l’offre
+              Connexion
             </button>
             <button
               type="button"
-              onClick={handleBackToPlans}
-              className="inline-flex items-center justify-center rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:border-white hover:bg-white/10"
+              className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#7C3AED] shadow-[0_15px_35px_rgba(124,58,237,0.45)] transition duration-200 hover:-translate-y-[1px] hover:bg-slate-50"
             >
-              Retour aux offres
+              S’inscrire
             </button>
           </div>
+        </nav>
 
-          {error && (
-            <div className="rounded-2xl border border-red-300/60 bg-red-500/10 px-4 py-3 text-sm text-red-50">{error}</div>
-          )}
-          {!error && !hasPlan && !isLoading && (
-            <div className="rounded-2xl border border-amber-300/60 bg-amber-500/10 px-4 py-3 text-sm text-amber-50">
-              Cette offre n’existe pas ou n’est plus disponible. Consultez la liste complète des formules ComptAsso.
-            </div>
-          )}
-        </section>
+        <section className="relative mt-12 overflow-hidden rounded-[36px] bg-gradient-to-br from-[#FE3CE7] via-[#D946EF] to-[#12071E] px-6 py-10 shadow-[0_40px_80px_rgba(0,0,0,0.75)] sm:px-10 lg:px-14">
+          <div className="absolute -right-10 -top-10 h-64 w-64 rounded-full bg-white/10 blur-[60px]" />
+          <div className="absolute left-10 top-10 h-32 w-32 rounded-full bg-white/15 blur-[50px]" />
 
-        <section className="space-y-6 rounded-[28px] border border-white/10 bg-white/5 px-6 py-8 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur md:px-10 md:py-10">
-          {isLoading && (
-            <>
-              <div className="h-16 rounded-2xl bg-white/10 border border-white/10 animate-pulse" />
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="h-40 rounded-2xl bg-white/10 border border-white/10 animate-pulse" />
-                <div className="h-40 rounded-2xl bg-white/10 border border-white/10 animate-pulse" />
+          <div className="relative grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-[13px] font-medium text-[#FCE7F3] backdrop-blur">
+                <span className="h-2 w-2 rounded-full bg-white" />
+                Nouveauté ComptAsso v2
               </div>
-            </>
-          )}
 
-          {!isLoading && hasPlan && (
-            <>
-              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-white/60">Ce qui est inclus</p>
-                  <h2 className="text-xl font-semibold text-white">Tout ce que votre abonnement couvre</h2>
-                  <p className="mt-1 text-sm text-white/70">
-                    Découvrez le détail des fonctionnalités prévues pour la formule {selectedPlan.name}.
+              <div className="space-y-3">
+                <h1 className="text-4xl font-light leading-[1.06] text-[#FCE7F3] sm:text-5xl lg:text-[62px] lg:leading-[1.05]">
+                  La Comptabilité Moderne
+                  <span className="block">Pour Votre Association</span>
+                </h1>
+                <p className="max-w-xl text-[16px] text-white/90 lg:text-[17px]">
+                  Centralisez les cotisations, subventions, notes de frais et obligations légales de votre association dans un seul
+                  outil pensé pour les trésoriers.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#7C3AED] shadow-[0_16px_40px_rgba(124,58,237,0.55)] transition duration-200 hover:-translate-y-[2px] hover:brightness-105"
+                >
+                  Essayer ComptAsso
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center rounded-full border border-white/60 px-6 py-3 text-sm font-semibold text-white transition duration-200 hover:bg-white/10 hover:shadow-lg hover:shadow-black/30"
+                >
+                  Voir la démo
+                </button>
+              </div>
+            </div>
+
+            <div className="relative flex flex-col items-center gap-6 lg:items-end">
+              <div className="relative w-full max-w-md rounded-3xl bg-gradient-to-br from-[#FE3CE7] via-[#D946EF] to-[#4C1D95] p-6 shadow-[0_24px_40px_rgba(0,0,0,0.85)] transition duration-300 hover:-translate-y-1">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-[#F9FAFB]/80">Budget de l’association</p>
+                    <p className="mt-2 text-3xl font-semibold text-white">6 650,00 €</p>
+                  </div>
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-lg text-white">
+                    💳
+                  </span>
+                </div>
+
+                <div className="mt-5 space-y-2 text-sm text-white/90">
+                  <p>
+                    Cotisations ce mois-ci : <span className="font-semibold text-white">1 650,00 €</span>{" "}
+                    <span className="text-emerald-200">(+10 % vs mois dernier)</span>
+                  </p>
+                  <p>
+                    Subventions reçues : <span className="font-semibold text-white">2 400,00 €</span>{" "}
+                    <span className="text-cyan-200">(75 % de l’objectif)</span>
                   </p>
                 </div>
-                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-100 ring-1 ring-emerald-300/40">
-                  Plan {selectedPlan.name}
-                </span>
+
+                <div className="mt-5 space-y-2">
+                  <div className="flex items-center justify-between text-xs text-white/80">
+                    <span>Avancement budget</span>
+                    <span className="font-semibold">75 %</span>
+                  </div>
+                  <div className="h-3 overflow-hidden rounded-full bg-[rgba(15,23,42,0.6)]">
+                    <div className="h-full w-[75%] rounded-full bg-gradient-to-r from-[#FE3CE7] via-[#D946EF] to-[#7C3AED]" />
+                  </div>
+                </div>
+
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-white/90">
+                  <span className="h-2 w-2 rounded-full bg-emerald-300" />
+                  Automatisé
+                </div>
               </div>
 
-              {includedFeatures.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {includedFeatures.map((feature) => (
-                    <article
-                      key={feature.id}
-                      className="flex h-full flex-col gap-2 rounded-2xl border border-white/10 bg-black/30 px-4 py-4 shadow-sm"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-200">
-                          ✓
-                        </span>
-                        <h3 className="text-base font-semibold text-white">{feature.label}</h3>
-                      </div>
-                      {feature.description && (
-                        <p className="pl-11 text-sm text-white/70">{feature.description}</p>
-                      )}
-                    </article>
-                  ))}
+              <div className="relative w-full max-w-sm rounded-[22px] border border-white/10 bg-[rgba(10,10,20,0.9)] p-5 shadow-[0_24px_40px_rgba(0,0,0,0.85)] backdrop-blur transition duration-300 hover:-translate-y-1">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-white">Cotisations & adhérents</h3>
+                  <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/70">
+                    Sans erreur
+                  </span>
                 </div>
-              ) : (
-                <div className="rounded-2xl border border-white/15 bg-black/40 px-4 py-6 text-center text-sm text-white/80">
-                  Les détails de cette formule seront bientôt disponibles.
-                </div>
-              )}
-            </>
-          )}
-        </section>
 
-        <section className="space-y-10 rounded-[28px] border border-white/10 bg-white/5 px-6 py-8 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur md:px-10 md:py-10">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-white/60">Pour aller plus loin</p>
-              <h2 className="text-xl font-semibold text-white">Comment ComptAsso accompagne votre association</h2>
-            </div>
-            <button
-              type="button"
-              onClick={handleSubscribeClick}
-              className="inline-flex items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
-              disabled={!hasPlan}
-            >
-              Souscrire
-            </button>
-          </div>
-
-          {isLoading
-            ? sectionSkeletons.map((_, index) => renderSectionSkeleton(index))
-            : sections.map((section, index) => (
-                <article key={section.id} className="grid gap-8 lg:grid-cols-2 items-center">
-                  <div className={`space-y-3 ${index % 2 === 1 ? "order-2 lg:order-1" : ""}`}>
-                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-white/60">{`Étape ${index + 1}`}</p>
-                    <h3 className="text-xl font-semibold text-white">{section.title}</h3>
-                    <p className="text-sm text-white/80 whitespace-pre-line">{section.body}</p>
+                <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl bg-white/5 p-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.08em] text-white/60">Adhérents actifs</p>
+                    <p className="mt-1 text-2xl font-semibold text-white">245</p>
                   </div>
-                  {section.imageUrl && (
-                    <div
-                      className={`overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-lg shadow-black/40 ${
-                        index % 2 === 1 ? "order-1 lg:order-2" : ""
-                      }`}
-                    >
-                      <img src={section.imageUrl} alt={section.title} className="w-full h-auto object-cover" />
-                    </div>
-                  )}
-                </article>
-              ))}
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.08em] text-white/60">Cotisations à jour</p>
+                    <p className="mt-1 text-2xl font-semibold text-white">92 %</p>
+                  </div>
+                </div>
+
+                <div className="mt-5 space-y-3">
+                  <div className="flex items-center justify-between text-xs text-white/70">
+                    <span>Événementiel</span>
+                    <span className="font-semibold text-pink-200">42 %</span>
+                  </div>
+                  <div className="flex h-2 overflow-hidden rounded-full bg-white/10">
+                    <div className="w-[42%] rounded-full bg-pink-400" />
+                    <div className="w-[26%] bg-purple-400" />
+                    <div className="w-[32%] bg-sky-400" />
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-white/70">
+                    <span>Sport</span>
+                    <span className="font-semibold text-purple-200">26 %</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-white/70">
+                    <span>Culturel</span>
+                    <span className="font-semibold text-sky-200">32 %</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
+
+        <section className="mt-16 text-center">
+          <p className="text-sm text-[#E5E7EB]">
+            Déjà adopté par des associations étudiantes, sportives et culturelles
+          </p>
+          <div className="mt-6 grid grid-cols-2 gap-4 text-sm text-[rgba(148,163,184,0.85)] sm:grid-cols-3 lg:grid-cols-6">
+            {partnerLogos.map((logo) => (
+              <span
+                key={logo}
+                className="rounded-full bg-white/5 px-4 py-3 text-center font-medium opacity-80 transition duration-200 hover:opacity-100"
+              >
+                {logo}
+              </span>
+            ))}
+          </div>
+        </section>
+
+        <p className="mt-10 text-center text-[13px] text-white/60">
+          ComptAsso sécurise les flux financiers, réduit les erreurs et rend les trésoriers sereins.
+        </p>
       </div>
-    </main>
+    </div>
   );
 };
 
-export default ComptAssoPlanDetailPage;
+export default ComptAssoLanding;
