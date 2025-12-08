@@ -60,8 +60,8 @@ const ComptaProSubscriptionPage: React.FC = () => {
     }
   };
 
-  const handlePlanDetailClick = (slug: string) => {
-    navigate(`/comptapro/${encodeURIComponent(slug)}`);
+  const handlePlanDetailClick = () => {
+    navigate("/nouvelle-page");
   };
 
   const handleProAccessClick = () => {
@@ -90,7 +90,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
       </header>
       <button
         className="mt-6 inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-md transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-        onClick={() => handlePlanDetailClick(plan.slug)}
+        onClick={handlePlanDetailClick}
       >
         En savoir plus
       </button>
