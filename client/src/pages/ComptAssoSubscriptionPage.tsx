@@ -1,9 +1,11 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
 import { PaidServiceComparison, PaidServicePlan, PaidServiceSection } from "../types/paidServices";
 import { formatPaidServicePrice } from "../lib/formatPaidServicePrice";
 
 const ComptAssoSubscriptionPage: React.FC = () => {
+  const navigate = useNavigate();
   const [plans, setPlans] = React.useState<PaidServicePlan[]>([]);
   const [comparison, setComparison] = React.useState<PaidServiceComparison | null>(null);
   const [sections, setSections] = React.useState<PaidServiceSection[]>([]);
@@ -45,25 +47,41 @@ const ComptAssoSubscriptionPage: React.FC = () => {
     fetchData();
   }, []);
 
+  const scrollToPlans = () => {
+    const anchor = document.getElementById("plans");
+    if (anchor) {
+      anchor.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const handlePlanDetailClick = (slug: string) => {
+    navigate(`/comptasso/${encodeURIComponent(slug)}`);
+  };
+
   const renderPlanCard = (plan: PaidServicePlan) => (
     <article
       key={plan.id}
-      className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white px-6 py-6 shadow-sm"
+      className="flex flex-col justify-between rounded-3xl border border-white/10 bg-white/5 px-6 py-6 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur"
     >
       <header className="flex items-start justify-between gap-4">
-        <h2 className="text-lg font-semibold text-slate-900">{plan.name}</h2>
-        <p className="text-right text-base font-semibold text-slate-900">
+        <div className="space-y-1">
+          <p className="inline-flex rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-emerald-200 ring-1 ring-emerald-300/30">
+            ComptAsso
+          </p>
+          <h2 className="text-lg font-semibold text-white">{plan.name}</h2>
+          {plan.subtitle && <p className="text-sm text-slate-200/90">{plan.subtitle}</p>}
+        </div>
+        <p className="text-right text-lg font-semibold text-white">
           {formatPaidServicePrice(Number(plan.priceAmount), plan.priceCurrency)}
-          <span className="text-sm text-slate-500"> /{plan.pricePeriod === "month" ? "mois" : "an"}</span>
+          <span className="text-sm text-slate-200"> /{plan.pricePeriod === "month" ? "mois" : "an"}</span>
         </p>
       </header>
-      {plan.subtitle && <p className="mt-2 text-sm text-slate-600">{plan.subtitle}</p>}
       <button
-        className="mt-6 inline-flex items-center justify-center rounded-full bg-slate-200 px-6 py-3 text-sm font-medium text-slate-600 cursor-not-allowed"
-        disabled
+        className="mt-6 inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-md transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         type="button"
+        onClick={() => handlePlanDetailClick(plan.slug)}
       >
-        Bientôt disponible
+        En savoir plus
       </button>
     </article>
   );
@@ -71,57 +89,143 @@ const ComptAssoSubscriptionPage: React.FC = () => {
   const renderPlanSkeleton = (index: number) => (
     <div
       key={`skeleton-${index}`}
-      className="h-52 rounded-3xl border border-slate-200 bg-slate-100 animate-pulse"
+      className="h-52 rounded-3xl border border-white/10 bg-white/10 animate-pulse"
     />
   );
 
   const renderComparisonSkeleton = () => (
-    <div className="h-48 rounded-2xl border border-slate-100 bg-slate-100 animate-pulse" />
+    <div className="h-48 rounded-2xl border border-white/10 bg-white/10 animate-pulse" />
   );
 
   const renderSectionSkeleton = (index: number) => (
-    <div key={`section-skeleton-${index}`} className="h-56 rounded-3xl bg-slate-100 border border-slate-100 animate-pulse" />
+    <div key={`section-skeleton-${index}`} className="h-56 rounded-3xl bg-white/10 border border-white/10 animate-pulse" />
   );
 
   const hasPlans = plans.length > 0;
 
   return (
-    <main className="bg-white min-h-screen py-12">
-      <div className="max-w-5xl mx-auto px-4 lg:px-8 space-y-10">
-        <section className="text-center space-y-4">
-          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-slate-900">
-            Abonnement à la web app <span className="block">ComptAsso</span>
-          </h1>
-          <p className="max-w-2xl mx-auto text-sm md:text-base text-slate-600">
-            Découvrez les services SaaS ComptAsso pour gérer vos associations avec la même simplicité que ComptaPro.
-          </p>
-        </section>
+    <main className="relative min-h-screen overflow-hidden bg-[#070312] text-white">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -left-16 top-0 h-72 w-72 rounded-full bg-pink-500/20 blur-[100px]" />
+        <div className="absolute right-0 top-10 h-96 w-96 rounded-full bg-purple-600/25 blur-[120px]" />
+        <div className="absolute inset-x-0 top-32 h-64 bg-gradient-to-b from-transparent via-white/10 to-transparent" />
+      </div>
 
-        <section className="rounded-3xl border border-slate-200 bg-slate-900 px-6 py-6 shadow-lg md:flex md:items-center md:justify-between md:px-10 md:py-8">
-          <div className="space-y-2 text-white md:max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-200">Accès ComptAsso</p>
-            <p className="text-sm md:text-base text-slate-100">
-              Les espaces ComptAsso seront bientôt accessibles pour gérer vos outils en ligne dédiés aux associations.
-            </p>
+      <div className="relative mx-auto max-w-6xl px-4 pb-20 pt-16 lg:px-8 lg:pt-20 space-y-12">
+        <section className="grid gap-10 lg:grid-cols-2 lg:items-center">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-emerald-100 ring-1 ring-white/20">
+              <span className="h-2 w-2 rounded-full bg-emerald-300" />
+              Nouvel espace ComptAsso
+            </div>
+
+            <div className="space-y-4">
+              <h1 className="text-4xl font-bold leading-tight md:text-5xl">
+                Comptabilité experte
+                <span className="block text-white/80">pour vos associations</span>
+              </h1>
+              <p className="max-w-2xl text-base text-white/80">
+                Retirez-vous du stress administratif : ComptAsso automatise vos finances associatives, suit vos budgets et sécurise vos remboursements, pour des équipes bénévoles plus sereines.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={scrollToPlans}
+                className="pressable-button inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-pink-500/30 transition hover:-translate-y-[1px] hover:bg-slate-100"
+              >
+                Découvrir les offres
+              </button>
+              <a
+                href="/comparatif-des-offres"
+                className="inline-flex items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:border-white hover:bg-white/10"
+              >
+                Comparer les abonnements
+              </a>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-purple-500/20">
+                <p className="text-xs uppercase tracking-[0.08em] text-white/60">Budget suivi</p>
+                <p className="mt-1 text-2xl font-semibold text-white">98%</p>
+                <p className="text-xs text-white/60">des dépenses catégorisées</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-pink-500/20">
+                <p className="text-xs uppercase tracking-[0.08em] text-white/60">Temps gagné</p>
+                <p className="mt-1 text-2xl font-semibold text-white">2h30</p>
+                <p className="text-xs text-white/60">par mois pour chaque trésorier</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-emerald-500/20">
+                <p className="text-xs uppercase tracking-[0.08em] text-white/60">Paiements</p>
+                <p className="mt-1 text-2xl font-semibold text-white">Sécurisés</p>
+                <p className="text-xs text-white/60">workflow automatisé</p>
+              </div>
+            </div>
           </div>
-          <button
-            type="button"
-            disabled
-            className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-white/60 px-6 py-3 text-center text-sm font-semibold text-slate-900 shadow-md transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-70 md:mt-0 md:w-auto"
-          >
-            Bientôt disponible
-          </button>
+
+          <div className="flex justify-center lg:justify-end">
+            <div className="w-full max-w-md rounded-[28px] border border-white/10 bg-gradient-to-br from-white/15 via-white/8 to-white/5 p-6 shadow-[0_35px_120px_rgba(0,0,0,0.45)] backdrop-blur">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm text-white/70">Solde de votre association</p>
+                  <p className="text-3xl font-semibold">€6 650,05</p>
+                </div>
+                <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-200 ring-1 ring-emerald-300/30">
+                  ComptAsso
+                </span>
+              </div>
+
+              <div className="mt-6 flex gap-3">
+                <button className="flex-1 rounded-full bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-pink-500/30">
+                  Transférer
+                </button>
+                <button className="flex-1 rounded-full border border-white/20 bg-white/5 px-4 py-3 text-sm font-semibold text-white">
+                  Demande
+                </button>
+              </div>
+
+              <div className="mt-6 space-y-3 rounded-2xl bg-black/20 p-4 ring-1 ring-white/5">
+                <div className="flex items-center justify-between text-sm text-white/80">
+                  <span>Total des dons</span>
+                  <span>€1 650,05</span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full w-[82%] rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500" />
+                </div>
+                <div className="flex items-center justify-between text-xs text-white/60">
+                  <span>Objectif 30 000</span>
+                  <span>82%</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
-        <section className="bg-white rounded-3xl border border-slate-100 shadow-[0_24px_60px_rgba(15,23,42,0.06)] px-6 py-8 md:px-10 md:py-10 space-y-10">
+        <section className="rounded-[24px] border border-white/10 bg-white/5 px-5 py-4 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur">
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-white/70">
+            <span className="text-xs uppercase tracking-[0.08em] text-white/50">Adopté par</span>
+            <span className="font-semibold">Spotify</span>
+            <span className="font-semibold">Slack</span>
+            <span className="font-semibold">Webflow</span>
+            <span className="font-semibold">Dropbox</span>
+            <span className="font-semibold">Notion</span>
+            <span className="font-semibold">Stellar</span>
+          </div>
+        </section>
+
+        <section
+          id="plans"
+          className="rounded-[28px] border border-white/10 bg-white/5 px-6 py-8 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur md:px-10 md:py-10 space-y-10"
+        >
           {error && (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="rounded-2xl border border-red-300/60 bg-red-500/10 px-4 py-3 text-sm text-red-50">
               {error}
             </div>
           )}
 
           {!error && !isLoading && !hasPlans && (
-            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-6 text-center text-sm text-slate-700">
+            <div className="rounded-2xl border border-white/15 bg-black/30 px-4 py-6 text-center text-sm text-white/80">
               Les abonnements ComptAsso seront disponibles prochainement.
             </div>
           )}
@@ -130,36 +234,36 @@ const ComptAssoSubscriptionPage: React.FC = () => {
             {isLoading ? planSkeletons.map((_, index) => renderPlanSkeleton(index)) : plans.map(renderPlanCard)}
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-slate-100">
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/30">
             {isLoading ? (
               renderComparisonSkeleton()
             ) : comparison && hasPlans ? (
-              <table className="min-w-full border-separate border-spacing-y-1 text-sm text-slate-700">
+              <table className="min-w-full border-separate border-spacing-y-1 text-sm text-white/80">
                 <thead>
                   <tr>
-                    <th className="bg-white px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Fonctionnalités</th>
-                    <th className="bg-white px-4 py-3 text-center text-sm font-semibold text-slate-900">
+                    <th className="bg-white/5 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white/70">Fonctionnalités</th>
+                    <th className="bg-white/5 px-4 py-3 text-center text-sm font-semibold text-white">
                       {comparison.plans[0]?.name || "Plan A"}
                     </th>
-                    <th className="bg-white px-4 py-3 text-center text-sm font-semibold text-slate-900">
+                    <th className="bg-white/5 px-4 py-3 text-center text-sm font-semibold text-white">
                       {comparison.plans[1]?.name || "Plan B"}
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {comparison.rows.map((row) => (
-                    <tr key={row.id} className="bg-white">
-                      <td className="rounded-l-xl border border-slate-100 px-4 py-3 align-top">
-                        <div className="text-sm font-medium text-slate-900">{row.label}</div>
-                        {row.description && <p className="text-xs text-slate-500">{row.description}</p>}
+                    <tr key={row.id} className="bg-white/5">
+                      <td className="rounded-l-xl border border-white/10 px-4 py-3 align-top">
+                        <div className="text-sm font-semibold text-white">{row.label}</div>
+                        {row.description && <p className="text-xs text-white/70">{row.description}</p>}
                       </td>
-                      <td className="border-t border-b border-slate-100 px-4 py-3 text-center align-middle">
-                        <span className={row.planAIncluded ? "text-emerald-600" : "text-slate-400"}>
+                      <td className="border-t border-b border-white/10 px-4 py-3 text-center align-middle">
+                        <span className={row.planAIncluded ? "text-emerald-300" : "text-white/40"}>
                           {row.planAIncluded ? "✓" : "—"}
                         </span>
                       </td>
-                      <td className="rounded-r-xl border border-slate-100 px-4 py-3 text-center align-middle">
-                        <span className={row.planBIncluded ? "text-emerald-600" : "text-slate-400"}>
+                      <td className="rounded-r-xl border border-white/10 px-4 py-3 text-center align-middle">
+                        <span className={row.planBIncluded ? "text-emerald-300" : "text-white/40"}>
                           {row.planBIncluded ? "✓" : "—"}
                         </span>
                       </td>
@@ -168,7 +272,7 @@ const ComptAssoSubscriptionPage: React.FC = () => {
                 </tbody>
               </table>
             ) : (
-              <div className="px-4 py-6 text-center text-sm text-slate-600">Comparatif disponible prochainement.</div>
+              <div className="px-4 py-6 text-center text-sm text-white/80">Comparatif disponible prochainement.</div>
             )}
           </div>
 
@@ -178,12 +282,13 @@ const ComptAssoSubscriptionPage: React.FC = () => {
               : sections.map((section, index) => (
                   <section key={section.id} className="grid gap-8 lg:grid-cols-2 items-center">
                     <div className={`space-y-3 ${index % 2 === 1 ? "order-2 lg:order-1" : ""}`}>
-                      <h3 className="text-xl font-semibold text-slate-900">{section.title}</h3>
-                      <p className="text-sm text-slate-700 whitespace-pre-line">{section.body}</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-white/60">{`Focus ${index + 1}`}</p>
+                      <h3 className="text-xl font-semibold text-white">{section.title}</h3>
+                      <p className="text-sm text-white/80 whitespace-pre-line">{section.body}</p>
                     </div>
                     {section.imageUrl && (
                       <div
-                        className={`overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm ${
+                        className={`overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-lg shadow-black/40 ${
                           index % 2 === 1 ? "order-1 lg:order-2" : ""
                         }`}
                       >
