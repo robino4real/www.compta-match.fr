@@ -55,7 +55,7 @@ const ComptAssoSubscriptionPage: React.FC = () => {
   };
 
   const handlePlanDetailClick = (slug: string) => {
-    navigate(`/comptasso/${encodeURIComponent(slug)}`);
+    navigate("/nouvelle-page");
   };
 
   const renderPlanCard = (plan: PaidServicePlan) => (

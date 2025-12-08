@@ -31,6 +31,7 @@ import ComptaProSubscriptionPage from "./pages/ComptaProSubscriptionPage";
 import ComptaProPlanDetailPage from "./pages/ComptaProPlanDetailPage";
 import ComptAssoSubscriptionPage from "./pages/ComptAssoSubscriptionPage";
 import ComptAssoPlanDetailPage from "./pages/ComptAssoPlanDetailPage";
+import NouvellePage from "./pages/NouvellePage";
 import CompareOffersPage from "./pages/CompareOffersPage";
 import AdminPaidServicesPage from "./pages/admin/AdminPaidServicesPage";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -100,6 +101,7 @@ const App: React.FC = () => {
           <Route path="/comptapro/:planSlug" element={<ComptaProPlanDetailPage />} />
           <Route path="/comptasso" element={<ComptAssoSubscriptionPage />} />
           <Route path="/comptasso/:planSlug" element={<ComptAssoPlanDetailPage />} />
+          <Route path="/nouvelle-page" element={<NouvellePage />} />
           <Route path="/panier" element={<CartPage />} />
           <Route path="/commande" element={<CheckoutPage />} />
           <Route path="/paiement/success" element={<PaymentSuccessPage />} />

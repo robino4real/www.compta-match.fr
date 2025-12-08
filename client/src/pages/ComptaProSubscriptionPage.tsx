@@ -61,7 +61,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
   };
 
   const handlePlanDetailClick = (slug: string) => {
-    navigate(`/comptapro/${encodeURIComponent(slug)}`);
+    navigate("/nouvelle-page");
   };
 
   const handleProAccessClick = () => {
