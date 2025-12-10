@@ -19,12 +19,23 @@ const TestimonialsListBlock: React.FC<TestimonialsListBlockProps> = ({ data }) =
         {items.map((item: any, idx: number) => (
           <div
             key={`${item.name || "testimonial"}-${idx}`}
-            className="h-full rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+            className="flex h-full min-h-[260px] flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
           >
-            <p className="text-sm text-slate-700 leading-relaxed">“{item.text}”</p>
-            <div className="mt-3 text-xs font-semibold text-black">
-              {item.name}
-              {item.role && <span className="text-slate-500"> — {item.role}</span>}
+            <p className="flex-1 text-sm leading-relaxed text-slate-700">“{item.text}”</p>
+            <div className="flex items-center gap-3">
+              {item.avatarUrl ? (
+                <div className="h-14 w-14 overflow-hidden rounded-full bg-slate-100">
+                  <img src={item.avatarUrl} alt={item.name || "Avatar"} className="h-full w-full object-cover" />
+                </div>
+              ) : (
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-500">
+                  {(item.name || "?").slice(0, 1)}
+                </div>
+              )}
+              <div>
+                <div className="text-sm font-semibold text-black">{item.name}</div>
+                {item.role && <div className="text-xs text-slate-500">{item.role}</div>}
+              </div>
             </div>
           </div>
         ))}

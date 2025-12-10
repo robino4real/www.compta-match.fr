@@ -23,7 +23,7 @@ const FeaturesListBlock: React.FC<FeaturesListBlockProps> = ({ data }) => {
                 <img
                   src={item.imageUrl}
                   alt={item.title || "Illustration de l'avantage"}
-                  className="h-64 w-full object-cover"
+                  className="h-44 w-full object-cover"
                 />
               </div>
             )}
