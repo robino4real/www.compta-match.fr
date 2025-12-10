@@ -1323,13 +1323,35 @@ const AdminPageDetailPage: React.FC = () => {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-slate-700">Avatar (URL)</label>
-                      <input
-                        type="text"
-                        value={testimonial?.avatarUrl || ""}
-                        onChange={(e) => updateNestedArray("testimonials", index, "avatarUrl", e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
-                      />
+                      <label className="text-[11px] font-semibold text-slate-700">Avatar</label>
+                      <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                        <input
+                          type="text"
+                          value={testimonial?.avatarUrl || ""}
+                          onChange={(e) => updateNestedArray("testimonials", index, "avatarUrl", e.target.value)}
+                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                          placeholder="URL de l'avatar"
+                        />
+                        <label
+                          htmlFor={`${selectedBlock.id}-testimonial-avatar-${index}`}
+                          className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-black hover:text-black"
+                        >
+                          <input
+                            id={`${selectedBlock.id}-testimonial-avatar-${index}`}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) =>
+                              handleImageUpload(
+                                e,
+                                (url) => updateNestedArray("testimonials", index, "avatarUrl", url),
+                                `${selectedBlock.id}-testimonial-avatar-${index}`,
+                              )
+                            }
+                          />
+                          {uploadingKey === `${selectedBlock.id}-testimonial-avatar-${index}` ? "Import..." : "Importer"}
+                        </label>
+                      </div>
                     </div>
                     <div className="flex justify-end">
                       <button
