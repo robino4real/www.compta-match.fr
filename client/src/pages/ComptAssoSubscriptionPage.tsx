@@ -146,18 +146,6 @@ const ComptAssoSubscriptionPage: React.FC = () => {
           </div>
         </section>
 
-        <section className="rounded-[24px] border border-white/10 bg-white/5 px-5 py-4 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur">
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-white/70">
-            <span className="text-xs uppercase tracking-[0.08em] text-white/50">Adopté par</span>
-            <span className="font-semibold">Spotify</span>
-            <span className="font-semibold">Slack</span>
-            <span className="font-semibold">Webflow</span>
-            <span className="font-semibold">Dropbox</span>
-            <span className="font-semibold">Notion</span>
-            <span className="font-semibold">Stellar</span>
-          </div>
-        </section>
-
         <section
           id="plans"
           className="rounded-[28px] border border-white/10 bg-white/5 px-6 py-8 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur md:px-10 md:py-10 space-y-10"
