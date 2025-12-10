@@ -15,6 +15,7 @@ interface AdminDownloadProduct {
   detailSlides?: { imageUrl?: string | null; description?: string | null }[];
   category?: DownloadableCategory | null;
   categoryId?: string | null;
+  binaries?: { id: string; platform: "WINDOWS" | "MACOS"; fileName: string; fileSize: number }[];
 }
 
 interface DownloadableCategory {
@@ -60,6 +61,14 @@ const AdminDownloadEditPage: React.FC = () => {
     React.useState<number | null>(null);
   const [priceEuros, setPriceEuros] = React.useState("");
   const [isActive, setIsActive] = React.useState(true);
+  const [binaryPlatform, setBinaryPlatform] = React.useState("WINDOWS");
+  const [binaryUploadError, setBinaryUploadError] = React.useState<string | null>(
+    null
+  );
+  const [isUploadingBinary, setIsUploadingBinary] = React.useState(false);
+  const [binaries, setBinaries] = React.useState<
+    NonNullable<AdminDownloadProduct["binaries"]>
+  >([]);
 
   const [isSaving, setIsSaving] = React.useState(false);
   const [saveError, setSaveError] = React.useState<string | null>(null);
@@ -145,6 +154,10 @@ const AdminDownloadEditPage: React.FC = () => {
             : ""
         );
         setIsActive(Boolean(prod.isActive));
+        setBinaries(Array.isArray(prod.binaries) ? prod.binaries : []);
+        if (prod.binaries?.length) {
+          setBinaryPlatform(prod.binaries[0].platform);
+        }
       } catch (err: any) {
         console.error("Erreur GET /admin/downloads/:id :", err);
         setError(
@@ -323,6 +336,67 @@ const AdminDownloadEditPage: React.FC = () => {
       );
     } finally {
       setUploadingSlideIndex(null);
+    }
+  };
+
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes) return "—";
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} Mo`;
+  };
+
+  const platformLabel = (platform: string) =>
+    platform === "MACOS" ? "MacOS" : "Windows";
+
+  const handleBinaryUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const selected = event.target.files?.[0];
+    if (!selected || !id) return;
+
+    setBinaryUploadError(null);
+    setIsUploadingBinary(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", selected);
+      formData.append("platform", binaryPlatform);
+
+      const response = await fetch(`${API_BASE_URL}/admin/downloads/${id}/files`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          (data as { message?: string }).message ||
+            "Impossible de téléverser ce fichier."
+        );
+      }
+
+      if ((data as { binary?: AdminDownloadProduct["binaries"][number] }).binary) {
+        const binary = (data as { binary: AdminDownloadProduct["binaries"][number] }).binary;
+        setBinaries((prev) => {
+          const filtered = prev.filter((entry) => entry.platform !== binary.platform);
+          return [...filtered, binary];
+        });
+        setProduct((prev) =>
+          prev ? { ...prev, binaries: [...(prev.binaries || []).filter((entry) => entry.platform !== binary.platform), binary] } : prev
+        );
+      }
+
+      setSaveSuccess("Fichier mis à jour avec succès.");
+    } catch (err: any) {
+      console.error("Erreur upload binaire", err);
+      setBinaryUploadError(
+        err?.message || "Impossible de téléverser ce fichier pour le moment."
+      );
+    } finally {
+      setIsUploadingBinary(false);
+      event.target.value = "";
     }
   };
 
@@ -659,6 +733,56 @@ const AdminDownloadEditPage: React.FC = () => {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-800">
+                Versions téléchargeables
+              </h3>
+              {isUploadingBinary && (
+                <span className="text-[11px] text-slate-500">
+                  Import en cours...
+                </span>
+              )}
+            </div>
+            {binaryUploadError && (
+              <p className="text-[11px] text-red-600">{binaryUploadError}</p>
+            )}
+            <div className="flex flex-wrap gap-2 text-[11px] text-slate-700">
+              {binaries.length ? (
+                binaries.map((binary) => (
+                  <span
+                    key={binary.id}
+                    className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 font-semibold text-slate-800 shadow-sm"
+                  >
+                    {platformLabel(binary.platform)}
+                    <span className="font-normal text-slate-600">
+                      ({formatFileSize(binary.fileSize)})
+                    </span>
+                    <span className="text-slate-400">• {binary.fileName}</span>
+                  </span>
+                ))
+              ) : (
+                <span className="text-[11px] text-slate-600">
+                  Aucun fichier n’a encore été importé pour ce logiciel.
+                </span>
+              )}
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <select
+                value={binaryPlatform}
+                onChange={(e) => setBinaryPlatform(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-black focus:outline-none focus:ring-2 focus:ring-black sm:max-w-[220px]"
+              >
+                <option value="WINDOWS">Windows</option>
+                <option value="MACOS">MacOS</option>
+              </select>
+              <input type="file" onChange={handleBinaryUpload} className="text-[11px]" />
+            </div>
+            <p className="text-[11px] text-slate-600">
+              Uploadez un binaire ou une archive quel que soit le poids. Vous pouvez remplacer une version existante en sélectionnant le même OS.
+            </p>
           </div>
 
           <div className="space-y-1">

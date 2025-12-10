@@ -5,6 +5,15 @@ export type DownloadableCategory = {
   productCount?: number;
 };
 
+export type DownloadPlatform = "WINDOWS" | "MACOS";
+
+export type DownloadableBinary = {
+  id: string;
+  platform: DownloadPlatform;
+  fileName: string;
+  fileSize: number;
+};
+
 export type DownloadableProduct = {
   id: string;
   slug: string;
@@ -22,4 +31,5 @@ export type DownloadableProduct = {
   detailSlides?: { imageUrl?: string | null; description?: string | null }[];
   isPublished?: boolean;
   category?: DownloadableCategory | null;
+  binaries?: DownloadableBinary[];
 };

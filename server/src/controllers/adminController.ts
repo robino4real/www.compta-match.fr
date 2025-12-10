@@ -1,10 +1,25 @@
 import { Request, Response } from "express";
+import { DownloadPlatform } from "@prisma/client";
+import fs from "fs";
 import { prisma } from "../config/prisma";
 
 type DetailSlideInput = {
   imageUrl?: string | null;
   description?: string | null;
 };
+
+const SUPPORTED_PLATFORMS: DownloadPlatform[] = [
+  DownloadPlatform.WINDOWS,
+  DownloadPlatform.MACOS,
+];
+
+function parsePlatform(raw: unknown): DownloadPlatform | null {
+  if (typeof raw !== "string") return null;
+  const upper = raw.trim().toUpperCase();
+  return SUPPORTED_PLATFORMS.includes(upper as DownloadPlatform)
+    ? (upper as DownloadPlatform)
+    : null;
+}
 
 function parseDetailSlides(raw: unknown): DetailSlideInput[] | undefined {
   if (Array.isArray(raw)) {
@@ -78,6 +93,7 @@ export async function createDownloadableProduct(req: Request, res: Response) {
       detailHtml,
       detailSlides,
       categoryId,
+      platform,
     } = req.body;
 
     if (!file) {
@@ -88,6 +104,13 @@ export async function createDownloadableProduct(req: Request, res: Response) {
       return res
         .status(400)
         .json({ message: "Les champs 'name' et 'priceCents' sont obligatoires." });
+    }
+
+    const parsedPlatform = parsePlatform(platform);
+    if (!parsedPlatform) {
+      return res.status(400).json({
+        message: "La plateforme doit être définie (Windows ou MacOS).",
+      });
     }
 
     const price = Number(priceCents);
@@ -155,6 +178,17 @@ export async function createDownloadableProduct(req: Request, res: Response) {
         currency: "EUR",
         isActive: true,
         categoryId: validCategoryId,
+        fileName: file.originalname,
+        fileSize: file.size,
+        fileMimeType: file.mimetype || null,
+        storagePath: file.path,
+      },
+    });
+
+    await prisma.downloadableBinary.create({
+      data: {
+        productId: product.id,
+        platform: parsedPlatform,
         fileName: file.originalname,
         fileSize: file.size,
         fileMimeType: file.mimetype || null,

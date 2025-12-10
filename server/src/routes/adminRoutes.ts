@@ -11,6 +11,7 @@ import {
   listAdminDownloadableProducts,
   archiveDownloadableProduct,
   restoreDownloadableProduct,
+  uploadDownloadableBinary,
 } from "../controllers/adminDownloadController";
 import {
   adminCreateDownloadableCategory,
@@ -124,6 +125,14 @@ router.post(
   requireAdmin,
   upload.single("file"),
   createDownloadableProduct
+);
+
+router.post(
+  "/downloads/:id/files",
+  attachUserToRequest,
+  requireAdmin,
+  upload.single("file"),
+  uploadDownloadableBinary
 );
 
 router.post(

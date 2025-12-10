@@ -1,5 +1,9 @@
 import { Request, Response } from "express";
-import { DownloadableProduct, VatRegime } from "@prisma/client";
+import {
+  DownloadableProduct,
+  DownloadPlatform,
+  VatRegime,
+} from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { getOrCreateSeoSettings } from "../services/seoSettingsService";
 import { getOrCreateCompanySettings } from "../services/companySettingsService";
@@ -42,6 +46,14 @@ type PublicDownloadableProductV2DTO = {
   priceDisplayMode: "HT" | "TTC";
   isPublished: boolean;
   category?: DownloadableCategoryDTO | null;
+  binaries?: PublicBinaryDTO[];
+};
+
+type PublicBinaryDTO = {
+  id: string;
+  platform: DownloadPlatform;
+  fileName: string;
+  fileSize: number;
 };
 
 type DownloadableCategoryDTO = {
@@ -237,7 +249,7 @@ export async function publicListDownloadableProductsV2(_req: Request, res: Respo
       prisma.downloadableProduct.findMany({
         where: { isActive: true, isArchived: false },
         orderBy: { createdAt: "desc" },
-        include: { category: true },
+        include: { category: true, binaries: true },
       }),
       getOrCreateCompanySettings(),
       prisma.downloadableCategory.findMany({
@@ -276,6 +288,13 @@ export async function publicListDownloadableProductsV2(_req: Request, res: Respo
 
       const detailSlides = parseDetailSlides(product.detailSlides);
 
+      const binaries = product.binaries?.map((binary) => ({
+        id: binary.id,
+        platform: binary.platform,
+        fileName: binary.fileName,
+        fileSize: binary.fileSize,
+      }));
+
       return {
         id: product.id,
         slug: product.slug,
@@ -294,6 +313,7 @@ export async function publicListDownloadableProductsV2(_req: Request, res: Respo
         priceDisplayMode,
         isPublished: product.isActive && !product.isArchived,
         category,
+        binaries: binaries && binaries.length ? binaries : undefined,
       };
     });
 

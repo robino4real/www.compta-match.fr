@@ -40,11 +40,14 @@ export async function applyPromoToCart(req: Request, res: Response) {
     });
   } catch (error) {
     const isInvalidProducts = error instanceof Error && error.message === "INVALID_PRODUCTS";
-    return res.status(isInvalidProducts ? 400 : 500).json({
+    const isInvalidBinary = error instanceof Error && error.message === "INVALID_BINARY";
+    return res.status(isInvalidProducts || isInvalidBinary ? 400 : 500).json({
       ok: false,
-      errorCode: isInvalidProducts ? "PRODUCTS" : "SERVER",
+      errorCode: isInvalidProducts ? "PRODUCTS" : isInvalidBinary ? "BINARY" : "SERVER",
       message: isInvalidProducts
         ? "Certains produits du panier sont invalides."
+        : isInvalidBinary
+        ? "La version sélectionnée pour un logiciel n'est plus disponible."
         : "Impossible de valider le code promo pour le moment.",
     });
   }
@@ -71,10 +74,14 @@ export async function removePromoFromCart(req: Request, res: Response) {
       message: "Code promo retiré.",
     });
   } catch (error) {
-    return res.status(500).json({
+    const isInvalidBinary = error instanceof Error && error.message === "INVALID_BINARY";
+    const isInvalidProducts = error instanceof Error && error.message === "INVALID_PRODUCTS";
+    return res.status(isInvalidBinary || isInvalidProducts ? 400 : 500).json({
       ok: false,
-      errorCode: "SERVER",
-      message: "Impossible de retirer le code promo pour le moment.",
+      errorCode: isInvalidBinary || isInvalidProducts ? "BINARY" : "SERVER",
+      message: isInvalidBinary || isInvalidProducts
+        ? "Certains logiciels ne sont plus disponibles."
+        : "Impossible de retirer le code promo pour le moment.",
     });
   }
 }

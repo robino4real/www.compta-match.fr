@@ -79,6 +79,13 @@ model OrderItem {
   productId        String
   product          DownloadableProduct @relation(fields: [productId], references: [id])
 
+  /// Variante sélectionnée (Windows ou MacOS)
+  platform         DownloadPlatform?
+
+  /// Binaire sélectionné pour cette commande
+  binaryId         String?
+  binary           DownloadableBinary? @relation(fields: [binaryId], references: [id])
+
   productNameSnapshot String
   priceCents          Int
   quantity            Int                @default(1)
@@ -124,6 +131,9 @@ model DownloadableProduct {
 
   /// Chemin de stockage interne sur le serveur (ex: "downloads/uuid-xxx.exe")
   storagePath  String
+
+  /// Fichiers téléchargeables associés (par plateforme)
+  binaries     DownloadableBinary[]
 
   items OrderItem[]
   downloadLinks DownloadLink[]
@@ -171,6 +181,26 @@ model DownloadLink {
   firstDownloadedAt DateTime?
   expiresAt        DateTime?
   lastDownloadedAt DateTime?
+}
+
+enum DownloadPlatform {
+  WINDOWS
+  MACOS
+}
+
+model DownloadableBinary {
+  id          String            @id @default(cuid())
+  productId   String
+  product     DownloadableProduct @relation(fields: [productId], references: [id])
+  platform    DownloadPlatform
+  fileName    String
+  fileSize    Int
+  fileMimeType String?
+  storagePath String
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  orderItems OrderItem[]
 }
 
 model StripeSettings {

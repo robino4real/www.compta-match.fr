@@ -45,7 +45,8 @@ export async function handleDownloadByToken(req: Request, res: Response) {
         orderItem: {
           include: {
             order: true,
-            product: true,
+            product: { include: { binaries: true } },
+            binary: true,
           },
         },
       },
@@ -105,17 +106,22 @@ export async function handleDownloadByToken(req: Request, res: Response) {
     });
 
     const product = link.orderItem.product;
+    const selectedBinary =
+      link.orderItem.binary || product?.binaries?.[0] || null;
 
-    if (!product.storagePath || !product.fileName) {
+    const fileName = selectedBinary?.fileName || product.fileName;
+    const storagePath = selectedBinary?.storagePath || product.storagePath;
+
+    if (!storagePath || !fileName) {
       return res.status(500).json({
         message:
           "Le fichier associé à ce produit n'est pas disponible sur le serveur.",
       });
     }
 
-    const filePath = path.isAbsolute(product.storagePath)
-      ? product.storagePath
-      : path.join(__dirname, "../../", product.storagePath);
+    const filePath = path.isAbsolute(storagePath)
+      ? storagePath
+      : path.join(__dirname, "../../", storagePath);
 
     if (!fs.existsSync(filePath)) {
       return res.status(500).json({
@@ -124,7 +130,7 @@ export async function handleDownloadByToken(req: Request, res: Response) {
       });
     }
 
-    return res.download(filePath, product.fileName);
+    return res.download(filePath, fileName);
   } catch (error) {
     console.error(
       "Erreur lors du téléchargement d'un produit téléchargeable :",

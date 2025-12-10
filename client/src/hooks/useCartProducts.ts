@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE_URL } from "../config/api";
 import { CartItem } from "../context/CartContext";
-import { DownloadableProduct } from "../types/downloadableProduct";
+import {
+  DownloadableBinary,
+  DownloadableProduct,
+} from "../types/downloadableProduct";
 
 const toCents = (priceTtc: number) => Math.round(priceTtc * 100);
 
@@ -9,6 +12,7 @@ export interface EnrichedCartItem extends CartItem {
   product?: DownloadableProduct;
   unitPriceCents: number;
   lineTotalCents: number;
+  binary?: DownloadableBinary;
 }
 
 export const useCartProducts = (items: CartItem[]) => {
@@ -51,7 +55,7 @@ export const useCartProducts = (items: CartItem[]) => {
   useEffect(() => {
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items.map((item) => item.id).join(",")]);
+  }, [items.map((item) => `${item.id}:${item.binaryId || ""}`).join(",")]);
 
   const productMap = useMemo(() => {
     return products.reduce<Record<string, DownloadableProduct>>((acc, product) => {
@@ -63,12 +67,16 @@ export const useCartProducts = (items: CartItem[]) => {
   const enrichedItems = useMemo<EnrichedCartItem[]>(() => {
     return items.map((item) => {
       const product = productMap[item.id];
+      const binary = product?.binaries?.find(
+        (entry) => entry.id === item.binaryId || entry.platform === item.platform
+      );
       const unitPriceCents = product
         ? toCents(product.priceTtc)
         : item.priceCents;
       return {
         ...item,
         product,
+        binary,
         unitPriceCents,
         lineTotalCents: unitPriceCents * item.quantity,
       };
