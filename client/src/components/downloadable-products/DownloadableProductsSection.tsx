@@ -82,6 +82,7 @@ export const DownloadableProductsSection: React.FC = () => {
   const [imageIndex, setImageIndex] = useState(0);
   const [isFading, setIsFading] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedBinaryId, setSelectedBinaryId] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -160,6 +161,14 @@ export const DownloadableProductsSection: React.FC = () => {
     setImageIndex(0);
   }, [selectedProduct?.id]);
 
+  useEffect(() => {
+    if (selectedProduct?.binaries?.length) {
+      setSelectedBinaryId(selectedProduct.binaries[0].id);
+    } else {
+      setSelectedBinaryId(null);
+    }
+  }, [selectedProduct?.id, selectedProduct?.binaries?.length]);
+
   const hasMultipleDetailSlides = detailSlides.length > 1;
   const hasBackOfficeSlideSet =
     slidesFromBackOffice && detailSlides.length > 1;
@@ -198,6 +207,21 @@ export const DownloadableProductsSection: React.FC = () => {
     selectedProduct?.shortDescription ||
     "";
 
+  const selectedBinary = useMemo(() => {
+    if (!selectedProduct?.binaries?.length) return null;
+    return (
+      selectedProduct.binaries.find((binary) => binary.id === selectedBinaryId) ||
+      selectedProduct.binaries[0]
+    );
+  }, [selectedBinaryId, selectedProduct?.binaries]);
+
+  const platformLabel = (platform?: string | null) =>
+    platform === "MACOS" ? "MacOS" : "Windows";
+
+  const isAddToCartDisabled =
+    !selectedProduct ||
+    (!!selectedProduct.binaries?.length && !selectedBinary);
+
   const maxIndex = Math.max(filteredProducts.length - VISIBLE_CARDS, 0);
 
   useEffect(() => {
@@ -233,10 +257,13 @@ export const DownloadableProductsSection: React.FC = () => {
   };
 
   const handleAddToCart = (product: DownloadableProduct) => {
+    const binary = selectedBinary || product.binaries?.[0] || null;
     addDownloadableProduct({
       id: product.id,
       name: product.name,
       priceCents: Math.round(product.priceTtc * 100),
+      binaryId: binary?.id,
+      platform: binary?.platform,
     });
   };
 
@@ -423,17 +450,57 @@ export const DownloadableProductsSection: React.FC = () => {
             </div>
           )}
 
-          <div className="mt-6 flex flex-wrap items-center gap-4">
+          <div className="mt-6 space-y-3">
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
+                Version du logiciel
+              </h4>
+              {selectedProduct?.binaries?.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {selectedProduct.binaries.map((binary) => {
+                    const isActive = binary.id === selectedBinary?.id;
+                    return (
+                      <button
+                        key={binary.id}
+                        type="button"
+                        onClick={() => setSelectedBinaryId(binary.id)}
+                        className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition ${
+                          isActive
+                            ? "border-black bg-black text-white shadow"
+                            : "border-slate-300 bg-white text-slate-800 hover:border-black"
+                        }`}
+                        aria-pressed={isActive}
+                      >
+                        {platformLabel(binary.platform)}
+                        <span className="text-[11px] font-normal text-current/80">
+                          {binary.fileSize
+                            ? `${(binary.fileSize / (1024 * 1024)).toFixed(1)} Mo`
+                            : ""}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-600">
+                  Les fichiers d’installation seront ajoutés prochainement.
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4">
             <div className="text-2xl font-semibold text-slate-900">
               {formatPrice(selectedProduct.priceTtc)} {priceLabel}
             </div>
             <button
               type="button"
               onClick={() => handleAddToCart(selectedProduct)}
-              className="pressable-button inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white hover:bg-slate-900"
+              disabled={isAddToCartDisabled}
+              className="pressable-button inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white hover:bg-slate-900 disabled:cursor-not-allowed disabled:bg-slate-400 disabled:text-white/80"
             >
               Ajouter au panier
             </button>
+            </div>
           </div>
         </div>
 

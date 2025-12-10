@@ -1,4 +1,6 @@
 import { Request, Response } from "express";
+import fs from "fs";
+import { DownloadPlatform } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { createDownloadableProduct } from "./adminController";
 
@@ -8,6 +10,19 @@ type DetailSlideInput = {
   imageUrl?: string | null;
   description?: string | null;
 };
+
+const SUPPORTED_PLATFORMS: DownloadPlatform[] = [
+  DownloadPlatform.WINDOWS,
+  DownloadPlatform.MACOS,
+];
+
+function parsePlatform(raw: unknown): DownloadPlatform | null {
+  if (typeof raw !== "string") return null;
+  const upper = raw.trim().toUpperCase();
+  return SUPPORTED_PLATFORMS.includes(upper as DownloadPlatform)
+    ? (upper as DownloadPlatform)
+    : null;
+}
 
 function parseFeatureBullets(raw: unknown) {
   if (Array.isArray(raw)) {
@@ -99,7 +114,7 @@ export async function getDownloadableProductById(req: Request, res: Response) {
 
     const product = await prisma.downloadableProduct.findUnique({
       where: { id },
-      include: { category: true },
+      include: { category: true, binaries: true },
     });
 
     if (!product) {
@@ -291,7 +306,7 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
     const updated = await prisma.downloadableProduct.update({
       where: { id },
       data: updateData,
-      include: { category: true },
+      include: { category: true, binaries: true },
     });
 
     return res.status(200).json({ product: updated });
@@ -327,6 +342,98 @@ export async function archiveDownloadableProduct(req: Request, res: Response) {
   }
 }
 
+export async function uploadDownloadableBinary(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    const file = (req as any).file as Express.Multer.File | undefined;
+    const platformInput = (req.body as { platform?: string }).platform;
+
+    if (!id) {
+      return res.status(400).json({ message: "Identifiant du produit manquant." });
+    }
+
+    if (!file) {
+      return res.status(400).json({ message: "Aucun fichier reçu." });
+    }
+
+    const platform = parsePlatform(platformInput);
+    if (!platform) {
+      return res
+        .status(400)
+        .json({ message: "La plateforme doit être Windows ou MacOS." });
+    }
+
+    const product = await prisma.downloadableProduct.findUnique({
+      where: { id },
+      include: { binaries: true },
+    });
+
+    if (!product) {
+      return res
+        .status(404)
+        .json({ message: "Produit téléchargeable introuvable." });
+    }
+
+    const existingBinary = product.binaries.find(
+      (binary) => binary.platform === platform
+    );
+
+    if (existingBinary?.storagePath && existingBinary.storagePath !== file.path) {
+      try {
+        if (fs.existsSync(existingBinary.storagePath)) {
+          fs.unlinkSync(existingBinary.storagePath);
+        }
+      } catch (error) {
+        console.warn(
+          "Impossible de supprimer l'ancien fichier binaire", error
+        );
+      }
+    }
+
+    const binary = existingBinary
+      ? await prisma.downloadableBinary.update({
+          where: { id: existingBinary.id },
+          data: {
+            fileName: file.originalname,
+            fileSize: file.size,
+            fileMimeType: file.mimetype || null,
+            storagePath: file.path,
+          },
+        })
+      : await prisma.downloadableBinary.create({
+          data: {
+            productId: id,
+            platform,
+            fileName: file.originalname,
+            fileSize: file.size,
+            fileMimeType: file.mimetype || null,
+            storagePath: file.path,
+          },
+        });
+
+    await prisma.downloadableProduct.update({
+      where: { id },
+      data: {
+        fileName: file.originalname,
+        fileSize: file.size,
+        fileMimeType: file.mimetype || null,
+        storagePath: file.path,
+      },
+    });
+
+    return res.status(existingBinary ? 200 : 201).json({ binary });
+  } catch (error) {
+    console.error(
+      "Erreur lors de l'upload d'un binaire téléchargeable :",
+      error
+    );
+    return res.status(500).json({
+      message:
+        "Impossible de téléverser le fichier du logiciel pour le moment.",
+    });
+  }
+}
+
 export async function restoreDownloadableProduct(req: Request, res: Response) {
   try {
     const { id } = req.params;
@@ -348,4 +455,4 @@ export async function restoreDownloadableProduct(req: Request, res: Response) {
   }
 }
 
-export { createDownloadableProduct };
+export { createDownloadableProduct, uploadDownloadableBinary };

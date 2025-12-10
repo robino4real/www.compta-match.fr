@@ -65,6 +65,7 @@ const AdminDownloadsPage: React.FC = () => {
   const [featureInput, setFeatureInput] = React.useState("");
   const [detailHtml, setDetailHtml] = React.useState("");
   const [releaseChannel, setReleaseChannel] = React.useState("stable");
+  const [binaryPlatform, setBinaryPlatform] = React.useState("WINDOWS");
   const [platforms, setPlatforms] = React.useState<string[]>([]);
   const [licenseType, setLicenseType] = React.useState("perpetual");
   const [supportContact, setSupportContact] = React.useState("support@compta-match.fr");
@@ -378,6 +379,7 @@ const AdminDownloadsPage: React.FC = () => {
     if (thumbnailUrl.trim()) {
       formData.append("thumbnailUrl", thumbnailUrl.trim());
     }
+    formData.append("platform", binaryPlatform);
     if (featureBullets.length) {
       formData.append("featureBullets", JSON.stringify(featureBullets));
     }
@@ -410,6 +412,7 @@ const AdminDownloadsPage: React.FC = () => {
         setFeatureInput("");
         setDetailHtml("");
         setReleaseChannel("stable");
+        setBinaryPlatform("WINDOWS");
         setPlatforms([]);
         setLicenseType("perpetual");
         setSupportContact("support@compta-match.fr");
@@ -825,6 +828,22 @@ const AdminDownloadsPage: React.FC = () => {
 
             <div className="space-y-3 rounded-xl border border-dashed border-slate-300 bg-white p-4">
               <p className="text-sm font-semibold text-black">Fichier à téléverser</p>
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-slate-800">
+                  Plateforme du binaire
+                </label>
+                <select
+                  value={binaryPlatform}
+                  onChange={(e) => setBinaryPlatform(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                >
+                  <option value="WINDOWS">Windows</option>
+                  <option value="MACOS">MacOS</option>
+                </select>
+                <p className="text-[11px] text-slate-500">
+                  Sélectionnez l’OS correspondant au fichier importé.
+                </p>
+              </div>
               <input
                 type="file"
                 onChange={handleFileChange}

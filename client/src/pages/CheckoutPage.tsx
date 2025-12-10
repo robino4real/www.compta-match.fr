@@ -97,6 +97,9 @@ const CheckoutPage: React.FC = () => {
   const discountCents = appliedPromo?.discountCents || 0;
   const payableCents = appliedPromo?.newTotalCents || baseTotalCents;
 
+  const platformLabel = (platform?: string | null) =>
+    platform === "MACOS" ? "MacOS" : platform === "WINDOWS" ? "Windows" : null;
+
   const handleBillingChange = (
     field: keyof BillingFormState,
     value: string
@@ -431,6 +434,11 @@ const CheckoutPage: React.FC = () => {
                       <p className="text-xs text-slate-600">
                         {item.product?.shortDescription || "Logiciel téléchargeable"}
                       </p>
+                      {platformLabel(item.platform) && (
+                        <p className="text-[11px] text-slate-500">
+                          Version {platformLabel(item.platform)}
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 text-sm font-semibold text-slate-900">
                       <span>{formatPrice(item.unitPriceCents / 100)}</span>

@@ -1,4 +1,5 @@
 import React from "react";
+import { DownloadPlatform } from "../types/downloadableProduct";
 
 export interface CartItem {
   id: string;
@@ -6,6 +7,8 @@ export interface CartItem {
   priceCents: number;
   quantity: number;
   type: "downloadable";
+  binaryId?: string | null;
+  platform?: DownloadPlatform | null;
 }
 
 interface CartContextValue {
@@ -15,6 +18,8 @@ interface CartContextValue {
     id: string;
     name: string;
     priceCents: number;
+    binaryId?: string;
+    platform?: DownloadPlatform;
   }) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
@@ -62,16 +67,34 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     React.useState<number>(0);
 
   const addDownloadableProduct = React.useCallback(
-    (product: { id: string; name: string; priceCents: number }) => {
+    (product: {
+      id: string;
+      name: string;
+      priceCents: number;
+      binaryId?: string;
+      platform?: DownloadPlatform;
+    }) => {
       setItems((prev) => {
-        const existing = prev.find(
+        const existingIndex = prev.findIndex(
           (item) => item.id === product.id && item.type === "downloadable"
         );
-        // Pour un logiciel téléchargeable, on ne duplique pas : 1 licence au panier
-        if (existing) {
-          return prev;
+
+        const nextTimestamp = Date.now();
+
+        if (existingIndex !== -1) {
+          const updated = [...prev];
+          updated[existingIndex] = {
+            ...updated[existingIndex],
+            name: product.name,
+            priceCents: product.priceCents,
+            binaryId: product.binaryId ?? null,
+            platform: product.platform ?? null,
+          };
+          setLastAdditionTimestamp(nextTimestamp);
+          return updated;
         }
-        setLastAdditionTimestamp(Date.now());
+
+        setLastAdditionTimestamp(nextTimestamp);
         return [
           ...prev,
           {
@@ -80,6 +103,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             priceCents: product.priceCents,
             quantity: 1,
             type: "downloadable",
+            binaryId: product.binaryId ?? null,
+            platform: product.platform ?? null,
           },
         ];
       });

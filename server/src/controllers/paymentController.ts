@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { PromoCode } from "@prisma/client";
+import { DownloadPlatform, PromoCode } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { stripe } from "../config/stripeClient";
 import { createInvoiceForOrder } from "../services/invoiceService";
@@ -204,6 +204,8 @@ export async function createDownloadCheckoutSession(
         normalizedItems.map((it) => ({
           productId: it.productId,
           quantity: it.quantity,
+          binaryId: it.binaryId || "",
+          platform: it.platform || "",
         }))
       ),
       promoCodeId: appliedPromo ? appliedPromo.id : "",
@@ -320,7 +322,22 @@ export async function handleStripeWebhook(req: Request, res: Response) {
       return res.status(200).json({ received: true });
     }
 
-    let parsedItems: { productId: string; quantity: number }[] = [];
+    const normalizePlatform = (
+      value: unknown
+    ): DownloadPlatform | undefined => {
+      if (typeof value !== "string") return undefined;
+      const upper = value.trim().toUpperCase();
+      return upper === "WINDOWS" || upper === "MACOS"
+        ? (upper as DownloadPlatform)
+        : undefined;
+    };
+
+    let parsedItems: {
+      productId: string;
+      quantity: number;
+      binaryId?: string | null;
+      platform?: DownloadPlatform | null;
+    }[] = [];
     try {
       const raw = JSON.parse(itemsJson);
       if (Array.isArray(raw)) {
@@ -330,6 +347,8 @@ export async function handleStripeWebhook(req: Request, res: Response) {
             it.quantity && Number(it.quantity) > 0
               ? Number(it.quantity)
               : 1,
+          binaryId: it.binaryId ? String(it.binaryId) : null,
+          platform: normalizePlatform(it.platform) || null,
         }));
       }
     } catch (err) {
@@ -367,6 +386,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
         id: { in: productIds },
         isActive: true,
       },
+      include: { binaries: true },
     });
 
     if (products.length === 0) {
@@ -385,6 +405,33 @@ export async function handleStripeWebhook(req: Request, res: Response) {
       acc[p.id] = p;
       return acc;
     }, {});
+
+    const hasInvalidBinary = parsedItems.some((item) => {
+      const product = productMap[item.productId];
+      if (!product) return true;
+
+      if (!product.binaries?.length) return false;
+
+      if (item.binaryId) {
+        return !product.binaries.some((binary) => binary.id === item.binaryId);
+      }
+
+      if (item.platform) {
+        return !product.binaries.some(
+          (binary) => binary.platform === item.platform
+        );
+      }
+
+      return false;
+    });
+
+    if (hasInvalidBinary) {
+      console.error(
+        "[Stripe webhook] Binaire sélectionné introuvable pour la commande. userId :",
+        userId
+      );
+      return res.status(200).json({ received: true });
+    }
 
     const totalCents = parsedItems.reduce((sum, it) => {
       const product = productMap[it.productId];
@@ -435,6 +482,29 @@ export async function handleStripeWebhook(req: Request, res: Response) {
         return parts.join(", ");
       })();
 
+    const itemsWithBinary = parsedItems
+      .filter((it) => !!productMap[it.productId])
+      .map((it) => {
+        const product = productMap[it.productId];
+        const selectedBinary =
+          (it.binaryId
+            ? product.binaries.find((binary) => binary.id === it.binaryId)
+            : undefined) ||
+          (it.platform
+            ? product.binaries.find(
+                (binary) => binary.platform === it.platform
+              )
+            : undefined) ||
+          product.binaries?.[0] ||
+          null;
+
+        return {
+          ...it,
+          binaryId: selectedBinary?.id || null,
+          platform: selectedBinary?.platform || it.platform || null,
+        };
+      });
+
     // Création de la commande (status PAID car Stripe a confirmé le paiement)
     const order = await prisma.order.create({
       data: {
@@ -454,14 +524,15 @@ export async function handleStripeWebhook(req: Request, res: Response) {
         acceptedTerms,
         acceptedLicense,
         items: {
-          create: parsedItems
-            .filter((it) => !!productMap[it.productId])
+          create: itemsWithBinary
             .map((it) => ({
               productId: it.productId,
               productNameSnapshot: productMap[it.productId].name,
               priceCents: productMap[it.productId].priceCents,
               quantity: it.quantity,
               lineTotal: productMap[it.productId].priceCents * it.quantity,
+              binaryId: it.binaryId,
+              platform: it.platform,
             })),
         },
       },

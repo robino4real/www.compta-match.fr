@@ -12,6 +12,9 @@ const CartPage: React.FC = () => {
 
   const hasItems = enrichedItems.length > 0;
 
+  const platformLabel = (platform?: string | null) =>
+    platform === "MACOS" ? "MacOS" : platform === "WINDOWS" ? "Windows" : null;
+
   const handleProceed = () => {
     navigate("/commande");
   };
@@ -107,6 +110,11 @@ const CartPage: React.FC = () => {
                         <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">
                           Licence perpétuelle
                         </span>
+                        {platformLabel(item.platform) && (
+                          <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">
+                            Version {platformLabel(item.platform)}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-3 sm:w-48">
@@ -138,7 +146,14 @@ const CartPage: React.FC = () => {
               <div className="mt-4 space-y-3 border-t border-slate-100 pt-4 text-sm">
                 {enrichedItems.map((item) => (
                   <div key={`summary-${item.id}`} className="flex items-center justify-between">
-                    <span className="text-slate-600">{item.product?.name || item.name}</span>
+                    <div className="flex flex-col">
+                      <span className="text-slate-600">{item.product?.name || item.name}</span>
+                      {platformLabel(item.platform) && (
+                        <span className="text-[11px] text-slate-500">
+                          Version {platformLabel(item.platform)}
+                        </span>
+                      )}
+                    </div>
                     <span className="font-semibold text-slate-900">
                       {formatPrice(item.lineTotalCents / 100)}
                     </span>
