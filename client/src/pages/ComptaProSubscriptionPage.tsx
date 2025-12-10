@@ -53,13 +53,6 @@ const ComptaProSubscriptionPage: React.FC = () => {
     fetchData();
   }, []);
 
-  const scrollToPlans = () => {
-    const anchor = document.getElementById("plans");
-    if (anchor) {
-      anchor.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
   const handlePlanDetailClick = () => {
     navigate("/nouvelle-page");
   };
@@ -119,98 +112,48 @@ const ComptaProSubscriptionPage: React.FC = () => {
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-20 top-0 h-80 w-80 rounded-full bg-pink-500/20 blur-[120px]" />
         <div className="absolute right-0 top-10 h-[26rem] w-[26rem] rounded-full bg-purple-700/30 blur-[140px]" />
+        <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-white via-white/70 to-transparent" />
         <div className="absolute inset-x-0 top-32 h-64 bg-gradient-to-b from-transparent via-white/10 to-transparent" />
       </div>
 
       <div className="relative mx-auto max-w-6xl px-4 pb-20 pt-16 lg:px-8 lg:pt-20 space-y-12">
-        <section className="grid gap-10 lg:grid-cols-2 lg:items-center">
-          <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-indigo-100 ring-1 ring-white/20">
-              <span className="h-2 w-2 rounded-full bg-indigo-300" />
-              Nouvelle version ComptaPro
-            </div>
-
-            <div className="space-y-4">
-              <h1 className="text-4xl font-bold leading-tight md:text-5xl">
-                Comptabilité experte
-                <span className="block text-white/80">pour vos équipes</span>
-              </h1>
-              <p className="max-w-2xl text-base text-white/80">
-                Pilotez votre comptabilité en ligne : automatisation bancaire, contrôle des dépenses et reporting instantané pour donner de la visibilité à toute votre organisation.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={scrollToPlans}
-                className="pressable-button inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-pink-500/30 transition hover:-translate-y-[1px] hover:bg-slate-100"
-              >
-                Voir les offres
-              </button>
-              <button
-                type="button"
-                onClick={handleProAccessClick}
-                disabled={isAuthLoading}
-                className="inline-flex items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:border-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                Accéder à mon espace Pro
-              </button>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-purple-500/20">
-                <p className="text-xs uppercase tracking-[0.08em] text-white/60">Transactions</p>
-                <p className="mt-1 text-2xl font-semibold text-white">+19%</p>
-                <p className="text-xs text-white/60">d’efficacité mensuelle</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-pink-500/20">
-                <p className="text-xs uppercase tracking-[0.08em] text-white/60">Clôture</p>
-                <p className="mt-1 text-2xl font-semibold text-white">2x</p>
-                <p className="text-xs text-white/60">plus rapide</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-indigo-500/20">
-                <p className="text-xs uppercase tracking-[0.08em] text-white/60">Équipe</p>
-                <p className="mt-1 text-2xl font-semibold text-white">Focus</p>
-                <p className="text-xs text-white/60">sur le conseil</p>
-              </div>
-            </div>
+        <section className="flex flex-col items-center gap-8 text-center">
+          <div className="space-y-4 max-w-3xl">
+            <h1 className="text-4xl font-bold leading-tight md:text-5xl">
+              Comptabilité experte
+              <span className="block text-white/80">pour vos équipes</span>
+            </h1>
+            <p className="text-base text-white/80">
+              Pilotez votre comptabilité en ligne : automatisation bancaire, contrôle des dépenses et reporting instantané pour donner de la visibilité à toute votre organisation.
+            </p>
           </div>
 
-          <div className="flex justify-center lg:justify-end">
-            <div className="w-full max-w-md rounded-[28px] border border-white/10 bg-gradient-to-br from-white/15 via-white/8 to-white/5 p-6 shadow-[0_35px_120px_rgba(0,0,0,0.45)] backdrop-blur">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm text-white/70">Solde disponible</p>
-                  <p className="text-3xl font-semibold">€6 650,05</p>
-                </div>
-                <span className="rounded-full bg-indigo-500/20 px-3 py-1 text-xs font-semibold text-indigo-100 ring-1 ring-indigo-300/30">
-                  ComptaPro
-                </span>
-              </div>
+          <div className="flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={handleProAccessClick}
+              disabled={isAuthLoading}
+              className="inline-flex items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:border-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              Accéder à mon espace Pro
+            </button>
+          </div>
 
-              <div className="mt-6 flex gap-3">
-                <button className="flex-1 rounded-full bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-pink-500/30">
-                  Transfer
-                </button>
-                <button className="flex-1 rounded-full border border-white/20 bg-white/5 px-4 py-3 text-sm font-semibold text-white">
-                  Request
-                </button>
-              </div>
-
-              <div className="mt-6 space-y-3 rounded-2xl bg-black/20 p-4 ring-1 ring-white/5">
-                <div className="flex items-center justify-between text-sm text-white/80">
-                  <span>Total Income</span>
-                  <span>€1 650,05</span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full w-[82%] rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500" />
-                </div>
-                <div className="flex items-center justify-between text-xs text-white/60">
-                  <span>Target 30 000</span>
-                  <span>82%</span>
-                </div>
-              </div>
+          <div className="grid w-full max-w-3xl gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-purple-500/20">
+              <p className="text-xs uppercase tracking-[0.08em] text-white/60">Transactions</p>
+              <p className="mt-1 text-2xl font-semibold text-white">+19%</p>
+              <p className="text-xs text-white/60">d’efficacité mensuelle</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-pink-500/20">
+              <p className="text-xs uppercase tracking-[0.08em] text-white/60">Clôture</p>
+              <p className="mt-1 text-2xl font-semibold text-white">2x</p>
+              <p className="text-xs text-white/60">plus rapide</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-indigo-500/20">
+              <p className="text-xs uppercase tracking-[0.08em] text-white/60">Équipe</p>
+              <p className="mt-1 text-2xl font-semibold text-white">Focus</p>
+              <p className="text-xs text-white/60">sur le conseil</p>
             </div>
           </div>
         </section>
