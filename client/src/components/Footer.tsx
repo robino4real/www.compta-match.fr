@@ -11,12 +11,12 @@ const Footer: React.FC = () => {
   );
 
   const containerClasses = isDarkFooter
-    ? 'border-t border-white/10 bg-black mt-8'
+    ? 'border-t border-white/10 bg-black mt-8 text-white'
     : 'border-t bg-slate-100 mt-8';
 
-  const textMutedClasses = isDarkFooter ? 'text-xs text-white/70' : 'text-xs text-slate-500';
+  const textMutedClasses = isDarkFooter ? 'text-xs text-white' : 'text-xs text-slate-500';
   const linkClasses = isDarkFooter
-    ? 'hover:text-white text-white/80 underline-offset-2 hover:underline'
+    ? 'hover:text-white text-white underline-offset-2 hover:underline'
     : 'hover:text-black text-slate-600 underline-offset-2 hover:underline';
 
   return (
@@ -25,7 +25,7 @@ const Footer: React.FC = () => {
         <p className={textMutedClasses}>
           © {currentYear} COMPTAMATCH. Tous droits réservés.
         </p>
-        <div className={`flex flex-wrap items-center gap-4 text-xs ${isDarkFooter ? 'text-white/80' : 'text-slate-600'}`}>
+        <div className={`flex flex-wrap items-center gap-4 text-xs ${isDarkFooter ? 'text-white' : 'text-slate-600'}`}>
           <Link to="/comparatif-des-offres" className={linkClasses}>
             Comparer les offres
           </Link>
