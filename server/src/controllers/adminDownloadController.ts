@@ -455,4 +455,4 @@ export async function restoreDownloadableProduct(req: Request, res: Response) {
   }
 }
 
-export { createDownloadableProduct, uploadDownloadableBinary };
+export { createDownloadableProduct };
