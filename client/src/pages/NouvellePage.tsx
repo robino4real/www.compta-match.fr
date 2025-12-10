@@ -1,14 +1,5 @@
 import React from "react";
 
-const partnerLogos = [
-  "HelloAsso",
-  "Banque Populaire",
-  "Crédit Mutuel",
-  "Université de Bordeaux",
-  "Ville de Lyon",
-  "Fondation Étudiante",
-];
-
 const navigationLinks = [
   "Home",
   "Fonctionnalités",
@@ -185,22 +176,6 @@ const ComptAssoLanding: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
-        </section>
-
-        <section className="mt-16 text-center">
-          <p className="text-sm text-[#E5E7EB]">
-            Déjà adopté par des associations étudiantes, sportives et culturelles
-          </p>
-          <div className="mt-6 grid grid-cols-2 gap-4 text-sm text-[rgba(148,163,184,0.85)] sm:grid-cols-3 lg:grid-cols-6">
-            {partnerLogos.map((logo) => (
-              <span
-                key={logo}
-                className="rounded-full bg-white/5 px-4 py-3 text-center font-medium opacity-80 transition duration-200 hover:opacity-100"
-              >
-                {logo}
-              </span>
-            ))}
           </div>
         </section>
 

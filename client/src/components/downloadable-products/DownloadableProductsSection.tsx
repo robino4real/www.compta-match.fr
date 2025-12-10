@@ -11,7 +11,9 @@ const skeletonItems = Array.from({ length: 3 });
 const CARD_WIDTH = 320;
 const CARD_GAP = 28;
 const VISIBLE_CARDS = 3;
-const CARD_EDGE_PADDING = 16;
+// Extra padding is increased by ~0.5cm on each side to avoid abrupt shadow cutoffs
+// when selecting cards near the edges of the carousel viewport.
+const CARD_EDGE_PADDING = 35;
 
 type DetailSlide = { imageUrl?: string | null; description?: string | null };
 
