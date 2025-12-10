@@ -108,16 +108,15 @@ const ComptaProSubscriptionPage: React.FC = () => {
   const hasPlans = plans.length > 0;
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#070312] text-white">
-      <div className="pointer-events-none absolute inset-0">
+    <main className="relative isolate min-h-screen overflow-visible bg-[#050316] text-white">
+      <div className="pointer-events-none absolute inset-0 z-0">
         <div className="absolute -left-20 top-0 h-80 w-80 rounded-full bg-pink-500/20 blur-[120px]" />
         <div className="absolute right-0 top-10 h-[26rem] w-[26rem] rounded-full bg-purple-700/30 blur-[140px]" />
-        <div className="absolute inset-x-0 top-0 h-7 bg-gradient-to-b from-white via-white/70 to-transparent" />
-        <div className="absolute inset-x-0 top-7 h-16 bg-gradient-to-b from-white/25 via-white/12 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black via-black/70 to-transparent" />
+        <div className="hero-nav-fade" />
       </div>
 
-      <div className="relative mx-auto max-w-6xl px-4 pb-20 pt-16 lg:px-8 lg:pt-20 space-y-12">
+      <div className="relative z-20 mx-auto max-w-6xl px-4 pb-20 pt-16 lg:px-8 lg:pt-20 space-y-12">
         <section className="flex flex-col items-center gap-8 text-center">
           <div className="space-y-4 max-w-3xl">
             <h1 className="text-4xl font-bold leading-tight md:text-5xl">
