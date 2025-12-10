@@ -112,10 +112,9 @@ const ComptaProSubscriptionPage: React.FC = () => {
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-20 top-0 h-80 w-80 rounded-full bg-pink-500/20 blur-[120px]" />
         <div className="absolute right-0 top-10 h-[26rem] w-[26rem] rounded-full bg-purple-700/30 blur-[140px]" />
-        <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-white via-white/90 to-white/30" />
-        <div className="absolute inset-x-0 top-8 h-8 bg-gradient-to-b from-white/50 via-white/30 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black via-[#070312]/85 to-transparent" />
-        <div className="absolute inset-x-0 bottom-12 h-6 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-white/80 via-white/40 to-transparent" />
+        <div className="absolute inset-x-0 top-16 h-32 bg-gradient-to-b from-transparent via-white/8 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#070312] via-[#0d071d]/80 to-transparent" />
       </div>
 
       <div className="relative mx-auto max-w-6xl px-4 pb-20 pt-16 lg:px-8 lg:pt-20 space-y-12">
