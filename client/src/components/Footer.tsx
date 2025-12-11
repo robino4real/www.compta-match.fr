@@ -1,23 +1,13 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
-  const location = useLocation();
   const currentYear = new Date().getFullYear();
 
-  const isDarkFooter = React.useMemo(
-    () => location.pathname.startsWith('/comptapro') || location.pathname.startsWith('/comptasso'),
-    [location.pathname]
-  );
+  const containerClasses = 'bg-white text-slate-900 mt-8';
 
-  const containerClasses = isDarkFooter
-    ? 'bg-black text-white'
-    : 'border-t bg-slate-100 mt-8';
-
-  const textMutedClasses = isDarkFooter ? 'text-xs text-white' : 'text-xs text-slate-500';
-  const linkClasses = isDarkFooter
-    ? 'hover:text-white text-white underline-offset-2 hover:underline'
-    : 'hover:text-black text-slate-600 underline-offset-2 hover:underline';
+  const textMutedClasses = 'text-xs text-slate-700';
+  const linkClasses = 'hover:text-black text-slate-800 underline-offset-2 hover:underline';
 
   return (
     <footer className={containerClasses}>
@@ -25,7 +15,7 @@ const Footer: React.FC = () => {
         <p className={textMutedClasses}>
           © {currentYear} COMPTAMATCH. Tous droits réservés.
         </p>
-        <div className={`flex flex-wrap items-center gap-4 text-xs ${isDarkFooter ? 'text-white' : 'text-slate-600'}`}>
+        <div className="flex flex-wrap items-center gap-4 text-xs text-slate-700">
           <Link to="/comparatif-des-offres" className={linkClasses}>
             Comparer les offres
           </Link>

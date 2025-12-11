@@ -66,23 +66,23 @@ const ComptaProSubscriptionPage: React.FC = () => {
   const renderPlanCard = (plan: PaidServicePlan) => (
     <article
       key={plan.id}
-      className="flex flex-col justify-between rounded-3xl border border-white/10 bg-white/5 px-6 py-6 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur"
+      className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white px-6 py-6 shadow-sm"
     >
       <header className="flex items-start justify-between gap-4">
         <div className="space-y-1">
-          <p className="inline-flex rounded-full bg-indigo-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-indigo-100 ring-1 ring-indigo-300/30">
+          <p className="inline-flex rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-purple-800 ring-1 ring-purple-200">
             ComptaPro
           </p>
-          <h2 className="text-lg font-semibold text-white">{plan.name}</h2>
-          {plan.subtitle && <p className="text-sm text-slate-200/90">{plan.subtitle}</p>}
+          <h2 className="text-lg font-semibold text-slate-900">{plan.name}</h2>
+          {plan.subtitle && <p className="text-sm text-slate-700">{plan.subtitle}</p>}
         </div>
-        <p className="text-right text-lg font-semibold text-white">
+        <p className="text-right text-lg font-semibold text-slate-900">
           {formatPaidServicePrice(Number(plan.priceAmount), plan.priceCurrency)}
-          <span className="text-sm text-slate-200"> /{plan.pricePeriod === "month" ? "mois" : "an"}</span>
+          <span className="text-sm text-slate-600"> /{plan.pricePeriod === "month" ? "mois" : "an"}</span>
         </p>
       </header>
       <button
-        className="mt-6 inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-md transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        className="mt-6 inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600"
         onClick={handlePlanDetailClick}
       >
         En savoir plus
@@ -93,36 +93,31 @@ const ComptaProSubscriptionPage: React.FC = () => {
   const renderPlanSkeleton = (index: number) => (
     <div
       key={`skeleton-${index}`}
-      className="h-52 rounded-3xl border border-white/10 bg-white/10 animate-pulse"
+      className="h-52 rounded-3xl border border-slate-200 bg-slate-100 animate-pulse"
     />
   );
 
   const renderComparisonSkeleton = () => (
-    <div className="h-48 rounded-2xl border border-white/10 bg-white/10 animate-pulse" />
+    <div className="h-48 rounded-2xl border border-slate-200 bg-slate-100 animate-pulse" />
   );
 
   const renderSectionSkeleton = (index: number) => (
-    <div key={`section-skeleton-${index}`} className="h-56 rounded-3xl bg-white/10 border border-white/10 animate-pulse" />
+    <div key={`section-skeleton-${index}`} className="h-56 rounded-3xl bg-slate-100 border border-slate-200 animate-pulse" />
   );
 
   const hasPlans = plans.length > 0;
 
   return (
-    <main className="hero-comptapro relative isolate min-h-screen overflow-visible text-white">
-      <div className="pointer-events-none absolute inset-0 z-0">
-        <div className="absolute left-1/2 top-[38vh] h-[22rem] w-[22rem] -translate-x-1/2 rounded-full bg-purple-600/25 blur-[140px]" />
-        <div className="absolute right-[-6%] top-[46vh] h-[24rem] w-[24rem] rounded-full bg-pink-500/18 blur-[140px]" />
-        <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black via-black/70 to-transparent" />
-      </div>
-
-      <div className="relative z-20 mx-auto max-w-6xl px-4 pb-20 pt-16 lg:px-8 lg:pt-20 space-y-12">
+    <main className="hero-comptapro min-h-screen bg-white text-slate-900">
+      <div className="mx-auto max-w-6xl px-4 pb-20 pt-16 lg:px-8 lg:pt-20 space-y-12">
         <section className="flex flex-col items-center gap-8 text-center">
-          <div className="space-y-4 max-w-3xl">
-            <h1 className="text-4xl font-bold leading-tight md:text-5xl hero-heading-glow">
+          <div className="relative space-y-4 max-w-3xl">
+            <span className="pointer-events-none absolute -inset-x-8 -inset-y-6 -z-10 rounded-[32px] bg-purple-500/15 blur-3xl" />
+            <h1 className="text-4xl font-bold leading-tight md:text-5xl">
               Comptabilité experte
-              <span className="block text-white/80">pour vos équipes</span>
+              <span className="block text-slate-700">pour vos équipes</span>
             </h1>
-            <p className="text-base text-white/80 hero-heading-glow">
+            <p className="text-base text-slate-700">
               Pilotez votre comptabilité en ligne : automatisation bancaire, contrôle des dépenses et reporting instantané pour donner de la visibilité à toute votre organisation.
             </p>
           </div>
@@ -132,116 +127,116 @@ const ComptaProSubscriptionPage: React.FC = () => {
               type="button"
               onClick={handleProAccessClick}
               disabled={isAuthLoading}
-              className="inline-flex items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:border-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-70"
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 disabled:cursor-not-allowed disabled:opacity-70"
             >
               Accéder à mon espace Pro
             </button>
           </div>
 
           <div className="grid w-full max-w-3xl gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-purple-500/20">
-              <p className="text-xs uppercase tracking-[0.08em] text-white/60">Transactions</p>
-              <p className="mt-1 text-2xl font-semibold text-white">+19%</p>
-              <p className="text-xs text-white/60">d’efficacité mensuelle</p>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.08em] text-slate-500">Transactions</p>
+              <p className="mt-1 text-2xl font-semibold text-slate-900">+19%</p>
+              <p className="text-xs text-slate-600">d’efficacité mensuelle</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-pink-500/20">
-              <p className="text-xs uppercase tracking-[0.08em] text-white/60">Clôture</p>
-              <p className="mt-1 text-2xl font-semibold text-white">2x</p>
-              <p className="text-xs text-white/60">plus rapide</p>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.08em] text-slate-500">Clôture</p>
+              <p className="mt-1 text-2xl font-semibold text-slate-900">2x</p>
+              <p className="text-xs text-slate-600">plus rapide</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-indigo-500/20">
-              <p className="text-xs uppercase tracking-[0.08em] text-white/60">Équipe</p>
-              <p className="mt-1 text-2xl font-semibold text-white">Focus</p>
-              <p className="text-xs text-white/60">sur le conseil</p>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.08em] text-slate-500">Équipe</p>
+              <p className="mt-1 text-2xl font-semibold text-slate-900">Focus</p>
+              <p className="text-xs text-slate-600">sur le conseil</p>
             </div>
           </div>
         </section>
 
-        <section
-          id="plans"
-          className="rounded-[28px] border border-white/10 bg-white/5 px-6 py-8 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur md:px-10 md:py-10 space-y-10"
-        >
-          {error && (
-            <div className="rounded-2xl border border-red-300/60 bg-red-500/10 px-4 py-3 text-sm text-red-50">
-              {error}
-            </div>
-          )}
-
-          {!error && !isLoading && !hasPlans && (
-            <div className="rounded-2xl border border-white/15 bg-black/30 px-4 py-6 text-center text-sm text-white/80">
-              Les abonnements à la web app COMPTAMATCH seront disponibles prochainement.
-            </div>
-          )}
-
-          <div className="grid gap-6 md:grid-cols-2">
-            {isLoading
-              ? planSkeletons.map((_, index) => renderPlanSkeleton(index))
-              : plans.map(renderPlanCard)}
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/30">
-            {isLoading ? (
-              renderComparisonSkeleton()
-            ) : comparison && hasPlans ? (
-              <table className="min-w-full border-separate border-spacing-y-1 text-sm text-white/80">
-                <thead>
-                  <tr>
-                    <th className="bg-white/5 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white/70">Fonctionnalités</th>
-                    <th className="bg-white/5 px-4 py-3 text-center text-sm font-semibold text-white">
-                      {comparison.plans[0]?.name || "Plan A"}
-                    </th>
-                    <th className="bg-white/5 px-4 py-3 text-center text-sm font-semibold text-white">
-                      {comparison.plans[1]?.name || "Plan B"}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {comparison.rows.map((row) => (
-                    <tr key={row.id} className="bg-white/5">
-                      <td className="rounded-l-xl border border-white/10 px-4 py-3 align-top">
-                        <div className="text-sm font-semibold text-white">{row.label}</div>
-                        {row.description && <p className="text-xs text-white/70">{row.description}</p>}
-                      </td>
-                      <td className="border-t border-b border-white/10 px-4 py-3 text-center align-middle">
-                        <span className={row.planAIncluded ? "text-emerald-300" : "text-white/40"}>
-                          {row.planAIncluded ? "✓" : "—"}
-                        </span>
-                      </td>
-                      <td className="rounded-r-xl border border-white/10 px-4 py-3 text-center align-middle">
-                        <span className={row.planBIncluded ? "text-emerald-300" : "text-white/40"}>
-                          {row.planBIncluded ? "✓" : "—"}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <div className="px-4 py-6 text-center text-sm text-white/80">Comparatif disponible prochainement.</div>
+        <section id="plans" className="relative">
+          <span className="pointer-events-none absolute -inset-x-6 -inset-y-4 -z-10 rounded-[36px] bg-purple-500/12 blur-3xl" />
+          <div className="rounded-[28px] border border-slate-200 bg-white px-6 py-8 shadow-sm md:px-10 md:py-10 space-y-10">
+            {error && (
+              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                {error}
+              </div>
             )}
-          </div>
 
-          <div className="space-y-10">
-            {isLoading
-              ? Array.from({ length: 2 }).map((_, index) => renderSectionSkeleton(index))
-              : sections.map((section, index) => (
-                  <section key={section.id} className="grid gap-8 lg:grid-cols-2 items-center">
-                    <div className={`space-y-3 ${index % 2 === 1 ? "order-2 lg:order-1" : ""}`}>
-                      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-white/60">{`Focus ${index + 1}`}</p>
-                      <h3 className="text-xl font-semibold text-white">{section.title}</h3>
-                      <p className="text-sm text-white/80 whitespace-pre-line">{section.body}</p>
-                    </div>
-                    {section.imageUrl && (
-                      <div
-                        className={`overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-lg shadow-black/40 ${
-                          index % 2 === 1 ? "order-1 lg:order-2" : ""
-                        }`}
-                      >
-                        <img src={section.imageUrl} alt={section.title} className="w-full h-auto object-cover" />
+            {!error && !isLoading && !hasPlans && (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-700">
+                Les abonnements à la web app COMPTAMATCH seront disponibles prochainement.
+              </div>
+            )}
+
+            <div className="grid gap-6 md:grid-cols-2">
+              {isLoading
+                ? planSkeletons.map((_, index) => renderPlanSkeleton(index))
+                : plans.map(renderPlanCard)}
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+              {isLoading ? (
+                renderComparisonSkeleton()
+              ) : comparison && hasPlans ? (
+                <table className="min-w-full border-separate border-spacing-y-1 text-sm text-slate-800">
+                  <thead>
+                    <tr>
+                      <th className="bg-slate-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Fonctionnalités</th>
+                      <th className="bg-slate-50 px-4 py-3 text-center text-sm font-semibold text-slate-900">
+                        {comparison.plans[0]?.name || "Plan A"}
+                      </th>
+                      <th className="bg-slate-50 px-4 py-3 text-center text-sm font-semibold text-slate-900">
+                        {comparison.plans[1]?.name || "Plan B"}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {comparison.rows.map((row) => (
+                      <tr key={row.id} className="bg-white">
+                        <td className="rounded-l-xl border border-slate-200 px-4 py-3 align-top">
+                          <div className="text-sm font-semibold text-slate-900">{row.label}</div>
+                          {row.description && <p className="text-xs text-slate-700">{row.description}</p>}
+                        </td>
+                        <td className="border-t border-b border-slate-200 px-4 py-3 text-center align-middle">
+                          <span className={row.planAIncluded ? "text-emerald-600" : "text-slate-400"}>
+                            {row.planAIncluded ? "✓" : "—"}
+                          </span>
+                        </td>
+                        <td className="rounded-r-xl border border-slate-200 px-4 py-3 text-center align-middle">
+                          <span className={row.planBIncluded ? "text-emerald-600" : "text-slate-400"}>
+                            {row.planBIncluded ? "✓" : "—"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="px-4 py-6 text-center text-sm text-slate-700">Comparatif disponible prochainement.</div>
+              )}
+            </div>
+
+            <div className="space-y-10">
+              {isLoading
+                ? Array.from({ length: 2 }).map((_, index) => renderSectionSkeleton(index))
+                : sections.map((section, index) => (
+                    <section key={section.id} className="grid gap-8 lg:grid-cols-2 items-center">
+                      <div className={`space-y-3 ${index % 2 === 1 ? "order-2 lg:order-1" : ""}`}>
+                        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{`Focus ${index + 1}`}</p>
+                        <h3 className="text-xl font-semibold text-slate-900">{section.title}</h3>
+                        <p className="text-sm text-slate-700 whitespace-pre-line">{section.body}</p>
                       </div>
-                    )}
-                  </section>
-                ))}
+                      {section.imageUrl && (
+                        <div
+                          className={`overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm ${
+                            index % 2 === 1 ? "order-1 lg:order-2" : ""
+                          }`}
+                        >
+                          <img src={section.imageUrl} alt={section.title} className="w-full h-auto object-cover" />
+                        </div>
+                      )}
+                    </section>
+                  ))}
+            </div>
           </div>
         </section>
       </div>
