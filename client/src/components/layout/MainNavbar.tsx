@@ -39,7 +39,7 @@ export function MainNavbar() {
     (isCartBouncing ? " cart-icon-bounce" : "");
 
   return (
-    <header className="relative z-30 w-full bg-white overflow-visible">
+    <header className="header-main relative z-30 w-full bg-white overflow-visible">
       <div className="relative z-20 flex w-full items-center justify-between px-4 py-4 sm:px-5 md:px-6 md:py-6">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 md:gap-3">
