@@ -32,20 +32,21 @@ body {
   overflow: hidden;
 }
 
-.hero-comptapro {
-  background: linear-gradient(180deg, #ffffff 0%, #f5edff 12%, #1c0f44 46%, #090218 100%);
-  background-size: 100% 50%;
-  background-repeat: no-repeat;
-  background-position: top;
-  background-color: #090218;
-}
-
+.hero-comptapro,
 .hero-comptasso {
-  background: linear-gradient(180deg, #ffffff 0%, #ecfff6 12%, #0f2e27 46%, #03130f 100%);
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #f8f5ff 18%,
+    #ede6ff 34%,
+    #dcd2f7 52%,
+    #271647 80%,
+    #0c051d 100%
+  );
   background-size: 100% 50%;
   background-repeat: no-repeat;
   background-position: top;
-  background-color: #03130f;
+  background-color: #0c051d;
 }
 
 .hero-comptapro::before,
