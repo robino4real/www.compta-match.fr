@@ -10,11 +10,11 @@ const navigationLinks = [
 
 const ComptAssoLanding: React.FC = () => {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#051224] text-white">
+    <div className="relative min-h-screen overflow-hidden bg-[#0b0718] text-white">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_18%,rgba(16,185,129,0.4),rgba(5,18,36,0)_42%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_16%,rgba(59,130,246,0.35),rgba(5,18,36,0)_40%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_65%,rgba(251,191,36,0.18),rgba(5,18,36,0)_45%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(139,92,246,0.45),rgba(11,7,24,0)_45%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_14%,rgba(236,72,153,0.38),rgba(11,7,24,0)_42%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_52%_70%,rgba(147,51,234,0.24),rgba(11,7,24,0)_48%)]" />
         <div className="absolute right-10 top-16 h-[520px] w-[520px] rounded-full border border-white/5" />
         <div className="absolute right-24 top-24 h-[640px] w-[640px] rounded-full border border-white/5" />
         <div className="absolute right-40 top-32 h-[780px] w-[780px] rounded-full border border-white/5" />
@@ -22,9 +22,9 @@ const ComptAssoLanding: React.FC = () => {
       </div>
 
       <div className="relative mx-auto max-w-6xl px-6 pb-16 pt-10 sm:px-8 lg:px-12">
-        <nav className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 rounded-full bg-gradient-to-r from-[#0EA5E9] via-[#22C55E] to-[#F59E0B] px-4 py-4 shadow-[0_20px_50px_rgba(0,0,0,0.55)] sm:px-6">
+        <nav className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 rounded-full bg-gradient-to-r from-[#9333EA] via-[#A855F7] to-[#EC4899] px-4 py-4 shadow-[0_20px_50px_rgba(0,0,0,0.55)] sm:px-6">
           <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#22C55E] via-[#0EA5E9] to-[#2563EB] text-lg font-semibold text-white shadow-lg shadow-cyan-500/40">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#7C3AED] via-[#A855F7] to-[#EC4899] text-lg font-semibold text-white shadow-lg shadow-fuchsia-500/35">
               ★
             </span>
             <span className="text-lg font-medium text-white">ComptAsso</span>
@@ -53,14 +53,14 @@ const ComptAssoLanding: React.FC = () => {
             </button>
             <button
               type="button"
-              className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#0EA5E9] shadow-[0_15px_35px_rgba(14,165,233,0.45)] transition duration-200 hover:-translate-y-[1px] hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#7C3AED] shadow-[0_15px_35px_rgba(168,85,247,0.4)] transition duration-200 hover:-translate-y-[1px] hover:bg-slate-50"
             >
               S’inscrire
             </button>
           </div>
         </nav>
 
-        <section className="relative mt-12 overflow-hidden rounded-[36px] bg-gradient-to-br from-[#0EA5E9] via-[#22C55E] to-[#0B1224] px-6 py-10 shadow-[0_40px_80px_rgba(0,0,0,0.75)] sm:px-10 lg:px-14">
+        <section className="relative mt-12 overflow-hidden rounded-[36px] bg-gradient-to-br from-[#2D0C4F] via-[#7C3AED] to-[#0B0718] px-6 py-10 shadow-[0_40px_80px_rgba(0,0,0,0.75)] sm:px-10 lg:px-14">
           <div className="absolute -right-10 -top-10 h-64 w-64 rounded-full bg-white/20 blur-[70px]" />
           <div className="absolute left-10 top-10 h-32 w-32 rounded-full bg-white/15 blur-[60px]" />
 
@@ -85,7 +85,7 @@ const ComptAssoLanding: React.FC = () => {
               <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
-                  className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#0EA5E9] shadow-[0_16px_40px_rgba(14,165,233,0.55)] transition duration-200 hover:-translate-y-[2px] hover:brightness-105"
+                  className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#7C3AED] shadow-[0_16px_40px_rgba(168,85,247,0.45)] transition duration-200 hover:-translate-y-[2px] hover:brightness-105"
                 >
                   Essayer ComptAsso
                 </button>
@@ -99,7 +99,7 @@ const ComptAssoLanding: React.FC = () => {
             </div>
 
             <div className="relative flex flex-col items-center gap-6 lg:items-end">
-              <div className="relative w-full max-w-md rounded-3xl bg-gradient-to-br from-[#0EA5E9] via-[#22C55E] to-[#0B1224] p-6 shadow-[0_24px_40px_rgba(0,0,0,0.85)] transition duration-300 hover:-translate-y-1">
+              <div className="relative w-full max-w-md rounded-3xl bg-gradient-to-br from-[#5B21B6] via-[#9333EA] to-[#0B0718] p-6 shadow-[0_24px_40px_rgba(0,0,0,0.85)] transition duration-300 hover:-translate-y-1">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs font-medium text-white/80">Budget de l’association</p>
@@ -113,11 +113,11 @@ const ComptAssoLanding: React.FC = () => {
                 <div className="mt-5 space-y-2 text-sm text-white/90">
                   <p>
                     Cotisations ce mois-ci : <span className="font-semibold text-white">1 650,00 €</span>{" "}
-                    <span className="text-emerald-100">(+10 % vs mois dernier)</span>
+                    <span className="text-fuchsia-100">(+10 % vs mois dernier)</span>
                   </p>
                   <p>
                     Subventions reçues : <span className="font-semibold text-white">2 400,00 €</span>{" "}
-                    <span className="text-cyan-100">(75 % de l’objectif)</span>
+                    <span className="text-purple-100">(75 % de l’objectif)</span>
                   </p>
                 </div>
 
@@ -127,12 +127,12 @@ const ComptAssoLanding: React.FC = () => {
                     <span className="font-semibold">75 %</span>
                   </div>
                   <div className="h-3 overflow-hidden rounded-full bg-[rgba(15,23,42,0.6)]">
-                    <div className="h-full w-[75%] rounded-full bg-gradient-to-r from-[#22C55E] via-[#0EA5E9] to-[#2563EB]" />
+                    <div className="h-full w-[75%] rounded-full bg-gradient-to-r from-[#C026D3] via-[#A855F7] to-[#7C3AED]" />
                   </div>
                 </div>
 
                 <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-white/90">
-                  <span className="h-2 w-2 rounded-full bg-emerald-300" />
+                  <span className="h-2 w-2 rounded-full bg-fuchsia-300" />
                   Automatisé
                 </div>
               </div>
@@ -156,23 +156,23 @@ const ComptAssoLanding: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="mt-5 space-y-3">
-                  <div className="flex items-center justify-between text-xs text-white/70">
-                    <span>Événementiel</span>
-                    <span className="font-semibold text-emerald-200">42 %</span>
-                  </div>
+                  <div className="mt-5 space-y-3">
+                    <div className="flex items-center justify-between text-xs text-white/70">
+                      <span>Événementiel</span>
+                      <span className="font-semibold text-fuchsia-200">42 %</span>
+                    </div>
                   <div className="flex h-2 overflow-hidden rounded-full bg-white/10">
-                    <div className="w-[42%] rounded-full bg-emerald-400" />
-                    <div className="w-[26%] bg-sky-400" />
-                    <div className="w-[32%] bg-amber-300" />
+                    <div className="w-[42%] rounded-full bg-fuchsia-400" />
+                    <div className="w-[26%] bg-purple-400" />
+                    <div className="w-[32%] bg-pink-300" />
                   </div>
                   <div className="flex items-center justify-between text-xs text-white/70">
                     <span>Sport</span>
-                    <span className="font-semibold text-sky-100">26 %</span>
+                    <span className="font-semibold text-purple-100">26 %</span>
                   </div>
                   <div className="flex items-center justify-between text-xs text-white/70">
                     <span>Culturel</span>
-                    <span className="font-semibold text-amber-100">32 %</span>
+                    <span className="font-semibold text-pink-100">32 %</span>
                   </div>
                 </div>
               </div>
