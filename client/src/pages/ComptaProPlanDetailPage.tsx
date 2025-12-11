@@ -82,22 +82,25 @@ const ComptaProPlanDetailPage: React.FC = () => {
   };
 
   const renderSectionSkeleton = (index: number) => (
-    <div key={`section-skeleton-${index}`} className="h-56 rounded-3xl bg-slate-100 border border-slate-100 animate-pulse" />
+    <div
+      key={`section-skeleton-${index}`}
+      className="h-56 rounded-3xl border border-white/10 bg-white/10 animate-pulse"
+    />
   );
 
   const hasPlan = Boolean(selectedPlan);
 
   return (
-    <main className="min-h-screen bg-white py-12">
+    <main className="min-h-screen bg-gradient-to-b from-[#0a061a] via-[#120a2c] to-[#1b103f] py-12 text-slate-50">
       <div className="mx-auto max-w-5xl px-4 lg:px-8 space-y-10">
-        <section className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-slate-900 px-6 py-8 text-white shadow-lg md:px-10 md:py-10">
+        <section className="flex flex-col gap-4 rounded-3xl border border-fuchsia-300/25 bg-gradient-to-br from-[#5B21B6] via-[#7C3AED] to-[#1a0f36] px-6 py-8 text-white shadow-[0_28px_70px_rgba(0,0,0,0.55)] md:px-10 md:py-10">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-300">Offre ComptaPro</p>
-              <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+              <p className="text-xs font-semibold uppercase tracking-wide text-fuchsia-100">Offre ComptaPro</p>
+              <h1 className="text-3xl font-semibold tracking-tight text-white md:text-4xl">
                 {selectedPlan?.name || "Offre introuvable"}
               </h1>
-              {selectedPlan?.subtitle && <p className="text-sm md:text-base text-slate-100">{selectedPlan.subtitle}</p>}
+              {selectedPlan?.subtitle && <p className="text-sm md:text-base text-white/85">{selectedPlan.subtitle}</p>}
             </div>
             <div className="text-right">
               {selectedPlan && (
@@ -106,7 +109,7 @@ const ComptaProPlanDetailPage: React.FC = () => {
                     Number(selectedPlan.priceAmount),
                     selectedPlan.priceCurrency,
                   )}
-                  <span className="text-sm text-slate-200"> /{selectedPlan.pricePeriod === "month" ? "mois" : "an"}</span>
+                  <span className="text-sm text-white/80"> /{selectedPlan.pricePeriod === "month" ? "mois" : "an"}</span>
                 </p>
               )}
             </div>
@@ -116,7 +119,7 @@ const ComptaProPlanDetailPage: React.FC = () => {
             <button
               type="button"
               onClick={handleSubscribeClick}
-              className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-md transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-70"
+              className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#5B21B6] shadow-[0_18px_40px_rgba(168,85,247,0.3)] transition hover:-translate-y-[1px] hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-70"
               disabled={!hasPlan}
             >
               S’abonner
@@ -124,29 +127,29 @@ const ComptaProPlanDetailPage: React.FC = () => {
             <button
               type="button"
               onClick={handleBackToPlans}
-              className="inline-flex items-center justify-center rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:border-white hover:bg-white/10"
+              className="inline-flex items-center justify-center rounded-full border border-white/60 px-6 py-3 text-sm font-semibold text-white transition hover:border-white hover:bg-white/10"
             >
               Retour aux offres
             </button>
           </div>
 
           {error && (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+            <div className="rounded-2xl border border-rose-300/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">{error}</div>
           )}
           {!error && !hasPlan && !isLoading && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <div className="rounded-2xl border border-amber-300/50 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
               Cette offre n’existe pas ou n’est plus disponible. Consultez la liste complète des formules ComptaPro.
             </div>
           )}
         </section>
 
-        <section className="space-y-6 rounded-3xl border border-slate-100 bg-white px-6 py-8 shadow-[0_24px_60px_rgba(15,23,42,0.06)] md:px-10 md:py-10">
+        <section className="space-y-6 rounded-3xl border border-white/10 bg-white/5 px-6 py-8 shadow-[0_24px_80px_rgba(0,0,0,0.4)] md:px-10 md:py-10">
           {isLoading && (
             <>
-              <div className="h-16 rounded-2xl bg-slate-100 border border-slate-100 animate-pulse" />
+              <div className="h-16 rounded-2xl border border-white/10 bg-white/10 animate-pulse" />
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="h-40 rounded-2xl bg-slate-100 border border-slate-100 animate-pulse" />
-                <div className="h-40 rounded-2xl bg-slate-100 border border-slate-100 animate-pulse" />
+                <div className="h-40 rounded-2xl border border-white/10 bg-white/10 animate-pulse" />
+                <div className="h-40 rounded-2xl border border-white/10 bg-white/10 animate-pulse" />
               </div>
             </>
           )}
@@ -155,13 +158,13 @@ const ComptaProPlanDetailPage: React.FC = () => {
             <>
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Ce qui est inclus</p>
-                  <h2 className="text-xl font-semibold text-slate-900">Tout ce que votre abonnement couvre</h2>
-                  <p className="mt-1 text-sm text-slate-600">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-fuchsia-200">Ce qui est inclus</p>
+                  <h2 className="text-xl font-semibold text-white">Tout ce que votre abonnement couvre</h2>
+                  <p className="mt-1 text-sm text-white/80">
                     Découvrez le détail des fonctionnalités prévues pour la formule {selectedPlan.name}.
                   </p>
                 </div>
-                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white ring-1 ring-white/20">
                   Plan {selectedPlan.name}
                 </span>
               </div>
@@ -171,22 +174,22 @@ const ComptaProPlanDetailPage: React.FC = () => {
                   {includedFeatures.map((feature) => (
                     <article
                       key={feature.id}
-                      className="flex h-full flex-col gap-2 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4 shadow-sm"
+                      className="flex h-full flex-col gap-2 rounded-2xl border border-white/10 bg-gradient-to-br from-[#1b103f] to-[#2f1660] px-4 py-4 shadow-[0_20px_50px_rgba(0,0,0,0.35)]"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-white">
                           ✓
                         </span>
-                        <h3 className="text-base font-semibold text-slate-900">{feature.label}</h3>
+                        <h3 className="text-base font-semibold text-white">{feature.label}</h3>
                       </div>
                       {feature.description && (
-                        <p className="pl-11 text-sm text-slate-600">{feature.description}</p>
+                        <p className="pl-11 text-sm text-white/75">{feature.description}</p>
                       )}
                     </article>
                   ))}
                 </div>
               ) : (
-                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-6 text-center text-sm text-slate-600">
+                <div className="rounded-2xl border border-white/15 bg-white/5 px-4 py-6 text-center text-sm text-white/80">
                   Les détails de cette formule seront bientôt disponibles.
                 </div>
               )}
@@ -194,16 +197,16 @@ const ComptaProPlanDetailPage: React.FC = () => {
           )}
         </section>
 
-        <section className="space-y-10 rounded-3xl border border-slate-100 bg-white px-6 py-8 shadow-[0_24px_60px_rgba(15,23,42,0.06)] md:px-10 md:py-10">
+        <section className="space-y-10 rounded-3xl border border-white/10 bg-white/5 px-6 py-8 shadow-[0_24px_80px_rgba(0,0,0,0.4)] md:px-10 md:py-10">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Pour aller plus loin</p>
-              <h2 className="text-xl font-semibold text-slate-900">Comment ComptaPro vous accompagne</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-fuchsia-200">Pour aller plus loin</p>
+              <h2 className="text-xl font-semibold text-white">Comment ComptaPro vous accompagne</h2>
             </div>
             <button
               type="button"
               onClick={handleSubscribeClick}
-              className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-70"
+              className="inline-flex items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#5B21B6] shadow-[0_18px_40px_rgba(168,85,247,0.3)] transition hover:-translate-y-[1px] hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
               disabled={!hasPlan}
             >
               S’abonner
@@ -215,13 +218,13 @@ const ComptaProPlanDetailPage: React.FC = () => {
             : sections.map((section, index) => (
                 <article key={section.id} className="grid gap-8 lg:grid-cols-2 items-center">
                   <div className={`space-y-3 ${index % 2 === 1 ? "order-2 lg:order-1" : ""}`}>
-                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{`Étape ${index + 1}`}</p>
-                    <h3 className="text-xl font-semibold text-slate-900">{section.title}</h3>
-                    <p className="text-sm text-slate-700 whitespace-pre-line">{section.body}</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-fuchsia-200">{`Étape ${index + 1}`}</p>
+                    <h3 className="text-xl font-semibold text-white">{section.title}</h3>
+                    <p className="text-sm text-white/80 whitespace-pre-line">{section.body}</p>
                   </div>
                   {section.imageUrl && (
                     <div
-                      className={`overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm ${
+                      className={`overflow-hidden rounded-3xl border border-white/10 bg-white/10 shadow-[0_18px_40px_rgba(0,0,0,0.35)] ${
                         index % 2 === 1 ? "order-1 lg:order-2" : ""
                       }`}
                     >
