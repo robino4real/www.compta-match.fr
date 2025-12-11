@@ -51,16 +51,17 @@ const ComptAssoSubscriptionPage: React.FC = () => {
     navigate("/nouvelle-page");
   };
 
+  const ctaButtonClasses =
+    "inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white shadow-sm transition transform hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 disabled:cursor-not-allowed disabled:opacity-70";
+
   const renderPlanCard = (plan: PaidServicePlan) => (
     <article
       key={plan.id}
-      className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white px-6 py-6 shadow-sm"
+      className="relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200 bg-white px-6 py-6 shadow-sm"
     >
-      <header className="flex items-start justify-between gap-4">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-purple-500/10 via-fuchsia-500/5 to-purple-700/10 blur-3xl" />
+      <header className="relative flex items-start justify-between gap-4">
         <div className="space-y-1">
-          <p className="inline-flex rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-purple-800 ring-1 ring-purple-200">
-            ComptAsso
-          </p>
           <h2 className="text-lg font-semibold text-slate-900">{plan.name}</h2>
           {plan.subtitle && <p className="text-sm text-slate-700">{plan.subtitle}</p>}
         </div>
@@ -69,11 +70,7 @@ const ComptAssoSubscriptionPage: React.FC = () => {
           <span className="text-sm text-slate-600"> /{plan.pricePeriod === "month" ? "mois" : "an"}</span>
         </p>
       </header>
-      <button
-        className="mt-6 inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600"
-        type="button"
-        onClick={handlePlanDetailClick}
-      >
+      <button className={`relative mt-6 ${ctaButtonClasses}`} type="button" onClick={handlePlanDetailClick}>
         En savoir plus
       </button>
     </article>
@@ -101,7 +98,7 @@ const ComptAssoSubscriptionPage: React.FC = () => {
       <div className="mx-auto max-w-6xl px-4 pb-20 pt-16 lg:px-8 lg:pt-20 space-y-12">
         <section className="flex flex-col items-center gap-8 text-center">
           <div className="relative space-y-4 max-w-3xl">
-            <span className="pointer-events-none absolute -inset-x-8 -inset-y-6 -z-10 rounded-[32px] bg-purple-500/15 blur-3xl" />
+            <span className="pointer-events-none absolute -inset-x-8 -inset-y-6 -z-10 rounded-[32px] bg-gradient-to-r from-purple-500/30 via-fuchsia-500/25 to-purple-700/30 blur-3xl" />
             <h1 className="text-4xl font-bold leading-tight md:text-5xl">
               Comptabilité experte
               <span className="block text-slate-700">pour vos associations</span>
@@ -112,10 +109,7 @@ const ComptAssoSubscriptionPage: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap justify-center gap-3">
-            <a
-              href="/comparatif-des-offres"
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600"
-            >
+            <a href="/comparatif-des-offres" className={ctaButtonClasses}>
               Accéder à mon espace Asso
             </a>
           </div>
@@ -140,7 +134,7 @@ const ComptAssoSubscriptionPage: React.FC = () => {
         </section>
 
         <section id="plans" className="relative">
-          <span className="pointer-events-none absolute -inset-x-6 -inset-y-4 -z-10 rounded-[36px] bg-purple-500/12 blur-3xl" />
+          <span className="pointer-events-none absolute -inset-x-6 -inset-y-4 -z-10 rounded-[36px] bg-gradient-to-r from-purple-500/25 via-fuchsia-500/15 to-purple-700/25 blur-3xl" />
           <div className="rounded-[28px] border border-slate-200 bg-white px-6 py-8 shadow-sm md:px-10 md:py-10 space-y-10">
             {error && (
               <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
