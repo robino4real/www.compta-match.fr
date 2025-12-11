@@ -36,19 +36,13 @@ body {
 .hero-comptasso {
   background: linear-gradient(
     180deg,
-    #f9f7ff 0%,
-    #f5f1ff 10%,
-    #ede6ff 22%,
-    #e2d9ff 34%,
-    #d4c8fa 46%,
-    #c3b2f2 58%,
-    #ab95e4 70%,
-    #8a6fcc 80%,
-    #5a3f9d 90%,
-    #241539 96%,
-    #0f081f 100%
+    #ffffff 0%,
+    #f4edff 24%,
+    #e5d9ff 48%,
+    #c8b3fa 70%,
+    #8c63e8 100%
   );
-  background-size: 100% 25%;
+  background-size: 100% 18%;
   background-repeat: no-repeat;
   background-position: top;
   background-color: #0c051d;
