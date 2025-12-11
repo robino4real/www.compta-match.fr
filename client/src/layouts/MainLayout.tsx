@@ -19,6 +19,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     [location.pathname]
   );
 
+  const pageClassName = React.useMemo(() => {
+    if (location.pathname === "/comptapro") return "page-comptapro";
+    if (location.pathname === "/comptasso") return "page-comptasso";
+    return "";
+  }, [location.pathname]);
+
   React.useEffect(() => {
     const faviconCandidate = data.branding?.faviconUrl?.trim() || data.branding?.navbarLogoUrl?.trim();
     if (!faviconCandidate) return;
@@ -35,11 +41,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   return (
     <div
-      className={
+      className={[
         isDarkPage
           ? "min-h-screen flex flex-col bg-[#050316]"
-          : "min-h-screen flex flex-col bg-white"
-      }
+          : "min-h-screen flex flex-col bg-white",
+        pageClassName,
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       <MainNavbar />
       <main className="flex-1">{children}</main>
