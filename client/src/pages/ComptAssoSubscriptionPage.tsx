@@ -102,7 +102,6 @@ const ComptAssoSubscriptionPage: React.FC = () => {
         <div className="absolute -left-16 top-0 h-72 w-72 rounded-full bg-pink-500/20 blur-[100px]" />
         <div className="absolute right-0 top-10 h-96 w-96 rounded-full bg-purple-600/25 blur-[120px]" />
         <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black via-black/70 to-transparent" />
-        <div className="hero-nav-fade" />
       </div>
 
       <div className="relative z-20 mx-auto max-w-6xl px-4 pb-20 pt-16 lg:px-8 lg:pt-20 space-y-12">
