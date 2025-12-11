@@ -56,7 +56,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         .join(" ")}
     >
       <MainNavbar />
-      {showGradientSeparator && <div className="gradient-separator" />}
       <main className={["flex-1", showGradientSeparator ? "hero-wrapper" : ""].filter(Boolean).join(" ")}>{children}</main>
       <Footer />
     </div>
