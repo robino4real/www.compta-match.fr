@@ -25,6 +25,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     return "";
   }, [location.pathname]);
 
+  const showGradientSeparator = React.useMemo(
+    () => location.pathname === "/comptapro" || location.pathname === "/comptasso",
+    [location.pathname]
+  );
+
   React.useEffect(() => {
     const faviconCandidate = data.branding?.faviconUrl?.trim() || data.branding?.navbarLogoUrl?.trim();
     if (!faviconCandidate) return;
@@ -51,7 +56,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         .join(" ")}
     >
       <MainNavbar />
-      <main className="flex-1">{children}</main>
+      {showGradientSeparator && <div className="gradient-separator" />}
+      <main className={["flex-1", showGradientSeparator ? "hero-wrapper" : ""].filter(Boolean).join(" ")}>{children}</main>
       <Footer />
     </div>
   );
