@@ -107,11 +107,11 @@ const ComptAssoSubscriptionPage: React.FC = () => {
       <div className="relative z-20 mx-auto max-w-6xl px-4 pb-20 pt-16 lg:px-8 lg:pt-20 space-y-12">
         <section className="flex flex-col items-center gap-8 text-center">
           <div className="space-y-4 max-w-3xl">
-            <h1 className="text-4xl font-bold leading-tight md:text-5xl">
+            <h1 className="text-4xl font-bold leading-tight md:text-5xl hero-heading-glow">
               Comptabilité experte
               <span className="block text-white/80">pour vos associations</span>
             </h1>
-            <p className="text-base text-white/80">
+            <p className="text-base text-white/80 hero-heading-glow">
               Retirez-vous du stress administratif : ComptAsso automatise vos finances associatives, suit vos budgets et sécurise vos remboursements, pour des équipes bénévoles plus sereines.
             </p>
           </div>
