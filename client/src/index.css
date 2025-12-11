@@ -35,17 +35,19 @@ body {
 .hero-comptapro,
 .hero-comptasso {
   background: linear-gradient(
-    180deg,
-    #ffffff 0%,
-    #f4edff 24%,
-    #e5d9ff 48%,
-    #c8b3fa 70%,
-    #8c63e8 100%
-  );
-  background-size: 100% 18%;
+      180deg,
+      #ffffff 0%,
+      #ffffff 45%,
+      #f6f1ff 55%,
+      #e3d4ff 63%,
+      #c2a2ff 70%,
+      #50307a 80%,
+      #0b0718 100%
+    ),
+    #0b0718;
   background-repeat: no-repeat;
+  background-size: 100% 100%;
   background-position: top;
-  background-color: #0c051d;
 }
 
 .hero-comptapro::before,

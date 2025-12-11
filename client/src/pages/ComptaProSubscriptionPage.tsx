@@ -110,9 +110,9 @@ const ComptaProSubscriptionPage: React.FC = () => {
   return (
     <main className="hero-comptapro relative isolate min-h-screen overflow-visible text-white">
       <div className="pointer-events-none absolute inset-0 z-0">
-        <div className="absolute -left-20 top-0 h-80 w-80 rounded-full bg-pink-500/20 blur-[120px]" />
-        <div className="absolute right-0 top-10 h-[26rem] w-[26rem] rounded-full bg-purple-700/30 blur-[140px]" />
-        <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black via-black/70 to-transparent" />
+        <div className="absolute left-1/2 top-[38vh] h-[22rem] w-[22rem] -translate-x-1/2 rounded-full bg-purple-600/25 blur-[140px]" />
+        <div className="absolute right-[-6%] top-[46vh] h-[24rem] w-[24rem] rounded-full bg-pink-500/18 blur-[140px]" />
+        <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black via-black/70 to-transparent" />
       </div>
 
       <div className="relative z-20 mx-auto max-w-6xl px-4 pb-20 pt-16 lg:px-8 lg:pt-20 space-y-12">
