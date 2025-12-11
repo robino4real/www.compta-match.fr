@@ -11,7 +11,7 @@ const Footer: React.FC = () => {
   );
 
   const containerClasses = isDarkFooter
-    ? 'border-t border-white/10 bg-black text-white'
+    ? 'bg-black text-white'
     : 'border-t bg-slate-100 mt-8';
 
   const textMutedClasses = isDarkFooter ? 'text-xs text-white' : 'text-xs text-slate-500';
