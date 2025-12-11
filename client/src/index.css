@@ -30,24 +30,7 @@ body {
 .hero-comptasso {
   position: relative;
   overflow: hidden;
-}
-
-.hero-comptapro,
-.hero-comptasso {
-  background: linear-gradient(
-      180deg,
-      #ffffff 0%,
-      #ffffff 15%,
-      #f2eaff 18%,
-      #7f3dff 20%,
-      #7f3dff 75%,
-      #3a1a7a 88%,
-      #0b0718 100%
-    ),
-    #0b0718;
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  background-position: top;
+  background: #ffffff;
 }
 
 .hero-comptapro::before,
@@ -63,7 +46,7 @@ body {
 }
 
 .hero-heading-glow {
-  text-shadow: 0 6px 22px rgba(0, 0, 0, 0.28), 0 2px 8px rgba(0, 0, 0, 0.18);
+  text-shadow: none;
 }
 
 a {
