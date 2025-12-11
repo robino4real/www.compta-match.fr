@@ -108,7 +108,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
   const hasPlans = plans.length > 0;
 
   return (
-    <main className="relative isolate min-h-screen overflow-visible bg-[#050316] text-white">
+    <main className="hero-comptapro relative isolate min-h-screen overflow-visible text-white">
       <div className="pointer-events-none absolute inset-0 z-0">
         <div className="absolute -left-20 top-0 h-80 w-80 rounded-full bg-pink-500/20 blur-[120px]" />
         <div className="absolute right-0 top-10 h-[26rem] w-[26rem] rounded-full bg-purple-700/30 blur-[140px]" />

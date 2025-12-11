@@ -97,7 +97,7 @@ const ComptAssoSubscriptionPage: React.FC = () => {
   const hasPlans = plans.length > 0;
 
   return (
-    <main className="relative isolate min-h-screen overflow-visible bg-[#050316] text-white">
+    <main className="hero-comptasso relative isolate min-h-screen overflow-visible text-white">
       <div className="pointer-events-none absolute inset-0 z-0">
         <div className="absolute -left-16 top-0 h-72 w-72 rounded-full bg-pink-500/20 blur-[100px]" />
         <div className="absolute right-0 top-10 h-96 w-96 rounded-full bg-purple-600/25 blur-[120px]" />
