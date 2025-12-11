@@ -42,11 +42,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       }
     >
       <MainNavbar />
-      {isDarkPage && (
-        <div className="relative h-24">
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-white via-white/50 to-[#050316]" />
-        </div>
-      )}
       <main className="flex-1">{children}</main>
       <Footer />
     </div>
