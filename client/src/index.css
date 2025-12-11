@@ -38,21 +38,26 @@ body {
 
 .hero-comptapro,
 .hero-comptasso {
-  background-color: #ffffff;
-  background-image: linear-gradient(
+  position: relative;
+  background: radial-gradient(circle at top, #f8e9ff 0%, #111322 55%, #050712 100%);
+  overflow: hidden;
+}
+
+.hero-comptapro::before,
+.hero-comptasso::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 220px;
+  background: linear-gradient(
     to bottom,
     #ffffff 0%,
-    #ffffff 10%,
-    rgba(255, 255, 255, 0.96) 18%,
-    rgba(255, 255, 255, 0.88) 26%,
-    rgba(34, 30, 70, 0.32) 40%,
-    rgba(18, 16, 50, 0.58) 52%,
-    rgba(10, 8, 30, 0.76) 64%,
-    #050316 74%,
-    #050316 100%
+    rgba(255, 255, 255, 0.95) 25%,
+    rgba(255, 255, 255, 0) 100%
   );
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
+  pointer-events: none;
 }
 
 a {
