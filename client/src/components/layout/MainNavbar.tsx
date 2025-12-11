@@ -145,11 +145,6 @@ export function MainNavbar() {
         </button>
       </div>
 
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-b from-white via-white/40 to-[#050316] md:h-20"
-      />
-
       {isMenuOpen && (
         <div className="bg-white shadow-sm md:hidden">
           <nav className="grid gap-1 px-3 py-3 text-sm font-medium text-slate-700">
