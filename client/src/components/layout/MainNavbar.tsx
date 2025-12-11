@@ -39,8 +39,8 @@ export function MainNavbar() {
     (isCartBouncing ? " cart-icon-bounce" : "");
 
   return (
-    <header className="relative z-30 w-full bg-white">
-      <div className="flex w-full items-center justify-between px-4 py-4 sm:px-5 md:px-6 md:py-6">
+    <header className="relative z-30 w-full bg-white overflow-visible">
+      <div className="relative z-20 flex w-full items-center justify-between px-4 py-4 sm:px-5 md:px-6 md:py-6">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 md:gap-3">
           <img
@@ -144,6 +144,11 @@ export function MainNavbar() {
           </svg>
         </button>
       </div>
+
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-b from-white via-white/40 to-[#050316] md:h-20"
+      />
 
       {isMenuOpen && (
         <div className="bg-white shadow-sm md:hidden">
