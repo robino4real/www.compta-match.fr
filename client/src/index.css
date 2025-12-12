@@ -23,7 +23,8 @@ body {
 }
 
 .hero-wrapper {
-  background-color: #050316;
+  background: radial-gradient(circle at 50% -12%, rgba(124, 58, 237, 0.24), rgba(109, 40, 217, 0.18) 18%, rgba(5, 3, 22, 0) 45%),
+    linear-gradient(180deg, rgba(76, 29, 149, 0.12) 0%, rgba(168, 85, 247, 0.08) 26%, rgba(236, 72, 153, 0.06) 48%, rgba(255, 255, 255, 0.95) 74%, #ffffff 88%);
 }
 
 .hero-comptapro,
@@ -68,11 +69,9 @@ body {
 .hero-comptasso::before {
   content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 0;
-  background: none;
+  inset: 0;
+  background: radial-gradient(circle at 50% 8%, rgba(124, 58, 237, 0.28), rgba(147, 51, 234, 0.18) 25%, rgba(5, 3, 22, 0.1) 42%, rgba(255, 255, 255, 0) 70%),
+    linear-gradient(180deg, rgba(76, 29, 149, 0.18) 0%, rgba(147, 51, 234, 0.12) 24%, rgba(236, 72, 153, 0.08) 46%, rgba(255, 255, 255, 0.94) 72%, rgba(255, 255, 255, 1) 84%);
   pointer-events: none;
 }
 
@@ -99,17 +98,17 @@ body {
   left: 50%;
   top: 68%;
   transform: translate(-50%, -50%);
-  width: 95%;
-  height: 95%;
+  width: 118%;
+  height: 118%;
   background: radial-gradient(
     circle,
-    rgba(168, 85, 247, 0.55) 0%,
-    rgba(168, 85, 247, 0.32) 26%,
-    rgba(236, 72, 153, 0.18) 45%,
-    rgba(255, 255, 255, 0) 65%
+    rgba(168, 85, 247, 0.72) 0%,
+    rgba(168, 85, 247, 0.46) 28%,
+    rgba(236, 72, 153, 0.28) 50%,
+    rgba(255, 255, 255, 0) 72%
   );
-  filter: blur(18px);
-  opacity: 0.9;
+  filter: blur(22px);
+  opacity: 0.95;
   z-index: -1;
   pointer-events: none;
 }
@@ -120,17 +119,18 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 180%;
-  height: 220%;
+  width: 200%;
+  height: 230%;
   background: radial-gradient(
     circle,
-    rgba(168, 85, 247, 0.55) 0%,
-    rgba(168, 85, 247, 0.35) 20%,
-    rgba(236, 72, 153, 0.28) 40%,
-    rgba(15, 23, 42, 0) 75%
+    rgba(168, 85, 247, 0.66) 0%,
+    rgba(168, 85, 247, 0.4) 20%,
+    rgba(236, 72, 153, 0.32) 42%,
+    rgba(15, 23, 42, 0.02) 65%,
+    rgba(255, 255, 255, 0) 80%
   );
   filter: blur(24px);
-  opacity: 0.9;
+  opacity: 0.95;
   z-index: -1;
   pointer-events: none;
 }
