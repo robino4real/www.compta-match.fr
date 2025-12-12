@@ -2,7 +2,7 @@ import React from "react";
 import { MainNavbar } from "../components/layout/MainNavbar";
 import { useHomepageSettings } from "../hooks/useHomepageSettings";
 import Footer from "../components/Footer";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -10,15 +10,7 @@ interface MainLayoutProps {
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const { data } = useHomepageSettings();
-
-  const isDarkPage = React.useMemo(
-    () =>
-      location.pathname.startsWith("/comptapro") ||
-      location.pathname.startsWith("/comptasso"),
-    [location.pathname]
-  );
 
   const pageClassName = React.useMemo(() => {
     if (location.pathname === "/comptapro") return "page-comptapro";
@@ -36,14 +28,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     [location.pathname]
   );
 
-  const handleBackClick = React.useCallback(() => {
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate("/");
-    }
-  }, [navigate]);
-
   React.useEffect(() => {
     const faviconCandidate = data.branding?.faviconUrl?.trim() || data.branding?.navbarLogoUrl?.trim();
     if (!faviconCandidate) return;
@@ -60,45 +44,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   return (
     <div
-      className={[
-        isDarkPage
-          ? "min-h-screen flex flex-col bg-[#050316]"
-          : "min-h-screen flex flex-col bg-white",
-        pageClassName,
-        "relative",
-      ]
+      className={["min-h-screen flex flex-col bg-white", pageClassName, "relative"]
         .filter(Boolean)
         .join(" ")}
     >
-      {isSubscriptionLanding ? (
-        <header className="px-4 pt-6 pb-2 sm:px-6 md:px-8">
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={handleBackClick}
-              className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-100 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
-              aria-label="Retour"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                className="h-5 w-5"
-              >
-                <path d="M15 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-
-            <span className="text-lg font-semibold tracking-tight text-slate-100 md:text-2xl">
-              COMPTAMATCH
-            </span>
-          </div>
-        </header>
-      ) : (
-        <MainNavbar />
-      )}
+      {!isSubscriptionLanding && <MainNavbar />}
       <main className={["flex-1", showGradientSeparator ? "hero-wrapper" : ""].filter(Boolean).join(" ")}>{children}</main>
       <Footer />
     </div>

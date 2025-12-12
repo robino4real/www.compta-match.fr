@@ -20,6 +20,14 @@ const ComptaProSubscriptionPage: React.FC = () => {
 
   const planSkeletons = React.useMemo(() => Array.from({ length: 2 }), []);
 
+  const handleBackClick = React.useCallback(() => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/");
+    }
+  }, [navigate]);
+
   React.useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -66,6 +74,9 @@ const ComptaProSubscriptionPage: React.FC = () => {
   const ctaButtonClasses =
     "inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white shadow-sm transition transform hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 disabled:cursor-not-allowed disabled:opacity-70";
 
+  const backButtonClasses =
+    "absolute left-0 inline-flex items-center gap-2 rounded-full border border-purple-200 bg-white/90 px-4 py-2 text-sm font-semibold text-purple-900 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600";
+
   const renderPlanCard = (plan: PaidServicePlan) => (
     <article
       key={plan.id}
@@ -107,7 +118,27 @@ const ComptaProSubscriptionPage: React.FC = () => {
 
   return (
     <main className="hero-comptapro min-h-screen bg-white text-slate-900">
-      <div className="mx-auto max-w-6xl px-4 pb-20 pt-16 lg:px-8 lg:pt-20 space-y-12">
+      <div className="mx-auto max-w-6xl px-4 pb-20 pt-12 lg:px-8 lg:pt-16 space-y-12">
+        <div className="relative flex items-center justify-center">
+          <button type="button" onClick={handleBackClick} className={backButtonClasses}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              className="h-5 w-5"
+            >
+              <path d="M15 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span>Retour</span>
+          </button>
+
+          <span className="text-sm font-semibold uppercase tracking-[0.14em] text-purple-900 md:text-base">
+            COMPTAMATCH
+          </span>
+        </div>
+
         <section className="flex flex-col items-center gap-8 text-center">
           <div className="halo-title halo-title-comptapro relative space-y-4 max-w-3xl">
             <span className="pointer-events-none absolute -inset-x-8 -inset-y-6 -z-10 rounded-[32px] bg-gradient-to-r from-purple-500/30 via-fuchsia-500/25 to-purple-700/30 blur-3xl" />
