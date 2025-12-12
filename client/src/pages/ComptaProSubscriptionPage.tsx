@@ -86,11 +86,11 @@ const ComptaProSubscriptionPage: React.FC = () => {
       <header className="relative flex items-start justify-between gap-4">
         <div className="space-y-1">
           <h2 className="text-lg font-semibold text-white">{plan.name}</h2>
-          {plan.subtitle && <p className="text-sm text-white/80">{plan.subtitle}</p>}
+          {plan.subtitle && <p className="text-sm text-white">{plan.subtitle}</p>}
         </div>
         <p className="text-right text-lg font-semibold text-white">
           {formatPaidServicePrice(Number(plan.priceAmount), plan.priceCurrency)}
-          <span className="text-sm text-white/80"> /{plan.pricePeriod === "month" ? "mois" : "an"}</span>
+          <span className="text-sm text-white"> /{plan.pricePeriod === "month" ? "mois" : "an"}</span>
         </p>
       </header>
       <button className={`relative mt-6 ${ctaButtonClasses}`} onClick={handlePlanDetailClick}>
@@ -146,7 +146,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
               Comptabilité experte
               <span className="block text-white">pour vos équipes</span>
             </h1>
-            <p className="text-base text-white/85">
+            <p className="text-base text-white">
               Pilotez votre comptabilité en ligne : automatisation bancaire, contrôle des dépenses et reporting instantané pour donner de la visibilité à toute votre organisation.
             </p>
 
@@ -164,19 +164,19 @@ const ComptaProSubscriptionPage: React.FC = () => {
 
           <div className="grid w-full max-w-3xl gap-3 sm:grid-cols-3">
             <div className="rounded-2xl border border-white/25 bg-white/10 p-4 shadow-sm backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.08em] text-white/80">Transactions</p>
+              <p className="text-xs uppercase tracking-[0.08em] text-white">Transactions</p>
               <p className="mt-1 text-2xl font-semibold text-white">+19%</p>
-              <p className="text-xs text-white/80">d’efficacité mensuelle</p>
+              <p className="text-xs text-white">d’efficacité mensuelle</p>
             </div>
             <div className="rounded-2xl border border-white/25 bg-white/10 p-4 shadow-sm backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.08em] text-white/80">Clôture</p>
+              <p className="text-xs uppercase tracking-[0.08em] text-white">Clôture</p>
               <p className="mt-1 text-2xl font-semibold text-white">2x</p>
-              <p className="text-xs text-white/80">plus rapide</p>
+              <p className="text-xs text-white">plus rapide</p>
             </div>
             <div className="rounded-2xl border border-white/25 bg-white/10 p-4 shadow-sm backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.08em] text-white/80">Équipe</p>
+              <p className="text-xs uppercase tracking-[0.08em] text-white">Équipe</p>
               <p className="mt-1 text-2xl font-semibold text-white">Focus</p>
-              <p className="text-xs text-white/80">sur le conseil</p>
+              <p className="text-xs text-white">sur le conseil</p>
             </div>
           </div>
         </section>
@@ -224,15 +224,15 @@ const ComptaProSubscriptionPage: React.FC = () => {
                         <tr key={row.id} className="bg-white/5">
                           <td className="rounded-l-xl border border-white/25 px-4 py-3 align-top">
                             <div className="text-sm font-semibold text-white">{row.label}</div>
-                            {row.description && <p className="text-xs text-white/80">{row.description}</p>}
+                            {row.description && <p className="text-xs text-white">{row.description}</p>}
                           </td>
                           <td className="border-t border-b border-white/25 px-4 py-3 text-center align-middle">
-                            <span className={row.planAIncluded ? "text-emerald-300" : "text-white/40"}>
+                            <span className={row.planAIncluded ? "text-emerald-300" : "text-white"}>
                               {row.planAIncluded ? "✓" : "—"}
                             </span>
                           </td>
                           <td className="rounded-r-xl border border-white/25 px-4 py-3 text-center align-middle">
-                            <span className={row.planBIncluded ? "text-emerald-300" : "text-white/40"}>
+                            <span className={row.planBIncluded ? "text-emerald-300" : "text-white"}>
                               {row.planBIncluded ? "✓" : "—"}
                             </span>
                           </td>

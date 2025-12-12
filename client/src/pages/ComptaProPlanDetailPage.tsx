@@ -100,7 +100,7 @@ const ComptaProPlanDetailPage: React.FC = () => {
               <h1 className="text-3xl font-semibold tracking-tight text-white md:text-4xl">
                 {selectedPlan?.name || "Offre introuvable"}
               </h1>
-              {selectedPlan?.subtitle && <p className="text-sm md:text-base text-white/85">{selectedPlan.subtitle}</p>}
+              {selectedPlan?.subtitle && <p className="text-sm md:text-base text-white">{selectedPlan.subtitle}</p>}
             </div>
             <div className="text-right">
               {selectedPlan && (
@@ -109,7 +109,7 @@ const ComptaProPlanDetailPage: React.FC = () => {
                     Number(selectedPlan.priceAmount),
                     selectedPlan.priceCurrency,
                   )}
-                  <span className="text-sm text-white/80"> /{selectedPlan.pricePeriod === "month" ? "mois" : "an"}</span>
+                  <span className="text-sm text-white"> /{selectedPlan.pricePeriod === "month" ? "mois" : "an"}</span>
                 </p>
               )}
             </div>
@@ -160,7 +160,7 @@ const ComptaProPlanDetailPage: React.FC = () => {
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.08em] text-fuchsia-200">Ce qui est inclus</p>
                   <h2 className="text-xl font-semibold text-white">Tout ce que votre abonnement couvre</h2>
-                  <p className="mt-1 text-sm text-white/80">
+                  <p className="mt-1 text-sm text-white">
                     Découvrez le détail des fonctionnalités prévues pour la formule {selectedPlan.name}.
                   </p>
                 </div>
@@ -183,13 +183,13 @@ const ComptaProPlanDetailPage: React.FC = () => {
                         <h3 className="text-base font-semibold text-white">{feature.label}</h3>
                       </div>
                       {feature.description && (
-                        <p className="pl-11 text-sm text-white/75">{feature.description}</p>
+                        <p className="pl-11 text-sm text-white">{feature.description}</p>
                       )}
                     </article>
                   ))}
                 </div>
               ) : (
-                <div className="rounded-2xl border border-white/15 bg-white/5 px-4 py-6 text-center text-sm text-white/80">
+                <div className="rounded-2xl border border-white/15 bg-white/5 px-4 py-6 text-center text-sm text-white">
                   Les détails de cette formule seront bientôt disponibles.
                 </div>
               )}
@@ -220,7 +220,7 @@ const ComptaProPlanDetailPage: React.FC = () => {
                   <div className={`space-y-3 ${index % 2 === 1 ? "order-2 lg:order-1" : ""}`}>
                     <p className="text-xs font-semibold uppercase tracking-[0.08em] text-fuchsia-200">{`Étape ${index + 1}`}</p>
                     <h3 className="text-xl font-semibold text-white">{section.title}</h3>
-                    <p className="text-sm text-white/80 whitespace-pre-line">{section.body}</p>
+                    <p className="text-sm text-white whitespace-pre-line">{section.body}</p>
                   </div>
                   {section.imageUrl && (
                     <div

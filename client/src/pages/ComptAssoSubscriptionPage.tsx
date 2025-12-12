@@ -74,11 +74,11 @@ const ComptAssoSubscriptionPage: React.FC = () => {
       <header className="relative flex items-start justify-between gap-4">
         <div className="space-y-1">
           <h2 className="text-lg font-semibold text-white">{plan.name}</h2>
-          {plan.subtitle && <p className="text-sm text-white/80">{plan.subtitle}</p>}
+          {plan.subtitle && <p className="text-sm text-white">{plan.subtitle}</p>}
         </div>
         <p className="text-right text-lg font-semibold text-white">
           {formatPaidServicePrice(Number(plan.priceAmount), plan.priceCurrency)}
-          <span className="text-sm text-white/80"> /{plan.pricePeriod === "month" ? "mois" : "an"}</span>
+          <span className="text-sm text-white"> /{plan.pricePeriod === "month" ? "mois" : "an"}</span>
         </p>
       </header>
       <button className={`relative mt-6 ${ctaButtonClasses}`} type="button" onClick={handlePlanDetailClick}>
@@ -134,7 +134,7 @@ const ComptAssoSubscriptionPage: React.FC = () => {
               Comptabilité experte
               <span className="block text-white">pour vos associations</span>
             </h1>
-            <p className="text-base text-white/85">
+            <p className="text-base text-white">
               Retirez-vous du stress administratif : ComptAsso automatise vos finances associatives, suit vos budgets et sécurise vos remboursements, pour des équipes bénévoles plus sereines.
             </p>
 
@@ -147,19 +147,19 @@ const ComptAssoSubscriptionPage: React.FC = () => {
 
           <div className="grid w-full max-w-3xl gap-3 sm:grid-cols-3">
             <div className="rounded-2xl border border-white/25 bg-white/10 p-4 shadow-sm backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.08em] text-white/80">Budget suivi</p>
+              <p className="text-xs uppercase tracking-[0.08em] text-white">Budget suivi</p>
               <p className="mt-1 text-2xl font-semibold text-white">98%</p>
-              <p className="text-xs text-white/80">des dépenses catégorisées</p>
+              <p className="text-xs text-white">des dépenses catégorisées</p>
             </div>
             <div className="rounded-2xl border border-white/25 bg-white/10 p-4 shadow-sm backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.08em] text-white/80">Temps gagné</p>
+              <p className="text-xs uppercase tracking-[0.08em] text-white">Temps gagné</p>
               <p className="mt-1 text-2xl font-semibold text-white">2h30</p>
-              <p className="text-xs text-white/80">par mois pour chaque trésorier</p>
+              <p className="text-xs text-white">par mois pour chaque trésorier</p>
             </div>
             <div className="rounded-2xl border border-white/25 bg-white/10 p-4 shadow-sm backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.08em] text-white/80">Paiements</p>
+              <p className="text-xs uppercase tracking-[0.08em] text-white">Paiements</p>
               <p className="mt-1 text-2xl font-semibold text-white">Sécurisés</p>
-              <p className="text-xs text-white/80">workflow automatisé</p>
+              <p className="text-xs text-white">workflow automatisé</p>
             </div>
           </div>
         </section>
@@ -205,15 +205,15 @@ const ComptAssoSubscriptionPage: React.FC = () => {
                         <tr key={row.id} className="bg-white/5">
                           <td className="rounded-l-xl border border-white/25 px-4 py-3 align-top">
                             <div className="text-sm font-semibold text-white">{row.label}</div>
-                            {row.description && <p className="text-xs text-white/80">{row.description}</p>}
+                            {row.description && <p className="text-xs text-white">{row.description}</p>}
                           </td>
                           <td className="border-t border-b border-white/25 px-4 py-3 text-center align-middle">
-                            <span className={row.planAIncluded ? "text-emerald-300" : "text-white/40"}>
+                            <span className={row.planAIncluded ? "text-emerald-300" : "text-white"}>
                               {row.planAIncluded ? "✓" : "—"}
                             </span>
                           </td>
                           <td className="rounded-r-xl border border-white/25 px-4 py-3 text-center align-middle">
-                            <span className={row.planBIncluded ? "text-emerald-300" : "text-white/40"}>
+                            <span className={row.planBIncluded ? "text-emerald-300" : "text-white"}>
                               {row.planBIncluded ? "✓" : "—"}
                             </span>
                           </td>
