@@ -144,24 +144,6 @@ const ComptAssoSubscriptionPage: React.FC = () => {
               </a>
             </div>
           </div>
-
-          <div className="grid w-full max-w-3xl gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-white/25 bg-white/10 p-4 shadow-sm backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.08em] text-white">Budget suivi</p>
-              <p className="mt-1 text-2xl font-semibold text-white">98%</p>
-              <p className="text-xs text-white">des dépenses catégorisées</p>
-            </div>
-            <div className="rounded-2xl border border-white/25 bg-white/10 p-4 shadow-sm backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.08em] text-white">Temps gagné</p>
-              <p className="mt-1 text-2xl font-semibold text-white">2h30</p>
-              <p className="text-xs text-white">par mois pour chaque trésorier</p>
-            </div>
-            <div className="rounded-2xl border border-white/25 bg-white/10 p-4 shadow-sm backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.08em] text-white">Paiements</p>
-              <p className="mt-1 text-2xl font-semibold text-white">Sécurisés</p>
-              <p className="text-xs text-white">workflow automatisé</p>
-            </div>
-          </div>
         </section>
 
         <section id="plans" className="pricing-section">
