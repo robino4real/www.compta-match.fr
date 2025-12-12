@@ -71,8 +71,8 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 8%, rgba(88, 28, 198, 0.32), rgba(88, 28, 198, 0.22) 25%, rgba(46, 16, 101, 0.14) 42%, rgba(255, 255, 255, 0) 70%),
-    linear-gradient(180deg, rgba(64, 10, 120, 0.2) 0%, rgba(107, 33, 168, 0.14) 24%, rgba(219, 39, 119, 0.1) 46%, rgba(255, 235, 255, 0.95) 72%, rgba(255, 255, 255, 1) 84%);
+  background: radial-gradient(circle at 50% 8%, rgba(26, 9, 45, 0.85), rgba(67, 20, 100, 0.55) 26%, rgba(88, 28, 198, 0.3) 48%, rgba(255, 255, 255, 0) 72%),
+    linear-gradient(180deg, rgba(34, 12, 57, 0.4) 0%, rgba(76, 29, 149, 0.22) 24%, rgba(140, 30, 100, 0.16) 46%, rgba(248, 240, 255, 0.9) 70%, rgba(255, 255, 255, 1) 86%);
   pointer-events: none;
 }
 
@@ -115,13 +115,13 @@ body {
   height: 118%;
   background: radial-gradient(
     circle,
-    rgba(168, 85, 247, 0.72) 0%,
-    rgba(168, 85, 247, 0.46) 28%,
-    rgba(236, 72, 153, 0.28) 50%,
+    rgba(35, 6, 70, 0.82) 0%,
+    rgba(88, 28, 198, 0.58) 26%,
+    rgba(147, 51, 234, 0.32) 50%,
     rgba(255, 255, 255, 0) 72%
   );
-  filter: blur(22px);
-  opacity: 0.95;
+  filter: blur(26px);
+  opacity: 0.97;
   z-index: -1;
   pointer-events: none;
 }
@@ -136,14 +136,14 @@ body {
   height: 230%;
   background: radial-gradient(
     circle,
-    rgba(168, 85, 247, 0.66) 0%,
-    rgba(168, 85, 247, 0.4) 20%,
-    rgba(236, 72, 153, 0.32) 42%,
-    rgba(15, 23, 42, 0.02) 65%,
-    rgba(255, 255, 255, 0) 80%
+    rgba(35, 6, 70, 0.78) 0%,
+    rgba(88, 28, 198, 0.5) 22%,
+    rgba(147, 51, 234, 0.34) 46%,
+    rgba(15, 23, 42, 0.06) 68%,
+    rgba(255, 255, 255, 0) 82%
   );
-  filter: blur(24px);
-  opacity: 0.95;
+  filter: blur(30px);
+  opacity: 0.9;
   z-index: -1;
   pointer-events: none;
 }
@@ -153,10 +153,10 @@ body {
 .halo-pricing-comptasso::before {
   background: radial-gradient(
     circle,
-    rgba(236, 72, 153, 0.55) 0%,
-    rgba(236, 72, 153, 0.3) 26%,
-    rgba(168, 85, 247, 0.18) 45%,
-    rgba(255, 255, 255, 0) 65%
+    rgba(25, 5, 48, 0.82) 0%,
+    rgba(102, 20, 110, 0.48) 24%,
+    rgba(147, 51, 234, 0.26) 46%,
+    rgba(255, 255, 255, 0) 68%
   );
 }
 
@@ -165,11 +165,25 @@ body {
 .halo-pricing-comptapro::before {
   background: radial-gradient(
     circle,
-    rgba(129, 140, 248, 0.55) 0%,
-    rgba(99, 102, 241, 0.32) 26%,
-    rgba(129, 140, 248, 0.18) 45%,
-    rgba(255, 255, 255, 0) 65%
+    rgba(25, 11, 63, 0.82) 0%,
+    rgba(76, 29, 149, 0.5) 24%,
+    rgba(109, 40, 217, 0.3) 46%,
+    rgba(255, 255, 255, 0) 68%
   );
+}
+
+.hero-back-button {
+  position: fixed;
+  left: 1cm;
+  top: clamp(1.25rem, 3vw, 2.5rem);
+  z-index: 30;
+}
+
+@media (max-width: 640px) {
+  .hero-back-button {
+    left: 1cm;
+    top: 1rem;
+  }
 }
 
 .glassy-card,

@@ -63,7 +63,7 @@ const ComptAssoSubscriptionPage: React.FC = () => {
     "inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white shadow-sm transition transform hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 disabled:cursor-not-allowed disabled:opacity-70";
 
   const backButtonClasses =
-    "absolute left-0 inline-flex items-center gap-2 rounded-full border border-purple-200 bg-white/90 px-4 py-2 text-sm font-semibold text-purple-900 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600";
+    "hero-back-button inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/20 px-5 py-2.5 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-300";
 
   const renderPlanCard = (plan: PaidServicePlan) => (
     <article
@@ -114,27 +114,27 @@ const ComptAssoSubscriptionPage: React.FC = () => {
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="1.8"
-              className="h-5 w-5"
+              strokeWidth="2"
+              className="h-6 w-6"
             >
               <path d="M15 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span>Retour</span>
           </button>
 
-          <span className="text-sm font-semibold uppercase tracking-[0.14em] text-purple-900 md:text-base">
+          <span className="text-lg font-semibold tracking-tight text-white md:text-2xl">
             COMPTAMATCH
           </span>
         </div>
 
-        <section className="flex flex-col items-center gap-8 text-center">
+        <section className="flex flex-col items-center gap-8 text-center text-white">
           <div className="halo-title halo-title-comptasso relative space-y-4 max-w-3xl">
             <span className="pointer-events-none absolute -inset-x-8 -inset-y-6 -z-10 rounded-[32px] bg-gradient-to-r from-purple-500/30 via-fuchsia-500/25 to-purple-700/30 blur-3xl" />
-            <h1 className="halo-purple-title text-4xl font-bold leading-tight md:text-5xl">
+            <h1 className="halo-purple-title text-4xl font-bold leading-tight text-white md:text-5xl">
               Comptabilité experte
-              <span className="block text-slate-700">pour vos associations</span>
+              <span className="block text-white/80">pour vos associations</span>
             </h1>
-            <p className="text-base text-slate-700">
+            <p className="text-base text-white/85">
               Retirez-vous du stress administratif : ComptAsso automatise vos finances associatives, suit vos budgets et sécurise vos remboursements, pour des équipes bénévoles plus sereines.
             </p>
 
@@ -146,20 +146,20 @@ const ComptAssoSubscriptionPage: React.FC = () => {
           </div>
 
           <div className="grid w-full max-w-3xl gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.08em] text-slate-500">Budget suivi</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">98%</p>
-              <p className="text-xs text-slate-600">des dépenses catégorisées</p>
+            <div className="rounded-2xl border border-white/25 bg-white/10 p-4 shadow-sm backdrop-blur">
+              <p className="text-xs uppercase tracking-[0.08em] text-white/80">Budget suivi</p>
+              <p className="mt-1 text-2xl font-semibold text-white">98%</p>
+              <p className="text-xs text-white/80">des dépenses catégorisées</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.08em] text-slate-500">Temps gagné</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">2h30</p>
-              <p className="text-xs text-slate-600">par mois pour chaque trésorier</p>
+            <div className="rounded-2xl border border-white/25 bg-white/10 p-4 shadow-sm backdrop-blur">
+              <p className="text-xs uppercase tracking-[0.08em] text-white/80">Temps gagné</p>
+              <p className="mt-1 text-2xl font-semibold text-white">2h30</p>
+              <p className="text-xs text-white/80">par mois pour chaque trésorier</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.08em] text-slate-500">Paiements</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">Sécurisés</p>
-              <p className="text-xs text-slate-600">workflow automatisé</p>
+            <div className="rounded-2xl border border-white/25 bg-white/10 p-4 shadow-sm backdrop-blur">
+              <p className="text-xs uppercase tracking-[0.08em] text-white/80">Paiements</p>
+              <p className="mt-1 text-2xl font-semibold text-white">Sécurisés</p>
+              <p className="text-xs text-white/80">workflow automatisé</p>
             </div>
           </div>
         </section>
