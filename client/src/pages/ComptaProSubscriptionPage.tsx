@@ -161,24 +161,6 @@ const ComptaProSubscriptionPage: React.FC = () => {
               </button>
             </div>
           </div>
-
-          <div className="grid w-full max-w-3xl gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-white/25 bg-white/10 p-4 shadow-sm backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.08em] text-white">Transactions</p>
-              <p className="mt-1 text-2xl font-semibold text-white">+19%</p>
-              <p className="text-xs text-white">d’efficacité mensuelle</p>
-            </div>
-            <div className="rounded-2xl border border-white/25 bg-white/10 p-4 shadow-sm backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.08em] text-white">Clôture</p>
-              <p className="mt-1 text-2xl font-semibold text-white">2x</p>
-              <p className="text-xs text-white">plus rapide</p>
-            </div>
-            <div className="rounded-2xl border border-white/25 bg-white/10 p-4 shadow-sm backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.08em] text-white">Équipe</p>
-              <p className="mt-1 text-2xl font-semibold text-white">Focus</p>
-              <p className="text-xs text-white">sur le conseil</p>
-            </div>
-          </div>
         </section>
 
         <section id="plans" className="pricing-section">

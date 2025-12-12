@@ -95,6 +95,24 @@ body {
   z-index: -1;
 }
 
+/* Assure une transition vers le blanc avant le footer sur les pages ComptaPro/ComptAsso */
+.hero-comptapro::after,
+.hero-comptasso::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: clamp(200px, 24vw, 320px);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0%,
+    #ffffff 70%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
 .hero-heading-glow {
   text-shadow: none;
 }
