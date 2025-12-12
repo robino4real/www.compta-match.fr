@@ -80,6 +80,59 @@ body {
   text-shadow: none;
 }
 
+/* Conteneurs qui vont porter le halo */
+.halo-title,
+.halo-pricing {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+}
+
+/* HALO GÉNÉRIQUE : grosse tache violette radiale */
+.halo-title::before,
+.halo-pricing::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 180%;
+  height: 220%;
+  background: radial-gradient(
+    circle,
+    rgba(168, 85, 247, 0.55) 0%,
+    rgba(168, 85, 247, 0.35) 20%,
+    rgba(236, 72, 153, 0.28) 40%,
+    rgba(15, 23, 42, 0) 75%
+  );
+  filter: blur(24px);
+  opacity: 0.9;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Halo un peu plus rosé pour ComptAsso */
+.halo-title-comptasso::before,
+.halo-pricing-comptasso::before {
+  background: radial-gradient(
+    circle,
+    rgba(236, 72, 153, 0.55) 0%,
+    rgba(168, 85, 247, 0.35) 25%,
+    rgba(15, 23, 42, 0) 75%
+  );
+}
+
+/* Halo plus violet "business" pour ComptaPro */
+.halo-title-comptapro::before,
+.halo-pricing-comptapro::before {
+  background: radial-gradient(
+    circle,
+    rgba(129, 140, 248, 0.55) 0%,
+    rgba(79, 70, 229, 0.35) 25%,
+    rgba(15, 23, 42, 0) 75%
+  );
+}
+
 a {
   color: inherit;
   text-decoration: none;
