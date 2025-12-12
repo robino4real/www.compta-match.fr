@@ -99,7 +99,7 @@ const ComptAssoSubscriptionPage: React.FC = () => {
         <section className="flex flex-col items-center gap-8 text-center">
           <div className="relative space-y-4 max-w-3xl">
             <span className="pointer-events-none absolute -inset-x-8 -inset-y-6 -z-10 rounded-[32px] bg-gradient-to-r from-purple-500/30 via-fuchsia-500/25 to-purple-700/30 blur-3xl" />
-            <h1 className="text-4xl font-bold leading-tight md:text-5xl">
+            <h1 className="halo-purple-title text-4xl font-bold leading-tight md:text-5xl">
               Comptabilité experte
               <span className="block text-slate-700">pour vos associations</span>
             </h1>
@@ -133,7 +133,7 @@ const ComptAssoSubscriptionPage: React.FC = () => {
           </div>
         </section>
 
-        <section id="plans" className="relative">
+        <section id="plans" className="relative halo-purple-block">
           <span className="pointer-events-none absolute -inset-x-6 -inset-y-4 -z-10 rounded-[36px] bg-gradient-to-r from-purple-500/25 via-fuchsia-500/15 to-purple-700/25 blur-3xl" />
           <div className="rounded-[28px] border border-slate-200 bg-white px-6 py-8 shadow-sm md:px-10 md:py-10 space-y-10">
             {error && (
