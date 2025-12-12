@@ -65,6 +65,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           ? "min-h-screen flex flex-col bg-[#050316]"
           : "min-h-screen flex flex-col bg-white",
         pageClassName,
+        "relative",
       ]
         .filter(Boolean)
         .join(" ")}
