@@ -89,7 +89,29 @@ body {
 }
 
 /* HALO GÉNÉRIQUE : grosse tache violette radiale */
-.halo-title::before,
+
+/* Halo compact pour les titres (évite d'atteindre la navbar) */
+.halo-title::before {
+  content: "";
+  position: absolute;
+  top: 55%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 130%;
+  height: 150%;
+  background: radial-gradient(
+    circle,
+    rgba(168, 85, 247, 0.5) 0%,
+    rgba(168, 85, 247, 0.35) 25%,
+    rgba(236, 72, 153, 0.22) 45%,
+    rgba(15, 23, 42, 0) 75%
+  );
+  filter: blur(24px);
+  opacity: 0.8;
+  z-index: -1;
+  pointer-events: none;
+}
+
 .halo-pricing::before {
   content: "";
   position: absolute;

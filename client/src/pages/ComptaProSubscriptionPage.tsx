@@ -153,7 +153,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
         <section id="plans" className="pricing-section">
           <div className="halo-pricing halo-pricing-comptapro relative">
             <span className="pointer-events-none absolute -inset-x-6 -inset-y-4 -z-10 rounded-[36px] bg-gradient-to-r from-purple-500/25 via-fuchsia-500/15 to-purple-700/25 blur-3xl" />
-            <div className="rounded-[28px] border border-slate-200 bg-white px-6 py-8 shadow-sm md:px-10 md:py-10 space-y-10">
+            <div className="px-6 py-8 md:px-10 md:py-10 space-y-10">
               {error && (
                 <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
                   {error}
