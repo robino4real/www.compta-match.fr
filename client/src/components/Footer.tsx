@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
-  const containerClasses = 'bg-white text-slate-900 mt-8';
+  const containerClasses = 'bg-white text-slate-900';
 
   const textMutedClasses = 'text-xs text-slate-700';
   const linkClasses = 'hover:text-black text-slate-800 underline-offset-2 hover:underline';

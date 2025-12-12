@@ -69,7 +69,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
   const renderPlanCard = (plan: PaidServicePlan) => (
     <article
       key={plan.id}
-      className="relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200 bg-white px-6 py-6 shadow-sm"
+      className="pricing-card relative flex flex-col justify-between overflow-hidden rounded-3xl px-6 py-6"
     >
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-purple-500/10 via-fuchsia-500/5 to-purple-700/10 blur-3xl" />
       <header className="relative flex items-start justify-between gap-4">
