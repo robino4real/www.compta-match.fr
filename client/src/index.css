@@ -94,20 +94,20 @@ body {
 .halo-title::before {
   content: "";
   position: absolute;
-  top: 55%;
   left: 50%;
+  top: 60%;
   transform: translate(-50%, -50%);
-  width: 130%;
-  height: 150%;
+  width: 110%;
+  height: 130%;
   background: radial-gradient(
     circle,
     rgba(168, 85, 247, 0.5) 0%,
     rgba(168, 85, 247, 0.35) 25%,
-    rgba(236, 72, 153, 0.22) 45%,
-    rgba(15, 23, 42, 0) 75%
+    rgba(236, 72, 153, 0.2) 45%,
+    rgba(15, 23, 42, 0) 70%
   );
-  filter: blur(24px);
-  opacity: 0.8;
+  filter: blur(22px);
+  opacity: 0.85;
   z-index: -1;
   pointer-events: none;
 }
@@ -140,7 +140,8 @@ body {
     circle,
     rgba(236, 72, 153, 0.55) 0%,
     rgba(168, 85, 247, 0.35) 25%,
-    rgba(15, 23, 42, 0) 75%
+    rgba(236, 72, 153, 0.2) 45%,
+    rgba(15, 23, 42, 0) 70%
   );
 }
 
@@ -151,8 +152,37 @@ body {
     circle,
     rgba(129, 140, 248, 0.55) 0%,
     rgba(79, 70, 229, 0.35) 25%,
-    rgba(15, 23, 42, 0) 75%
+    rgba(129, 140, 248, 0.2) 45%,
+    rgba(15, 23, 42, 0) 70%
   );
+}
+
+.pricing-card {
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.92),
+    rgba(244, 232, 255, 0.96)
+  );
+  border-radius: 24px;
+  border: 1px solid rgba(209, 213, 219, 0.6);
+  box-shadow:
+    0 18px 35px rgba(15, 23, 42, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 0;
+}
+
+.pricing-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at bottom, rgba(168, 85, 247, 0.18), transparent 55%);
+  opacity: 0.7;
+  z-index: -1;
+  pointer-events: none;
 }
 
 a {
