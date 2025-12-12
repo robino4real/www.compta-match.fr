@@ -70,30 +70,28 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         .join(" ")}
     >
       {isSubscriptionLanding ? (
-        <header className="px-4 pt-6 pb-2 lg:px-8">
-          <div className="mx-auto flex max-w-6xl items-center justify-between">
+        <header className="px-4 pt-6 pb-2 sm:px-6 md:px-8">
+          <div className="flex items-center justify-between">
             <button
               type="button"
               onClick={handleBackClick}
-              className="group inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-sm font-semibold text-slate-800 shadow-md ring-1 ring-purple-200/70 backdrop-blur transition hover:-translate-y-0.5 hover:shadow-lg"
+              className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-100 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
+              aria-label="Retour"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-purple-600/80 to-fuchsia-500/80 text-white shadow-inner transition group-hover:from-purple-600 group-hover:to-fuchsia-500">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  className="h-4 w-4"
-                >
-                  <path d="M15 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </span>
-              <span className="leading-none">Retour</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                className="h-5 w-5"
+              >
+                <path d="M15 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </button>
 
-            <span className="text-xs font-semibold uppercase tracking-[0.32em] text-purple-700 lg:text-sm">
-              Comptamatch
+            <span className="text-lg font-semibold tracking-tight text-slate-100 md:text-2xl">
+              COMPTAMATCH
             </span>
           </div>
         </header>
