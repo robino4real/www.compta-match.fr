@@ -70,32 +70,34 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         .filter(Boolean)
         .join(" ")}
     >
-      {isSubscriptionLanding ? null : <MainNavbar />}
-
-      {isSubscriptionLanding && (
-        <div className="pointer-events-none absolute inset-x-0 top-4 flex items-center justify-between px-3 sm:px-4 md:px-6">
-          <button
-            type="button"
-            onClick={handleBackClick}
-            className="pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/5 text-white transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            aria-label="Retour"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              className="h-5 w-5"
+      {isSubscriptionLanding ? (
+        <header className="px-4 pt-6 pb-2 sm:px-6 md:px-8">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={handleBackClick}
+              className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-100 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
+              aria-label="Retour"
             >
-              <path d="M15 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                className="h-5 w-5"
+              >
+                <path d="M15 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
 
-          <span className="pointer-events-auto text-lg font-semibold tracking-tight text-white md:text-2xl">
-            COMPTAMATCH
-          </span>
-        </div>
+            <span className="text-lg font-semibold tracking-tight text-slate-100 md:text-2xl">
+              COMPTAMATCH
+            </span>
+          </div>
+        </header>
+      ) : (
+        <MainNavbar />
       )}
       <main className={["flex-1", showGradientSeparator ? "hero-wrapper" : ""].filter(Boolean).join(" ")}>{children}</main>
       <Footer />
