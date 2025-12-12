@@ -97,7 +97,7 @@ const ComptAssoSubscriptionPage: React.FC = () => {
     <main className="hero-comptasso min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-6xl px-4 pb-20 pt-16 lg:px-8 lg:pt-20 space-y-12">
         <section className="flex flex-col items-center gap-8 text-center">
-          <div className="relative space-y-4 max-w-3xl">
+          <div className="halo-title halo-title-comptasso relative space-y-4 max-w-3xl">
             <span className="pointer-events-none absolute -inset-x-8 -inset-y-6 -z-10 rounded-[32px] bg-gradient-to-r from-purple-500/30 via-fuchsia-500/25 to-purple-700/30 blur-3xl" />
             <h1 className="halo-purple-title text-4xl font-bold leading-tight md:text-5xl">
               Comptabilité experte
@@ -106,12 +106,12 @@ const ComptAssoSubscriptionPage: React.FC = () => {
             <p className="text-base text-slate-700">
               Retirez-vous du stress administratif : ComptAsso automatise vos finances associatives, suit vos budgets et sécurise vos remboursements, pour des équipes bénévoles plus sereines.
             </p>
-          </div>
 
-          <div className="flex flex-wrap justify-center gap-3">
-            <a href="/comparatif-des-offres" className={ctaButtonClasses}>
-              Accéder à mon espace Asso
-            </a>
+            <div className="flex flex-wrap justify-center gap-3">
+              <a href="/comparatif-des-offres" className={ctaButtonClasses}>
+                Accéder à mon espace Asso
+              </a>
+            </div>
           </div>
 
           <div className="grid w-full max-w-3xl gap-3 sm:grid-cols-3">
@@ -133,88 +133,90 @@ const ComptAssoSubscriptionPage: React.FC = () => {
           </div>
         </section>
 
-        <section id="plans" className="relative halo-purple-block">
-          <span className="pointer-events-none absolute -inset-x-6 -inset-y-4 -z-10 rounded-[36px] bg-gradient-to-r from-purple-500/25 via-fuchsia-500/15 to-purple-700/25 blur-3xl" />
-          <div className="rounded-[28px] border border-slate-200 bg-white px-6 py-8 shadow-sm md:px-10 md:py-10 space-y-10">
-            {error && (
-              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-                {error}
-              </div>
-            )}
-
-            {!error && !isLoading && !hasPlans && (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-700">
-                Les abonnements ComptAsso seront disponibles prochainement.
-              </div>
-            )}
-
-            <div className="grid gap-6 md:grid-cols-2">
-              {isLoading ? planSkeletons.map((_, index) => renderPlanSkeleton(index)) : plans.map(renderPlanCard)}
-            </div>
-
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-              {isLoading ? (
-                renderComparisonSkeleton()
-              ) : comparison && hasPlans ? (
-                <table className="min-w-full border-separate border-spacing-y-1 text-sm text-slate-800">
-                  <thead>
-                    <tr>
-                      <th className="bg-slate-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Fonctionnalités</th>
-                      <th className="bg-slate-50 px-4 py-3 text-center text-sm font-semibold text-slate-900">
-                        {comparison.plans[0]?.name || "Plan A"}
-                      </th>
-                      <th className="bg-slate-50 px-4 py-3 text-center text-sm font-semibold text-slate-900">
-                        {comparison.plans[1]?.name || "Plan B"}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {comparison.rows.map((row) => (
-                      <tr key={row.id} className="bg-white">
-                        <td className="rounded-l-xl border border-slate-200 px-4 py-3 align-top">
-                          <div className="text-sm font-semibold text-slate-900">{row.label}</div>
-                          {row.description && <p className="text-xs text-slate-700">{row.description}</p>}
-                        </td>
-                        <td className="border-t border-b border-slate-200 px-4 py-3 text-center align-middle">
-                          <span className={row.planAIncluded ? "text-emerald-600" : "text-slate-400"}>
-                            {row.planAIncluded ? "✓" : "—"}
-                          </span>
-                        </td>
-                        <td className="rounded-r-xl border border-slate-200 px-4 py-3 text-center align-middle">
-                          <span className={row.planBIncluded ? "text-emerald-600" : "text-slate-400"}>
-                            {row.planBIncluded ? "✓" : "—"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <div className="px-4 py-6 text-center text-sm text-slate-700">Comparatif disponible prochainement.</div>
+        <section id="plans" className="pricing-section">
+          <div className="halo-pricing halo-pricing-comptasso relative">
+            <span className="pointer-events-none absolute -inset-x-6 -inset-y-4 -z-10 rounded-[36px] bg-gradient-to-r from-purple-500/25 via-fuchsia-500/15 to-purple-700/25 blur-3xl" />
+            <div className="rounded-[28px] border border-slate-200 bg-white px-6 py-8 shadow-sm md:px-10 md:py-10 space-y-10">
+              {error && (
+                <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                  {error}
+                </div>
               )}
-            </div>
 
-            <div className="space-y-10">
-              {isLoading
-                ? Array.from({ length: 2 }).map((_, index) => renderSectionSkeleton(index))
-                : sections.map((section, index) => (
-                    <section key={section.id} className="grid gap-8 lg:grid-cols-2 items-center">
-                      <div className={`space-y-3 ${index % 2 === 1 ? "order-2 lg:order-1" : ""}`}>
-                        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{`Focus ${index + 1}`}</p>
-                        <h3 className="text-xl font-semibold text-slate-900">{section.title}</h3>
-                        <p className="text-sm text-slate-700 whitespace-pre-line">{section.body}</p>
-                      </div>
-                      {section.imageUrl && (
-                        <div
-                          className={`overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm ${
-                            index % 2 === 1 ? "order-1 lg:order-2" : ""
-                          }`}
-                        >
-                          <img src={section.imageUrl} alt={section.title} className="w-full h-auto object-cover" />
+              {!error && !isLoading && !hasPlans && (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-700">
+                  Les abonnements ComptAsso seront disponibles prochainement.
+                </div>
+              )}
+
+              <div className="grid gap-6 md:grid-cols-2">
+                {isLoading ? planSkeletons.map((_, index) => renderPlanSkeleton(index)) : plans.map(renderPlanCard)}
+              </div>
+
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                {isLoading ? (
+                  renderComparisonSkeleton()
+                ) : comparison && hasPlans ? (
+                  <table className="min-w-full border-separate border-spacing-y-1 text-sm text-slate-800">
+                    <thead>
+                      <tr>
+                        <th className="bg-slate-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Fonctionnalités</th>
+                        <th className="bg-slate-50 px-4 py-3 text-center text-sm font-semibold text-slate-900">
+                          {comparison.plans[0]?.name || "Plan A"}
+                        </th>
+                        <th className="bg-slate-50 px-4 py-3 text-center text-sm font-semibold text-slate-900">
+                          {comparison.plans[1]?.name || "Plan B"}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {comparison.rows.map((row) => (
+                        <tr key={row.id} className="bg-white">
+                          <td className="rounded-l-xl border border-slate-200 px-4 py-3 align-top">
+                            <div className="text-sm font-semibold text-slate-900">{row.label}</div>
+                            {row.description && <p className="text-xs text-slate-700">{row.description}</p>}
+                          </td>
+                          <td className="border-t border-b border-slate-200 px-4 py-3 text-center align-middle">
+                            <span className={row.planAIncluded ? "text-emerald-600" : "text-slate-400"}>
+                              {row.planAIncluded ? "✓" : "—"}
+                            </span>
+                          </td>
+                          <td className="rounded-r-xl border border-slate-200 px-4 py-3 text-center align-middle">
+                            <span className={row.planBIncluded ? "text-emerald-600" : "text-slate-400"}>
+                              {row.planBIncluded ? "✓" : "—"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="px-4 py-6 text-center text-sm text-slate-700">Comparatif disponible prochainement.</div>
+                )}
+              </div>
+
+              <div className="space-y-10">
+                {isLoading
+                  ? Array.from({ length: 2 }).map((_, index) => renderSectionSkeleton(index))
+                  : sections.map((section, index) => (
+                      <section key={section.id} className="grid gap-8 lg:grid-cols-2 items-center">
+                        <div className={`space-y-3 ${index % 2 === 1 ? "order-2 lg:order-1" : ""}`}>
+                          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{`Focus ${index + 1}`}</p>
+                          <h3 className="text-xl font-semibold text-slate-900">{section.title}</h3>
+                          <p className="text-sm text-slate-700 whitespace-pre-line">{section.body}</p>
                         </div>
-                      )}
-                    </section>
-                  ))}
+                        {section.imageUrl && (
+                          <div
+                            className={`overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm ${
+                              index % 2 === 1 ? "order-1 lg:order-2" : ""
+                            }`}
+                          >
+                            <img src={section.imageUrl} alt={section.title} className="w-full h-auto object-cover" />
+                          </div>
+                        )}
+                      </section>
+                    ))}
+              </div>
             </div>
           </div>
         </section>
