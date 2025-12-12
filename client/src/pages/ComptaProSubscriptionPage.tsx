@@ -69,7 +69,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
   const renderPlanCard = (plan: PaidServicePlan) => (
     <article
       key={plan.id}
-      className="pricing-card relative flex flex-col justify-between overflow-hidden rounded-3xl px-6 py-6"
+      className="glassy-card pricing-card relative flex flex-col justify-between overflow-hidden rounded-3xl px-6 py-6"
     >
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-purple-500/10 via-fuchsia-500/5 to-purple-700/10 blur-3xl" />
       <header className="relative flex items-start justify-between gap-4">
@@ -172,7 +172,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
                   : plans.map(renderPlanCard)}
               </div>
 
-              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+              <div className="glassy-card overflow-hidden">
                 {isLoading ? (
                   renderComparisonSkeleton()
                 ) : comparison && hasPlans ? (

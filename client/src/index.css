@@ -82,32 +82,34 @@ body {
 
 /* Conteneurs qui vont porter le halo */
 .halo-title,
+.halo-title-comptapro,
+.halo-title-comptasso,
 .halo-pricing {
   position: relative;
   z-index: 0;
   isolation: isolate;
 }
 
-/* HALO GÉNÉRIQUE : grosse tache violette radiale */
-
-/* Halo compact pour les titres (évite d'atteindre la navbar) */
-.halo-title::before {
+/* HALO GÉNÉRIQUE : halo compact et recentré sous le bloc titre */
+.halo-title::before,
+.halo-title-comptapro::before,
+.halo-title-comptasso::before {
   content: "";
   position: absolute;
   left: 50%;
-  top: 60%;
+  top: 68%;
   transform: translate(-50%, -50%);
-  width: 110%;
-  height: 130%;
+  width: 95%;
+  height: 95%;
   background: radial-gradient(
     circle,
-    rgba(168, 85, 247, 0.5) 0%,
-    rgba(168, 85, 247, 0.35) 25%,
-    rgba(236, 72, 153, 0.2) 45%,
-    rgba(15, 23, 42, 0) 70%
+    rgba(168, 85, 247, 0.55) 0%,
+    rgba(168, 85, 247, 0.32) 26%,
+    rgba(236, 72, 153, 0.18) 45%,
+    rgba(255, 255, 255, 0) 65%
   );
-  filter: blur(22px);
-  opacity: 0.85;
+  filter: blur(18px);
+  opacity: 0.9;
   z-index: -1;
   pointer-events: none;
 }
@@ -139,9 +141,9 @@ body {
   background: radial-gradient(
     circle,
     rgba(236, 72, 153, 0.55) 0%,
-    rgba(168, 85, 247, 0.35) 25%,
-    rgba(236, 72, 153, 0.2) 45%,
-    rgba(15, 23, 42, 0) 70%
+    rgba(236, 72, 153, 0.3) 26%,
+    rgba(168, 85, 247, 0.18) 45%,
+    rgba(255, 255, 255, 0) 65%
   );
 }
 
@@ -151,12 +153,13 @@ body {
   background: radial-gradient(
     circle,
     rgba(129, 140, 248, 0.55) 0%,
-    rgba(79, 70, 229, 0.35) 25%,
-    rgba(129, 140, 248, 0.2) 45%,
-    rgba(15, 23, 42, 0) 70%
+    rgba(99, 102, 241, 0.32) 26%,
+    rgba(129, 140, 248, 0.18) 45%,
+    rgba(255, 255, 255, 0) 65%
   );
 }
 
+.glassy-card,
 .pricing-card {
   position: relative;
   background: linear-gradient(
@@ -174,6 +177,7 @@ body {
   z-index: 0;
 }
 
+.glassy-card::before,
 .pricing-card::before {
   content: "";
   position: absolute;
