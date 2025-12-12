@@ -50,7 +50,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     >
       {!isSubscriptionLanding && <MainNavbar />}
       <main className={["flex-1", showGradientSeparator ? "hero-wrapper" : ""].filter(Boolean).join(" ")}>{children}</main>
-      <Footer />
+      {!isSubscriptionLanding && <Footer />}
     </div>
   );
 };
