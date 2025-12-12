@@ -80,17 +80,17 @@ const ComptaProSubscriptionPage: React.FC = () => {
   const renderPlanCard = (plan: PaidServicePlan) => (
     <article
       key={plan.id}
-      className="relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200 bg-white px-6 py-6 text-slate-900 shadow-xl"
+      className="relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/30 bg-white/15 px-6 py-6 text-white shadow-lg backdrop-blur"
     >
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-purple-100/60 via-white to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/15 via-white/10 to-white/5" />
       <header className="relative flex items-start justify-between gap-4">
         <div className="space-y-1">
-          <h2 className="text-lg font-semibold text-slate-900">{plan.name}</h2>
-          {plan.subtitle && <p className="text-sm text-slate-700">{plan.subtitle}</p>}
+          <h2 className="text-lg font-semibold text-white">{plan.name}</h2>
+          {plan.subtitle && <p className="text-sm text-white">{plan.subtitle}</p>}
         </div>
-        <p className="text-right text-lg font-semibold text-slate-900">
+        <p className="text-right text-lg font-semibold text-white">
           {formatPaidServicePrice(Number(plan.priceAmount), plan.priceCurrency)}
-          <span className="text-sm text-slate-700"> /{plan.pricePeriod === "month" ? "mois" : "an"}</span>
+          <span className="text-sm text-white"> /{plan.pricePeriod === "month" ? "mois" : "an"}</span>
         </p>
       </header>
       <button className={`relative mt-6 ${ctaButtonClasses}`} onClick={handlePlanDetailClick}>
@@ -134,17 +134,17 @@ const ComptaProSubscriptionPage: React.FC = () => {
             <span>Retour</span>
           </button>
 
-          <span className="text-lg font-semibold tracking-tight text-slate-900 md:text-2xl">
+          <span className="text-lg font-semibold tracking-tight text-white md:text-2xl">
             COMPTAMATCH
           </span>
         </div>
 
-        <section className="flex flex-col items-center gap-8 text-center text-slate-900">
+        <section className="flex flex-col items-center gap-8 text-center text-white">
           <div className="halo-title halo-title-comptapro relative space-y-4 max-w-3xl">
-            <span className="pointer-events-none absolute -inset-x-10 -inset-y-6 -z-10 rounded-[32px] bg-gradient-to-r from-purple-500/25 via-fuchsia-400/25 to-purple-700/25 blur-3xl" />
-            <h1 className="halo-purple-title text-4xl font-bold leading-tight text-slate-900 md:text-5xl">
+            <span className="pointer-events-none absolute -inset-x-8 -inset-y-6 -z-10 rounded-[32px] bg-gradient-to-r from-purple-500/30 via-fuchsia-500/25 to-purple-700/30 blur-3xl" />
+            <h1 className="halo-purple-title text-4xl font-bold leading-tight text-white md:text-5xl">
               Comptabilité experte
-              <span className="block text-slate-900">pour vos équipes</span>
+              <span className="block text-white">pour vos équipes</span>
             </h1>
               <p className="text-base text-white">
                 Pilotez votre comptabilité en ligne : automatisation bancaire, contrôle des dépenses et reporting instantané pour donner de la visibilité à toute votre organisation.
@@ -165,8 +165,8 @@ const ComptaProSubscriptionPage: React.FC = () => {
 
         <section id="plans" className="pricing-section">
           <div className="halo-pricing halo-pricing-comptapro relative">
-            <span className="pointer-events-none absolute -inset-x-8 -inset-y-6 -z-10 rounded-[42px] bg-gradient-to-r from-purple-500/22 via-fuchsia-400/16 to-purple-700/22 blur-3xl" />
-            <div className="px-6 py-8 md:px-10 md:py-10 space-y-10 bg-white/80 rounded-[28px] border border-slate-200 shadow-xl">
+            <span className="pointer-events-none absolute -inset-x-6 -inset-y-4 -z-10 rounded-[36px] bg-gradient-to-r from-purple-500/25 via-fuchsia-500/15 to-purple-700/25 blur-3xl" />
+            <div className="px-6 py-8 md:px-10 md:py-10 space-y-10">
               {error && (
                 <div className="rounded-2xl border border-red-500 bg-red-700 px-4 py-3 text-sm text-white">
                   {error}
