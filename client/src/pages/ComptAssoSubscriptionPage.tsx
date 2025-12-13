@@ -60,17 +60,17 @@ const ComptAssoSubscriptionPage: React.FC = () => {
   };
 
   const ctaButtonClasses =
-    "inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white shadow-sm transition transform hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white shadow-sm transition transform hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-700 disabled:cursor-not-allowed";
 
   const backButtonClasses =
-    "hero-back-button inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-base font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-300";
+    "hero-back-button inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-base font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400";
 
   const renderPlanCard = (plan: PaidServicePlan) => (
     <article
       key={plan.id}
       className="halo-purple-card relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200 bg-white px-6 py-6 text-slate-900 shadow-xl"
     >
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-pink-100/60 via-white to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-slate-100/60 via-white to-transparent" />
       <header className="relative flex items-start justify-between gap-4">
         <div className="space-y-1">
           <h2 className="text-lg font-semibold text-slate-900">{plan.name}</h2>
@@ -129,7 +129,7 @@ const ComptAssoSubscriptionPage: React.FC = () => {
 
         <section className="flex flex-col items-center gap-8 text-center text-slate-900">
           <div className="halo-title halo-title-comptasso relative space-y-4 max-w-3xl">
-            <span className="pointer-events-none absolute -inset-x-10 -inset-y-6 -z-10 rounded-[32px] bg-gradient-to-r from-purple-500/22 via-fuchsia-400/22 to-purple-700/22 blur-3xl" />
+            <span className="pointer-events-none absolute -inset-x-10 -inset-y-6 -z-10 rounded-[32px] bg-gradient-to-r from-slate-200/50 via-white to-slate-300/50 blur-3xl" />
             <h1 className="halo-purple-title text-4xl font-bold leading-tight text-slate-900 md:text-5xl">
               Comptabilité experte
               <span className="block text-slate-900">pour vos associations</span>
