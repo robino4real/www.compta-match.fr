@@ -67,6 +67,12 @@ body {
   height: 240vh;
   transform: translate(-50%, -50%);
   border-radius: 50%;
+  filter: blur(140px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero-comptapro::before {
   background: radial-gradient(
     circle at 50% 50%,
     rgba(36, 6, 64, 0.92) 0%,
@@ -76,9 +82,18 @@ body {
     rgba(181, 115, 238, 0.28) 80%,
     transparent 92%
   );
-  filter: blur(140px);
-  z-index: 0;
-  pointer-events: none;
+}
+
+.hero-comptasso::before {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(42, 6, 70, 0.94) 0%,
+    rgba(76, 14, 112, 0.88) 24%,
+    rgba(126, 32, 126, 0.76) 44%,
+    rgba(168, 58, 96, 0.6) 62%,
+    rgba(214, 90, 54, 0.4) 78%,
+    transparent 92%
+  );
 }
 
 .hero-heading-glow {
