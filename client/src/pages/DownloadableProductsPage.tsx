@@ -46,20 +46,20 @@ export default function DownloadableProductsPage() {
           <div className="flex items-center justify-self-end gap-2 md:gap-3">
             <Link
               to={user ? "/compte" : "/auth/login"}
-              className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              className="hero-back-button inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/15 px-4 py-2 text-sm font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/40 text-xs font-semibold text-slate-900">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-white/15 text-xs font-semibold text-white">
                 {!isLoading && user?.email ? (
                   user.email.charAt(0).toUpperCase()
                 ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    className="h-4 w-4"
-                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      className="h-4 w-4"
+                    >
                     <circle cx="12" cy="8" r="3.25" />
                     <path d="M6.5 18.5c0-2.35 2.7-4 5.5-4s5.5 1.65 5.5 4" />
                   </svg>
@@ -70,7 +70,7 @@ export default function DownloadableProductsPage() {
 
             <Link
               to="/panier"
-              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              className="hero-back-button relative flex h-10 w-10 items-center justify-center rounded-full border border-white/50 bg-white/15 text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
               aria-label="Panier"
             >
               <svg
@@ -85,7 +85,7 @@ export default function DownloadableProductsPage() {
                 <path d="M1 1h4l2.68 12.39a1 1 0 0 0 .98.8h8.72a1 1 0 0 0 .98-.8L21 6H6" strokeWidth={1.6} />
               </svg>
               {items.length > 0 && (
-                <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-black px-1 text-[10px] font-semibold text-white">
+                <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-white text-[10px] font-semibold text-slate-900">
                   {items.length}
                 </span>
               )}
