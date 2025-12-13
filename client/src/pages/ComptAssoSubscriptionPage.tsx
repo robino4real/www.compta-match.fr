@@ -68,7 +68,7 @@ const ComptAssoSubscriptionPage: React.FC = () => {
   const renderPlanCard = (plan: PaidServicePlan) => (
     <article
       key={plan.id}
-      className="relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200 bg-white px-6 py-6 text-slate-900 shadow-xl"
+      className="halo-purple-card relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200 bg-white px-6 py-6 text-slate-900 shadow-xl"
     >
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-pink-100/60 via-white to-transparent" />
       <header className="relative flex items-start justify-between gap-4">
@@ -134,7 +134,7 @@ const ComptAssoSubscriptionPage: React.FC = () => {
               Comptabilité experte
               <span className="block text-slate-900">pour vos associations</span>
             </h1>
-            <p className="text-base text-slate-700">
+            <p className="halo-purple-subtitle inline-block text-base text-slate-700">
               Retirez-vous du stress administratif : ComptAsso automatise vos finances associatives, suit vos budgets et sécurise vos remboursements, pour des équipes bénévoles plus sereines.
             </p>
 
@@ -164,7 +164,7 @@ const ComptAssoSubscriptionPage: React.FC = () => {
               {isLoading ? planSkeletons.map((_, index) => renderPlanSkeleton(index)) : plans.map(renderPlanCard)}
             </div>
 
-            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white text-slate-900 shadow-lg">
+            <div className="halo-purple-panel overflow-hidden rounded-3xl border border-slate-200 bg-white text-slate-900 shadow-lg">
               {isLoading ? (
                 renderComparisonSkeleton()
               ) : comparison && hasPlans ? (
