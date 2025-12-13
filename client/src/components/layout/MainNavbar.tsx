@@ -13,7 +13,6 @@ export function MainNavbar() {
 
   const menuItems = React.useMemo(
     () => [
-      { to: "/", label: "Accueil", exact: true },
       { to: "/logiciels", label: "Nos logiciels" },
       { to: "/comptapro", label: "ComptaPro" },
       { to: "/comptasso", label: "ComptAsso" },
