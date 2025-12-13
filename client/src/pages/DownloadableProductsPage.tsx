@@ -39,10 +39,10 @@ export default function DownloadableProductsPage() {
             COMPTAMATCH
           </span>
 
-          <div className="absolute right-0 top-0 flex items-center gap-2 md:gap-3">
+          <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-2 md:gap-3">
             <Link
               to="/auth/login"
-              className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/20 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+              className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/15 px-5 py-2.5 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/25 text-xs font-semibold text-white">
                 <svg
@@ -62,7 +62,7 @@ export default function DownloadableProductsPage() {
 
             <Link
               to="/panier"
-              className="relative flex items-center gap-2 rounded-full border border-white/50 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/20 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+              className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/15 px-5 py-2.5 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
