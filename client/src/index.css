@@ -69,11 +69,12 @@ body {
   border-radius: 50%;
   background: radial-gradient(
     circle at 50% 50%,
-    rgba(12, 8, 18, 0.82) 0%,
-    rgba(28, 6, 38, 0.75) 38%,
-    rgba(79, 70, 229, 0.42) 56%,
-    rgba(147, 51, 234, 0.35) 74%,
-    transparent 90%
+    rgba(36, 6, 64, 0.92) 0%,
+    rgba(58, 10, 88, 0.86) 26%,
+    rgba(87, 24, 130, 0.68) 46%,
+    rgba(132, 55, 190, 0.48) 64%,
+    rgba(181, 115, 238, 0.28) 80%,
+    transparent 92%
   );
   filter: blur(140px);
   z-index: 0;

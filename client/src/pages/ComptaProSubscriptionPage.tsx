@@ -72,10 +72,10 @@ const ComptaProSubscriptionPage: React.FC = () => {
   };
 
   const ctaButtonClasses =
-    "inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white shadow-sm transition transform hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-700 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center rounded-full bg-black/80 px-6 py-3 text-sm font-semibold text-white shadow-sm transition transform hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-400 disabled:cursor-not-allowed";
 
   const backButtonClasses =
-    "hero-back-button inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/30 px-5 py-2.5 text-base font-semibold text-slate-900 shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/40 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400";
+    "hero-back-button inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/15 px-5 py-2.5 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-300";
 
   const renderPlanCard = (plan: PaidServicePlan) => (
     <article
@@ -116,7 +116,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
   const hasPlans = plans.length > 0;
 
   return (
-    <main className="hero-comptapro min-h-screen bg-white text-slate-900">
+    <main className="hero-comptapro min-h-screen bg-[#0c0316] text-white">
       <div className="mx-auto max-w-6xl px-4 pb-20 pt-12 lg:px-8 lg:pt-16 space-y-12">
         <div className="relative flex items-center justify-center">
           <button type="button" onClick={handleBackClick} className={backButtonClasses}>
@@ -133,19 +133,19 @@ const ComptaProSubscriptionPage: React.FC = () => {
             <span>Retour</span>
           </button>
 
-          <span className="text-lg font-semibold tracking-tight text-slate-900 md:text-2xl">
+          <span className="text-lg font-semibold tracking-tight text-white drop-shadow md:text-2xl">
             COMPTAMATCH
           </span>
         </div>
 
-        <section className="flex flex-col items-center gap-8 text-center text-slate-900">
+        <section className="flex flex-col items-center gap-8 text-center text-white">
           <div className="halo-title halo-title-comptapro relative space-y-4 max-w-3xl">
-            <span className="pointer-events-none absolute -inset-x-10 -inset-y-6 -z-10 rounded-[32px] bg-gradient-to-r from-slate-200/50 via-white to-slate-300/50 blur-3xl" />
-            <h1 className="halo-purple-title text-4xl font-bold leading-tight text-slate-900 md:text-5xl">
+            <span className="pointer-events-none absolute -inset-x-10 -inset-y-6 -z-10 rounded-[32px] bg-gradient-to-r from-fuchsia-500/25 via-purple-800/30 to-fuchsia-400/25 blur-3xl" />
+            <h1 className="halo-purple-title text-4xl font-bold leading-tight text-white drop-shadow md:text-5xl">
               Comptabilité experte
-              <span className="block text-slate-900">pour vos équipes</span>
+              <span className="block text-white">pour vos équipes</span>
             </h1>
-            <p className="halo-purple-subtitle inline-block text-base text-slate-700">
+            <p className="halo-purple-subtitle inline-block text-base text-fuchsia-100">
               Pilotez votre comptabilité en ligne : automatisation bancaire, contrôle des dépenses et reporting instantané pour donner de la visibilité à toute votre organisation.
             </p>
 
