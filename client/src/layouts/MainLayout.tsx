@@ -15,16 +15,23 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const pageClassName = React.useMemo(() => {
     if (location.pathname === "/comptapro") return "page-comptapro";
     if (location.pathname === "/comptasso") return "page-comptasso";
+    if (location.pathname === "/logiciels") return "page-logiciels";
     return "";
   }, [location.pathname]);
 
   const showGradientSeparator = React.useMemo(
-    () => location.pathname === "/comptapro" || location.pathname === "/comptasso",
+    () =>
+      location.pathname === "/comptapro" ||
+      location.pathname === "/comptasso" ||
+      location.pathname === "/logiciels",
     [location.pathname]
   );
 
   const isSubscriptionLanding = React.useMemo(
-    () => location.pathname.startsWith("/comptapro") || location.pathname.startsWith("/comptasso"),
+    () =>
+      location.pathname.startsWith("/comptapro") ||
+      location.pathname.startsWith("/comptasso") ||
+      location.pathname === "/logiciels",
     [location.pathname]
   );
 

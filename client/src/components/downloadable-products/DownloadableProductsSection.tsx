@@ -297,22 +297,22 @@ export const DownloadableProductsSection: React.FC = () => {
         <div
           key={`skeleton-${idx}`}
           style={{ width: isMobile ? "100%" : CARD_WIDTH }}
-          className={`rounded-3xl border border-slate-100 bg-white px-7 py-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] ${
+          className={`rounded-3xl border border-white/25 bg-white/10 px-7 py-6 shadow-[0_24px_60px_rgba(0,0,0,0.25)] backdrop-blur-xl ${
             isMobile ? "" : "flex-shrink-0"
           }`}
         >
-          <div className="h-5 w-2/3 animate-pulse rounded-full bg-slate-200" />
-          <div className="mt-3 h-4 w-full animate-pulse rounded-full bg-slate-200" />
-          <div className="mt-2 h-4 w-5/6 animate-pulse rounded-full bg-slate-200" />
-          <div className="mt-6 h-9 w-24 animate-pulse rounded-full bg-slate-200" />
-          <div className="mt-6 h-10 w-full animate-pulse rounded-full bg-slate-200" />
+          <div className="h-5 w-2/3 animate-pulse rounded-full bg-white/30" />
+          <div className="mt-3 h-4 w-full animate-pulse rounded-full bg-white/30" />
+          <div className="mt-2 h-4 w-5/6 animate-pulse rounded-full bg-white/30" />
+          <div className="mt-6 h-9 w-24 animate-pulse rounded-full bg-white/30" />
+          <div className="mt-6 h-10 w-full animate-pulse rounded-full bg-white/30" />
         </div>
       ));
     }
 
     if (!filteredProducts.length) {
       return (
-        <div className="flex min-h-[160px] w-full flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white px-6 py-8 text-center text-sm text-slate-600 shadow-[0_24px_60px_rgba(15,23,42,0.05)]">
+        <div className="flex min-h-[160px] w-full flex-col items-center justify-center rounded-3xl border border-dashed border-white/30 bg-white/10 px-6 py-8 text-center text-sm text-white/80 shadow-[0_24px_60px_rgba(0,0,0,0.25)] backdrop-blur-xl">
           {products.length
             ? "Aucun logiciel n’est disponible dans cette catégorie pour le moment."
             : "Aucun logiciel n’est disponible pour le moment. Veuillez revenir plus tard."}
@@ -328,12 +328,12 @@ export const DownloadableProductsSection: React.FC = () => {
         style={{ width: isMobile ? "100%" : CARD_WIDTH }}
         className={`group cursor-pointer rounded-3xl px-7 py-6 text-center transition-all duration-200 ${
           selectedProduct?.id === product.id
-            ? "bg-slate-50 shadow-[0_20px_50px_rgba(15,23,42,0.12)]"
-            : "bg-white hover:-translate-y-1 hover:bg-slate-50 hover:shadow-[0_18px_44px_rgba(15,23,42,0.1)]"
+            ? "border border-white/70 bg-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.32)]"
+            : "border border-white/25 bg-white/10 hover:-translate-y-1 hover:border-white/50 hover:bg-white/15 hover:shadow-[0_18px_44px_rgba(0,0,0,0.28)]"
         } ${isMobile ? "" : "flex-shrink-0"}`}
       >
         <div className="flex flex-col items-center gap-3">
-          <div className="flex w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-100 aspect-square">
+          <div className="flex w-full items-center justify-center overflow-hidden rounded-2xl bg-white/10 aspect-square">
             {product.cardImageUrl ? (
               <img
                 src={product.cardImageUrl}
@@ -341,25 +341,25 @@ export const DownloadableProductsSection: React.FC = () => {
                 className="h-full w-full object-cover"
               />
             ) : (
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <span className="text-xs font-semibold uppercase tracking-wide text-white/70">
                 Visuel à venir
               </span>
             )}
           </div>
-          <h3 className="text-2xl font-semibold text-slate-900">{product.name}</h3>
-          <p className="text-sm leading-relaxed text-slate-600">
+          <h3 className="text-2xl font-semibold text-white">{product.name}</h3>
+          <p className="text-sm leading-relaxed text-white/80">
             {product.shortDescription}
           </p>
           {product.badge && (
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-800">
+            <span className="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-medium text-white">
               {product.badge}
             </span>
           )}
-          <div className="flex items-center gap-2 text-slate-900">
+          <div className="flex items-center gap-2 text-white">
             <span className="text-4xl font-semibold leading-none">
               {formatPrice(product.priceTtc)}
             </span>
-            <span className="text-sm font-semibold uppercase text-slate-500">
+            <span className="text-sm font-semibold uppercase text-emerald-100/80">
               {product.priceDisplayMode === "HT" ? "HT" : "TTC"}
             </span>
           </div>
@@ -373,16 +373,16 @@ export const DownloadableProductsSection: React.FC = () => {
       return (
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
           <div className="space-y-3">
-            <div className="h-8 w-2/3 animate-pulse rounded-full bg-slate-200" />
-            <div className="h-4 w-full animate-pulse rounded-full bg-slate-200" />
-            <div className="h-4 w-5/6 animate-pulse rounded-full bg-slate-200" />
-            <div className="h-4 w-3/4 animate-pulse rounded-full bg-slate-200" />
+            <div className="h-8 w-2/3 animate-pulse rounded-full bg-white/30" />
+            <div className="h-4 w-full animate-pulse rounded-full bg-white/30" />
+            <div className="h-4 w-5/6 animate-pulse rounded-full bg-white/30" />
+            <div className="h-4 w-3/4 animate-pulse rounded-full bg-white/30" />
             <div className="mt-6 flex gap-3">
-              <div className="h-10 w-32 animate-pulse rounded-full bg-slate-200" />
-              <div className="h-10 w-40 animate-pulse rounded-full bg-slate-200" />
+              <div className="h-10 w-32 animate-pulse rounded-full bg-white/30" />
+              <div className="h-10 w-40 animate-pulse rounded-full bg-white/30" />
             </div>
           </div>
-          <div className="h-72 rounded-3xl bg-slate-100 animate-pulse" />
+          <div className="h-72 rounded-3xl border border-white/20 bg-white/10 animate-pulse" />
         </div>
       );
     }
@@ -390,7 +390,7 @@ export const DownloadableProductsSection: React.FC = () => {
     if (!selectedProduct) {
       if (!products.length) return null;
       return (
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-white/80">
           Sélectionnez un logiciel pour voir le détail.
         </p>
       );
@@ -403,11 +403,11 @@ export const DownloadableProductsSection: React.FC = () => {
       <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
         <div className="space-y-4">
           <div className="space-y-2">
-            <h3 className="text-3xl font-semibold text-slate-900 md:text-4xl">
+            <h3 className="text-3xl font-semibold text-white md:text-4xl">
               {selectedProduct.name}
             </h3>
             <p
-              className={`text-base leading-relaxed text-slate-700 transition-opacity duration-500 ${
+              className={`text-base leading-relaxed text-white/80 transition-opacity duration-500 ${
                 isFading ? "opacity-0" : "opacity-100"
               }`}
             >
@@ -438,13 +438,13 @@ export const DownloadableProductsSection: React.FC = () => {
 
           {!!features.length && (
             <div className="mt-4">
-              <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
+              <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-100/80">
                 Fonctionnalités clés
               </h4>
-              <ul className="mt-3 grid gap-2 text-sm text-slate-700">
+              <ul className="mt-3 grid gap-2 text-sm text-white/80">
                 {features.map((feature) => (
                   <li key={feature} className="flex gap-3">
-                    <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-slate-900" aria-hidden />
+                    <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-emerald-300" aria-hidden />
                     <span>{feature}</span>
                   </li>
                 ))}
@@ -454,7 +454,7 @@ export const DownloadableProductsSection: React.FC = () => {
 
           <div className="mt-6 space-y-3">
             <div className="space-y-2">
-              <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
+              <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-100/80">
                 Version du logiciel
               </h4>
               {selectedProduct?.binaries?.length ? (
@@ -468,8 +468,8 @@ export const DownloadableProductsSection: React.FC = () => {
                         onClick={() => setSelectedBinaryId(binary.id)}
                         className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition ${
                           isActive
-                            ? "border-black bg-black text-white shadow"
-                            : "border-slate-300 bg-white text-slate-800 hover:border-black"
+                            ? "border-white bg-white/20 text-white shadow-lg"
+                            : "border-white/40 bg-white/10 text-white hover:border-white"
                         }`}
                         aria-pressed={isActive}
                       >
@@ -484,21 +484,21 @@ export const DownloadableProductsSection: React.FC = () => {
                   })}
                 </div>
               ) : (
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-white/80">
                   Les fichiers d’installation seront ajoutés prochainement.
                 </p>
               )}
             </div>
 
             <div className="flex flex-wrap items-center gap-4">
-            <div className="text-2xl font-semibold text-slate-900">
+            <div className="text-2xl font-semibold text-white">
               {formatPrice(selectedProduct.priceTtc)} {priceLabel}
             </div>
             <button
               type="button"
               onClick={() => handleAddToCart(selectedProduct)}
               disabled={isAddToCartDisabled}
-              className="pressable-button inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white hover:bg-slate-900 disabled:cursor-not-allowed disabled:bg-slate-400 disabled:text-white/80"
+              className="pressable-button inline-flex items-center justify-center rounded-full border border-emerald-200/60 bg-emerald-500/80 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/40 transition hover:-translate-y-0.5 hover:bg-emerald-500 disabled:cursor-not-allowed disabled:border-white/20 disabled:bg-white/10 disabled:text-white/70"
             >
               Ajouter au panier
             </button>
@@ -519,7 +519,7 @@ export const DownloadableProductsSection: React.FC = () => {
                   return (
                     <div key={slide.imageUrl ?? `slide-${idx}`} className="w-full flex-shrink-0">
                       {slide.imageUrl ? (
-                        <div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
+                        <div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl border border-white/15 bg-white/10 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.3)] backdrop-blur-xl">
                           <img
                             src={slide.imageUrl}
                             alt={selectedProduct.name}
@@ -529,7 +529,7 @@ export const DownloadableProductsSection: React.FC = () => {
                           />
                         </div>
                       ) : (
-                        <div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl bg-white p-4 text-sm font-semibold text-slate-500 shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
+                        <div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl border border-white/20 bg-white/5 p-4 text-sm font-semibold text-white/70 shadow-[0_10px_30px_rgba(0,0,0,0.28)] backdrop-blur-xl">
                           Visuel à venir
                         </div>
                       )}
@@ -541,12 +541,12 @@ export const DownloadableProductsSection: React.FC = () => {
 
             {hasMultipleDetailSlides && (
               <>
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white via-transparent to-white opacity-70" aria-hidden />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-emerald-200/25 via-transparent to-emerald-200/25 opacity-70" aria-hidden />
                 <div className="absolute inset-y-0 left-0 flex -translate-x-full items-center pl-3 pr-1 sm:-translate-x-[60%]">
                   <button
                     type="button"
                     onClick={handleSlidePrev}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-lg font-semibold text-slate-900 shadow-[0_10px_30px_rgba(15,23,42,0.14)] transition hover:shadow-[0_14px_36px_rgba(15,23,42,0.16)]"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white/15 text-lg font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/25 hover:shadow-[0_14px_36px_rgba(0,0,0,0.32)]"
                     aria-label="Afficher l’image précédente"
                   >
                     ←
@@ -556,7 +556,7 @@ export const DownloadableProductsSection: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleSlideNext}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-lg font-semibold text-slate-900 shadow-[0_10px_30px_rgba(15,23,42,0.14)] transition hover:shadow-[0_14px_36px_rgba(15,23,42,0.16)]"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white/15 text-lg font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/25 hover:shadow-[0_14px_36px_rgba(0,0,0,0.32)]"
                     aria-label="Afficher l’image suivante"
                   >
                     →
@@ -579,8 +579,8 @@ export const DownloadableProductsSection: React.FC = () => {
                     onClick={() => setImageIndex(idx)}
                     className={`group relative h-16 w-16 rounded-2xl border transition duration-150 ${
                       isActiveSlide
-                        ? "border-slate-900 shadow-[0_14px_36px_rgba(15,23,42,0.16)]"
-                        : "border-slate-200 hover:border-slate-400"
+                        ? "border-white shadow-[0_14px_36px_rgba(0,0,0,0.28)]"
+                        : "border-white/40 hover:border-white/70"
                     }`}
                   >
                     {slide.imageUrl ? (
@@ -594,13 +594,13 @@ export const DownloadableProductsSection: React.FC = () => {
                         />
                       </div>
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      <div className="flex h-full w-full items-center justify-center bg-white/10 text-[11px] font-semibold uppercase tracking-wide text-white/70">
                         Visuel
                       </div>
                     )}
                     <span
                       className={`pointer-events-none absolute inset-0 rounded-2xl ring-2 transition ${
-                        isActiveSlide ? "ring-slate-900" : "ring-transparent group-hover:ring-slate-300"
+                        isActiveSlide ? "ring-white" : "ring-transparent group-hover:ring-white/60"
                       }`}
                       aria-hidden
                     />
@@ -629,30 +629,30 @@ export const DownloadableProductsSection: React.FC = () => {
   );
 
   return (
-    <section className="space-y-8">
+    <section className="space-y-8 text-white">
       {error && (
         <div className="flex justify-center">
-          <div className="rounded-full bg-red-50 px-4 py-2 text-xs font-semibold text-red-700">
+          <div className="rounded-full border border-red-300/50 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-100">
             {error}
           </div>
         </div>
       )}
 
       {!!categories.length && (
-        <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-3 rounded-3xl border border-slate-100 bg-white px-6 py-5 shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/90 text-white">↺</span>
+        <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-3 rounded-3xl border border-white/25 bg-white/10 px-6 py-5 shadow-[0_18px_44px_rgba(0,0,0,0.25)] backdrop-blur-2xl">
+          <div className="flex items-center gap-2 text-sm font-semibold text-white">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white">↺</span>
             <span>Filtrer par catégorie</span>
           </div>
           <div className="relative w-full max-w-lg">
-            <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-r from-slate-50 via-white to-slate-50" aria-hidden />
+            <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-400/15 via-white/10 to-emerald-400/15" aria-hidden />
             <select
               value={selectedCategoryId}
               onChange={(event) => {
                 setSelectedCategoryId(event.target.value);
                 setCurrentIndex(0);
               }}
-              className="relative z-10 w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-[0_14px_36px_rgba(15,23,42,0.08)] transition focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/20"
+              className="relative z-10 w-full appearance-none rounded-2xl border border-white/30 bg-white/15 px-4 py-3 text-sm font-semibold text-white shadow-[0_14px_36px_rgba(0,0,0,0.25)] backdrop-blur-xl transition focus:border-white focus:outline-none focus:ring-2 focus:ring-emerald-300/40"
             >
               <option value="">Toutes les catégories</option>
               {categories.map((category) => (
@@ -664,7 +664,7 @@ export const DownloadableProductsSection: React.FC = () => {
                 </option>
               ))}
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-500">▾</div>
+            <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-white/70">▾</div>
           </div>
         </div>
       )}
@@ -678,7 +678,7 @@ export const DownloadableProductsSection: React.FC = () => {
                   type="button"
                   onClick={handlePrev}
                   disabled={currentIndex === 0}
-                  className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white text-lg font-semibold text-slate-900 shadow-[0_10px_30px_rgba(15,23,42,0.14)] transition hover:shadow-[0_14px_36px_rgba(15,23,42,0.16)] disabled:opacity-40"
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-white/15 text-lg font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/25 hover:shadow-[0_14px_36px_rgba(0,0,0,0.3)] disabled:opacity-40"
                   aria-label="Afficher les logiciels précédents"
                 >
                   ←
@@ -689,7 +689,7 @@ export const DownloadableProductsSection: React.FC = () => {
                   type="button"
                   onClick={handleNext}
                   disabled={currentIndex === maxIndex}
-                  className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white text-lg font-semibold text-slate-900 shadow-[0_10px_30px_rgba(15,23,42,0.14)] transition hover:shadow-[0_14px_36px_rgba(15,23,42,0.16)] disabled:opacity-40"
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-white/15 text-lg font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/25 hover:shadow-[0_14px_36px_rgba(0,0,0,0.3)] disabled:opacity-40"
                   aria-label="Afficher les logiciels suivants"
                 >
                   →
