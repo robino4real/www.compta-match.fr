@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import DownloadableProductsSection from "../components/downloadable-products/DownloadableProductsSection";
 
 export default function DownloadableProductsPage() {
@@ -16,7 +16,7 @@ export default function DownloadableProductsPage() {
   return (
     <main className="hero-logiciels min-h-screen bg-[#04140c] text-white">
       <div className="mx-auto max-w-6xl space-y-12 px-4 pb-16 pt-14 lg:px-8 lg:pb-20 lg:pt-16">
-        <div className="relative flex items-center justify-center">
+        <div className="relative flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={handleBackClick}
@@ -35,9 +35,58 @@ export default function DownloadableProductsPage() {
             <span>Retour</span>
           </button>
 
-          <span className="text-lg font-semibold tracking-tight text-white drop-shadow md:text-2xl">
+          <span className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold tracking-tight text-white drop-shadow md:text-2xl">
             COMPTAMATCH
           </span>
+
+          <div className="flex items-center gap-2 md:gap-3">
+            <Link
+              to="/panier"
+              className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/10 px-4 py-2 text-sm font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/20 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 md:px-5 md:py-2.5"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="h-5 w-5"
+              >
+                <path
+                  d="M6 6h15l-1.5 9h-11z"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <circle cx="9" cy="19" r="1.5" />
+                <circle cx="17" cy="19" r="1.5" />
+                <path d="M6 6 4 3H2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>Panier</span>
+            </Link>
+
+            <Link
+              to="/auth/login"
+              className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/10 px-4 py-2 text-sm font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/20 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 md:px-5 md:py-2.5"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="h-5 w-5"
+              >
+                <path
+                  d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path d="M10 17l5-5-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M15 12H3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>Se connecter</span>
+            </Link>
+          </div>
         </div>
 
         <section className="flex flex-col items-center gap-6 text-center">
