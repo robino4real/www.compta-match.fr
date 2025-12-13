@@ -20,7 +20,7 @@ export default function DownloadableProductsPage() {
   return (
     <main className="hero-logiciels min-h-screen bg-[#04140c] text-white">
       <div className="mx-auto max-w-6xl space-y-12 px-4 pb-16 pt-14 lg:px-8 lg:pb-20 lg:pt-16">
-        <div className="relative flex w-full items-center justify-center">
+        <div className="relative grid w-full grid-cols-[auto_1fr_auto] items-center">
           <button
             type="button"
             onClick={handleBackClick}
@@ -39,11 +39,11 @@ export default function DownloadableProductsPage() {
             <span>Retour</span>
           </button>
 
-          <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-center text-lg font-semibold tracking-tight text-white drop-shadow md:text-2xl">
+          <span className="pointer-events-none justify-self-center text-center text-lg font-semibold tracking-tight text-white drop-shadow md:text-2xl">
             COMPTAMATCH
           </span>
 
-          <div className="absolute right-0 flex items-center gap-2 md:gap-3">
+          <div className="flex items-center justify-self-end gap-2 md:gap-3">
             <Link
               to={user ? "/compte" : "/auth/login"}
               className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
