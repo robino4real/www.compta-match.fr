@@ -89,11 +89,11 @@ body {
 .hero-comptasso::before {
   background: radial-gradient(
     circle at 50% 50%,
-    rgba(42, 6, 70, 0.94) 0%,
-    rgba(76, 14, 112, 0.88) 24%,
-    rgba(126, 32, 126, 0.76) 44%,
-    rgba(168, 58, 96, 0.6) 62%,
-    rgba(214, 90, 54, 0.4) 78%,
+    rgba(52, 8, 72, 0.94) 0%,
+    rgba(98, 18, 102, 0.9) 22%,
+    rgba(150, 36, 98, 0.76) 44%,
+    rgba(198, 64, 82, 0.6) 64%,
+    rgba(238, 110, 48, 0.45) 80%,
     transparent 92%
   );
 }

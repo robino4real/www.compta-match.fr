@@ -118,8 +118,13 @@ const ComptaProSubscriptionPage: React.FC = () => {
   return (
     <main className="hero-comptapro min-h-screen bg-[#0c0316] text-white">
       <div className="mx-auto max-w-6xl px-4 pb-20 pt-12 lg:px-8 lg:pt-16 space-y-12">
-        <div className="relative flex items-center justify-center">
-          <button type="button" onClick={handleBackClick} className={backButtonClasses}>
+        <div className="relative flex min-h-[72px] items-center justify-center">
+          <button
+            type="button"
+            onClick={handleBackClick}
+            className={backButtonClasses}
+            style={{ position: "absolute", left: 0, top: "clamp(1rem, 3vw, 2.5rem)" }}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -133,7 +138,9 @@ const ComptaProSubscriptionPage: React.FC = () => {
             <span>Retour</span>
           </button>
 
-          <span className="text-lg font-semibold tracking-tight text-white drop-shadow md:text-2xl">
+          <span
+            className="absolute left-1/2 top-[clamp(1rem,3vw,2.5rem)] -translate-x-1/2 text-lg font-semibold tracking-tight text-white drop-shadow md:text-2xl"
+          >
             COMPTAMATCH
           </span>
         </div>
@@ -149,7 +156,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
               Pilotez votre comptabilité en ligne : automatisation bancaire, contrôle des dépenses et reporting instantané pour donner de la visibilité à toute votre organisation.
             </p>
 
-            <div className="flex flex-wrap justify-center gap-3">
+            <div className="flex flex-wrap justify-center gap-3 pt-3 pb-4">
               <button
                 type="button"
                 onClick={handleProAccessClick}
