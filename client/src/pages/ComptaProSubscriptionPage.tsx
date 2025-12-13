@@ -75,12 +75,12 @@ const ComptaProSubscriptionPage: React.FC = () => {
     "inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white shadow-sm transition transform hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-700 disabled:cursor-not-allowed";
 
   const backButtonClasses =
-    "hero-back-button inline-flex items-center gap-2 rounded-full border border-slate-200 bg-transparent px-5 py-2.5 text-base font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400";
+    "hero-back-button inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/30 px-5 py-2.5 text-base font-semibold text-slate-900 shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/40 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400";
 
   const renderPlanCard = (plan: PaidServicePlan) => (
     <article
       key={plan.id}
-      className="halo-purple-card relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200 bg-transparent px-6 py-6 text-slate-900 shadow-xl"
+      className="halo-purple-card relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/50 bg-white/40 px-6 py-6 text-slate-900 shadow-xl backdrop-blur-lg"
     >
       <header className="relative flex items-start justify-between gap-4">
         <div className="space-y-1">
@@ -182,7 +182,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
                 : plans.map(renderPlanCard)}
             </div>
 
-            <div className="halo-purple-panel overflow-hidden rounded-3xl border border-slate-200 bg-transparent text-slate-900 shadow-lg">
+            <div className="halo-purple-panel overflow-hidden rounded-3xl border border-white/50 bg-white/35 text-slate-900 shadow-lg backdrop-blur-lg">
               {isLoading ? (
                 renderComparisonSkeleton()
               ) : comparison && hasPlans ? (
