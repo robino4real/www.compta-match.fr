@@ -16,7 +16,7 @@ export default function DownloadableProductsPage() {
   return (
     <main className="hero-logiciels min-h-screen bg-[#04140c] text-white">
       <div className="mx-auto max-w-6xl space-y-12 px-4 pb-16 pt-14 lg:px-8 lg:pb-20 lg:pt-16">
-        <div className="relative flex items-center gap-3">
+        <div className="grid grid-cols-[auto,1fr,auto] items-center gap-3">
           <button
             type="button"
             onClick={handleBackClick}
@@ -35,11 +35,11 @@ export default function DownloadableProductsPage() {
             <span>Retour</span>
           </button>
 
-          <span className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold tracking-tight text-white drop-shadow md:text-2xl">
+          <span className="text-center text-lg font-semibold tracking-tight text-white drop-shadow md:text-2xl">
             COMPTAMATCH
           </span>
 
-          <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-2 md:gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             <Link
               to="/auth/login"
               className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/15 px-5 py-2.5 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
@@ -75,7 +75,6 @@ export default function DownloadableProductsPage() {
                 <circle cx="20" cy="21" r="1" />
                 <path d="M1 1h4l2.68 12.39a1 1 0 0 0 .98.8h8.72a1 1 0 0 0 .98-.8L21 6H6" strokeWidth={1.6} />
               </svg>
-              <span>Panier</span>
             </Link>
           </div>
         </div>
