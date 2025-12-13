@@ -63,18 +63,18 @@ body {
   position: fixed;
   top: 50%;
   left: 50%;
-  width: 80vw;
-  height: 80vh;
+  width: 240vw;
+  height: 240vh;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: radial-gradient(
     circle at 50% 50%,
-    rgba(79, 70, 229, 0.22),
-    rgba(147, 51, 234, 0.2),
-    rgba(28, 6, 38, 0.08),
+    rgba(79, 70, 229, 0.35),
+    rgba(147, 51, 234, 0.32),
+    rgba(28, 6, 38, 0.14),
     transparent 70%
   );
-  filter: blur(120px);
+  filter: blur(180px);
   z-index: 0;
   pointer-events: none;
 }
