@@ -30,53 +30,13 @@ body {
 .hero-comptapro,
 .hero-comptasso {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   background: #ffffff;
   isolation: isolate;
 }
 
-.halo-purple-title {
-  position: relative;
-  display: inline-block;
-}
-
-.halo-purple-title::before {
-  content: "";
-  position: absolute;
-  inset: -36px;
-  border-radius: 9999px;
-  background: radial-gradient(
-    circle at 50% 45%,
-    rgba(28, 6, 38, 0.78),
-    rgba(109, 40, 217, 0.32),
-    rgba(168, 85, 247, 0.16),
-    transparent 82%
-  );
-  filter: blur(36px);
-  z-index: -1;
-  pointer-events: none;
-}
-
-.halo-purple-block {
-  position: relative;
-}
-
-.halo-purple-block::before {
-  content: "";
-  position: absolute;
-  inset: -36px;
-  border-radius: 40px;
-  background: radial-gradient(
-    circle at 50% 50%,
-    rgba(28, 6, 38, 0.7),
-    rgba(126, 34, 206, 0.26),
-    transparent 84%
-  );
-  filter: blur(40px);
-  z-index: -1;
-  pointer-events: none;
-}
-
+.halo-purple-title,
+.halo-purple-block,
 .halo-purple-subtitle,
 .halo-purple-card,
 .halo-purple-panel {
@@ -85,74 +45,38 @@ body {
   isolation: isolate;
 }
 
-.halo-purple-subtitle::before {
-  content: "";
-  position: absolute;
-  inset: -20px;
-  border-radius: 20px;
-  background: radial-gradient(
-    circle at 50% 45%,
-    rgba(28, 6, 38, 0.74),
-    rgba(126, 34, 206, 0.28),
-    rgba(168, 85, 247, 0.14),
-    transparent 82%
-  );
-  filter: blur(32px);
-  opacity: 0.9;
-  z-index: -1;
-  pointer-events: none;
+.halo-purple-title {
+  display: inline-block;
 }
 
-.halo-purple-card::before {
-  content: "";
-  position: absolute;
-  inset: -28px;
-  border-radius: 32px;
-  background: radial-gradient(
-    circle at 50% 45%,
-    rgba(28, 6, 38, 0.78),
-    rgba(109, 40, 217, 0.32),
-    rgba(147, 51, 234, 0.18),
-    transparent 86%
-  );
-  filter: blur(44px);
-  opacity: 0.95;
-  z-index: -1;
-  pointer-events: none;
-}
-
+.halo-purple-title::before,
+.halo-purple-block::before,
+.halo-purple-subtitle::before,
+.halo-purple-card::before,
 .halo-purple-panel::before {
-  content: "";
-  position: absolute;
-  inset: -44px;
-  border-radius: 40px;
-  background: radial-gradient(
-    circle at 50% 50%,
-    rgba(28, 6, 38, 0.72),
-    rgba(109, 40, 217, 0.3),
-    rgba(168, 85, 247, 0.18),
-    transparent 88%
-  );
-  filter: blur(56px);
-  opacity: 0.9;
-  z-index: -1;
-  pointer-events: none;
+  content: none;
 }
 
 .hero-comptapro::before,
 .hero-comptasso::before {
-  content: none;
-}
-
-.hero-comptapro::after,
-.hero-comptasso::after {
-  content: none;
-}
-
-/* Assure une transition vers le blanc avant le footer sur les pages ComptaPro/ComptAsso */
-.hero-comptapro::after,
-.hero-comptasso::after {
-  content: none;
+  content: "";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 80vw;
+  height: 80vh;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(79, 70, 229, 0.22),
+    rgba(147, 51, 234, 0.2),
+    rgba(28, 6, 38, 0.08),
+    transparent 70%
+  );
+  filter: blur(120px);
+  z-index: 0;
+  pointer-events: none;
 }
 
 .hero-heading-glow {
