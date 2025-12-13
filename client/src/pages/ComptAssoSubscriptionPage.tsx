@@ -68,16 +68,16 @@ const ComptAssoSubscriptionPage: React.FC = () => {
   const renderPlanCard = (plan: PaidServicePlan) => (
     <article
       key={plan.id}
-      className="halo-purple-card relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/50 bg-white/40 px-6 py-6 text-slate-900 shadow-xl backdrop-blur-lg"
+      className="halo-purple-card relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/50 bg-white/40 px-6 py-6 text-white shadow-xl backdrop-blur-lg"
     >
       <header className="relative flex items-start justify-between gap-4">
         <div className="space-y-1">
-          <h2 className="text-lg font-semibold text-slate-900">{plan.name}</h2>
-          {plan.subtitle && <p className="text-sm text-slate-700">{plan.subtitle}</p>}
+          <h2 className="text-lg font-semibold text-white">{plan.name}</h2>
+          {plan.subtitle && <p className="text-sm text-white/80">{plan.subtitle}</p>}
         </div>
-        <p className="text-right text-lg font-semibold text-slate-900">
+        <p className="text-right text-lg font-semibold text-white">
           {formatPaidServicePrice(Number(plan.priceAmount), plan.priceCurrency)}
-          <span className="text-sm text-slate-700"> /{plan.pricePeriod === "month" ? "mois" : "an"}</span>
+          <span className="text-sm text-white/80"> /{plan.pricePeriod === "month" ? "mois" : "an"}</span>
         </p>
       </header>
       <button className={`relative mt-6 ${ctaButtonClasses}`} type="button" onClick={handlePlanDetailClick}>
@@ -163,18 +163,18 @@ const ComptAssoSubscriptionPage: React.FC = () => {
               {isLoading ? planSkeletons.map((_, index) => renderPlanSkeleton(index)) : plans.map(renderPlanCard)}
             </div>
 
-            <div className="halo-purple-panel overflow-hidden rounded-3xl border border-white/50 bg-white/35 text-slate-900 shadow-lg backdrop-blur-lg">
+            <div className="halo-purple-panel overflow-hidden rounded-3xl border border-white/50 bg-white/35 text-white shadow-lg backdrop-blur-lg">
               {isLoading ? (
                 renderComparisonSkeleton()
               ) : comparison && hasPlans ? (
                 <table className="min-w-full border-separate border-spacing-y-1 text-sm">
                   <thead>
                     <tr>
-                      <th className="bg-transparent px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-900">Fonctionnalités</th>
-                      <th className="bg-transparent px-4 py-3 text-center text-sm font-semibold text-slate-900">
+                      <th className="bg-transparent px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">Fonctionnalités</th>
+                      <th className="bg-transparent px-4 py-3 text-center text-sm font-semibold text-white">
                         {comparison.plans[0]?.name || "Plan A"}
                       </th>
-                      <th className="bg-transparent px-4 py-3 text-center text-sm font-semibold text-slate-900">
+                      <th className="bg-transparent px-4 py-3 text-center text-sm font-semibold text-white">
                         {comparison.plans[1]?.name || "Plan B"}
                       </th>
                     </tr>
@@ -183,16 +183,16 @@ const ComptAssoSubscriptionPage: React.FC = () => {
                     {comparison.rows.map((row) => (
                       <tr key={row.id} className="bg-transparent">
                         <td className="rounded-l-xl border border-slate-200 px-4 py-3 align-top">
-                          <div className="text-sm font-semibold text-slate-900">{row.label}</div>
-                          {row.description && <p className="text-xs text-slate-700">{row.description}</p>}
+                          <div className="text-sm font-semibold text-white">{row.label}</div>
+                          {row.description && <p className="text-xs text-white/80">{row.description}</p>}
                         </td>
                         <td className="border-t border-b border-slate-200 px-4 py-3 text-center align-middle">
-                          <span className="text-slate-900">
+                          <span className="text-white">
                             {row.planAIncluded ? "✓" : "—"}
                           </span>
                         </td>
                         <td className="rounded-r-xl border border-slate-200 px-4 py-3 text-center align-middle">
-                          <span className="text-slate-900">
+                          <span className="text-white">
                             {row.planBIncluded ? "✓" : "—"}
                           </span>
                         </td>
