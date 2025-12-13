@@ -63,14 +63,13 @@ const ComptAssoSubscriptionPage: React.FC = () => {
     "inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white shadow-sm transition transform hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-700 disabled:cursor-not-allowed";
 
   const backButtonClasses =
-    "hero-back-button inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-base font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400";
+    "hero-back-button inline-flex items-center gap-2 rounded-full border border-slate-200 bg-transparent px-5 py-2.5 text-base font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400";
 
   const renderPlanCard = (plan: PaidServicePlan) => (
     <article
       key={plan.id}
-      className="halo-purple-card relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200 bg-white px-6 py-6 text-slate-900 shadow-xl"
+      className="halo-purple-card relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200 bg-transparent px-6 py-6 text-slate-900 shadow-xl"
     >
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-slate-100/60 via-white to-transparent" />
       <header className="relative flex items-start justify-between gap-4">
         <div className="space-y-1">
           <h2 className="text-lg font-semibold text-slate-900">{plan.name}</h2>
@@ -164,25 +163,25 @@ const ComptAssoSubscriptionPage: React.FC = () => {
               {isLoading ? planSkeletons.map((_, index) => renderPlanSkeleton(index)) : plans.map(renderPlanCard)}
             </div>
 
-            <div className="halo-purple-panel overflow-hidden rounded-3xl border border-slate-200 bg-white text-slate-900 shadow-lg">
+            <div className="halo-purple-panel overflow-hidden rounded-3xl border border-slate-200 bg-transparent text-slate-900 shadow-lg">
               {isLoading ? (
                 renderComparisonSkeleton()
               ) : comparison && hasPlans ? (
                 <table className="min-w-full border-separate border-spacing-y-1 text-sm">
                   <thead>
                     <tr>
-                      <th className="bg-slate-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-900">Fonctionnalités</th>
-                      <th className="bg-slate-50 px-4 py-3 text-center text-sm font-semibold text-slate-900">
+                      <th className="bg-transparent px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-900">Fonctionnalités</th>
+                      <th className="bg-transparent px-4 py-3 text-center text-sm font-semibold text-slate-900">
                         {comparison.plans[0]?.name || "Plan A"}
                       </th>
-                      <th className="bg-slate-50 px-4 py-3 text-center text-sm font-semibold text-slate-900">
+                      <th className="bg-transparent px-4 py-3 text-center text-sm font-semibold text-slate-900">
                         {comparison.plans[1]?.name || "Plan B"}
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     {comparison.rows.map((row) => (
-                      <tr key={row.id} className="bg-white">
+                      <tr key={row.id} className="bg-transparent">
                         <td className="rounded-l-xl border border-slate-200 px-4 py-3 align-top">
                           <div className="text-sm font-semibold text-slate-900">{row.label}</div>
                           {row.description && <p className="text-xs text-slate-700">{row.description}</p>}
