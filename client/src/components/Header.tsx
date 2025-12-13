@@ -94,9 +94,6 @@ const Header: React.FC = () => {
             className="flex flex-col gap-2 md:flex-row md:items-center md:justify-center md:gap-4"
             aria-label="Navigation principale"
           >
-            <NavLink to="/" end className={navLinkClass}>
-              Accueil
-            </NavLink>
             <NavLink to="/logiciels" className={navLinkClass}>
               Nos logiciels
             </NavLink>
