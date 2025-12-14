@@ -86,53 +86,104 @@ export const DownloadableProductsSection: React.FC = () => {
 
   const fetchProducts = React.useCallback(
     async (preserveSelection = false) => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await fetch(
-          `${API_BASE_URL}/downloadable-products/public`
-        );
-        const json = await response.json().catch(() => ({}));
+      const endpoints = [
+        `${API_BASE_URL}/downloadable-products/public`,
+        `${API_BASE_URL}/public/downloadable-products`,
+      ];
 
-        if (!response.ok) {
-          throw new Error(
-            json?.message || "Impossible de charger les logiciels disponibles."
+      const normalizeProducts = (
+        rawProducts: any[]
+      ): DownloadableProduct[] => {
+        if (!rawProducts.length) return [];
+
+        const firstProduct = rawProducts[0];
+        const isV2Shape = typeof firstProduct?.priceTtc === "number";
+
+        if (isV2Shape) return rawProducts as DownloadableProduct[];
+
+        return rawProducts.map((product) => ({
+          id: product.id,
+          slug: product.slug,
+          name: product.name,
+          shortDescription:
+            product.shortDescription || "Logiciel comptable COMPTAMATCH",
+          longDescription:
+            product.longDescription ||
+            product.shortDescription ||
+            "Description à venir",
+          priceTtc: Math.round((product.priceCents / 100) * 100) / 100,
+          priceDisplayMode: "TTC",
+          currency: "EUR",
+          badge: product.badge || undefined,
+          tags: Array.isArray(product.keyFeatures)
+            ? (product.keyFeatures as string[])
+            : undefined,
+          cardImageUrl: product.heroImageUrl || product.screenshots?.[0],
+          heroImageUrl: product.heroImageUrl || product.screenshots?.[0],
+          galleryUrls: product.screenshots || undefined,
+          detailSlides: undefined,
+          isPublished: true,
+          category: null,
+          binaries: undefined,
+        }));
+      };
+
+      let lastError: any = null;
+
+      for (const url of endpoints) {
+        try {
+          setLoading(true);
+          setError(null);
+
+          const response = await fetch(url);
+          const json = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            throw new Error(
+              json?.message || "Impossible de charger les logiciels disponibles."
+            );
+          }
+
+          const incoming = normalizeProducts(
+            Array.isArray(json?.products) ? json.products : []
           );
+          const incomingCategories: DownloadableCategory[] = Array.isArray(
+            json?.categories
+          )
+            ? json.categories
+            : [];
+
+          if (!isMountedRef.current) return;
+
+          setProducts(incoming);
+          setCategories(incomingCategories);
+
+          const nextSelected = preserveSelection
+            ? incoming.find((product) => product.id === selectedProduct?.id) ||
+              incoming[0]
+            : incoming[0];
+
+          setSelectedProduct(nextSelected ?? null);
+          setImageIndex(0);
+          setCurrentIndex(0);
+          return;
+        } catch (err: any) {
+          console.error(
+            "Erreur de chargement des produits téléchargeables",
+            err
+          );
+          lastError = err;
+        } finally {
+          if (!isMountedRef.current) return;
+          setLoading(false);
         }
-
-        const incoming: DownloadableProduct[] = Array.isArray(json?.products)
-          ? json.products
-          : [];
-        const incomingCategories: DownloadableCategory[] = Array.isArray(
-          json?.categories
-        )
-          ? json.categories
-          : [];
-
-        if (!isMountedRef.current) return;
-
-        setProducts(incoming);
-        setCategories(incomingCategories);
-
-        const nextSelected = preserveSelection
-          ? incoming.find((product) => product.id === selectedProduct?.id) ||
-            incoming[0]
-          : incoming[0];
-
-        setSelectedProduct(nextSelected ?? null);
-        setImageIndex(0);
-        setCurrentIndex(0);
-      } catch (err: any) {
-        console.error("Erreur de chargement des produits téléchargeables", err);
-        if (!isMountedRef.current) return;
-        setError(
-          err?.message ||
-            "Impossible de récupérer les informations des logiciels."
-        );
-      } finally {
-        if (!isMountedRef.current) return;
-        setLoading(false);
       }
+
+      if (!isMountedRef.current) return;
+      setError(
+        lastError?.message ||
+          "Impossible de récupérer les informations des logiciels."
+      );
     },
     [selectedProduct?.id]
   );
