@@ -146,11 +146,11 @@ const ComptaProSubscriptionPage: React.FC = () => {
         <section className="flex flex-col items-center gap-8 text-center text-white">
           <div className="halo-title halo-title-comptapro relative space-y-4 max-w-4xl">
             <span className="pointer-events-none absolute -inset-x-10 -inset-y-6 -z-10 rounded-[32px] bg-gradient-to-r from-fuchsia-500/25 via-purple-800/30 to-fuchsia-400/25 blur-3xl" />
-            <h1 className="halo-purple-title text-4xl font-bold leading-tight text-white drop-shadow sm:text-5xl lg:text-6xl">
+            <h1 className="halo-purple-title text-4xl font-bold leading-tight text-white drop-shadow md:text-5xl">
               Comptabilité experte
               <span className="block text-white">pour vos équipes</span>
             </h1>
-            <p className="halo-purple-subtitle inline-block text-base text-fuchsia-100 sm:text-lg">
+            <p className="halo-purple-subtitle inline-block text-base text-fuchsia-100">
               Pilotez votre comptabilité en ligne : automatisation bancaire, contrôle des dépenses et reporting instantané pour donner de la visibilité à toute votre organisation.
             </p>
 
