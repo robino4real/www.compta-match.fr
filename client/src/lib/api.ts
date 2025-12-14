@@ -12,11 +12,21 @@ export async function apiFetch<T>(
     ...(headers || {}),
   } as HeadersInit;
 
-  const response = await fetch(url, {
-    credentials: "include",
-    ...rest,
-    headers: mergedHeaders,
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(url, {
+      credentials: "include",
+      ...rest,
+      headers: mergedHeaders,
+    });
+  } catch (error) {
+    const connectionError: ApiError = new Error(
+      "Impossible de se connecter au serveur. Vérifiez votre connexion et réessayez."
+    );
+    connectionError.status = 0;
+    throw connectionError;
+  }
 
   const data = await response.json().catch(() => ({}));
 
