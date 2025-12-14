@@ -648,7 +648,7 @@ export const DownloadableProductsSection: React.FC = () => {
   );
 
   return (
-    <section className="space-y-8 text-white">
+    <section className="space-y-8 p-4 text-white md:p-6">
       {error && (
         <div className="flex justify-center">
           <div className="rounded-full border border-red-300/50 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-100">
