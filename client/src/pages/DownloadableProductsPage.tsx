@@ -5,7 +5,17 @@ import { useCart } from "../context/CartContext";
 
 export default function DownloadableProductsPage() {
   const navigate = useNavigate();
-  const { items } = useCart();
+  const { items, lastAdditionTimestamp } = useCart();
+  const [isCartBouncing, setIsCartBouncing] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!lastAdditionTimestamp) return;
+
+    setIsCartBouncing(true);
+    const timeout = window.setTimeout(() => setIsCartBouncing(false), 600);
+
+    return () => window.clearTimeout(timeout);
+  }, [lastAdditionTimestamp]);
 
   const handleBackClick = React.useCallback(() => {
     if (window.history.length > 1) {
@@ -46,7 +56,9 @@ export default function DownloadableProductsPage() {
             </Link>
             <Link
               to="/panier"
-              className="relative inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/15 px-5 py-2.5 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+              className={`relative inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/15 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300${
+                isCartBouncing ? " cart-icon-bounce" : ""
+              }`}
               aria-label="Panier"
             >
               <svg
