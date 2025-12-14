@@ -407,7 +407,7 @@ export const DownloadableProductsSection: React.FC = () => {
               {selectedProduct.name}
             </h3>
             <p
-              className={`text-base leading-relaxed text-white/80 transition-opacity duration-500 ${
+              className={`text-base leading-relaxed text-white transition-opacity duration-500 ${
                 isFading ? "opacity-0" : "opacity-100"
               }`}
             >
@@ -673,7 +673,7 @@ export const DownloadableProductsSection: React.FC = () => {
         <div className="relative">
           {showNavigation && (
             <>
-              <div className="absolute inset-y-0 left-0 flex items-center">
+              <div className="absolute inset-y-0 -left-16 flex items-center">
                 <button
                   type="button"
                   onClick={handlePrev}
@@ -684,7 +684,7 @@ export const DownloadableProductsSection: React.FC = () => {
                   ←
                 </button>
               </div>
-              <div className="absolute inset-y-0 right-0 flex items-center">
+              <div className="absolute inset-y-0 -right-16 flex items-center">
                 <button
                   type="button"
                   onClick={handleNext}
@@ -710,7 +710,7 @@ export const DownloadableProductsSection: React.FC = () => {
             <div
               className={`flex py-2 transition-transform duration-500 ease-out ${
                 showNavigation
-                  ? "gap-7"
+                  ? "gap-7 justify-center"
                   : isMobile
                   ? "flex-col gap-4"
                   : "flex-wrap justify-center gap-7"
