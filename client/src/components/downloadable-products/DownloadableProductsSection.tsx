@@ -82,11 +82,10 @@ export const DownloadableProductsSection: React.FC = () => {
   const [isFading, setIsFading] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedBinaryId, setSelectedBinaryId] = useState<string | null>(null);
+  const isMountedRef = React.useRef(true);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchProducts = async () => {
+  const fetchProducts = React.useCallback(
+    async (preserveSelection = false) => {
       try {
         setLoading(true);
         setError(null);
@@ -110,33 +109,54 @@ export const DownloadableProductsSection: React.FC = () => {
           ? json.categories
           : [];
 
-        if (!isMounted) return;
+        if (!isMountedRef.current) return;
 
         setProducts(incoming);
         setCategories(incomingCategories);
-        setSelectedProduct(incoming[0] ?? null);
+
+        const nextSelected = preserveSelection
+          ? incoming.find((product) => product.id === selectedProduct?.id) ||
+            incoming[0]
+          : incoming[0];
+
+        setSelectedProduct(nextSelected ?? null);
         setImageIndex(0);
         setCurrentIndex(0);
       } catch (err: any) {
         console.error("Erreur de chargement des produits téléchargeables", err);
-        if (!isMounted) return;
+        if (!isMountedRef.current) return;
         setError(
           err?.message ||
-            "Une erreur est survenue lors du chargement des logiciels disponibles."
+            "Impossible de récupérer les informations des logiciels."
         );
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (!isMountedRef.current) return;
+        setLoading(false);
       }
-    };
+    },
+    [selectedProduct?.id]
+  );
 
+
+  useEffect(() => {
     fetchProducts();
 
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
     };
-  }, []);
+  }, [fetchProducts]);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchProducts(true);
+    };
+
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [fetchProducts]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 768px)");
