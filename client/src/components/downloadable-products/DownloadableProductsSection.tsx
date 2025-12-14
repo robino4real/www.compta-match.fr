@@ -90,18 +90,42 @@ export const DownloadableProductsSection: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`${API_BASE_URL}/downloadable-products/public`);
-        const json = await response.json().catch(() => ({}));
+        const endpoints = [
+          `${API_BASE_URL}/downloadable-products/public`,
+          `${API_BASE_URL}/public/downloadable-products`,
+        ];
 
-        if (!response.ok) {
-          throw new Error(
-            json?.message || "Impossible de charger les logiciels disponibles."
-          );
+        let incoming: DownloadableProduct[] = [];
+        let incomingCategories: DownloadableCategory[] = [];
+        let lastError: string | null = null;
+
+        for (const endpoint of endpoints) {
+          try {
+            const response = await fetch(endpoint);
+            const json = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+              throw new Error(
+                json?.message ||
+                  "Impossible de charger les logiciels disponibles."
+              );
+            }
+
+            incoming = Array.isArray(json?.products) ? json.products : [];
+            incomingCategories = Array.isArray(json?.categories)
+              ? json.categories
+              : [];
+
+            break;
+          } catch (error: any) {
+            lastError = error?.message || String(error);
+          }
         }
 
-        const incoming: DownloadableProduct[] = Array.isArray(json?.products)
-          ? json.products
-          : [];
+        if (!incoming.length && lastError) {
+          throw new Error(lastError);
+        }
+
         const normalizedProducts = incoming.map((product) => {
           const normalizedPriceTtc =
             typeof product?.priceTtc === "number"
@@ -160,12 +184,6 @@ export const DownloadableProductsSection: React.FC = () => {
               : undefined,
           } satisfies DownloadableProduct;
         });
-        const incomingCategories: DownloadableCategory[] = Array.isArray(
-          json?.categories
-        )
-          ? json.categories
-          : [];
-
         if (!isMountedRef.current) return;
 
         setProducts(normalizedProducts);
