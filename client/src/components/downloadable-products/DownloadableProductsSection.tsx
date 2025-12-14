@@ -333,12 +333,12 @@ export const DownloadableProductsSection: React.FC = () => {
         } ${isMobile ? "" : "flex-shrink-0"}`}
       >
         <div className="flex flex-col items-center gap-3">
-          <div className="invisible flex w-full items-center justify-center overflow-hidden rounded-2xl bg-white/10 aspect-square">
+          <div className="flex w-full items-center justify-center overflow-hidden rounded-2xl bg-white/10 aspect-square">
             {product.cardImageUrl ? (
               <img
                 src={product.cardImageUrl}
                 alt={product.name}
-                className="h-full w-full object-cover invisible"
+                className="h-full w-full object-cover"
               />
             ) : (
               <span className="text-xs font-semibold uppercase tracking-wide text-white/70">
@@ -519,17 +519,17 @@ export const DownloadableProductsSection: React.FC = () => {
                   return (
                     <div key={slide.imageUrl ?? `slide-${idx}`} className="w-full flex-shrink-0">
                       {slide.imageUrl ? (
-                        <div className="invisible flex aspect-[4/3] w-full items-center justify-center rounded-2xl border border-white/15 bg-white/10 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+                        <div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl border border-white/15 bg-white/10 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.3)] backdrop-blur-xl">
                           <img
                             src={slide.imageUrl}
                             alt={selectedProduct.name}
-                            className={`h-full w-full object-contain transition-opacity duration-500 ease-out invisible ${
+                            className={`h-full w-full object-contain transition-opacity duration-500 ease-out ${
                               isActiveSlide && isFading ? "opacity-0" : "opacity-100"
                             }`}
                           />
                         </div>
                       ) : (
-                        <div className="invisible flex aspect-[4/3] w-full items-center justify-center rounded-2xl border border-white/20 bg-white/5 p-4 text-sm font-semibold text-white/70 shadow-[0_10px_30px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+                        <div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl border border-white/20 bg-white/5 p-4 text-sm font-semibold text-white/70 shadow-[0_10px_30px_rgba(0,0,0,0.28)] backdrop-blur-xl">
                           Visuel à venir
                         </div>
                       )}
@@ -584,11 +584,11 @@ export const DownloadableProductsSection: React.FC = () => {
                     }`}
                   >
                     {slide.imageUrl ? (
-                      <div className="invisible h-full w-full overflow-hidden rounded-2xl">
+                      <div className="h-full w-full overflow-hidden rounded-2xl">
                         <img
                           src={slide.imageUrl}
                           alt=""
-                          className={`h-full w-full object-cover transition-opacity duration-300 invisible ${
+                          className={`h-full w-full object-cover transition-opacity duration-300 ${
                             isActiveSlide ? "opacity-100" : "opacity-80 group-hover:opacity-100"
                           }`}
                         />
@@ -673,7 +673,7 @@ export const DownloadableProductsSection: React.FC = () => {
         <div className="relative">
           {showNavigation && (
             <>
-              <div className="absolute inset-y-0 -left-12 flex items-center">
+              <div className="absolute inset-y-0 left-0 flex items-center">
                 <button
                   type="button"
                   onClick={handlePrev}
@@ -684,7 +684,7 @@ export const DownloadableProductsSection: React.FC = () => {
                   ←
                 </button>
               </div>
-              <div className="absolute inset-y-0 -right-12 flex items-center">
+              <div className="absolute inset-y-0 right-0 flex items-center">
                 <button
                   type="button"
                   onClick={handleNext}
