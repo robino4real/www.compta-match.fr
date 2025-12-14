@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useClientAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 
@@ -12,7 +12,13 @@ const Header: React.FC = () => {
   const { user, isLoading, logout } = useClientAuth();
   const { items } = useCart();
   const [isNavOpen, setIsNavOpen] = React.useState(false);
+  const { pathname } = useLocation();
   const navbarLogo = "/images/logo.png";
+
+  const hideAuthAndCartButtons = React.useMemo(
+    () => pathname === "/comptapro" || pathname === "/comptasso",
+    [pathname]
+  );
 
   const handleLogout = async () => {
     await logout("/");
@@ -40,6 +46,7 @@ const Header: React.FC = () => {
           </Link>
 
         <div className="flex items-center gap-2 md:hidden">
+          {!hideAuthAndCartButtons && (
             <Link
               to="/panier"
               className="relative flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
@@ -63,26 +70,27 @@ const Header: React.FC = () => {
                 </span>
               )}
             </Link>
-            {user && !isLoading && (
-              <Link
-                to="/compte"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
-                aria-label="Espace client"
-              >
-                {user.email?.charAt(0).toUpperCase() || "A"}
-              </Link>
-            )}
-            <button
-              type="button"
-              onClick={() => setIsNavOpen((prev) => !prev)}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
-              aria-label="Ouvrir le menu"
+          )}
+          {user && !isLoading && (
+            <Link
+              to="/compte"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
+              aria-label="Espace client"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-5 w-5">
-                <path strokeLinecap="round" strokeWidth={1.8} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          </div>
+              {user.email?.charAt(0).toUpperCase() || "A"}
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={() => setIsNavOpen((prev) => !prev)}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
+            aria-label="Ouvrir le menu"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-5 w-5">
+              <path strokeLinecap="round" strokeWidth={1.8} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
         </div>
 
         <div
@@ -108,36 +116,40 @@ const Header: React.FC = () => {
           <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
             {!user || isLoading ? (
               <>
-                <Link
-                  to="/auth/login"
-                  className="flex items-center justify-center rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-black hover:text-black"
-                  aria-label="Se connecter"
-                >
-                  Se connecter
-                </Link>
-                <Link
-                  to="/panier"
-                  className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
-                  aria-label="Panier"
-                  onClick={() => setIsNavOpen(false)}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    className="h-5 w-5"
+                {!hideAuthAndCartButtons && (
+                  <Link
+                    to="/auth/login"
+                    className="flex items-center justify-center rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-black hover:text-black"
+                    aria-label="Se connecter"
                   >
-                    <circle cx="9" cy="21" r="1" />
-                    <circle cx="20" cy="21" r="1" />
-                    <path d="M1 1h4l2.68 12.39a1 1 0 0 0 .98.8h8.72a1 1 0 0 0 .98-.8L21 6H6" strokeWidth={1.6} />
-                  </svg>
-                  {items.length > 0 && (
-                    <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-black px-1 text-[10px] font-semibold text-white">
-                      {items.length}
-                    </span>
-                  )}
-                </Link>
+                    Se connecter
+                  </Link>
+                )}
+                {!hideAuthAndCartButtons && (
+                  <Link
+                    to="/panier"
+                    className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
+                    aria-label="Panier"
+                    onClick={() => setIsNavOpen(false)}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      className="h-5 w-5"
+                    >
+                      <circle cx="9" cy="21" r="1" />
+                      <circle cx="20" cy="21" r="1" />
+                      <path d="M1 1h4l2.68 12.39a1 1 0 0 0 .98.8h8.72a1 1 0 0 0 .98-.8L21 6H6" strokeWidth={1.6} />
+                    </svg>
+                    {items.length > 0 && (
+                      <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-black px-1 text-[10px] font-semibold text-white">
+                        {items.length}
+                      </span>
+                    )}
+                  </Link>
+                )}
               </>
             ) : (
               <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-3">
@@ -158,29 +170,31 @@ const Header: React.FC = () => {
                 >
                   Se déconnecter
                 </button>
-                <Link
-                  to="/panier"
-                  className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
-                  aria-label="Panier"
-                  onClick={() => setIsNavOpen(false)}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    className="h-5 w-5"
+                {!hideAuthAndCartButtons && (
+                  <Link
+                    to="/panier"
+                    className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
+                    aria-label="Panier"
+                    onClick={() => setIsNavOpen(false)}
                   >
-                    <circle cx="9" cy="21" r="1" />
-                    <circle cx="20" cy="21" r="1" />
-                    <path d="M1 1h4l2.68 12.39a1 1 0 0 0 .98.8h8.72a1 1 0 0 0 .98-.8L21 6H6" strokeWidth={1.6} />
-                  </svg>
-                  {items.length > 0 && (
-                    <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-black px-1 text-[10px] font-semibold text-white">
-                      {items.length}
-                    </span>
-                  )}
-                </Link>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      className="h-5 w-5"
+                    >
+                      <circle cx="9" cy="21" r="1" />
+                      <circle cx="20" cy="21" r="1" />
+                      <path d="M1 1h4l2.68 12.39a1 1 0 0 0 .98.8h8.72a1 1 0 0 0 .98-.8L21 6H6" strokeWidth={1.6} />
+                    </svg>
+                    {items.length > 0 && (
+                      <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-black px-1 text-[10px] font-semibold text-white">
+                        {items.length}
+                      </span>
+                    )}
+                  </Link>
+                )}
               </div>
             )}
           </div>
