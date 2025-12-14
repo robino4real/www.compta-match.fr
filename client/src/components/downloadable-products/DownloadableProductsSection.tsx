@@ -84,25 +84,6 @@ export const DownloadableProductsSection: React.FC = () => {
   const [selectedBinaryId, setSelectedBinaryId] = useState<string | null>(null);
   const isMountedRef = React.useRef(true);
 
-  const normalizeApiResponse = (payload: any) => {
-    const productCandidates = [
-      payload?.products,
-      payload?.data?.products,
-      payload?.downloads,
-      payload?.items,
-    ];
-
-    const categoryCandidates = [payload?.categories, payload?.data?.categories];
-
-    const resolvedProducts = productCandidates.find(Array.isArray) || [];
-    const resolvedCategories = categoryCandidates.find(Array.isArray) || [];
-
-    return {
-      products: resolvedProducts as DownloadableProduct[],
-      categories: resolvedCategories as DownloadableCategory[],
-    };
-  };
-
   const fetchProducts = React.useCallback(
     async (preserveSelection = false) => {
       try {
@@ -112,8 +93,6 @@ export const DownloadableProductsSection: React.FC = () => {
         const endpoints = [
           `${API_BASE_URL}/downloadable-products/public`,
           `${API_BASE_URL}/public/downloadable-products`,
-          `${API_BASE_URL}/public/products`,
-          `${API_BASE_URL}/catalog/downloads?includeInactive=true`,
         ];
 
         let incoming: DownloadableProduct[] = [];
@@ -124,8 +103,6 @@ export const DownloadableProductsSection: React.FC = () => {
           try {
             const response = await fetch(endpoint);
             const json = await response.json().catch(() => ({}));
-            const { products: parsedProducts, categories: parsedCategories } =
-              normalizeApiResponse(json);
 
             if (!response.ok) {
               throw new Error(
@@ -134,11 +111,12 @@ export const DownloadableProductsSection: React.FC = () => {
               );
             }
 
-            if (parsedProducts.length) {
-              incoming = parsedProducts;
-              incomingCategories = parsedCategories;
-              break;
-            }
+            incoming = Array.isArray(json?.products) ? json.products : [];
+            incomingCategories = Array.isArray(json?.categories)
+              ? json.categories
+              : [];
+
+            break;
           } catch (error: any) {
             lastError = error?.message || String(error);
           }
