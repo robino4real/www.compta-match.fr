@@ -3,17 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
 import { PaidServiceComparison, PaidServicePlan, PaidServiceSection } from "../types/paidServices";
 import { formatPaidServicePrice } from "../lib/formatPaidServicePrice";
-import { useCart } from "../context/CartContext";
 
 const ComptAssoSubscriptionPage: React.FC = () => {
   const navigate = useNavigate();
-  const { items, lastAdditionTimestamp } = useCart();
   const [plans, setPlans] = React.useState<PaidServicePlan[]>([]);
   const [comparison, setComparison] = React.useState<PaidServiceComparison | null>(null);
   const [sections, setSections] = React.useState<PaidServiceSection[]>([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [isCartBouncing, setIsCartBouncing] = React.useState(false);
 
   const planSkeletons = React.useMemo(() => Array.from({ length: 2 }), []);
 
@@ -24,15 +21,6 @@ const ComptAssoSubscriptionPage: React.FC = () => {
       navigate("/");
     }
   }, [navigate]);
-
-  React.useEffect(() => {
-    if (!lastAdditionTimestamp) return;
-
-    setIsCartBouncing(true);
-    const timeout = window.setTimeout(() => setIsCartBouncing(false), 600);
-
-    return () => window.clearTimeout(timeout);
-  }, [lastAdditionTimestamp]);
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -137,52 +125,6 @@ const ComptAssoSubscriptionPage: React.FC = () => {
             <span className="sr-only">Retour</span>
             <span className="hidden sm:inline">Retour</span>
           </button>
-
-          <div className="fixed right-[1cm] top-[clamp(1.25rem,3vw,2.5rem)] z-30 flex items-center gap-3">
-            <Link
-              to="/auth/login"
-              className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/15 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-300 sm:h-auto sm:w-auto sm:gap-2 sm:px-5 sm:py-2.5"
-              aria-label="Se connecter"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="h-6 w-6 sm:hidden"
-              >
-                <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Z" />
-                <path d="M4 20a8 8 0 0 1 16 0" />
-              </svg>
-              <span className="sr-only">Se connecter</span>
-              <span className="hidden sm:inline">Se connecter</span>
-            </Link>
-            <Link
-              to="/panier"
-              className={`relative inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/15 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-300${
-                isCartBouncing ? " cart-icon-bounce" : ""
-              }`}
-              aria-label="Panier"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                className="h-6 w-6"
-              >
-                <circle cx="9" cy="21" r="1" />
-                <circle cx="20" cy="21" r="1" />
-                <path d="M1 1h4l2.68 12.39a1 1 0 0 0 .98.8h8.72a1 1 0 0 0 .98-.8L21 6H6" strokeWidth={2} />
-              </svg>
-              {items.length > 0 && (
-                <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-fuchsia-500 px-1 text-[11px] font-semibold text-white">
-                  {items.length}
-                </span>
-              )}
-            </Link>
-          </div>
 
           <span className="pointer-events-none text-center text-lg font-semibold tracking-tight text-white drop-shadow md:text-2xl">
             COMPTAMATCH
