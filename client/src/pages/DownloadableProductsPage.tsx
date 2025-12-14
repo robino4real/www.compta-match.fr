@@ -16,11 +16,11 @@ export default function DownloadableProductsPage() {
   return (
     <main className="hero-logiciels min-h-screen bg-[#04140c] text-white">
       <div className="mx-auto max-w-6xl space-y-12 px-4 pb-16 pt-14 lg:px-8 lg:pb-20 lg:pt-16">
-        <div className="relative grid w-full grid-cols-[auto,1fr] items-center gap-4">
+        <div className="relative flex w-full items-center justify-center">
           <button
             type="button"
             onClick={handleBackClick}
-            className="hero-back-button inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/15 px-5 py-2.5 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+            className="hero-back-button absolute left-0 inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/15 px-5 py-2.5 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -35,7 +35,7 @@ export default function DownloadableProductsPage() {
             <span>Retour</span>
           </button>
 
-          <span className="pointer-events-none justify-self-center text-center text-lg font-semibold tracking-tight text-white drop-shadow md:text-2xl">
+          <span className="pointer-events-none text-center text-lg font-semibold tracking-tight text-white drop-shadow md:text-2xl">
             COMPTAMATCH
           </span>
         </div>
