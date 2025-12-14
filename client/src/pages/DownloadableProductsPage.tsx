@@ -98,9 +98,7 @@ export default function DownloadableProductsPage() {
           </div>
         </section>
 
-        <div className="overflow-hidden rounded-[32px] border border-white/20 bg-white/10 p-4 shadow-2xl backdrop-blur-2xl md:p-6">
-          <DownloadableProductsSection />
-        </div>
+        <DownloadableProductsSection />
       </div>
     </main>
   );
