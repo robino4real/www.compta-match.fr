@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import DownloadableProductsSection from "../components/downloadable-products/DownloadableProductsSection";
+import { DownloadableProductsSection } from "../components/downloadable-products/DownloadableProductsSection";
 import { useCart } from "../context/CartContext";
 
 export default function DownloadableProductsPage() {
@@ -26,8 +26,8 @@ export default function DownloadableProductsPage() {
   }, [navigate]);
 
   return (
-    <main className="hero-logiciels min-h-screen bg-[#04140c] text-white">
-      <div className="mx-auto max-w-6xl space-y-12 px-4 pb-16 pt-14 lg:px-8 lg:pb-20 lg:pt-16">
+    <main className="hero-logiciels relative min-h-screen bg-[#04140c] text-white">
+      <div className="relative z-10 mx-auto max-w-6xl space-y-12 px-4 pb-16 pt-14 lg:px-8 lg:pb-20 lg:pt-16">
         <div className="relative flex w-full items-center justify-center">
           <button
             type="button"
