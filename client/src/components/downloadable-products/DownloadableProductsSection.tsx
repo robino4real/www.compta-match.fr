@@ -241,11 +241,13 @@ export const DownloadableProductsSection: React.FC = () => {
     !selectedProduct ||
     (!!selectedProduct.binaries?.length && !selectedBinary);
 
-  const maxIndex = Math.max(filteredProducts.length - VISIBLE_CARDS, 0);
+  const visibleCards = isMobile ? 1 : VISIBLE_CARDS;
+
+  const maxIndex = Math.max(filteredProducts.length - visibleCards, 0);
 
   useEffect(() => {
     setCurrentIndex(0);
-  }, [filteredProducts.length]);
+  }, [filteredProducts.length, isMobile]);
 
   useEffect(() => {
     if (currentIndex > maxIndex) {
@@ -308,14 +310,20 @@ export const DownloadableProductsSection: React.FC = () => {
     });
   };
 
+  const shouldUseMobileCarousel = isMobile && !loading && filteredProducts.length > 1;
+
   const renderCards = () => {
     if (loading) {
       return skeletonItems.map((_, idx) => (
         <div
           key={`skeleton-${idx}`}
           style={{
-            width: isMobile ? "100%" : CARD_WIDTH,
-            flex: isMobile ? undefined : `0 0 ${CARD_WIDTH}px`,
+            width: shouldUseMobileCarousel ? "100%" : isMobile ? "100%" : CARD_WIDTH,
+            flex: shouldUseMobileCarousel
+              ? "0 0 100%"
+              : isMobile
+              ? undefined
+              : `0 0 ${CARD_WIDTH}px`,
           }}
           className="rounded-3xl border border-white/25 bg-white/10 px-7 py-6 shadow-[0_24px_60px_rgba(0,0,0,0.25)] backdrop-blur-xl"
         >
@@ -344,8 +352,12 @@ export const DownloadableProductsSection: React.FC = () => {
         role="button"
         onClick={() => handleSelect(product)}
         style={{
-          width: isMobile ? "100%" : CARD_WIDTH,
-          flex: isMobile ? undefined : `0 0 ${CARD_WIDTH}px`,
+          width: shouldUseMobileCarousel ? "100%" : isMobile ? "100%" : CARD_WIDTH,
+          flex: shouldUseMobileCarousel
+            ? "0 0 100%"
+            : isMobile
+            ? undefined
+            : `0 0 ${CARD_WIDTH}px`,
         }}
         className={`group cursor-pointer rounded-3xl px-7 py-6 text-center transition-all duration-200 ${
           selectedProduct?.id === product.id
@@ -635,16 +647,20 @@ export const DownloadableProductsSection: React.FC = () => {
     );
   };
 
-  const showNavigation =
-    !loading && !isMobile && filteredProducts.length > VISIBLE_CARDS;
-  const translateX =
-    showNavigation && !isMobile ? currentIndex * (CARD_WIDTH + CARD_GAP) : 0;
+  const showNavigation = !loading && filteredProducts.length > visibleCards;
+
+  const translateValue = showNavigation
+    ? isMobile
+      ? `translateX(-${currentIndex * 100}%)`
+      : `translateX(-${currentIndex * (CARD_WIDTH + CARD_GAP)}px)`
+    : undefined;
+
   const viewportWidth = useMemo(
     () =>
       isMobile
         ? undefined
-        : VISIBLE_CARDS * CARD_WIDTH + CARD_GAP * (VISIBLE_CARDS - 1),
-    [isMobile]
+        : visibleCards * CARD_WIDTH + CARD_GAP * (visibleCards - 1),
+    [isMobile, visibleCards]
   );
 
   return (
@@ -691,30 +707,53 @@ export const DownloadableProductsSection: React.FC = () => {
       <div className="space-y-6">
         <div className="relative">
           {showNavigation && (
-            <>
-              <div className="absolute inset-y-0 -left-16 flex items-center">
+            isMobile ? (
+              <div className="mb-4 flex items-center justify-between gap-3">
                 <button
                   type="button"
                   onClick={handlePrev}
                   disabled={currentIndex === 0}
-                  className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-white/15 text-lg font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/25 hover:shadow-[0_14px_36px_rgba(0,0,0,0.3)] disabled:opacity-40"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white/15 text-base font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.2)] transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/25 hover:shadow-[0_14px_36px_rgba(0,0,0,0.28)] disabled:opacity-40"
                   aria-label="Afficher les logiciels précédents"
                 >
                   ←
                 </button>
-              </div>
-              <div className="absolute inset-y-0 -right-16 flex items-center">
                 <button
                   type="button"
                   onClick={handleNext}
                   disabled={currentIndex === maxIndex}
-                  className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-white/15 text-lg font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/25 hover:shadow-[0_14px_36px_rgba(0,0,0,0.3)] disabled:opacity-40"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white/15 text-base font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.2)] transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/25 hover:shadow-[0_14px_36px_rgba(0,0,0,0.28)] disabled:opacity-40"
                   aria-label="Afficher les logiciels suivants"
                 >
                   →
                 </button>
               </div>
-            </>
+            ) : (
+              <>
+                <div className="absolute inset-y-0 -left-16 flex items-center">
+                  <button
+                    type="button"
+                    onClick={handlePrev}
+                    disabled={currentIndex === 0}
+                    className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-white/15 text-lg font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/25 hover:shadow-[0_14px_36px_rgba(0,0,0,0.3)] disabled:opacity-40"
+                    aria-label="Afficher les logiciels précédents"
+                  >
+                    ←
+                  </button>
+                </div>
+                <div className="absolute inset-y-0 -right-16 flex items-center">
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    disabled={currentIndex === maxIndex}
+                    className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-white/15 text-lg font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/25 hover:shadow-[0_14px_36px_rgba(0,0,0,0.3)] disabled:opacity-40"
+                    aria-label="Afficher les logiciels suivants"
+                  >
+                    →
+                  </button>
+                </div>
+              </>
+            )
           )}
 
           <div
@@ -727,16 +766,14 @@ export const DownloadableProductsSection: React.FC = () => {
             <div
               className={`flex py-2 transition-transform duration-500 ease-out ${
                 showNavigation
-                  ? "justify-center"
+                  ? ""
                   : isMobile
                   ? "flex-col gap-4"
                   : "flex-wrap justify-center"
               }`}
               style={{
-                transform: showNavigation
-                  ? `translateX(-${translateX}px)`
-                  : undefined,
-                columnGap: showNavigation || !isMobile ? CARD_GAP : undefined,
+                transform: translateValue,
+                columnGap: !isMobile ? CARD_GAP : undefined,
                 rowGap: !showNavigation && !isMobile ? CARD_GAP : undefined,
               }}
             >
