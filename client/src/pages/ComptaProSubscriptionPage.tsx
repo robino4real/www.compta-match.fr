@@ -162,7 +162,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
-                className="h-6 w-6"
+                className="h-6 w-6 sm:hidden"
               >
                 <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Z" />
                 <path d="M4 20a8 8 0 0 1 16 0" />
@@ -174,7 +174,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
               to="/panier"
               className={`relative inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/15 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-300${
                 isCartBouncing ? " cart-icon-bounce" : ""
-              } sm:h-auto sm:w-auto sm:gap-2 sm:px-5 sm:py-2.5`}
+              }`}
               aria-label="Panier"
             >
               <svg

@@ -60,7 +60,7 @@ export default function DownloadableProductsPage() {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
-                className="h-6 w-6"
+                className="h-6 w-6 sm:hidden"
               >
                 <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Z" />
                 <path d="M4 20a8 8 0 0 1 16 0" />
