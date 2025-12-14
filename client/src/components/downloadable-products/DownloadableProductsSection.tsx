@@ -89,9 +89,8 @@ export const DownloadableProductsSection: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(
-          `${API_BASE_URL}/downloadable-products/public`
-        );
+
+        const response = await fetch(`${API_BASE_URL}/downloadable-products/public`);
         const json = await response.json().catch(() => ({}));
 
         if (!response.ok) {
@@ -126,8 +125,7 @@ export const DownloadableProductsSection: React.FC = () => {
         console.error("Erreur de chargement des produits téléchargeables", err);
         if (!isMountedRef.current) return;
         setError(
-          err?.message ||
-            "Impossible de récupérer les informations des logiciels."
+          err?.message || "Impossible de récupérer les informations des logiciels."
         );
       } finally {
         if (!isMountedRef.current) return;
