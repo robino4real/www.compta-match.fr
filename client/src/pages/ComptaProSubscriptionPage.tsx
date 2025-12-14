@@ -118,12 +118,11 @@ const ComptaProSubscriptionPage: React.FC = () => {
   return (
     <main className="hero-comptapro min-h-screen bg-[#0c0316] text-white">
       <div className="mx-auto max-w-6xl px-4 pb-20 pt-12 lg:px-8 lg:pt-16 space-y-12">
-        <div className="relative flex min-h-[72px] items-center justify-center">
+        <div className="relative flex w-full items-center justify-center">
           <button
             type="button"
             onClick={handleBackClick}
-            className={backButtonClasses}
-            style={{ position: "absolute", left: 0, top: "clamp(1rem, 3vw, 2.5rem)" }}
+            className={`${backButtonClasses} absolute left-0`}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -138,9 +137,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
             <span>Retour</span>
           </button>
 
-          <span
-            className="absolute left-1/2 top-[clamp(1rem,3vw,2.5rem)] -translate-x-1/2 text-lg font-semibold tracking-tight text-white drop-shadow md:text-2xl"
-          >
+          <span className="pointer-events-none text-center text-lg font-semibold tracking-tight text-white drop-shadow md:text-2xl">
             COMPTAMATCH
           </span>
         </div>
