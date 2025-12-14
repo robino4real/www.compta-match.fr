@@ -442,7 +442,7 @@ export const DownloadableProductsSection: React.FC = () => {
               <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-100/80">
                 Fonctionnalités clés
               </h4>
-              <ul className="mt-3 grid gap-2 text-sm text-white/80">
+              <ul className="mt-3 grid gap-2 text-sm text-white">
                 {features.map((feature) => (
                   <li key={feature} className="flex gap-3">
                     <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-emerald-300" aria-hidden />
@@ -455,7 +455,7 @@ export const DownloadableProductsSection: React.FC = () => {
 
           <div className="mt-6 space-y-3">
             <div className="space-y-2">
-              <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-emerald-100/80">
+              <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-white">
                 Version du logiciel
               </h4>
               {selectedProduct?.binaries?.length ? (
@@ -475,7 +475,7 @@ export const DownloadableProductsSection: React.FC = () => {
                         aria-pressed={isActive}
                       >
                         {platformLabel(binary.platform)}
-                        <span className="text-[11px] font-normal text-current/80">
+                        <span className="text-[11px] font-normal text-current">
                           {binary.fileSize
                             ? `${(binary.fileSize / (1024 * 1024)).toFixed(1)} Mo`
                             : ""}
@@ -485,7 +485,7 @@ export const DownloadableProductsSection: React.FC = () => {
                   })}
                 </div>
               ) : (
-                <p className="text-sm text-white/80">
+                <p className="text-sm text-white">
                   Les fichiers d’installation seront ajoutés prochainement.
                 </p>
               )}
@@ -499,7 +499,7 @@ export const DownloadableProductsSection: React.FC = () => {
               type="button"
               onClick={() => handleAddToCart(selectedProduct)}
               disabled={isAddToCartDisabled}
-              className="pressable-button inline-flex items-center justify-center rounded-full border border-emerald-200/60 bg-emerald-500/80 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/40 transition hover:-translate-y-0.5 hover:bg-emerald-500 disabled:cursor-not-allowed disabled:border-white/20 disabled:bg-white/10 disabled:text-white/70"
+              className="pressable-button inline-flex items-center justify-center rounded-full border border-emerald-200 bg-emerald-500 px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-emerald-900/40 transition hover:-translate-y-0.5 hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200 disabled:cursor-not-allowed disabled:border-white/30 disabled:bg-white/20 disabled:text-white"
             >
               Ajouter au panier
             </button>
