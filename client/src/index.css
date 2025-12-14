@@ -326,14 +326,6 @@ a {
   transition: opacity 700ms ease, transform 700ms ease;
 }
 
-@media (max-width: 768px) {
-  .page-section-animated,
-  .page-section-animated .section-anim-item {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 .page-section-animated.animate-fade {
   transform: translateY(12px);
 }
