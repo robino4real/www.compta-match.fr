@@ -39,6 +39,15 @@ body {
   color: #0f172a;
 }
 
+.page-logiciels {
+  background-color: #04140c;
+  color: #ffffff;
+}
+
+.page-logiciels .hero-wrapper {
+  background-color: #04140c;
+}
+
 .header-main {
   position: relative;
   z-index: 20;
@@ -59,6 +68,10 @@ body {
   overflow: visible;
   background: #ffffff;
   isolation: isolate;
+}
+
+.hero-logiciels {
+  background: #04140c;
 }
 
 .halo-purple-title,
@@ -311,6 +324,14 @@ a {
   opacity: 0;
   transform: translateY(26px);
   transition: opacity 700ms ease, transform 700ms ease;
+}
+
+@media (max-width: 768px) {
+  .page-section-animated,
+  .page-section-animated .section-anim-item {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .page-section-animated.animate-fade {
