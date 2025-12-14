@@ -404,7 +404,7 @@ export const DownloadableProductsSection: React.FC = () => {
               {selectedProduct.name}
             </h3>
             <p
-              className={`text-base leading-relaxed text-white transition-opacity duration-500 ${
+              className={`relative z-10 text-base leading-relaxed text-white transition-opacity duration-500 ${
                 isFading ? "opacity-0" : "opacity-100"
               }`}
             >
