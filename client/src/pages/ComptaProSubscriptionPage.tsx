@@ -117,7 +117,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
 
   return (
     <main className="hero-comptapro min-h-screen bg-[#0c0316] text-white">
-      <div className="mx-auto max-w-6xl px-4 pb-20 pt-12 lg:px-8 lg:pt-16 space-y-12">
+      <div className="mx-auto max-w-7xl px-4 pb-20 pt-12 sm:px-6 lg:px-10 lg:pt-16 page-safe-container space-y-12 lg:space-y-16">
         <div className="relative flex w-full items-center justify-center">
           <button
             type="button"
@@ -143,13 +143,13 @@ const ComptaProSubscriptionPage: React.FC = () => {
         </div>
 
         <section className="flex flex-col items-center gap-8 text-center text-white">
-          <div className="halo-title halo-title-comptapro relative space-y-4 max-w-3xl">
+          <div className="halo-title halo-title-comptapro relative space-y-4 max-w-4xl">
             <span className="pointer-events-none absolute -inset-x-10 -inset-y-6 -z-10 rounded-[32px] bg-gradient-to-r from-fuchsia-500/25 via-purple-800/30 to-fuchsia-400/25 blur-3xl" />
-            <h1 className="halo-purple-title text-4xl font-bold leading-tight text-white drop-shadow md:text-5xl">
+            <h1 className="halo-purple-title text-4xl font-bold leading-tight text-white drop-shadow sm:text-5xl lg:text-6xl">
               Comptabilité experte
               <span className="block text-white">pour vos équipes</span>
             </h1>
-            <p className="halo-purple-subtitle inline-block text-base text-fuchsia-100">
+            <p className="halo-purple-subtitle inline-block text-base text-fuchsia-100 sm:text-lg">
               Pilotez votre comptabilité en ligne : automatisation bancaire, contrôle des dépenses et reporting instantané pour donner de la visibilité à toute votre organisation.
             </p>
 
@@ -190,39 +190,41 @@ const ComptaProSubscriptionPage: React.FC = () => {
               {isLoading ? (
                 renderComparisonSkeleton()
               ) : comparison && hasPlans ? (
-                <table className="min-w-full border-separate border-spacing-y-1 text-sm">
-                  <thead>
-                    <tr>
-                      <th className="bg-transparent px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">Fonctionnalités</th>
-                      <th className="bg-transparent px-4 py-3 text-center text-sm font-semibold text-white">
-                        {comparison.plans[0]?.name || "Plan A"}
-                      </th>
-                      <th className="bg-transparent px-4 py-3 text-center text-sm font-semibold text-white">
-                        {comparison.plans[1]?.name || "Plan B"}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {comparison.rows.map((row) => (
-                      <tr key={row.id} className="bg-transparent">
-                        <td className="rounded-l-xl border border-slate-200 px-4 py-3 align-top">
-                          <div className="text-sm font-semibold text-white">{row.label}</div>
-                          {row.description && <p className="text-xs text-white/80">{row.description}</p>}
-                        </td>
-                        <td className="border-t border-b border-slate-200 px-4 py-3 text-center align-middle">
-                          <span className="text-white">
-                            {row.planAIncluded ? "✓" : "—"}
-                          </span>
-                        </td>
-                        <td className="rounded-r-xl border border-slate-200 px-4 py-3 text-center align-middle">
-                          <span className="text-white">
-                            {row.planBIncluded ? "✓" : "—"}
-                          </span>
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full border-separate border-spacing-y-1 text-sm">
+                    <thead>
+                      <tr>
+                        <th className="bg-transparent px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">Fonctionnalités</th>
+                        <th className="bg-transparent px-4 py-3 text-center text-sm font-semibold text-white">
+                          {comparison.plans[0]?.name || "Plan A"}
+                        </th>
+                        <th className="bg-transparent px-4 py-3 text-center text-sm font-semibold text-white">
+                          {comparison.plans[1]?.name || "Plan B"}
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {comparison.rows.map((row) => (
+                        <tr key={row.id} className="bg-transparent">
+                          <td className="rounded-l-xl border border-slate-200 px-4 py-3 align-top">
+                            <div className="text-sm font-semibold text-white">{row.label}</div>
+                            {row.description && <p className="text-xs text-white/80">{row.description}</p>}
+                          </td>
+                          <td className="border-t border-b border-slate-200 px-4 py-3 text-center align-middle">
+                            <span className="text-white">
+                              {row.planAIncluded ? "✓" : "—"}
+                            </span>
+                          </td>
+                          <td className="rounded-r-xl border border-slate-200 px-4 py-3 text-center align-middle">
+                            <span className="text-white">
+                              {row.planBIncluded ? "✓" : "—"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               ) : (
                 <div className="px-4 py-6 text-center text-sm text-slate-600">Comparatif disponible prochainement.</div>
               )}

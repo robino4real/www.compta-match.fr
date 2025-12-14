@@ -21,8 +21,8 @@ const ComptAssoLanding: React.FC = () => {
         <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,0.08)_0,rgba(255,255,255,0)_55%)] opacity-40 mix-blend-screen" />
       </div>
 
-      <div className="relative mx-auto max-w-6xl px-6 pb-16 pt-10 sm:px-8 lg:px-12">
-        <nav className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 rounded-full bg-gradient-to-r from-[#9333EA] via-[#A855F7] to-[#EC4899] px-4 py-4 shadow-[0_20px_50px_rgba(0,0,0,0.55)] sm:px-6">
+      <div className="relative mx-auto max-w-6xl px-6 pb-16 pt-10 sm:px-8 lg:max-w-7xl lg:px-12 page-safe-container">
+        <nav className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 overflow-x-auto rounded-full bg-gradient-to-r from-[#9333EA] via-[#A855F7] to-[#EC4899] px-4 py-4 shadow-[0_20px_50px_rgba(0,0,0,0.55)] sm:px-6">
           <div className="flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#7C3AED] via-[#A855F7] to-[#EC4899] text-lg font-semibold text-white shadow-lg shadow-fuchsia-500/35">
               ★

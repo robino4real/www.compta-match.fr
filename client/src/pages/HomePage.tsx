@@ -109,7 +109,7 @@ const HomePage: React.FC = () => {
 
   return (
     <main className="bg-white text-slate-900">
-      <div className="mx-auto max-w-6xl px-4 py-10 md:py-14">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 md:py-14 lg:px-8 page-safe-container">
         <PageRenderer page={DEFAULT_PAGE} sections={mappedSections} />
       </div>
     </main>

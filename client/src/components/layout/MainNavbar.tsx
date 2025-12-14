@@ -39,7 +39,7 @@ export function MainNavbar() {
 
   return (
     <header className="header-main w-full overflow-visible">
-      <div className="relative z-20 flex w-full items-center justify-between px-4 py-4 sm:px-5 md:px-6 md:py-6">
+      <div className="relative z-20 flex w-full items-center justify-between px-4 py-4 sm:px-5 md:px-6 md:py-6 page-safe-container">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 md:gap-3">
           <img

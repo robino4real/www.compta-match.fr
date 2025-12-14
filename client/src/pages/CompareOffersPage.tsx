@@ -162,7 +162,7 @@ const CompareOffersPage: React.FC = () => {
   return (
     <main className="min-h-screen bg-white pb-16">
       <section className="bg-white">
-        <div className="px-4 py-12 text-center lg:px-12 lg:py-16">
+        <div className="mx-auto max-w-6xl px-4 py-12 text-center sm:px-6 lg:max-w-7xl lg:px-12 lg:py-16 page-safe-container">
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
             Comparatif des offres comptables en ligne
           </h1>
@@ -170,8 +170,9 @@ const CompareOffersPage: React.FC = () => {
       </section>
 
       <section className="mt-6 lg:mt-10">
-        <div className="grid lg:grid-cols-[300px,1fr] lg:gap-0">
-          <aside className="bg-white px-4 py-6 lg:sticky lg:top-20 lg:min-h-[70vh] lg:px-6 lg:py-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-12 page-safe-container">
+          <div className="grid lg:grid-cols-[320px,1fr] lg:gap-0">
+            <aside className="bg-white px-2 py-6 sm:px-4 lg:sticky lg:top-20 lg:min-h-[70vh] lg:px-6 lg:py-8">
             <h3 className="mt-2 text-lg font-semibold text-slate-900">Choisissez une alternative</h3>
             <div className="mt-4 space-y-2">
               {comparisonOptions.map((option) => {
@@ -195,7 +196,7 @@ const CompareOffersPage: React.FC = () => {
             </div>
           </aside>
 
-          <div className="px-4 py-6 lg:px-12 lg:py-10">
+            <div className="px-2 py-6 sm:px-4 lg:px-12 lg:py-10">
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
               <div className="text-center">
                 <h3 className="text-2xl font-semibold text-slate-900">{activeComparison.title}</h3>
@@ -256,9 +257,10 @@ const CompareOffersPage: React.FC = () => {
             </div>
           </div>
         </div>
+        </div>
       </section>
 
-      <section className="mx-auto mt-12 max-w-5xl px-4 lg:px-8">
+      <section className="mx-auto mt-12 max-w-5xl px-4 sm:px-6 lg:px-8 page-safe-container">
         <div className="flex flex-col gap-6 rounded-3xl bg-slate-900 px-6 py-8 text-white md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.08em] text-emerald-300">Prêt à comparer en détail ?</p>
