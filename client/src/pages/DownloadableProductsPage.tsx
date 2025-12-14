@@ -32,7 +32,7 @@ export default function DownloadableProductsPage() {
           <button
             type="button"
             onClick={handleBackClick}
-            className="hero-back-button absolute left-0 inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/15 px-5 py-2.5 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+            className="hero-back-button absolute left-0 inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/15 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 sm:h-auto sm:w-auto sm:gap-2 sm:px-5 sm:py-2.5"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -44,15 +44,29 @@ export default function DownloadableProductsPage() {
             >
               <path d="M15 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span>Retour</span>
+            <span className="sr-only">Retour</span>
+            <span className="hidden sm:inline">Retour</span>
           </button>
 
           <div className="fixed right-[1cm] top-[clamp(1.25rem,3vw,2.5rem)] z-30 flex items-center gap-3">
             <Link
               to="/auth/login"
-              className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/15 px-5 py-2.5 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+              className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/15 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 sm:h-auto sm:w-auto sm:gap-2 sm:px-5 sm:py-2.5"
+              aria-label="Se connecter"
             >
-              Se connecter
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="h-6 w-6 sm:hidden"
+              >
+                <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Z" />
+                <path d="M4 20a8 8 0 0 1 16 0" />
+              </svg>
+              <span className="sr-only">Se connecter</span>
+              <span className="hidden sm:inline">Se connecter</span>
             </Link>
             <Link
               to="/panier"
