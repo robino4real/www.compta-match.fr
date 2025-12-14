@@ -293,10 +293,11 @@ export const DownloadableProductsSection: React.FC = () => {
       return skeletonItems.map((_, idx) => (
         <div
           key={`skeleton-${idx}`}
-          style={{ width: isMobile ? "100%" : CARD_WIDTH }}
-          className={`rounded-3xl border border-white/25 bg-white/10 px-7 py-6 shadow-[0_24px_60px_rgba(0,0,0,0.25)] backdrop-blur-xl ${
-            isMobile ? "" : "flex-shrink-0"
-          }`}
+          style={{
+            width: isMobile ? "100%" : CARD_WIDTH,
+            flex: isMobile ? undefined : `0 0 ${CARD_WIDTH}px`,
+          }}
+          className="rounded-3xl border border-white/25 bg-white/10 px-7 py-6 shadow-[0_24px_60px_rgba(0,0,0,0.25)] backdrop-blur-xl"
         >
           <div className="h-5 w-2/3 animate-pulse rounded-full bg-white/30" />
           <div className="mt-3 h-4 w-full animate-pulse rounded-full bg-white/30" />
@@ -322,12 +323,15 @@ export const DownloadableProductsSection: React.FC = () => {
         key={product.id}
         role="button"
         onClick={() => handleSelect(product)}
-        style={{ width: isMobile ? "100%" : CARD_WIDTH }}
+        style={{
+          width: isMobile ? "100%" : CARD_WIDTH,
+          flex: isMobile ? undefined : `0 0 ${CARD_WIDTH}px`,
+        }}
         className={`group cursor-pointer rounded-3xl px-7 py-6 text-center transition-all duration-200 ${
           selectedProduct?.id === product.id
             ? "border border-white/70 bg-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.32)]"
             : "border border-white/25 bg-white/10 hover:-translate-y-1 hover:border-white/50 hover:bg-white/15 hover:shadow-[0_18px_44px_rgba(0,0,0,0.28)]"
-        } ${isMobile ? "" : "flex-shrink-0"}`}
+        }`}
       >
         <div className="flex flex-col items-center gap-3">
           <div className="flex w-full items-center justify-center overflow-hidden rounded-2xl bg-white/10 aspect-square">
@@ -694,7 +698,7 @@ export const DownloadableProductsSection: React.FC = () => {
           )}
 
           <div
-            className="mx-auto overflow-x-hidden overflow-y-visible pb-10"
+            className="mx-auto overflow-hidden overflow-y-visible pb-10"
             style={{
               maxWidth: viewportWidth,
               width: isMobile ? "100%" : viewportWidth,
@@ -703,18 +707,18 @@ export const DownloadableProductsSection: React.FC = () => {
             <div
               className={`flex py-2 transition-transform duration-500 ease-out ${
                 showNavigation
-                  ? "gap-7 justify-center"
+                  ? "justify-center"
                   : isMobile
                   ? "flex-col gap-4"
-                  : "flex-wrap justify-center gap-7"
+                  : "flex-wrap justify-center"
               }`}
-              style={
-                showNavigation
-                  ? {
-                      transform: `translateX(-${translateX}px)`,
-                    }
-                  : undefined
-              }
+              style={{
+                transform: showNavigation
+                  ? `translateX(-${translateX}px)`
+                  : undefined,
+                columnGap: showNavigation || !isMobile ? CARD_GAP : undefined,
+                rowGap: !showNavigation && !isMobile ? CARD_GAP : undefined,
+              }}
             >
               {renderCards()}
             </div>
