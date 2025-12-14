@@ -14,7 +14,10 @@ const inferBaseUrl = () => {
   }
 
   if (typeof window !== "undefined" && window.location?.origin) {
-    return appendApiSuffix(window.location.origin);
+    // Utilise un chemin relatif lorsque le front et l'API partagent le même
+    // domaine pour éviter les erreurs de connexion liées aux différences de
+    // port ou de protocole (http/https).
+    return "/api";
   }
 
   return "http://localhost:4000/api";
