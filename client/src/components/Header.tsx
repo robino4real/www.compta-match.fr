@@ -16,7 +16,7 @@ const Header: React.FC = () => {
   const navbarLogo = "/images/logo.png";
 
   const hideAuthAndCartButtons = React.useMemo(
-    () => pathname.startsWith("/comptapro") || pathname.startsWith("/comptasso"),
+    () => pathname === "/comptapro" || pathname === "/comptasso",
     [pathname]
   );
 
