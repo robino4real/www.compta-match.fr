@@ -20,12 +20,19 @@ export default function DownloadableProductsPage() {
   return (
     <main className="hero-logiciels min-h-screen bg-[#04140c] text-white">
       <div className="mx-auto max-w-6xl space-y-12 px-4 pb-16 pt-14 lg:px-8 lg:pb-20 lg:pt-16">
-        <div className="relative flex w-full items-center gap-4">
-          <div className="flex flex-1 justify-start">
-            <button
-              type="button"
-              onClick={handleBackClick}
-              className="hero-back-button inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/15 px-5 py-2.5 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+        <div className="relative grid w-full grid-cols-[auto,1fr,auto] items-center gap-4">
+          <button
+            type="button"
+            onClick={handleBackClick}
+            className="hero-back-button inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/15 px-5 py-2.5 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="h-6 w-6"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -41,11 +48,11 @@ export default function DownloadableProductsPage() {
             </button>
           </div>
 
-          <span className="pointer-events-none flex-1 text-center text-lg font-semibold tracking-tight text-white drop-shadow md:text-2xl">
+          <span className="pointer-events-none justify-self-center text-center text-lg font-semibold tracking-tight text-white drop-shadow md:text-2xl">
             COMPTAMATCH
           </span>
 
-          <div className="flex flex-1 items-center justify-end gap-2 md:gap-3">
+          <div className="flex items-center justify-end gap-2 md:gap-3">
             <Link
               to={user ? "/compte" : "/auth/login"}
               className="hero-back-button inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/15 px-4 py-2 text-sm font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
