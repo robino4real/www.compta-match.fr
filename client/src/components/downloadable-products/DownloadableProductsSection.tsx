@@ -102,6 +102,64 @@ export const DownloadableProductsSection: React.FC = () => {
         const incoming: DownloadableProduct[] = Array.isArray(json?.products)
           ? json.products
           : [];
+        const normalizedProducts = incoming.map((product) => {
+          const normalizedPriceTtc =
+            typeof product?.priceTtc === "number"
+              ? product.priceTtc
+              : typeof product?.priceCents === "number"
+              ? Math.round((product.priceCents / 100) * 100) / 100
+              : 0;
+
+          const heroImageUrl =
+            product?.heroImageUrl ||
+            product?.thumbnailUrl ||
+            product?.cardImageUrl ||
+            product?.ogImageUrl ||
+            (Array.isArray(product?.screenshots)
+              ? product.screenshots[0]
+              : undefined);
+
+          const galleryUrls = Array.isArray(product?.galleryUrls)
+            ? product.galleryUrls
+            : Array.isArray(product?.screenshots)
+            ? product.screenshots.filter(Boolean)
+            : heroImageUrl
+            ? [heroImageUrl]
+            : undefined;
+
+          return {
+            id: product?.id ?? "",
+            slug: product?.slug ?? "",
+            name: product?.name ?? "",
+            shortDescription: product?.shortDescription ?? "",
+            longDescription:
+              product?.longDescription ?? product?.shortDescription ?? "",
+            priceTtc: normalizedPriceTtc,
+            priceDisplayMode:
+              product?.priceDisplayMode === "HT" ? "HT" : "TTC",
+            currency: product?.currency === "EUR" ? "EUR" : "EUR",
+            badge: product?.badge ?? undefined,
+            tags: Array.isArray(product?.tags) ? product.tags : undefined,
+            cardImageUrl:
+              product?.cardImageUrl ||
+              product?.thumbnailUrl ||
+              product?.ogImageUrl ||
+              (Array.isArray(product?.screenshots)
+                ? product.screenshots[0]
+                : undefined),
+            heroImageUrl: heroImageUrl || undefined,
+            galleryUrls,
+            detailSlides: Array.isArray(product?.detailSlides)
+              ? product.detailSlides
+              : undefined,
+            isPublished:
+              product?.isPublished ?? product?.isActive ?? undefined,
+            category: product?.category ?? null,
+            binaries: Array.isArray(product?.binaries)
+              ? product.binaries
+              : undefined,
+          } satisfies DownloadableProduct;
+        });
         const incomingCategories: DownloadableCategory[] = Array.isArray(
           json?.categories
         )
@@ -110,13 +168,14 @@ export const DownloadableProductsSection: React.FC = () => {
 
         if (!isMountedRef.current) return;
 
-        setProducts(incoming);
+        setProducts(normalizedProducts);
         setCategories(incomingCategories);
 
         const nextSelected = preserveSelection
-          ? incoming.find((product) => product.id === selectedProduct?.id) ||
-            incoming[0]
-          : incoming[0];
+          ? normalizedProducts.find(
+              (product) => product.id === selectedProduct?.id
+            ) || normalizedProducts[0]
+          : normalizedProducts[0];
 
         setSelectedProduct(nextSelected ?? null);
         setImageIndex(0);
