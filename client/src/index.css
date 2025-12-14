@@ -72,6 +72,7 @@ body {
 
 .hero-logiciels {
   background: #04140c;
+  z-index: 0;
 }
 
 .halo-purple-title,
@@ -100,7 +101,7 @@ body {
 .hero-comptasso::before,
 .hero-logiciels::before {
   content: "";
-  position: fixed;
+  position: absolute;
   top: 50%;
   left: 50%;
   width: 240vw;
@@ -108,8 +109,13 @@ body {
   transform: translate(-50%, -50%);
   border-radius: 50%;
   filter: blur(140px);
-  z-index: 0;
+  z-index: -5;
   pointer-events: none;
+}
+
+.hero-logiciels > * {
+  position: relative;
+  z-index: 10;
 }
 
 .hero-comptapro::before {
@@ -146,6 +152,7 @@ body {
     rgba(68, 178, 116, 0.42) 78%,
     transparent 92%
   );
+  z-index: -5;
 }
 
 .hero-heading-glow {
