@@ -105,7 +105,7 @@ const ComptAssoSubscriptionPage: React.FC = () => {
 
   return (
     <main className="hero-comptasso min-h-screen bg-[#0c0316] text-white">
-      <div className="mx-auto max-w-6xl px-4 pb-20 pt-12 lg:px-8 lg:pt-16 space-y-12">
+      <div className="mx-auto max-w-7xl px-4 pb-20 pt-12 lg:px-8 lg:pt-16 space-y-12">
         <div className="relative flex w-full items-center justify-center">
           <button
             type="button"

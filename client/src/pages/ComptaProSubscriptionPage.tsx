@@ -144,7 +144,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
         </div>
 
         <section className="flex flex-col items-center gap-8 text-center text-white">
-          <div className="halo-title halo-title-comptapro relative space-y-4 max-w-4xl">
+          <div className="halo-title halo-title-comptapro relative space-y-4 max-w-3xl">
             <span className="pointer-events-none absolute -inset-x-10 -inset-y-6 -z-10 rounded-[32px] bg-gradient-to-r from-fuchsia-500/25 via-purple-800/30 to-fuchsia-400/25 blur-3xl" />
             <h1 className="halo-purple-title text-4xl font-bold leading-tight text-white drop-shadow md:text-5xl">
               Comptabilité experte
