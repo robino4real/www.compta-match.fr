@@ -11,9 +11,6 @@ const skeletonItems = Array.from({ length: 3 });
 const CARD_WIDTH = 320;
 const CARD_GAP = 28;
 const VISIBLE_CARDS = 3;
-// Extra padding is increased by ~0.5cm on each side to avoid abrupt shadow cutoffs
-// when selecting cards near the edges of the carousel viewport.
-const CARD_EDGE_PADDING = 35;
 
 type DetailSlide = { imageUrl?: string | null; description?: string | null };
 
@@ -622,9 +619,7 @@ export const DownloadableProductsSection: React.FC = () => {
     () =>
       isMobile
         ? undefined
-        : VISIBLE_CARDS * CARD_WIDTH +
-          CARD_GAP * (VISIBLE_CARDS - 1) +
-          CARD_EDGE_PADDING * 2,
+        : VISIBLE_CARDS * CARD_WIDTH + CARD_GAP * (VISIBLE_CARDS - 1),
     [isMobile]
   );
 
@@ -702,9 +697,7 @@ export const DownloadableProductsSection: React.FC = () => {
             className="mx-auto overflow-x-hidden overflow-y-visible pb-10"
             style={{
               maxWidth: viewportWidth,
-              width: "100%",
-              paddingLeft: isMobile ? 0 : CARD_EDGE_PADDING,
-              paddingRight: isMobile ? 0 : CARD_EDGE_PADDING,
+              width: isMobile ? "100%" : viewportWidth,
             }}
           >
             <div
