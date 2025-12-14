@@ -1,9 +1,11 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import DownloadableProductsSection from "../components/downloadable-products/DownloadableProductsSection";
+import { useCart } from "../context/CartContext";
 
 export default function DownloadableProductsPage() {
   const navigate = useNavigate();
+  const { items } = useCart();
 
   const handleBackClick = React.useCallback(() => {
     if (window.history.length > 1) {
@@ -34,6 +36,37 @@ export default function DownloadableProductsPage() {
             </svg>
             <span>Retour</span>
           </button>
+
+          <div className="fixed right-[1cm] top-[clamp(1.25rem,3vw,2.5rem)] z-30 flex items-center gap-3">
+            <Link
+              to="/auth/login"
+              className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/15 px-5 py-2.5 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+            >
+              Se connecter
+            </Link>
+            <Link
+              to="/panier"
+              className="relative inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/15 px-5 py-2.5 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+              aria-label="Panier"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                className="h-6 w-6"
+              >
+                <circle cx="9" cy="21" r="1" />
+                <circle cx="20" cy="21" r="1" />
+                <path d="M1 1h4l2.68 12.39a1 1 0 0 0 .98.8h8.72a1 1 0 0 0 .98-.8L21 6H6" strokeWidth={2} />
+              </svg>
+              {items.length > 0 && (
+                <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-emerald-500 px-1 text-[11px] font-semibold text-white">
+                  {items.length}
+                </span>
+              )}
+            </Link>
+          </div>
 
           <span className="pointer-events-none text-center text-lg font-semibold tracking-tight text-white drop-shadow md:text-2xl">
             COMPTAMATCH
