@@ -1,13 +1,9 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { useCart } from "../context/CartContext";
+import { useNavigate } from "react-router-dom";
 import DownloadableProductsSection from "../components/downloadable-products/DownloadableProductsSection";
 
 export default function DownloadableProductsPage() {
   const navigate = useNavigate();
-  const { user, isLoading } = useAuth();
-  const { items } = useCart();
 
   const handleBackClick = React.useCallback(() => {
     if (window.history.length > 1) {
@@ -20,7 +16,7 @@ export default function DownloadableProductsPage() {
   return (
     <main className="hero-logiciels min-h-screen bg-[#04140c] text-white">
       <div className="mx-auto max-w-6xl space-y-12 px-4 pb-16 pt-14 lg:px-8 lg:pb-20 lg:pt-16">
-        <div className="relative grid w-full grid-cols-[auto,1fr,auto] items-center gap-4">
+        <div className="relative grid w-full grid-cols-[auto,1fr] items-center gap-4">
           <button
             type="button"
             onClick={handleBackClick}
@@ -42,55 +38,6 @@ export default function DownloadableProductsPage() {
           <span className="pointer-events-none justify-self-center text-center text-lg font-semibold tracking-tight text-white drop-shadow md:text-2xl">
             COMPTAMATCH
           </span>
-
-          <div className="flex items-center justify-end gap-2 md:gap-3">
-            <Link
-              to={user ? "/compte" : "/auth/login"}
-              className="hero-back-button inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/15 px-4 py-2 text-sm font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
-            >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-white/15 text-xs font-semibold text-white">
-                {!isLoading && user?.email ? (
-                  user.email.charAt(0).toUpperCase()
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    className="h-4 w-4"
-                  >
-                    <circle cx="12" cy="8" r="3.25" />
-                    <path d="M6.5 18.5c0-2.35 2.7-4 5.5-4s5.5 1.65 5.5 4" />
-                  </svg>
-                )}
-              </span>
-              <span>{user ? "Mon compte" : "Se connecter"}</span>
-            </Link>
-
-            <Link
-              to="/panier"
-              className="hero-back-button relative flex h-10 w-10 items-center justify-center rounded-full border border-white/50 bg-white/15 text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
-              aria-label="Panier"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                className="h-5 w-5"
-              >
-                <circle cx="9" cy="21" r="1" />
-                <circle cx="20" cy="21" r="1" />
-                <path d="M1 1h4l2.68 12.39a1 1 0 0 0 .98.8h8.72a1 1 0 0 0 .98-.8L21 6H6" strokeWidth={1.6} />
-              </svg>
-              {items.length > 0 && (
-                <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-white text-[10px] font-semibold text-slate-900">
-                  {items.length}
-                </span>
-              )}
-            </Link>
-          </div>
         </div>
 
         <section className="flex flex-col items-center gap-6 text-center">
