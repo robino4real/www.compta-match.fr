@@ -12,6 +12,19 @@ const CARD_WIDTH = 320;
 const CARD_GAP = 28;
 const VISIBLE_CARDS = 3;
 
+const API_ORIGIN = API_BASE_URL.replace(/\/?api\/?$/, "");
+
+const normalizeMediaUrl = (url?: string | null) => {
+  if (!url) return undefined;
+
+  if (/^(https?:)?\/\//i.test(url) || url.startsWith("data:")) {
+    return url;
+  }
+
+  const prefixed = url.startsWith("/") ? url : `/${url}`;
+  return `${API_ORIGIN}${prefixed}`;
+};
+
 type DetailSlide = { imageUrl?: string | null; description?: string | null };
 
 type BuiltSlides = { slides: DetailSlide[]; fromBackOffice: boolean };
@@ -134,19 +147,24 @@ export const DownloadableProductsSection: React.FC = () => {
               ? Math.round((product.priceCents / 100) * 100) / 100
               : 0;
 
-          const heroImageUrl =
+          const heroImageUrl = normalizeMediaUrl(
             product?.heroImageUrl ||
-            product?.thumbnailUrl ||
-            product?.cardImageUrl ||
-            product?.ogImageUrl ||
-            (Array.isArray(product?.screenshots)
-              ? product.screenshots[0]
-              : undefined);
+              product?.thumbnailUrl ||
+              product?.cardImageUrl ||
+              product?.ogImageUrl ||
+              (Array.isArray(product?.screenshots)
+                ? product.screenshots[0]
+                : undefined)
+          );
 
           const galleryUrls = Array.isArray(product?.galleryUrls)
             ? product.galleryUrls
+                .map((url) => normalizeMediaUrl(url))
+                .filter(Boolean)
             : Array.isArray(product?.screenshots)
-            ? product.screenshots.filter(Boolean)
+            ? product.screenshots
+                .map((url) => normalizeMediaUrl(url))
+                .filter(Boolean)
             : heroImageUrl
             ? [heroImageUrl]
             : undefined;
@@ -165,16 +183,19 @@ export const DownloadableProductsSection: React.FC = () => {
             badge: product?.badge ?? undefined,
             tags: Array.isArray(product?.tags) ? product.tags : undefined,
             cardImageUrl:
-              product?.cardImageUrl ||
-              product?.thumbnailUrl ||
-              product?.ogImageUrl ||
+              normalizeMediaUrl(product?.cardImageUrl) ||
+              normalizeMediaUrl(product?.thumbnailUrl) ||
+              normalizeMediaUrl(product?.ogImageUrl) ||
               (Array.isArray(product?.screenshots)
-                ? product.screenshots[0]
+                ? normalizeMediaUrl(product.screenshots[0])
                 : undefined),
             heroImageUrl: heroImageUrl || undefined,
             galleryUrls,
             detailSlides: Array.isArray(product?.detailSlides)
-              ? product.detailSlides
+              ? product.detailSlides.map((slide) => ({
+                  ...slide,
+                  imageUrl: normalizeMediaUrl(slide?.imageUrl),
+                }))
               : undefined,
             isPublished:
               product?.isPublished ?? product?.isActive ?? undefined,
