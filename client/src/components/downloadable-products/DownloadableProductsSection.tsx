@@ -5,7 +5,7 @@ import {
 } from "../../types/downloadableProduct";
 import { formatPrice } from "../../lib/formatPrice";
 import { useCart } from "../../context/CartContext";
-import { API_BASE_URL } from "../../config/api";
+import { buildApiUrl } from "../../config/api";
 
 const skeletonItems = Array.from({ length: 3 });
 const CARD_WIDTH = 320;
@@ -15,6 +15,81 @@ const VISIBLE_CARDS = 3;
 type DetailSlide = { imageUrl?: string | null; description?: string | null };
 
 type BuiltSlides = { slides: DetailSlide[]; fromBackOffice: boolean };
+
+const normalizeProduct = (product: any): DownloadableProduct => {
+  const normalizedPriceTtc =
+    typeof product?.priceTtc === "number"
+      ? product.priceTtc
+      : typeof product?.priceCents === "number"
+      ? Math.round((product.priceCents / 100) * 100) / 100
+      : 0;
+
+  const heroImageUrl =
+    product?.heroImageUrl ||
+    product?.thumbnailUrl ||
+    product?.cardImageUrl ||
+    product?.ogImageUrl ||
+    (Array.isArray(product?.screenshots)
+      ? product.screenshots[0]
+      : undefined);
+
+  const galleryUrls = Array.isArray(product?.galleryUrls)
+    ? product.galleryUrls
+    : Array.isArray(product?.screenshots)
+    ? product.screenshots.filter(Boolean)
+    : heroImageUrl
+    ? [heroImageUrl]
+    : undefined;
+
+  return {
+    id: product?.id ?? "",
+    slug: product?.slug ?? "",
+    name: product?.name ?? "",
+    shortDescription: product?.shortDescription ?? "",
+    longDescription: product?.longDescription ?? product?.shortDescription ?? "",
+    priceTtc: normalizedPriceTtc,
+    priceDisplayMode: product?.priceDisplayMode === "HT" ? "HT" : "TTC",
+    currency: product?.currency === "EUR" ? "EUR" : "EUR",
+    badge: product?.badge ?? undefined,
+    tags: Array.isArray(product?.tags) ? product.tags : undefined,
+    cardImageUrl:
+      product?.cardImageUrl ||
+      product?.thumbnailUrl ||
+      product?.ogImageUrl ||
+      (Array.isArray(product?.screenshots) ? product.screenshots[0] : undefined),
+    heroImageUrl: heroImageUrl || undefined,
+    galleryUrls,
+    detailSlides: Array.isArray(product?.detailSlides)
+      ? product.detailSlides
+      : undefined,
+    isPublished: product?.isPublished ?? product?.isActive ?? undefined,
+    category: product?.category ?? null,
+    binaries: Array.isArray(product?.binaries)
+      ? product.binaries
+      : undefined,
+  } satisfies DownloadableProduct;
+};
+
+const deriveCategories = (
+  products: DownloadableProduct[],
+  incomingCategories: DownloadableCategory[]
+): DownloadableCategory[] => {
+  if (incomingCategories?.length) return incomingCategories;
+
+  const byId = new Map<string, DownloadableCategory>();
+
+  products.forEach((product) => {
+    if (product.category?.id && !byId.has(product.category.id)) {
+      byId.set(product.category.id, {
+        id: product.category.id,
+        name: product.category.name,
+        slug: product.category.slug,
+      });
+    }
+  });
+
+  return Array.from(byId.values());
+};
 
 const buildDetailSlides = (
   product: DownloadableProduct | null
@@ -91,11 +166,11 @@ export const DownloadableProductsSection: React.FC = () => {
         setError(null);
 
         const endpoints = [
-          `${API_BASE_URL}/downloadable-products/public`,
-          `${API_BASE_URL}/public/downloadable-products`,
+          buildApiUrl("/downloadable-products/public"),
+          buildApiUrl("/public/downloadable-products"),
         ];
 
-        let incoming: DownloadableProduct[] = [];
+        let incoming: any[] = [];
         let incomingCategories: DownloadableCategory[] = [];
         let lastError: string | null = null;
 
@@ -111,7 +186,11 @@ export const DownloadableProductsSection: React.FC = () => {
               );
             }
 
-            incoming = Array.isArray(json?.products) ? json.products : [];
+            incoming = Array.isArray(json?.products)
+              ? json.products
+              : Array.isArray(json)
+              ? json
+              : [];
             incomingCategories = Array.isArray(json?.categories)
               ? json.categories
               : [];
@@ -126,68 +205,11 @@ export const DownloadableProductsSection: React.FC = () => {
           throw new Error(lastError);
         }
 
-        const normalizedProducts = incoming.map((product) => {
-          const normalizedPriceTtc =
-            typeof product?.priceTtc === "number"
-              ? product.priceTtc
-              : typeof product?.priceCents === "number"
-              ? Math.round((product.priceCents / 100) * 100) / 100
-              : 0;
-
-          const heroImageUrl =
-            product?.heroImageUrl ||
-            product?.thumbnailUrl ||
-            product?.cardImageUrl ||
-            product?.ogImageUrl ||
-            (Array.isArray(product?.screenshots)
-              ? product.screenshots[0]
-              : undefined);
-
-          const galleryUrls = Array.isArray(product?.galleryUrls)
-            ? product.galleryUrls
-            : Array.isArray(product?.screenshots)
-            ? product.screenshots.filter(Boolean)
-            : heroImageUrl
-            ? [heroImageUrl]
-            : undefined;
-
-          return {
-            id: product?.id ?? "",
-            slug: product?.slug ?? "",
-            name: product?.name ?? "",
-            shortDescription: product?.shortDescription ?? "",
-            longDescription:
-              product?.longDescription ?? product?.shortDescription ?? "",
-            priceTtc: normalizedPriceTtc,
-            priceDisplayMode:
-              product?.priceDisplayMode === "HT" ? "HT" : "TTC",
-            currency: product?.currency === "EUR" ? "EUR" : "EUR",
-            badge: product?.badge ?? undefined,
-            tags: Array.isArray(product?.tags) ? product.tags : undefined,
-            cardImageUrl:
-              product?.cardImageUrl ||
-              product?.thumbnailUrl ||
-              product?.ogImageUrl ||
-              (Array.isArray(product?.screenshots)
-                ? product.screenshots[0]
-                : undefined),
-            heroImageUrl: heroImageUrl || undefined,
-            galleryUrls,
-            detailSlides: Array.isArray(product?.detailSlides)
-              ? product.detailSlides
-              : undefined,
-            isPublished:
-              product?.isPublished ?? product?.isActive ?? undefined,
-            category: product?.category ?? null,
-            binaries: Array.isArray(product?.binaries)
-              ? product.binaries
-              : undefined,
-          } satisfies DownloadableProduct;
-        });
+        const normalizedProducts = incoming.map(normalizeProduct);
         if (!isMountedRef.current) return;
 
         setProducts(normalizedProducts);
-        setCategories(incomingCategories);
+        setCategories(deriveCategories(normalizedProducts, incomingCategories));
 
         const nextSelected = preserveSelection
           ? normalizedProducts.find(
