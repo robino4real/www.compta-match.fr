@@ -14,10 +14,8 @@ const VISIBLE_CARDS = 3;
 
 type DetailSlide = { imageUrl?: string | null; description?: string | null };
 
-type BuiltSlides = { slides: DetailSlide[]; fromBackOffice: boolean };
-
 const normalizeProduct = (product: any): DownloadableProduct => {
-  const normalizedPriceTtc =
+  const priceTtc =
     typeof product?.priceTtc === "number"
       ? product.priceTtc
       : typeof product?.priceCents === "number"
@@ -25,21 +23,21 @@ const normalizeProduct = (product: any): DownloadableProduct => {
       : 0;
 
   const heroImageUrl =
-    product?.heroImageUrl ||
-    product?.thumbnailUrl ||
     product?.cardImageUrl ||
+    product?.thumbnailUrl ||
+    product?.heroImageUrl ||
     product?.ogImageUrl ||
     (Array.isArray(product?.screenshots)
-      ? product.screenshots[0]
+      ? product.screenshots.find(Boolean)
       : undefined);
 
   const galleryUrls = Array.isArray(product?.galleryUrls)
-    ? product.galleryUrls
+    ? product.galleryUrls.filter(Boolean)
     : Array.isArray(product?.screenshots)
     ? product.screenshots.filter(Boolean)
     : heroImageUrl
     ? [heroImageUrl]
-    : undefined;
+    : [];
 
   return {
     id: product?.id ?? "",
@@ -47,18 +45,24 @@ const normalizeProduct = (product: any): DownloadableProduct => {
     name: product?.name ?? "",
     shortDescription: product?.shortDescription ?? "",
     longDescription: product?.longDescription ?? product?.shortDescription ?? "",
-    priceTtc: normalizedPriceTtc,
+    priceTtc,
     priceDisplayMode: product?.priceDisplayMode === "HT" ? "HT" : "TTC",
-    currency: product?.currency === "EUR" ? "EUR" : "EUR",
+    currency: "EUR",
     badge: product?.badge ?? undefined,
-    tags: Array.isArray(product?.tags) ? product.tags : undefined,
+    tags: Array.isArray(product?.tags)
+      ? product.tags.filter(Boolean)
+      : Array.isArray(product?.featureBullets)
+      ? product.featureBullets.filter(Boolean)
+      : undefined,
     cardImageUrl:
       product?.cardImageUrl ||
       product?.thumbnailUrl ||
       product?.ogImageUrl ||
-      (Array.isArray(product?.screenshots) ? product.screenshots[0] : undefined),
+      (Array.isArray(product?.screenshots)
+        ? product.screenshots.find(Boolean)
+        : undefined),
     heroImageUrl: heroImageUrl || undefined,
-    galleryUrls,
+    galleryUrls: galleryUrls.length ? galleryUrls : undefined,
     detailSlides: Array.isArray(product?.detailSlides)
       ? product.detailSlides
       : undefined,
@@ -91,56 +95,35 @@ const deriveCategories = (
   return Array.from(byId.values());
 };
 
-const buildDetailSlides = (
-  product: DownloadableProduct | null
-): BuiltSlides => {
-  if (!product) return { slides: [], fromBackOffice: false };
+const buildSlides = (product: DownloadableProduct | null): DetailSlide[] => {
+  if (!product) return [];
 
   if (Array.isArray(product.detailSlides) && product.detailSlides.length) {
     const slides = product.detailSlides
       .map((slide) => ({
         imageUrl: slide?.imageUrl || undefined,
         description:
-          slide?.description ??
-          product.longDescription ??
-          product.shortDescription ??
+          slide?.description ||
+          product.longDescription ||
+          product.shortDescription ||
           "",
       }))
       .filter((slide) => slide.imageUrl || slide.description);
 
-    if (slides.length) {
-      return { slides, fromBackOffice: true };
-    }
+    if (slides.length) return slides;
   }
 
   const fallbackDescription =
     product.longDescription || product.shortDescription || "";
-
   const urls = [product.heroImageUrl, ...(product.galleryUrls || [])].filter(
-    (url): url is string => Boolean(url)
-  );
+    Boolean
+  ) as string[];
 
-  const uniqueUrls = Array.from(new Set(urls));
-
-  if (uniqueUrls.length) {
-    return {
-      slides: uniqueUrls.map((url) => ({
-        imageUrl: url,
-        description: fallbackDescription,
-      })),
-      fromBackOffice: false,
-    };
+  if (urls.length) {
+    return urls.map((url) => ({ imageUrl: url, description: fallbackDescription }));
   }
 
-  return {
-    slides: [
-      {
-        imageUrl: undefined,
-        description: fallbackDescription,
-      },
-    ],
-    fromBackOffice: false,
-  };
+  return [{ imageUrl: undefined, description: fallbackDescription }];
 };
 
 export const DownloadableProductsSection: React.FC = () => {
@@ -149,133 +132,86 @@ export const DownloadableProductsSection: React.FC = () => {
   const [categories, setCategories] = useState<DownloadableCategory[]>([]);
   const [selectedProduct, setSelectedProduct] =
     useState<DownloadableProduct | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  const [selectedBinaryId, setSelectedBinaryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [imageIndex, setImageIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+  const [cardIndex, setCardIndex] = useState(0);
+  const [slideIndex, setSlideIndex] = useState(0);
   const [isFading, setIsFading] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedBinaryId, setSelectedBinaryId] = useState<string | null>(null);
-  const isMountedRef = React.useRef(true);
 
-  const fetchProducts = React.useCallback(
-    async (preserveSelection = false) => {
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadProducts = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const endpoints = [
+        const response = await fetch(
           buildApiUrl("/downloadable-products/public"),
-          buildApiUrl("/public/downloadable-products"),
-        ];
+          { signal: controller.signal }
+        );
 
-        let incoming: any[] = [];
-        let incomingCategories: DownloadableCategory[] = [];
-        let lastError: string | null = null;
-
-        for (const endpoint of endpoints) {
-          try {
-            const response = await fetch(endpoint);
-            const json = await response.json().catch(() => ({}));
-
-            if (!response.ok) {
-              throw new Error(
-                json?.message ||
-                  "Impossible de charger les logiciels disponibles."
-              );
-            }
-
-            incoming = Array.isArray(json?.products)
-              ? json.products
-              : Array.isArray(json)
-              ? json
-              : [];
-            incomingCategories = Array.isArray(json?.categories)
-              ? json.categories
-              : [];
-
-            break;
-          } catch (error: any) {
-            lastError = error?.message || String(error);
-          }
+        if (!response.ok) {
+          const json = await response.json().catch(() => ({}));
+          throw new Error(
+            json?.message || "Impossible de charger les logiciels disponibles."
+          );
         }
 
-        if (!incoming.length && lastError) {
-          throw new Error(lastError);
-        }
-
-        const normalizedProducts = incoming.map(normalizeProduct);
-        if (!isMountedRef.current) return;
+        const json = await response.json();
+        const normalizedProducts = Array.isArray(json?.products)
+          ? json.products.map(normalizeProduct)
+          : [];
+        const normalizedCategories = deriveCategories(
+          normalizedProducts,
+          Array.isArray(json?.categories) ? json.categories : []
+        );
 
         setProducts(normalizedProducts);
-        setCategories(deriveCategories(normalizedProducts, incomingCategories));
-
-        const nextSelected = preserveSelection
-          ? normalizedProducts.find(
-              (product) => product.id === selectedProduct?.id
-            ) || normalizedProducts[0]
-          : normalizedProducts[0];
-
-        setSelectedProduct(nextSelected ?? null);
-        setImageIndex(0);
-        setCurrentIndex(0);
+        setCategories(normalizedCategories);
+        setSelectedProduct(normalizedProducts[0] ?? null);
+        setCardIndex(0);
+        setSlideIndex(0);
       } catch (err: any) {
-        console.error("Erreur de chargement des produits téléchargeables", err);
-        if (!isMountedRef.current) return;
+        if (controller.signal.aborted) return;
+        console.error("Erreur lors du chargement des logiciels", err);
         setError(
           err?.message || "Impossible de récupérer les informations des logiciels."
         );
       } finally {
-        if (!isMountedRef.current) return;
+        if (controller.signal.aborted) return;
         setLoading(false);
       }
-    },
-    [selectedProduct?.id]
-  );
-
-
-  useEffect(() => {
-    fetchProducts();
-
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, [fetchProducts]);
-
-  useEffect(() => {
-    const handleFocus = () => {
-      fetchProducts(true);
     };
 
-    window.addEventListener("focus", handleFocus);
+    loadProducts();
 
-    return () => {
-      window.removeEventListener("focus", handleFocus);
-    };
-  }, [fetchProducts]);
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 768px)");
-
-    const updateIsMobile = () => {
-      setIsMobile(mediaQuery.matches);
-    };
-
-    updateIsMobile();
-    mediaQuery.addEventListener("change", updateIsMobile);
-
-    return () => mediaQuery.removeEventListener("change", updateIsMobile);
+    const update = () => setIsMobile(mediaQuery.matches);
+    update();
+    mediaQuery.addEventListener("change", update);
+    return () => mediaQuery.removeEventListener("change", update);
   }, []);
 
-  const { slides: detailSlides, fromBackOffice: slidesFromBackOffice } = useMemo(
-    () => buildDetailSlides(selectedProduct),
-    [selectedProduct]
-  );
+  const filteredProducts = useMemo(() => {
+    if (!selectedCategoryId) return products;
+    return products.filter((product) => product.category?.id === selectedCategoryId);
+  }, [products, selectedCategoryId]);
 
   useEffect(() => {
-    setImageIndex(0);
-  }, [selectedProduct?.id]);
+    setCardIndex(0);
+    setSelectedProduct((current) => {
+      if (current && filteredProducts.some((p) => p.id === current.id)) return current;
+      return filteredProducts[0] ?? null;
+    });
+  }, [filteredProducts]);
 
   useEffect(() => {
     if (selectedProduct?.binaries?.length) {
@@ -283,40 +219,30 @@ export const DownloadableProductsSection: React.FC = () => {
     } else {
       setSelectedBinaryId(null);
     }
+    setSlideIndex(0);
   }, [selectedProduct?.id, selectedProduct?.binaries?.length]);
 
-  const hasMultipleDetailSlides = detailSlides.length > 1;
-  const hasBackOfficeSlideSet =
-    slidesFromBackOffice && detailSlides.length > 1;
+  const slides = useMemo(() => buildSlides(selectedProduct), [selectedProduct]);
 
   useEffect(() => {
-    setImageIndex(0);
-  }, [selectedProduct?.id, detailSlides.length]);
+    if (slideIndex >= slides.length) setSlideIndex(0);
+  }, [slides.length, slideIndex]);
 
   useEffect(() => {
-    if (
-      selectedCategoryId &&
-      !categories.some((category) => category.id === selectedCategoryId)
-    ) {
-      setSelectedCategoryId("");
-    }
-  }, [categories, selectedCategoryId]);
+    setIsFading(true);
+    const timeout = window.setTimeout(() => setIsFading(false), 180);
+    return () => window.clearTimeout(timeout);
+  }, [slideIndex, selectedProduct?.id]);
 
-  const filteredProducts = useMemo(() => {
-    if (!selectedCategoryId) return products;
-    return products.filter(
-      (product) => product.category?.id === selectedCategoryId
-    );
-  }, [products, selectedCategoryId]);
+  const visibleCards = isMobile ? 1 : VISIBLE_CARDS;
+  const maxIndex = Math.max(filteredProducts.length - visibleCards, 0);
 
   useEffect(() => {
-    if (imageIndex > Math.max(detailSlides.length - 1, 0)) {
-      setImageIndex(0);
-    }
-  }, [imageIndex, detailSlides.length]);
+    if (cardIndex > maxIndex) setCardIndex(maxIndex);
+  }, [cardIndex, maxIndex]);
 
   const currentSlide =
-    detailSlides[imageIndex] || detailSlides[0] || { imageUrl: null, description: null };
+    slides[slideIndex] || slides[0] || { imageUrl: undefined, description: "" };
   const currentDescription =
     currentSlide.description ||
     selectedProduct?.longDescription ||
@@ -334,42 +260,6 @@ export const DownloadableProductsSection: React.FC = () => {
   const platformLabel = (platform?: string | null) =>
     platform === "MACOS" ? "MacOS" : "Windows";
 
-  const isAddToCartDisabled =
-    !selectedProduct ||
-    (!!selectedProduct.binaries?.length && !selectedBinary);
-
-  const visibleCards = isMobile ? 1 : VISIBLE_CARDS;
-
-  const maxIndex = Math.max(filteredProducts.length - visibleCards, 0);
-
-  useEffect(() => {
-    setCurrentIndex(0);
-  }, [filteredProducts.length, isMobile]);
-
-  useEffect(() => {
-    if (currentIndex > maxIndex) {
-      setCurrentIndex(maxIndex);
-    }
-  }, [currentIndex, maxIndex]);
-
-  useEffect(() => {
-    if (
-      selectedProduct &&
-      filteredProducts.some((product) => product.id === selectedProduct.id)
-    ) {
-      return;
-    }
-
-    setSelectedProduct(filteredProducts[0] ?? null);
-  }, [filteredProducts, selectedProduct]);
-
-  useEffect(() => {
-    setIsFading(true);
-    const timeout = window.setTimeout(() => setIsFading(false), 180);
-
-    return () => window.clearTimeout(timeout);
-  }, [imageIndex, selectedProduct?.id]);
-
   const handleSelect = (product: DownloadableProduct) => {
     setSelectedProduct(product);
   };
@@ -379,35 +269,41 @@ export const DownloadableProductsSection: React.FC = () => {
     addDownloadableProduct({
       id: product.id,
       name: product.name,
-      priceCents: Math.round(product.priceTtc * 100),
+      price: product.priceTtc,
+      priceDisplayMode: product.priceDisplayMode || "TTC",
+      badge: product.badge,
+      imageUrl: product.cardImageUrl,
+      shortDescription: product.shortDescription,
       binaryId: binary?.id,
       platform: binary?.platform,
     });
   };
 
-  const handlePrev = () => {
-    setCurrentIndex((prev) => Math.max(prev - 1, 0));
-  };
+  const handlePrev = () => setCardIndex((index) => Math.max(index - 1, 0));
+  const handleNext = () => setCardIndex((index) => Math.min(index + 1, maxIndex));
 
-  const handleNext = () => {
-    setCurrentIndex((prev) => Math.min(prev + 1, maxIndex));
+  const handleSlideNext = () => {
+    setSlideIndex((prev) => {
+      if (!slides.length) return 0;
+      return prev === slides.length - 1 ? 0 : prev + 1;
+    });
   };
 
   const handleSlidePrev = () => {
-    setImageIndex((prev) => {
-      if (!detailSlides.length) return 0;
-      return prev === 0 ? detailSlides.length - 1 : prev - 1;
+    setSlideIndex((prev) => {
+      if (!slides.length) return 0;
+      return prev === 0 ? slides.length - 1 : prev - 1;
     });
   };
 
-  const handleSlideNext = () => {
-    setImageIndex((prev) => {
-      if (!detailSlides.length) return 0;
-      return prev === detailSlides.length - 1 ? 0 : prev + 1;
-    });
-  };
+  const viewportWidth = isMobile
+    ? "100%"
+    : `${CARD_WIDTH * VISIBLE_CARDS + CARD_GAP * (VISIBLE_CARDS - 1)}px`;
+  const translateValue = `translateX(-${cardIndex * (CARD_WIDTH + CARD_GAP)}px)`;
+  const showNavigation = filteredProducts.length > visibleCards;
 
-  const shouldUseMobileCarousel = isMobile && !loading && filteredProducts.length > 1;
+  const isAddToCartDisabled =
+    !selectedProduct || (!!selectedProduct.binaries?.length && !selectedBinary);
 
   const renderCards = () => {
     if (loading) {
@@ -415,12 +311,8 @@ export const DownloadableProductsSection: React.FC = () => {
         <div
           key={`skeleton-${idx}`}
           style={{
-            width: shouldUseMobileCarousel ? "100%" : isMobile ? "100%" : CARD_WIDTH,
-            flex: shouldUseMobileCarousel
-              ? "0 0 100%"
-              : isMobile
-              ? undefined
-              : `0 0 ${CARD_WIDTH}px`,
+            width: isMobile ? "100%" : CARD_WIDTH,
+            flex: isMobile ? "0 0 100%" : `0 0 ${CARD_WIDTH}px`,
           }}
           className="rounded-3xl border border-white/25 bg-white/10 px-7 py-6 shadow-[0_24px_60px_rgba(0,0,0,0.25)] backdrop-blur-xl"
         >
@@ -449,12 +341,8 @@ export const DownloadableProductsSection: React.FC = () => {
         role="button"
         onClick={() => handleSelect(product)}
         style={{
-          width: shouldUseMobileCarousel ? "100%" : isMobile ? "100%" : CARD_WIDTH,
-          flex: shouldUseMobileCarousel
-            ? "0 0 100%"
-            : isMobile
-            ? undefined
-            : `0 0 ${CARD_WIDTH}px`,
+          width: isMobile ? "100%" : CARD_WIDTH,
+          flex: isMobile ? "0 0 100%" : `0 0 ${CARD_WIDTH}px`,
         }}
         className={`group cursor-pointer rounded-3xl px-7 py-6 text-center transition-all duration-200 ${
           selectedProduct?.id === product.id
@@ -543,23 +431,23 @@ export const DownloadableProductsSection: React.FC = () => {
             >
               {currentDescription}
             </p>
-            {hasBackOfficeSlideSet && (
+            {slides.length > 1 && (
               <div
                 className="mt-2 flex items-center gap-2"
                 aria-label="Pagination des visuels du descriptif"
               >
-                {detailSlides.map((_, idx) => (
+                {slides.map((_, idx) => (
                   <button
                     key={`indicator-${idx}`}
                     type="button"
-                    onClick={() => setImageIndex(idx)}
+                    onClick={() => setSlideIndex(idx)}
                     className={`h-2.5 w-2.5 rounded-full transition duration-200 ${
-                      imageIndex === idx
+                      slideIndex === idx
                         ? "bg-slate-900 shadow-[0_0_0_4px_rgba(15,23,42,0.08)]"
                         : "bg-slate-300 hover:bg-slate-400"
                     }`}
                     aria-label={`Aller au visuel ${idx + 1}`}
-                    aria-pressed={imageIndex === idx}
+                    aria-pressed={slideIndex === idx}
                   />
                 ))}
               </div>
@@ -621,122 +509,60 @@ export const DownloadableProductsSection: React.FC = () => {
             </div>
 
             <div className="flex flex-wrap items-center gap-4">
-            <div className="text-2xl font-semibold text-white">
-              {formatPrice(selectedProduct.priceTtc)} {priceLabel}
-            </div>
-            <button
-              type="button"
-              onClick={() => handleAddToCart(selectedProduct)}
-              disabled={isAddToCartDisabled}
-              className="pressable-button inline-flex items-center justify-center rounded-full border border-emerald-200 bg-emerald-500 px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-emerald-900/40 transition hover:-translate-y-0.5 hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200 disabled:cursor-not-allowed disabled:border-white/30 disabled:bg-white/20 disabled:text-white"
-            >
-              Ajouter au panier
-            </button>
+              <div className="text-2xl font-semibold text-white">
+                {formatPrice(selectedProduct.priceTtc)} {priceLabel}
+              </div>
+              <button
+                type="button"
+                onClick={() => handleAddToCart(selectedProduct)}
+                disabled={isAddToCartDisabled}
+                className="pressable-button inline-flex items-center justify-center rounded-full border border-emerald-200 bg-emerald-500 px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-emerald-900/40 transition hover:-translate-y-0.5 hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200 disabled:cursor-not-allowed disabled:border-white/30 disabled:bg-white/20 disabled:text-white"
+              >
+                Ajouter au panier
+              </button>
             </div>
           </div>
         </div>
 
-        <div className="overflow-visible rounded-3xl p-6">
-          <div className="relative overflow-visible rounded-2xl bg-transparent shadow-none">
-            <div className="overflow-hidden rounded-2xl bg-transparent shadow-none">
-              <div
-                className="flex transition-transform duration-500 ease-out"
-                style={{ transform: `translateX(-${imageIndex * 100}%)` }}
-              >
-                {detailSlides.map((slide, idx) => {
-                  const isActiveSlide = idx === imageIndex;
-
-                  return (
-                    <div key={slide.imageUrl ?? `slide-${idx}`} className="w-full flex-shrink-0">
-                      {slide.imageUrl ? (
-                        <div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl border border-white/15 bg-white/10 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.3)] backdrop-blur-xl">
-                          <img
-                            src={slide.imageUrl}
-                            alt={selectedProduct.name}
-                            className={`h-full w-full object-contain transition-opacity duration-500 ease-out ${
-                              isActiveSlide && isFading ? "opacity-0" : "opacity-100"
-                            }`}
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl border border-white/20 bg-white/5 p-4 text-sm font-semibold text-white/70 shadow-[0_10px_30px_rgba(0,0,0,0.28)] backdrop-blur-xl">
-                          Visuel à venir
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+        <div className="relative">
+          <div className="relative overflow-hidden rounded-3xl border border-white/20 bg-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.25)]">
+            {currentSlide.imageUrl ? (
+              <img
+                key={currentSlide.imageUrl}
+                src={currentSlide.imageUrl}
+                alt={selectedProduct.name}
+                className={`h-full w-full object-cover transition-opacity duration-300 ${
+                  isFading ? "opacity-40" : "opacity-100"
+                }`}
+              />
+            ) : (
+              <div className="flex h-full min-h-[320px] items-center justify-center text-white/70">
+                Visuel en cours d’ajout
               </div>
-            </div>
-
-            {hasMultipleDetailSlides && (
-              <>
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-emerald-200/25 via-transparent to-emerald-200/25 opacity-70" aria-hidden />
-                <div className="absolute inset-y-0 left-0 flex -translate-x-full items-center pl-3 pr-1 sm:-translate-x-[60%]">
-                  <button
-                    type="button"
-                    onClick={handleSlidePrev}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white/15 text-lg font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/25 hover:shadow-[0_14px_36px_rgba(0,0,0,0.32)]"
-                    aria-label="Afficher l’image précédente"
-                  >
-                    ←
-                  </button>
-                </div>
-                <div className="absolute inset-y-0 right-0 flex translate-x-full items-center pl-1 pr-3 sm:translate-x-[60%]">
-                  <button
-                    type="button"
-                    onClick={handleSlideNext}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white/15 text-lg font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/25 hover:shadow-[0_14px_36px_rgba(0,0,0,0.32)]"
-                    aria-label="Afficher l’image suivante"
-                  >
-                    →
-                  </button>
-                </div>
-              </>
+            )}
+            {slides.length > 1 && (
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
             )}
           </div>
 
-          {hasBackOfficeSlideSet && (
-            <div className="mt-5 flex items-center justify-center gap-3">
-              {detailSlides.map((slide, idx) => {
-                const isActiveSlide = idx === imageIndex;
-
-                return (
-                  <button
-                    key={slide.imageUrl ?? `thumb-${idx}`}
-                    type="button"
-                    aria-label={`Afficher l’aperçu ${idx + 1}`}
-                    onClick={() => setImageIndex(idx)}
-                    className={`group relative h-16 w-16 rounded-2xl border transition duration-150 ${
-                      isActiveSlide
-                        ? "border-white shadow-[0_14px_36px_rgba(0,0,0,0.28)]"
-                        : "border-white/40 hover:border-white/70"
-                    }`}
-                  >
-                    {slide.imageUrl ? (
-                      <div className="h-full w-full overflow-hidden rounded-2xl">
-                        <img
-                          src={slide.imageUrl}
-                          alt=""
-                          className={`h-full w-full object-cover transition-opacity duration-300 ${
-                            isActiveSlide ? "opacity-100" : "opacity-80 group-hover:opacity-100"
-                          }`}
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-white/10 text-[11px] font-semibold uppercase tracking-wide text-white/70">
-                        Visuel
-                      </div>
-                    )}
-                    <span
-                      className={`pointer-events-none absolute inset-0 rounded-2xl ring-2 transition ${
-                        isActiveSlide ? "ring-white" : "ring-transparent group-hover:ring-white/60"
-                      }`}
-                      aria-hidden
-                    />
-                  </button>
-                );
-              })}
+          {slides.length > 1 && (
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={handleSlidePrev}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white/15 text-base font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.2)] transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/25 hover:shadow-[0_14px_36px_rgba(0,0,0,0.28)]"
+                aria-label="Visuel précédent"
+              >
+                ←
+              </button>
+              <button
+                type="button"
+                onClick={handleSlideNext}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white/15 text-base font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.2)] transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/25 hover:shadow-[0_14px_36px_rgba(0,0,0,0.28)]"
+                aria-label="Visuel suivant"
+              >
+                →
+              </button>
             </div>
           )}
         </div>
@@ -744,60 +570,48 @@ export const DownloadableProductsSection: React.FC = () => {
     );
   };
 
-  const showNavigation = !loading && filteredProducts.length > visibleCards;
-
-  const translateValue = showNavigation
-    ? isMobile
-      ? `translateX(-${currentIndex * 100}%)`
-      : `translateX(-${currentIndex * (CARD_WIDTH + CARD_GAP)}px)`
-    : undefined;
-
-  const viewportWidth = useMemo(
-    () =>
-      isMobile
-        ? undefined
-        : visibleCards * CARD_WIDTH + CARD_GAP * (visibleCards - 1),
-    [isMobile, visibleCards]
-  );
-
   return (
-    <section className="space-y-8 p-4 text-white md:p-6">
-      {error && (
-        <div className="flex justify-center">
-          <div className="rounded-full border border-red-300/50 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-100">
-            {error}
-          </div>
+    <section className="relative space-y-8">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap gap-3">
+          <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-100/80">
+            Sélection rigoureuse
+          </span>
+          <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-100/80">
+            Téléchargement immédiat
+          </span>
+          <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-100/80">
+            Mise à jour continue
+          </span>
         </div>
-      )}
 
-      {!!categories.length && (
-        <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-3 rounded-3xl border border-white/25 bg-white/10 px-6 py-5 shadow-[0_18px_44px_rgba(0,0,0,0.25)] backdrop-blur-2xl">
-          <div className="flex items-center gap-2 text-sm font-semibold text-white">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white">↺</span>
-            <span>Filtrer par catégorie</span>
-          </div>
-          <div className="relative w-full max-w-lg">
-            <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-400/15 via-white/10 to-emerald-400/15" aria-hidden />
-            <select
-              value={selectedCategoryId}
-              onChange={(event) => {
-                setSelectedCategoryId(event.target.value);
-                setCurrentIndex(0);
-              }}
-              className="relative z-10 w-full appearance-none rounded-2xl border border-white/30 bg-white/15 px-4 py-3 text-sm font-semibold text-white shadow-[0_14px_36px_rgba(0,0,0,0.25)] backdrop-blur-xl transition focus:border-white focus:outline-none focus:ring-2 focus:ring-emerald-300/40"
-            >
-              <option value="">Toutes les catégories</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                  {typeof category.productCount === "number"
-                    ? ` (${category.productCount})`
-                    : ""}
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-white/70">▾</div>
-          </div>
+        <div className="relative w-full max-w-lg">
+          <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-400/15 via-white/10 to-emerald-400/15" aria-hidden />
+          <select
+            value={selectedCategoryId}
+            onChange={(event) => {
+              setSelectedCategoryId(event.target.value);
+              setCardIndex(0);
+            }}
+            className="relative z-10 w-full appearance-none rounded-2xl border border-white/30 bg-white/15 px-4 py-3 text-sm font-semibold text-white shadow-[0_14px_36px_rgba(0,0,0,0.25)] backdrop-blur-xl transition focus:border-white focus:outline-none focus:ring-2 focus:ring-emerald-300/40"
+          >
+            <option value="">Toutes les catégories</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+                {typeof category.productCount === "number"
+                  ? ` (${category.productCount})`
+                  : ""}
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-white/70">▾</div>
+        </div>
+      </div>
+
+      {error && (
+        <div className="rounded-2xl border border-red-300/50 bg-red-500/15 px-4 py-3 text-sm text-red-50">
+          {error}
         </div>
       )}
 
@@ -809,7 +623,7 @@ export const DownloadableProductsSection: React.FC = () => {
                 <button
                   type="button"
                   onClick={handlePrev}
-                  disabled={currentIndex === 0}
+                  disabled={cardIndex === 0}
                   className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white/15 text-base font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.2)] transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/25 hover:shadow-[0_14px_36px_rgba(0,0,0,0.28)] disabled:opacity-40"
                   aria-label="Afficher les logiciels précédents"
                 >
@@ -818,7 +632,7 @@ export const DownloadableProductsSection: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleNext}
-                  disabled={currentIndex === maxIndex}
+                  disabled={cardIndex === maxIndex}
                   className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white/15 text-base font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.2)] transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/25 hover:shadow-[0_14px_36px_rgba(0,0,0,0.28)] disabled:opacity-40"
                   aria-label="Afficher les logiciels suivants"
                 >
@@ -831,7 +645,7 @@ export const DownloadableProductsSection: React.FC = () => {
                   <button
                     type="button"
                     onClick={handlePrev}
-                    disabled={currentIndex === 0}
+                    disabled={cardIndex === 0}
                     className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-white/15 text-lg font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/25 hover:shadow-[0_14px_36px_rgba(0,0,0,0.3)] disabled:opacity-40"
                     aria-label="Afficher les logiciels précédents"
                   >
@@ -842,7 +656,7 @@ export const DownloadableProductsSection: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleNext}
-                    disabled={currentIndex === maxIndex}
+                    disabled={cardIndex === maxIndex}
                     className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-white/15 text-lg font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/25 hover:shadow-[0_14px_36px_rgba(0,0,0,0.3)] disabled:opacity-40"
                     aria-label="Afficher les logiciels suivants"
                   >
@@ -880,9 +694,7 @@ export const DownloadableProductsSection: React.FC = () => {
         </div>
       </div>
 
-      <div className="pt-2">
-        {renderDetails()}
-      </div>
+      <div className="pt-2">{renderDetails()}</div>
     </section>
   );
 };
