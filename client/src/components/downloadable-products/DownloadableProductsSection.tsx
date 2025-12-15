@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   DownloadableCategory,
   DownloadableProduct,
@@ -74,27 +74,6 @@ const normalizeProduct = (product: any): DownloadableProduct => {
   } satisfies DownloadableProduct;
 };
 
-const deriveCategories = (
-  products: DownloadableProduct[],
-  incomingCategories: DownloadableCategory[]
-): DownloadableCategory[] => {
-  if (incomingCategories?.length) return incomingCategories;
-
-  const byId = new Map<string, DownloadableCategory>();
-
-  products.forEach((product) => {
-    if (product.category?.id && !byId.has(product.category.id)) {
-      byId.set(product.category.id, {
-        id: product.category.id,
-        name: product.category.name,
-        slug: product.category.slug,
-      });
-    }
-  });
-
-  return Array.from(byId.values());
-};
-
 const buildSlides = (product: DownloadableProduct | null): DetailSlide[] => {
   if (!product) return [];
 
@@ -140,6 +119,8 @@ export const DownloadableProductsSection: React.FC = () => {
   const [cardIndex, setCardIndex] = useState(0);
   const [slideIndex, setSlideIndex] = useState(0);
   const [isFading, setIsFading] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const categoryDropdownRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -165,13 +146,8 @@ export const DownloadableProductsSection: React.FC = () => {
         const normalizedProducts = Array.isArray(json?.products)
           ? json.products.map(normalizeProduct)
           : [];
-        const normalizedCategories = deriveCategories(
-          normalizedProducts,
-          Array.isArray(json?.categories) ? json.categories : []
-        );
-
         setProducts(normalizedProducts);
-        setCategories(normalizedCategories);
+        setCategories(Array.isArray(json?.categories) ? json.categories : []);
         setSelectedProduct(normalizedProducts[0] ?? null);
         setCardIndex(0);
         setSlideIndex(0);
@@ -200,10 +176,41 @@ export const DownloadableProductsSection: React.FC = () => {
     return () => mediaQuery.removeEventListener("change", update);
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isCategoryOpen &&
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsCategoryOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsCategoryOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isCategoryOpen]);
+
   const filteredProducts = useMemo(() => {
     if (!selectedCategoryId) return products;
     return products.filter((product) => product.category?.id === selectedCategoryId);
   }, [products, selectedCategoryId]);
+
+  useEffect(() => {
+    if (!selectedCategoryId) return;
+    const categoryExists = categories.some((category) => category.id === selectedCategoryId);
+    if (!categoryExists) setSelectedCategoryId("");
+  }, [categories, selectedCategoryId]);
 
   useEffect(() => {
     setCardIndex(0);
@@ -256,6 +263,22 @@ export const DownloadableProductsSection: React.FC = () => {
       selectedProduct.binaries[0]
     );
   }, [selectedBinaryId, selectedProduct?.binaries]);
+
+  const selectedCategoryLabel = useMemo(() => {
+    if (!selectedCategoryId) return "Toutes les catégories";
+    const selectedCategory = categories.find(
+      (category) => category.id === selectedCategoryId
+    );
+
+    if (!selectedCategory) return "Toutes les catégories";
+
+    const suffix =
+      typeof selectedCategory.productCount === "number"
+        ? ` (${selectedCategory.productCount})`
+        : "";
+
+    return `${selectedCategory.name}${suffix}`;
+  }, [categories, selectedCategoryId]);
 
   const platformLabel = (platform?: string | null) =>
     platform === "MACOS" ? "MacOS" : "Windows";
@@ -573,27 +596,71 @@ export const DownloadableProductsSection: React.FC = () => {
   return (
     <section className="relative space-y-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-        <div className="relative w-full max-w-lg">
+        <div className="relative w-full max-w-lg" ref={categoryDropdownRef}>
           <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-400/15 via-white/10 to-emerald-400/15" aria-hidden />
-          <select
-            value={selectedCategoryId}
-            onChange={(event) => {
-              setSelectedCategoryId(event.target.value);
-              setCardIndex(0);
-            }}
-            className="relative z-10 w-full appearance-none rounded-2xl border border-white/30 bg-white/15 px-4 py-3 text-sm font-semibold text-white shadow-[0_14px_36px_rgba(0,0,0,0.25)] backdrop-blur-xl transition focus:border-white focus:outline-none focus:ring-2 focus:ring-emerald-300/40"
+          <button
+            type="button"
+            onClick={() => setIsCategoryOpen((open) => !open)}
+            className="relative z-10 flex w-full items-center justify-between rounded-2xl border border-white/30 bg-white/15 px-4 py-3 text-left text-sm font-semibold text-white shadow-[0_14px_36px_rgba(0,0,0,0.25)] backdrop-blur-xl transition focus:border-white focus:outline-none focus:ring-2 focus:ring-emerald-300/40"
+            aria-haspopup="listbox"
+            aria-expanded={isCategoryOpen}
           >
-            <option value="">Toutes les catégories</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-                {typeof category.productCount === "number"
+            <span>{selectedCategoryLabel}</span>
+            <span className={`transition-transform ${isCategoryOpen ? "rotate-180" : ""}`}>▾</span>
+          </button>
+
+          <div
+            role="listbox"
+            className={`absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-white/20 bg-[#0a1c14]/95 shadow-[0_14px_36px_rgba(0,0,0,0.35)] backdrop-blur-2xl transition-all duration-150 ${
+              isCategoryOpen
+                ? "pointer-events-auto opacity-100"
+                : "pointer-events-none opacity-0"
+            }`}
+          >
+            <button
+              type="button"
+              className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold transition hover:bg-white/5 ${
+                !selectedCategoryId ? "text-white" : "text-white/80"
+              }`}
+              onClick={() => {
+                setSelectedCategoryId("");
+                setCardIndex(0);
+                setIsCategoryOpen(false);
+              }}
+              role="option"
+              aria-selected={!selectedCategoryId}
+            >
+              <span>Toutes les catégories</span>
+              {!selectedCategoryId && <span className="text-emerald-300">•</span>}
+            </button>
+            {categories.map((category) => {
+              const suffix =
+                typeof category.productCount === "number"
                   ? ` (${category.productCount})`
-                  : ""}
-              </option>
-            ))}
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-white/70">▾</div>
+                  : "";
+              const isSelected = category.id === selectedCategoryId;
+
+              return (
+                <button
+                  key={category.id}
+                  type="button"
+                  className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold transition hover:bg-white/5 ${
+                    isSelected ? "text-white" : "text-white/80"
+                  }`}
+                  onClick={() => {
+                    setSelectedCategoryId(category.id);
+                    setCardIndex(0);
+                    setIsCategoryOpen(false);
+                  }}
+                  role="option"
+                  aria-selected={isSelected}
+                >
+                  <span>{`${category.name}${suffix}`}</span>
+                  {isSelected && <span className="text-emerald-300">•</span>}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
