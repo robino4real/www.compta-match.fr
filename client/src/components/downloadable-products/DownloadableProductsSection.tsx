@@ -572,19 +572,7 @@ export const DownloadableProductsSection: React.FC = () => {
 
   return (
     <section className="relative space-y-8">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap gap-3">
-          <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-100/80">
-            Sélection rigoureuse
-          </span>
-          <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-100/80">
-            Téléchargement immédiat
-          </span>
-          <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-100/80">
-            Mise à jour continue
-          </span>
-        </div>
-
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
         <div className="relative w-full max-w-lg">
           <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-400/15 via-white/10 to-emerald-400/15" aria-hidden />
           <select
