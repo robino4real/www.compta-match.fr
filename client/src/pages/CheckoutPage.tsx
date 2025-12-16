@@ -540,7 +540,6 @@ const CheckoutPage: React.FC = () => {
               </button>
               <Link
                 to="/panier"
-                reloadDocument
                 className="flex w-full items-center justify-center rounded-full border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:border-black hover:text-black"
               >
                 Retour au panier

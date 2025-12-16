@@ -25,7 +25,6 @@ const PaymentCancelPage: React.FC = () => {
             </Link>
             <Link
               to="/panier"
-              reloadDocument
               className="inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-800 transition hover:border-black hover:text-black"
             >
               Retour au panier
