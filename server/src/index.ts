@@ -81,33 +81,23 @@ app.use("/api", apiRouter);
 app.get("/robots.txt", robotsTxtHandler);
 app.get("/sitemap.xml", sitemapHandler);
 
-// Préférez le build copié dans `server/frontend` (utilisé sur cPanel) puis
-// retombez sur `client/dist` en développement local pour éviter de servir une
-// ancienne version du site lors d'un rafraîchissement.
-const frontendDir =
-  [
-    path.resolve(__dirname, "..", "frontend"),
-    path.resolve(__dirname, "..", "..", "client", "dist"),
-  ].find((candidate) => fs.existsSync(candidate)) ?? "";
-
-if (frontendDir) {
-  app.use(express.static(frontendDir));
-}
+// Servez toujours le build Vite généré dans client/dist pour éviter de renvoyer
+// d'anciennes versions du site lorsque l'utilisateur rafraîchit la page.
+const frontendDir = path.resolve(__dirname, "..", "..", "client", "dist");
+app.use(express.static(frontendDir));
 
 app.get("*", (req, res, next) => {
   if (req.path.startsWith("/api")) {
     return next();
   }
 
-  if (!frontendDir) {
+  const indexPath = path.join(frontendDir, "index.html");
+
+  if (!fs.existsSync(indexPath)) {
     return res.status(404).send("Interface front-end introuvable.");
   }
 
-  const indexPath = path.join(frontendDir, "index.html");
-
-  return fs.existsSync(indexPath)
-    ? res.sendFile(indexPath)
-    : res.status(404).send("Interface front-end introuvable.");
+  return res.sendFile(indexPath);
 });
 
 app.use(errorHandler);
