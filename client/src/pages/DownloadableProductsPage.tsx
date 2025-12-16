@@ -70,6 +70,7 @@ export default function DownloadableProductsPage() {
             </Link>
             <Link
               to="/panier"
+              reloadDocument
               className={`relative inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/15 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300${
                 isCartBouncing ? " cart-icon-bounce" : ""
               }`}
