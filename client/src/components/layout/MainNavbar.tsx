@@ -63,6 +63,7 @@ export function MainNavbar() {
                   : ""
               }`}
               to={item.to}
+              reloadDocument
               aria-label={item.label}
             >
               {item.label}
@@ -95,7 +96,12 @@ export function MainNavbar() {
             </div>
             <span>{user ? "Mon compte" : "Se connecter"}</span>
           </Link>
-          <Link className={cartLinkClasses} to="/panier" aria-label="Panier">
+          <Link
+            className={cartLinkClasses}
+            to="/panier"
+            reloadDocument
+            aria-label="Panier"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -147,14 +153,15 @@ export function MainNavbar() {
       {isMenuOpen && (
         <div className="bg-white shadow-sm md:hidden">
           <nav className="grid gap-1 px-3 py-3 text-sm font-medium text-slate-700">
-            {menuItems.map((item) => (
-              <Link
-                key={item.to}
-                className="rounded-lg px-2 py-2 hover:bg-white"
-                to={item.to}
-                aria-label={item.label}
-              >
-                {item.label}
+              {menuItems.map((item) => (
+                <Link
+                  key={item.to}
+                  className="rounded-lg px-2 py-2 hover:bg-white"
+                  to={item.to}
+                  reloadDocument
+                  aria-label={item.label}
+                >
+                  {item.label}
               </Link>
             ))}
           </nav>
@@ -185,6 +192,7 @@ export function MainNavbar() {
             <Link
               className={cartLinkClasses}
               to="/panier"
+              reloadDocument
               aria-label="Panier"
             >
               <svg

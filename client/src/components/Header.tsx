@@ -49,6 +49,7 @@ const Header: React.FC = () => {
           {!hideAuthAndCartButtons && (
             <Link
               to="/panier"
+              reloadDocument
               className="relative flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
               aria-label="Panier"
               onClick={() => setIsNavOpen(false)}
@@ -102,13 +103,13 @@ const Header: React.FC = () => {
             className="flex flex-col gap-2 md:flex-row md:items-center md:justify-center md:gap-4"
             aria-label="Navigation principale"
           >
-            <NavLink to="/logiciels" className={navLinkClass}>
+            <NavLink to="/logiciels" className={navLinkClass} reloadDocument>
               Nos logiciels
             </NavLink>
-            <NavLink to="/comptapro" className={navLinkClass}>
+            <NavLink to="/comptapro" className={navLinkClass} reloadDocument>
               ComptaPro
             </NavLink>
-            <NavLink to="/comptasso" className={navLinkClass}>
+            <NavLink to="/comptasso" className={navLinkClass} reloadDocument>
               ComptAsso
             </NavLink>
           </nav>
@@ -128,6 +129,7 @@ const Header: React.FC = () => {
                 {!hideAuthAndCartButtons && (
                   <Link
                     to="/panier"
+                    reloadDocument
                     className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
                     aria-label="Panier"
                     onClick={() => setIsNavOpen(false)}
@@ -173,6 +175,7 @@ const Header: React.FC = () => {
                 {!hideAuthAndCartButtons && (
                   <Link
                     to="/panier"
+                    reloadDocument
                     className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 hover:border-black hover:text-black"
                     aria-label="Panier"
                     onClick={() => setIsNavOpen(false)}
