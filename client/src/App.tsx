@@ -26,9 +26,13 @@ import AdminSeoPage from "./pages/admin/AdminSeoPage";
 import AdminPagesPage from "./pages/admin/AdminPagesPage";
 import AdminPageDetailPage from "./pages/admin/AdminPageDetailPage";
 import AnalyticsTracker from "./components/AnalyticsTracker";
+import DownloadableProductsPage from "./pages/DownloadableProductsPage";
+import ComptaProSubscriptionPage from "./pages/ComptaProSubscriptionPage";
 import ComptaProPlanDetailPage from "./pages/ComptaProPlanDetailPage";
+import ComptAssoSubscriptionPage from "./pages/ComptAssoSubscriptionPage";
 import ComptAssoLanding from "./pages/ComptAssoPlanDetailPage";
 import CompareOffersPage from "./pages/CompareOffersPage";
+import DiscoveryPage from "./pages/DiscoveryPage";
 import AdminPaidServicesPage from "./pages/admin/AdminPaidServicesPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MonProfilPage from "./pages/account/MonProfilPage";
@@ -43,7 +47,6 @@ import PaymentCancelPage from "./pages/PaymentCancelPage";
 import LegalPage from "./pages/LegalPage";
 import AuthLoginPage from "./pages/AuthLoginPage";
 import ProSpacePage from "./pages/ProSpacePage";
-import DownloadableProductsPage from "./pages/DownloadableProductsPage";
 
 const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { admin, isLoading } = useAdminAuth();
@@ -94,17 +97,12 @@ const App: React.FC = () => {
           <Route path="/comparatif-des-offres" element={<CompareOffersPage />} />
           <Route path="/offres" element={<Navigate to="/comparatif-des-offres" replace />} />
           <Route path="/logiciels" element={<DownloadableProductsPage />} />
-          <Route path="/contact" element={<Navigate to="/" replace />} />
-          <Route path="/demo" element={<Navigate to="/" replace />} />
-          <Route path="/blog" element={<Navigate to="/" replace />} />
-          <Route path="/produits" element={<Navigate to="/" replace />} />
-          <Route path="/tarifs" element={<Navigate to="/comparatif-des-offres" replace />} />
-          <Route path="/comptapro" element={<Navigate to="/" replace />} />
+          <Route path="/comptapro" element={<ComptaProSubscriptionPage />} />
           <Route path="/comptapro/:planSlug" element={<ComptaProPlanDetailPage />} />
-          <Route path="/comptasso" element={<Navigate to="/" replace />} />
+          <Route path="/comptasso" element={<ComptAssoSubscriptionPage />} />
           <Route path="/comptasso/:planSlug" element={<ComptAssoLanding />} />
-          <Route path="/découverte" element={<Navigate to="/" replace />} />
-          <Route path="/decouverte" element={<Navigate to="/" replace />} />
+          <Route path="/découverte" element={<DiscoveryPage />} />
+          <Route path="/decouverte" element={<Navigate to="/découverte" replace />} />
           <Route path="/panier" element={<CartPage />} />
           <Route path="/commande" element={<CheckoutPage />} />
           <Route path="/paiement/success" element={<PaymentSuccessPage />} />
