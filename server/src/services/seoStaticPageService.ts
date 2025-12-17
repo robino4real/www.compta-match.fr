@@ -1,7 +1,12 @@
 import { Prisma, SeoStaticPage } from "@prisma/client";
 import { prisma } from "../config/prisma";
 
-export type SeoStaticPageKey = "HOME_LISTING_ARTICLES";
+export type SeoStaticPageKey =
+  | "HOME_LISTING_ARTICLES"
+  | "PRICING_PAGE"
+  | "CONTACT_PAGE"
+  | "DOWNLOADS_PAGE"
+  | "ACCOUNT_PAGE";
 
 const DEFAULT_STATIC_PAGES: Record<SeoStaticPageKey, Prisma.SeoStaticPageCreateInput> = {
   HOME_LISTING_ARTICLES: {
@@ -10,6 +15,30 @@ const DEFAULT_STATIC_PAGES: Record<SeoStaticPageKey, Prisma.SeoStaticPageCreateI
     title: "Articles ComptaMatch",
     metaDescription:
       "Parcourez les articles et guides publiés par ComptaMatch pour simplifier votre comptabilité.",
+  },
+  PRICING_PAGE: {
+    key: "PRICING_PAGE",
+    route: "/logiciels",
+    title: "Logiciels ComptaMatch",
+    metaDescription: "Découvrez les logiciels et tarifs des solutions ComptaMatch.",
+  },
+  CONTACT_PAGE: {
+    key: "CONTACT_PAGE",
+    route: "/contact",
+    title: "Contact ComptaMatch",
+    metaDescription: "Contactez l'équipe ComptaMatch pour toute question ou assistance.",
+  },
+  DOWNLOADS_PAGE: {
+    key: "DOWNLOADS_PAGE",
+    route: "/telechargements",
+    title: "Téléchargements ComptaMatch",
+    metaDescription: "Accédez à vos ressources et logiciels téléchargeables.",
+  },
+  ACCOUNT_PAGE: {
+    key: "ACCOUNT_PAGE",
+    route: "/mon-compte",
+    title: "Espace client ComptaMatch",
+    metaDescription: "Gérez vos informations et vos commandes depuis l'espace client.",
   },
 };
 
