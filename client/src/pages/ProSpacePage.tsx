@@ -12,6 +12,14 @@ interface UserSubscription {
   plan?: SubscriptionPlan | null;
 }
 
+interface CustomSpace {
+  id: string;
+  name: string;
+  type: string;
+  identifier?: string;
+  contactEmail?: string;
+}
+
 const ProSpacePage: React.FC = () => {
   const { user, login, isLoading: isAuthLoading } = useAuth();
 
@@ -23,6 +31,16 @@ const ProSpacePage: React.FC = () => {
   const [subscriptions, setSubscriptions] = React.useState<UserSubscription[]>([]);
   const [spacesError, setSpacesError] = React.useState<string | null>(null);
   const [isFetchingSpaces, setIsFetchingSpaces] = React.useState(false);
+
+  const [customSpaces, setCustomSpaces] = React.useState<CustomSpace[]>([]);
+  const [isSpaceModalOpen, setIsSpaceModalOpen] = React.useState(false);
+  const [spaceFormError, setSpaceFormError] = React.useState<string | null>(null);
+  const [spaceForm, setSpaceForm] = React.useState({
+    name: "",
+    identifier: "",
+    contactEmail: "",
+    type: "Entreprise",
+  });
 
   const fetchSubscriptions = React.useCallback(async () => {
     if (!user) return;
@@ -71,6 +89,42 @@ const ProSpacePage: React.FC = () => {
     }
 
     setIsSubmitting(false);
+  };
+
+  const handleOpenSpaceModal = () => {
+    setSpaceFormError(null);
+    setIsSpaceModalOpen(true);
+  };
+
+  const handleSpaceFormChange = (field: keyof typeof spaceForm, value: string) => {
+    setSpaceForm((previous) => ({ ...previous, [field]: value }));
+  };
+
+  const handleCustomSpaceSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!spaceForm.name.trim()) {
+      setSpaceFormError("Merci de renseigner le nom de la structure.");
+      return;
+    }
+
+    const newSpace: CustomSpace = {
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      name: spaceForm.name.trim(),
+      identifier: spaceForm.identifier.trim(),
+      contactEmail: spaceForm.contactEmail.trim(),
+      type: spaceForm.type || "Entreprise",
+    };
+
+    setCustomSpaces((previous) => [...previous, newSpace]);
+    setIsSpaceModalOpen(false);
+    setSpaceFormError(null);
+    setSpaceForm({
+      name: "",
+      identifier: "",
+      contactEmail: "",
+      type: "Entreprise",
+    });
   };
 
   const renderLoginForm = () => (
@@ -135,6 +189,7 @@ const ProSpacePage: React.FC = () => {
 
   const renderSpaces = () => {
     const hasSubscriptions = subscriptions.length > 0;
+    const hasAnySpaces = hasSubscriptions || customSpaces.length > 0;
 
     return (
       <section className="mt-12 space-y-6">
@@ -175,12 +230,43 @@ const ProSpacePage: React.FC = () => {
               </article>
             ))}
 
-          <div className="flex min-h-[220px] items-center justify-center rounded-3xl border-2 border-dashed border-slate-300 bg-white text-6xl font-semibold text-slate-300">
-            +
-          </div>
+          {customSpaces.map((space) => (
+            <article
+              key={space.id}
+              className="flex min-h-[220px] flex-col justify-between rounded-3xl border border-emerald-100 bg-white px-6 py-5 shadow-sm"
+            >
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                  Nouvelle structure
+                </p>
+                <h3 className="text-lg font-semibold text-slate-900">{space.name}</h3>
+                <p className="text-sm text-slate-600">
+                  {space.type} ajoutée pour suivre vos documents dédiés.{" "}
+                  {space.identifier ? `Identifiant : ${space.identifier}. ` : ""}
+                  {space.contactEmail ? `Contact : ${space.contactEmail}` : ""}
+                </p>
+              </div>
+              <div className="text-xs text-slate-500">Créé depuis cette page</div>
+            </article>
+          ))}
+
+          <button
+            type="button"
+            onClick={handleOpenSpaceModal}
+            className="group relative flex min-h-[220px] flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-slate-300 bg-white text-slate-400 transition duration-150 ease-out hover:-translate-y-1 hover:border-slate-500 hover:text-slate-500 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black"
+            aria-label="Ajouter une nouvelle structure"
+          >
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-5xl font-semibold transition duration-150 ease-out group-hover:scale-105 group-hover:bg-black group-hover:text-white">
+              +
+            </span>
+            <span className="px-6 text-center text-sm font-semibold text-slate-600 transition duration-150 ease-out group-hover:text-slate-800">
+              Ajouter une fiche entreprise
+            </span>
+            <span className="text-xs text-slate-500">Cliquer pour renseigner vos informations</span>
+          </button>
         </div>
 
-        {!isFetchingSpaces && !hasSubscriptions && !spacesError && (
+        {!isFetchingSpaces && !hasAnySpaces && !spacesError && (
           <p className="text-center text-sm text-slate-600">
             Aucun abonnement actif pour le moment. Commencez par créer votre premier espace.
           </p>
@@ -209,6 +295,107 @@ const ProSpacePage: React.FC = () => {
 
         {!isAuthLoading && user && renderSpaces()}
       </div>
+
+      {isSpaceModalOpen && (
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">Ajouter une fiche entreprise</h3>
+                <p className="text-sm text-slate-600">
+                  Renseignez les informations de la structure pour générer son cadre dédié.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSpaceModalOpen(false)}
+                className="text-xs font-semibold text-slate-600 hover:text-black"
+              >
+                Fermer
+              </button>
+            </div>
+
+            <form className="mt-4 space-y-4" onSubmit={handleCustomSpaceSubmit}>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700" htmlFor="pro-space-name">
+                  Nom de l'entreprise
+                </label>
+                <input
+                  id="pro-space-name"
+                  type="text"
+                  value={spaceForm.name}
+                  onChange={(event) => handleSpaceFormChange("name", event.target.value)}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                  placeholder="Ex : ComptaMatch SAS"
+                  required
+                />
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700" htmlFor="pro-space-identifier">
+                    SIREN / SIRET (optionnel)
+                  </label>
+                  <input
+                    id="pro-space-identifier"
+                    type="text"
+                    value={spaceForm.identifier}
+                    onChange={(event) => handleSpaceFormChange("identifier", event.target.value)}
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                    placeholder="Ex : 900 123 456"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700" htmlFor="pro-space-contact">
+                    Email de contact (optionnel)
+                  </label>
+                  <input
+                    id="pro-space-contact"
+                    type="email"
+                    value={spaceForm.contactEmail}
+                    onChange={(event) => handleSpaceFormChange("contactEmail", event.target.value)}
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                    placeholder="contact@exemple.fr"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-700" htmlFor="pro-space-type">
+                  Type de structure
+                </label>
+                <input
+                  id="pro-space-type"
+                  type="text"
+                  value={spaceForm.type}
+                  onChange={(event) => handleSpaceFormChange("type", event.target.value)}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                  placeholder="Entreprise, holding..."
+                />
+              </div>
+
+              {spaceFormError && <p className="text-sm text-red-600">{spaceFormError}</p>}
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsSpaceModalOpen(false)}
+                  className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-black hover:text-black"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-900"
+                >
+                  Créer le cadre
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </main>
   );
 };
