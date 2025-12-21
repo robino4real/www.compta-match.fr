@@ -46,6 +46,7 @@ import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import PaymentCancelPage from "./pages/PaymentCancelPage";
 import LegalPage from "./pages/LegalPage";
 import AuthLoginPage from "./pages/AuthLoginPage";
+import AuthRegisterPage from "./pages/AuthRegisterPage";
 import ProSpacePage from "./pages/ProSpacePage";
 
 const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -108,6 +109,7 @@ const App: React.FC = () => {
           <Route path="/paiement/success" element={<PaymentSuccessPage />} />
           <Route path="/paiement/cancel" element={<PaymentCancelPage />} />
           <Route path="/auth/login" element={<AuthLoginPage />} />
+          <Route path="/auth/register" element={<AuthRegisterPage />} />
           <Route path="/:legalSlug" element={<LegalPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/compte" element={<MonProfilPage />} />
