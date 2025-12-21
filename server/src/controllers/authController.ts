@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Prisma } from "@prisma/client";
+import { Prisma, AccountType } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { env } from "../config/env";
 import {
@@ -18,19 +18,63 @@ const TOKEN_MAX_AGE_MS = TOKEN_MAX_AGE_SECONDS * 1000;
 interface AuthRequestBody {
   email?: string;
   password?: string;
+  firstName?: string;
+  lastName?: string;
+  accountType?: string;
+  companyName?: string;
+  vatNumber?: string;
+  siret?: string;
+  address1?: string;
+  address2?: string;
+  postalCode?: string;
+  city?: string;
+  country?: string;
+  phone?: string;
 }
 
-function sanitizeUser(user: {
+type UserWithProfile = {
   id: string;
   email: string;
   role: string;
   isEmailVerified: boolean;
-}) {
+  firstName?: string | null;
+  lastName?: string | null;
+  profile?: {
+    accountType: AccountType;
+    companyName?: string | null;
+    vatNumber?: string | null;
+    siret?: string | null;
+    billingStreet?: string | null;
+    billingZip?: string | null;
+    billingCity?: string | null;
+    billingCountry?: string | null;
+    phone?: string | null;
+  } | null;
+};
+
+function sanitizeUser(user: UserWithProfile) {
+  const profile = user.profile
+    ? {
+        accountType: user.profile.accountType,
+        companyName: user.profile.companyName,
+        vatNumber: user.profile.vatNumber,
+        siret: user.profile.siret,
+        billingStreet: user.profile.billingStreet,
+        billingZip: user.profile.billingZip,
+        billingCity: user.profile.billingCity,
+        billingCountry: user.profile.billingCountry,
+        phone: user.profile.phone,
+      }
+    : undefined;
+
   return {
     id: user.id,
     email: user.email,
     role: user.role,
     isEmailVerified: user.isEmailVerified,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    profile,
   };
 }
 
@@ -58,13 +102,39 @@ function sendUnexpectedError(res: Response, error: unknown) {
 }
 
 export async function register(req: Request, res: Response) {
-  const { email, password } = (req.body ?? {}) as AuthRequestBody;
+  const {
+    email,
+    password,
+    firstName,
+    lastName,
+    accountType,
+    companyName,
+    vatNumber,
+    siret,
+    address1,
+    address2,
+    postalCode,
+    city,
+    country,
+    phone,
+  } = (req.body ?? {}) as AuthRequestBody;
   const normalizedEmail = email?.trim().toLowerCase();
+  const normalizedAccountType = (accountType || "").toUpperCase();
 
-  if (!normalizedEmail || !password?.trim()) {
+  if (
+    !normalizedEmail ||
+    !password?.trim() ||
+    !firstName?.trim() ||
+    !lastName?.trim() ||
+    !postalCode?.trim() ||
+    !city?.trim() ||
+    !country?.trim() ||
+    !address1?.trim()
+  ) {
     return res.status(400).json({
       error: "INVALID_PAYLOAD",
-      message: "Email et mot de passe requis.",
+      message:
+        "Email, mot de passe, nom, prénom et adresse de facturation sont requis.",
     });
   }
 
@@ -75,14 +145,42 @@ export async function register(req: Request, res: Response) {
     });
   }
 
+  if (!["PROFESSIONAL", "ASSOCIATION", "INDIVIDUAL"].includes(normalizedAccountType)) {
+    return res.status(400).json({
+      error: "INVALID_ACCOUNT_TYPE",
+      message:
+        "Le statut du compte doit être renseigné (professionnel, association ou particulier).",
+    });
+  }
+
   try {
+    const billingStreet = [address1.trim(), address2?.trim()].filter(Boolean).join(", ");
+
     const passwordHash = hashPassword(password);
     const user = await prisma.user.create({
       data: {
         email: normalizedEmail,
         passwordHash,
         role: "user",
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        profile: {
+          create: {
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            companyName: companyName?.trim() || null,
+            vatNumber: vatNumber?.trim() || null,
+            siret: siret?.trim() || null,
+            billingStreet,
+            billingZip: postalCode.trim(),
+            billingCity: city.trim(),
+            billingCountry: country.trim(),
+            accountType: normalizedAccountType as AccountType,
+            phone: phone?.trim() || null,
+          },
+        },
       },
+      include: { profile: true },
     });
 
     const token = buildJwtForUser(user.id);
@@ -120,7 +218,10 @@ export async function login(req: Request, res: Response) {
   const normalizedEmail = email.trim().toLowerCase();
 
   try {
-    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      include: { profile: true },
+    });
 
     if (!user || !verifyPassword(password, user.passwordHash || "")) {
       return res.status(401).json({
@@ -238,5 +339,18 @@ export async function me(req: Request, res: Response) {
     return res.status(401).json({ error: "UNAUTHENTICATED", message: "Non authentifié." });
   }
 
-  return res.json(sanitizeUser(user));
+  try {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { profile: true },
+    });
+
+    if (!dbUser) {
+      return res.status(404).json({ error: "USER_NOT_FOUND", message: "Utilisateur introuvable." });
+    }
+
+    return res.json(sanitizeUser(dbUser));
+  } catch (error) {
+    return sendUnexpectedError(res, error);
+  }
 }

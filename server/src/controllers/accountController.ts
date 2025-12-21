@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
+import { AccountType } from "@prisma/client";
 import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import { hashPassword, verifyPassword } from "../utils/password";
 
@@ -81,7 +82,12 @@ export async function getAccountProfile(req: Request, res: Response) {
       return res.status(404).json({ message: "Utilisateur introuvable." });
     }
 
-    return res.json({ user, profile: user.profile });
+    const profile =
+      user.profile || {
+        accountType: AccountType.INDIVIDUAL,
+      };
+
+    return res.json({ user: { ...user, profile }, profile });
   } catch (error) {
     console.error("[account] Erreur lors de la récupération du profil", error);
     return res.status(500).json({
@@ -107,9 +113,27 @@ export async function updateAccountProfile(req: Request, res: Response) {
     billingCity,
     billingCountry,
     phone,
+    accountType,
   } = (req.body ?? {}) as Record<string, string | undefined>;
 
+  const normalizeAccountType = (value?: string): AccountType | null => {
+    const normalized = (value || "").toUpperCase();
+    if (!normalized) return null;
+    if (normalized === "PROFESSIONAL") return "PROFESSIONAL";
+    if (normalized === "ASSOCIATION") return "ASSOCIATION";
+    if (normalized === "INDIVIDUAL") return "INDIVIDUAL";
+    return null;
+  };
+
   try {
+    const resolvedAccountType = normalizeAccountType(accountType);
+    if (accountType && !resolvedAccountType) {
+      return res.status(400).json({
+        message:
+          "Statut de compte invalide. Valeurs autorisées : INDIVIDUAL, PROFESSIONAL ou ASSOCIATION.",
+      });
+    }
+
     const sanitizedData = {
       firstName: firstName?.trim() || null,
       lastName: lastName?.trim() || null,
@@ -121,6 +145,7 @@ export async function updateAccountProfile(req: Request, res: Response) {
       billingCity: billingCity?.trim() || null,
       billingCountry: billingCountry?.trim() || null,
       phone: phone?.trim() || null,
+      accountType: resolvedAccountType || undefined,
     };
 
     const [user, profile] = await prisma.$transaction([
@@ -134,7 +159,11 @@ export async function updateAccountProfile(req: Request, res: Response) {
       }),
       prisma.userProfile.upsert({
         where: { userId },
-        create: { userId, ...sanitizedData },
+        create: {
+          userId,
+          ...sanitizedData,
+          accountType: sanitizedData.accountType || AccountType.INDIVIDUAL,
+        },
         update: { ...sanitizedData },
       }),
     ]);
