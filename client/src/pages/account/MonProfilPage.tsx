@@ -107,7 +107,7 @@ const MonProfilPage: React.FC = () => {
   };
 
   return (
-    <main className="bg-white min-h-screen py-10">
+    <main className="page-halo-neutral bg-white min-h-screen py-10">
       <div className="max-w-6xl mx-auto px-4 lg:px-8">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-slate-900">
