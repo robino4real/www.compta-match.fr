@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
 
 interface InvoiceSummary {
@@ -31,6 +32,7 @@ const statusColor: Record<string, string> = {
 };
 
 const AccountOrdersPage: React.FC = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = React.useState<OrderSummary[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -67,6 +69,25 @@ const AccountOrdersPage: React.FC = () => {
   return (
     <main className="bg-white min-h-screen py-10">
       <div className="max-w-5xl mx-auto px-4 lg:px-8 space-y-6">
+        <div className="flex">
+          <button
+            onClick={() => navigate("/compte")}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:border-black hover:text-black"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.6}
+              stroke="currentColor"
+              className="h-4 w-4"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5m-7.5 7.5h12" />
+            </svg>
+            Retour à mon profil
+          </button>
+        </div>
+
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Espace client</p>
           <h1 className="text-2xl md:text-3xl font-semibold text-slate-900">Mes commandes</h1>
