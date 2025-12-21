@@ -2,10 +2,12 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { DownloadableProductsSection } from "../components/downloadable-products/DownloadableProductsSection";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function DownloadableProductsPage() {
   const navigate = useNavigate();
   const { items, lastAdditionTimestamp } = useCart();
+  const { user, isLoading } = useAuth();
   const [isCartBouncing, setIsCartBouncing] = React.useState(false);
 
   React.useEffect(() => {
@@ -24,6 +26,10 @@ export default function DownloadableProductsPage() {
       navigate("/");
     }
   }, [navigate]);
+
+  const authButtonLabel = user ? "Mon compte" : "Se connecter";
+  const authButtonTarget = user ? "/compte" : "/auth/login";
+  const userInitial = !isLoading && user?.email ? user.email.charAt(0).toUpperCase() : null;
 
   return (
     <main className="hero-logiciels relative min-h-screen bg-[#04140c] text-white">
@@ -50,23 +56,29 @@ export default function DownloadableProductsPage() {
 
           <div className="fixed right-[1cm] top-[clamp(1.25rem,3vw,2.5rem)] z-30 flex items-center gap-3">
             <Link
-              to="/auth/login"
+              to={authButtonTarget}
               className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/15 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 sm:h-auto sm:w-auto sm:gap-2 sm:px-5 sm:py-2.5"
-              aria-label="Se connecter"
+              aria-label={authButtonLabel}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="h-6 w-6 sm:hidden"
-              >
-                <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Z" />
-                <path d="M4 20a8 8 0 0 1 16 0" />
-              </svg>
-              <span className="sr-only">Se connecter</span>
-              <span className="hidden sm:inline">Se connecter</span>
+              {userInitial ? (
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-lg font-semibold text-white sm:h-8 sm:w-8">
+                  {userInitial}
+                </span>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="h-6 w-6 sm:hidden"
+                >
+                  <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Z" />
+                  <path d="M4 20a8 8 0 0 1 16 0" />
+                </svg>
+              )}
+              <span className="sr-only">{authButtonLabel}</span>
+              <span className="hidden sm:inline">{authButtonLabel}</span>
             </Link>
             <Link
               to="/panier"
