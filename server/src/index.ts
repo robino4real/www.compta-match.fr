@@ -81,14 +81,39 @@ app.use("/api", apiRouter);
 app.get("/robots.txt", robotsTxtHandler);
 app.get("/sitemap.xml", sitemapHandler);
 
-// Servez toujours le build Vite généré dans client/dist pour éviter de renvoyer
-// d'anciennes versions du site lorsque l'utilisateur rafraîchit la page.
-const frontendDir = path.resolve(__dirname, "..", "..", "client", "dist");
-app.use(express.static(frontendDir));
+// Servez toujours le build Vite généré (emplacement configurable)
+// On privilégie toujours le build le plus récent : variable d'environnement,
+// puis build local client/dist, puis fallback server/frontend (archive de déploiement).
+const frontendDirCandidates = [
+  process.env.FRONTEND_DIST_DIR
+    ? path.resolve(process.env.FRONTEND_DIST_DIR)
+    : null,
+  // Emplacement par défaut en développement : client/dist
+  path.resolve(__dirname, "..", "..", "client", "dist"),
+  // Dossier utilisé lors du packaging pour cPanel : server/frontend
+  path.resolve(__dirname, "..", "frontend"),
+].filter(Boolean) as string[];
+
+const frontendDir = frontendDirCandidates.find((candidate) => fs.existsSync(candidate));
+
+if (!frontendDir) {
+  console.warn(
+    "[frontend] Aucun build front trouvé. Attendu dans l'un des chemins suivants :",
+    frontendDirCandidates,
+  );
+}
+
+if (frontendDir) {
+  app.use(express.static(frontendDir));
+}
 
 app.get("*", (req, res, next) => {
   if (req.path.startsWith("/api")) {
     return next();
+  }
+
+  if (!frontendDir) {
+    return res.status(404).send("Interface front-end introuvable (build manquant).");
   }
 
   const indexPath = path.join(frontendDir, "index.html");
