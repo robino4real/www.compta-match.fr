@@ -105,7 +105,7 @@ const AccountSettingsPage: React.FC = () => {
   };
 
   return (
-    <main className="bg-white min-h-screen py-10">
+    <main className="page-halo-neutral bg-white min-h-screen py-10">
       <div className="max-w-3xl mx-auto px-4 lg:px-8 space-y-6">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Espace client</p>
