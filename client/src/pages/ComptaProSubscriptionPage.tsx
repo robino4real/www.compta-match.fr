@@ -68,7 +68,7 @@ const ComptaProSubscriptionPage: React.FC = () => {
   const handleProAccessClick = () => {
     if (isAuthLoading) return;
 
-    navigate("/mon-espace-pro");
+    window.open("/mon-espace-pro", "_blank", "noopener,noreferrer");
   };
 
   const ctaButtonClasses =

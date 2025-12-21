@@ -59,6 +59,10 @@ const ComptAssoSubscriptionPage: React.FC = () => {
     navigate("/nouvelle-page");
   };
 
+  const handleAssoAccessClick = () => {
+    window.open("/mon-espace-asso", "_blank", "noopener,noreferrer");
+  };
+
   const ctaButtonClasses =
     "inline-flex items-center justify-center rounded-full bg-black/80 px-6 py-3 text-sm font-semibold text-white shadow-sm transition transform hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-400 disabled:cursor-not-allowed";
 
@@ -143,9 +147,9 @@ const ComptAssoSubscriptionPage: React.FC = () => {
             </p>
 
             <div className="flex flex-wrap justify-center gap-3 pt-3 pb-4">
-              <a href="/comparatif-des-offres" className={ctaButtonClasses}>
+              <button type="button" onClick={handleAssoAccessClick} className={ctaButtonClasses}>
                 Accéder à mon espace Asso
-              </a>
+              </button>
             </div>
           </div>
         </section>

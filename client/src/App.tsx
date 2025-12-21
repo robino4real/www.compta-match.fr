@@ -48,6 +48,7 @@ import LegalPage from "./pages/LegalPage";
 import AuthLoginPage from "./pages/AuthLoginPage";
 import AuthRegisterPage from "./pages/AuthRegisterPage";
 import ProSpacePage from "./pages/ProSpacePage";
+import AssoSpacePage from "./pages/AssoSpacePage";
 
 const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { admin, isLoading } = useAdminAuth();
@@ -122,6 +123,7 @@ const App: React.FC = () => {
         </Route>
 
         <Route path="/mon-espace-pro" element={<ProSpacePage />} />
+        <Route path="/mon-espace-asso" element={<AssoSpacePage />} />
 
         <Route path="/admin" element={<AdminLayoutWrapper />}>
           <Route index element={<AdminDashboardPage />} />
