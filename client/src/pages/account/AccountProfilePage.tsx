@@ -12,6 +12,7 @@ interface ProfilePayload {
   billingCity?: string | null;
   billingCountry?: string | null;
   phone?: string | null;
+  accountType?: "INDIVIDUAL" | "PROFESSIONAL" | "ASSOCIATION";
 }
 
 const AccountProfilePage: React.FC = () => {
@@ -43,6 +44,7 @@ const AccountProfilePage: React.FC = () => {
           billingCity: data?.profile?.billingCity || "",
           billingCountry: data?.profile?.billingCountry || "",
           phone: data?.profile?.phone || "",
+          accountType: data?.profile?.accountType || "INDIVIDUAL",
         });
       } catch (err) {
         const message = err instanceof Error ? err.message : "Erreur inconnue";
@@ -136,6 +138,30 @@ const AccountProfilePage: React.FC = () => {
                   onChange={(e) => handleChange("lastName", e.target.value)}
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="accountType" className="text-xs font-semibold text-slate-800">
+                Statut du compte
+              </label>
+              <select
+                id="accountType"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-inner focus:border-black focus:outline-none"
+                value={profile.accountType || "INDIVIDUAL"}
+                onChange={(e) =>
+                  handleChange(
+                    "accountType",
+                    e.target.value as "INDIVIDUAL" | "PROFESSIONAL" | "ASSOCIATION"
+                  )
+                }
+              >
+                <option value="INDIVIDUAL">Particulier</option>
+                <option value="PROFESSIONAL">Professionnel</option>
+                <option value="ASSOCIATION">Association</option>
+              </select>
+              <p className="text-[11px] text-slate-500">
+                Ces informations permettent de pré-remplir vos coordonnées de facturation.
+              </p>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">

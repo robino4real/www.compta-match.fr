@@ -8,12 +8,41 @@ export interface AuthUser {
   lastName?: string | null;
   role?: string;
   isEmailVerified?: boolean;
+  profile?: {
+    accountType?: "INDIVIDUAL" | "PROFESSIONAL" | "ASSOCIATION";
+    companyName?: string | null;
+    vatNumber?: string | null;
+    siret?: string | null;
+    billingStreet?: string | null;
+    billingZip?: string | null;
+    billingCity?: string | null;
+    billingCountry?: string | null;
+    phone?: string | null;
+  };
 }
 
 interface ClientAuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   refreshUser: () => Promise<void>;
+  register: (
+    payload: {
+      email: string;
+      password: string;
+      firstName: string;
+      lastName: string;
+      accountType: "INDIVIDUAL" | "PROFESSIONAL" | "ASSOCIATION";
+      address1: string;
+      address2?: string;
+      postalCode: string;
+      city: string;
+      country: string;
+      companyName?: string;
+      vatNumber?: string;
+      siret?: string;
+      phone?: string;
+    }
+  ) => Promise<{ success: boolean; message?: string }>;
   login: (
     email: string,
     password: string
@@ -64,6 +93,56 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({
       setUser(null);
     }
   }, []);
+
+  const register = React.useCallback(
+    async (payload: {
+      email: string;
+      password: string;
+      firstName: string;
+      lastName: string;
+      accountType: "INDIVIDUAL" | "PROFESSIONAL" | "ASSOCIATION";
+      address1: string;
+      address2?: string;
+      postalCode: string;
+      city: string;
+      country: string;
+      companyName?: string;
+      vatNumber?: string;
+      siret?: string;
+      phone?: string;
+    }): Promise<{ success: boolean; message?: string }> => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(buildApiUrl("/auth/register"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (response.ok && data?.user) {
+          setUser(data.user as AuthUser);
+          return { success: true };
+        }
+
+        return {
+          success: false,
+          message: data?.message || "Impossible de créer le compte.",
+        };
+      } catch (error) {
+        console.error("Error during registration", error);
+        return {
+          success: false,
+          message: "Impossible de traiter la demande d'inscription.",
+        };
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
 
   const login = React.useCallback(
     async (
@@ -152,8 +231,8 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({
   }, []);
 
   const value: ClientAuthContextValue = React.useMemo(
-    () => ({ user, isLoading, refreshUser, login, logout }),
-    [user, isLoading, refreshUser, login, logout]
+    () => ({ user, isLoading, refreshUser, register, login, logout }),
+    [user, isLoading, refreshUser, register, login, logout]
   );
 
   return (

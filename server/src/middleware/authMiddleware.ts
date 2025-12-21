@@ -10,6 +10,8 @@ declare global {
       email: string;
       role: string;
       isEmailVerified: boolean;
+      firstName?: string | null;
+      lastName?: string | null;
       createdAt: Date;
     }
   }

@@ -41,6 +41,12 @@ enum VatRegime {
   OTHER
 }
 
+enum AccountType {
+  INDIVIDUAL
+  PROFESSIONAL
+  ASSOCIATION
+}
+
 model Order {
   id        String      @id @default(cuid())
   userId    String
@@ -611,6 +617,7 @@ model UserProfile {
   billingCity    String?
   billingCountry String?
   phone          String?
+  accountType    AccountType @default(INDIVIDUAL)
 
   user User @relation(fields: [userId], references: [id])
 }

@@ -84,6 +84,12 @@ const CheckoutPage: React.FC = () => {
       firstName: prev.firstName || user?.firstName || "",
       lastName: prev.lastName || user?.lastName || "",
       email: prev.email || user?.email || "",
+      company: prev.company || user?.profile?.companyName || "",
+      address1: prev.address1 || user?.profile?.billingStreet || "",
+      postalCode: prev.postalCode || user?.profile?.billingZip || "",
+      city: prev.city || user?.profile?.billingCity || "",
+      country: prev.country || user?.profile?.billingCountry || "France",
+      vatNumber: prev.vatNumber || user?.profile?.vatNumber || "",
     }));
   }, [user]);
 
