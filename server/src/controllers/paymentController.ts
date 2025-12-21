@@ -89,6 +89,27 @@ function buildSuccessUrl(baseUrl: string): string {
   return `${baseUrl}${separator}session_id={CHECKOUT_SESSION_ID}`;
 }
 
+function buildFreeOrderSuccessUrl(baseUrl: string, orderId: string): string {
+  const cleanedBase = baseUrl.replace(/([?&])session_id=\{CHECKOUT_SESSION_ID\}/, "");
+  const separator = cleanedBase.includes("?") ? "&" : "?";
+  return `${cleanedBase}${separator}order_id=${encodeURIComponent(orderId)}`;
+}
+
+function buildOrderItemsPayload(
+  normalizedItems: { productId: string; quantity: number; binaryId?: string | null; platform?: DownloadPlatform | null }[],
+  productMap: Record<string, Awaited<ReturnType<typeof prisma.downloadableProduct.findMany>>[number]>
+) {
+  return normalizedItems.map((it) => ({
+    productId: it.productId,
+    productNameSnapshot: productMap[it.productId].name,
+    priceCents: productMap[it.productId].priceCents,
+    quantity: it.quantity,
+    lineTotal: productMap[it.productId].priceCents * it.quantity,
+    binaryId: it.binaryId,
+    platform: it.platform,
+  }));
+}
+
 /**
  * Création d'une session Stripe Checkout pour les logiciels téléchargeables.
  * Nécessite un utilisateur connecté.
@@ -105,6 +126,11 @@ export async function createDownloadCheckoutSession(
     const userId = request.user?.id;
     if (!userId) {
       return res.status(401).json({ message: "Utilisateur non authentifié." });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ message: "Utilisateur introuvable." });
     }
 
     const { items, promoCode, billing, acceptedTerms, acceptedLicense } =
@@ -150,13 +176,7 @@ export async function createDownloadCheckoutSession(
       });
     }
 
-    const { totalCents, totalsByCategory, normalizedItems } = cartComputation;
-
-    if (totalCents <= 0) {
-      return res.status(400).json({
-        message: "Le montant de la commande doit être supérieur à 0.",
-      });
-    }
+    const { totalCents, totalsByCategory, normalizedItems, productMap } = cartComputation;
 
     let appliedPromo: PromoCode | null = null;
     let promoDiscountCents = 0;
@@ -180,22 +200,76 @@ export async function createDownloadCheckoutSession(
 
     const payableCents = totalCents - promoDiscountCents;
 
-    if (payableCents <= 0) {
-      return res.status(400).json({
-        message: "Le montant après réduction doit être strictement supérieur à 0.",
-      });
-    }
-
     const billingName = `${billingInfo.firstName} ${billingInfo.lastName}`.trim();
     const billingAddress = buildBillingAddress(billingInfo);
 
-    const successUrl = buildSuccessUrl(
-      process.env.STRIPE_SUCCESS_URL ||
-        "http://localhost:5173/paiement/success"
-    );
+    const baseSuccessUrl =
+      process.env.STRIPE_SUCCESS_URL || "http://localhost:5173/paiement/success";
     const cancelUrl =
-      process.env.STRIPE_CANCEL_URL ||
-      "http://localhost:5173/paiement/cancel";
+      process.env.STRIPE_CANCEL_URL || "http://localhost:5173/paiement/cancel";
+
+    if (payableCents <= 0) {
+      const currency =
+        productMap[normalizedItems[0].productId]?.currency?.toUpperCase() ||
+        (process.env.CURRENCY || "EUR").toUpperCase();
+
+      const order = await prisma.order.create({
+        data: {
+          userId,
+          totalBeforeDiscount: totalCents,
+          discountAmount: promoDiscountCents > 0 ? promoDiscountCents : 0,
+          totalPaid: 0,
+          currency,
+          status: "PAID",
+          paidAt: new Date(),
+          promoCodeId: appliedPromo ? appliedPromo.id : null,
+          billingNameSnapshot: billingName,
+          billingEmailSnapshot: billingInfo.email,
+          billingAddressSnapshot: billingAddress || null,
+          acceptedTerms,
+          acceptedLicense,
+          items: {
+            create: buildOrderItemsPayload(normalizedItems, productMap),
+          },
+        },
+        include: {
+          items: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      });
+
+      await generateDownloadLinksForOrder(order.id, userId);
+
+      const invoice = await createInvoiceForOrder({
+        order,
+        user,
+        billingEmail: billingInfo.email,
+        billingName,
+        billingAddress,
+      });
+
+      if (appliedPromo && promoDiscountCents > 0) {
+        await prisma.promoCode.update({
+          where: { id: appliedPromo.id },
+          data: {
+            currentUses: {
+              increment: 1,
+            },
+          },
+        });
+      }
+
+      await sendOrderConfirmationEmail(order.id);
+      if (invoice) {
+        await sendInvoiceAvailableEmail(invoice.id);
+      }
+
+      const successUrl = buildFreeOrderSuccessUrl(baseSuccessUrl, order.id);
+      return res.status(201).json({ url: successUrl });
+    }
 
     // On stocke les infos nécessaires dans metadata pour les récupérer dans le webhook
     const metadata = {
@@ -221,6 +295,7 @@ export async function createDownloadCheckoutSession(
     };
 
     const currency = (process.env.CURRENCY || "eur").toLowerCase();
+    const successUrl = buildSuccessUrl(baseSuccessUrl);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -603,19 +678,22 @@ export async function getDownloadCheckoutConfirmation(
   try {
     const userId = request.user?.id;
     const sessionId = req.query.session_id as string | undefined;
+    const orderId = req.query.order_id as string | undefined;
 
     if (!userId) {
       return res.status(401).json({ message: "Utilisateur non authentifié." });
     }
 
-    if (!sessionId || !sessionId.trim()) {
+    if ((!sessionId || !sessionId.trim()) && (!orderId || !orderId.trim())) {
       return res
         .status(400)
-        .json({ message: "Identifiant de session Stripe manquant." });
+        .json({ message: "Identifiant de paiement manquant." });
     }
 
     const order = await prisma.order.findFirst({
-      where: { stripeSessionId: sessionId, userId },
+      where: orderId
+        ? { id: orderId, userId }
+        : { stripeSessionId: sessionId || "", userId },
       include: {
         items: {
           include: {
