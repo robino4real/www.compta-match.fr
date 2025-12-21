@@ -42,10 +42,11 @@ const PaymentSuccessPage: React.FC = () => {
   }, [downloadStartedAt]);
 
   React.useEffect(() => {
-    const sessionId = searchParams.get("session_id");
+    const sessionId = searchParams.get("session_id") || undefined;
+    const orderId = searchParams.get("order_id") || undefined;
 
-    if (!sessionId) {
-      setError("Lien de confirmation invalide : session Stripe manquante.");
+    if (!sessionId && !orderId) {
+      setError("Lien de confirmation invalide : identifiant de paiement manquant.");
       setLoading(false);
       return;
     }
@@ -54,7 +55,10 @@ const PaymentSuccessPage: React.FC = () => {
 
     const fetchConfirmation = async () => {
       try {
-        const data = await fetchDownloadConfirmation(sessionId, controller.signal);
+        const data = await fetchDownloadConfirmation(
+          { sessionId, orderId },
+          controller.signal
+        );
         setConfirmation(data);
       } catch (err) {
         if (controller.signal.aborted) return;

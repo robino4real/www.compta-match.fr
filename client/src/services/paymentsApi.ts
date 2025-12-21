@@ -56,13 +56,19 @@ export async function createDownloadCheckoutSession(options: {
 }
 
 export async function fetchDownloadConfirmation(
-  sessionId: string,
+  params: { sessionId?: string; orderId?: string },
   signal?: AbortSignal
 ): Promise<DownloadConfirmationResponse> {
+  const searchParams = new URLSearchParams();
+  if (params.sessionId) {
+    searchParams.set("session_id", params.sessionId);
+  }
+  if (params.orderId) {
+    searchParams.set("order_id", params.orderId);
+  }
+
   return apiFetch<DownloadConfirmationResponse>(
-    `${API_BASE_URL}/payments/downloads/confirmation?session_id=${encodeURIComponent(
-      sessionId
-    )}`,
+    `${API_BASE_URL}/payments/downloads/confirmation?${searchParams.toString()}`,
     {
       method: "GET",
       signal,
