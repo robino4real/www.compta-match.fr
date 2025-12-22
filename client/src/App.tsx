@@ -49,6 +49,7 @@ import AuthLoginPage from "./pages/AuthLoginPage";
 import AuthRegisterPage from "./pages/AuthRegisterPage";
 import ProSpacePage from "./pages/ProSpacePage";
 import AssoSpacePage from "./pages/AssoSpacePage";
+import PageBuilderPage from "./pages/PageBuilderPage";
 
 const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { admin, isLoading } = useAdminAuth();
@@ -76,6 +77,8 @@ const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 };
 
 const App: React.FC = () => {
+  const NotFoundRedirect = <Navigate to="/" replace />;
+
   const MainLayoutWrapper: React.FC = () => (
     <MainLayout>
       <Outlet />
@@ -96,13 +99,32 @@ const App: React.FC = () => {
       <Routes>
         <Route element={<MainLayoutWrapper />}>
           <Route path="/" element={<HomePage />} />
-          <Route path="/comparatif-des-offres" element={<CompareOffersPage />} />
+          <Route
+            path="/comparatif-des-offres"
+            element={<PageBuilderPage route="/comparatif-des-offres" fallback={<CompareOffersPage />} />}
+          />
           <Route path="/offres" element={<Navigate to="/comparatif-des-offres" replace />} />
-          <Route path="/logiciels" element={<DownloadableProductsPage />} />
-          <Route path="/comptapro" element={<ComptaProSubscriptionPage />} />
+          <Route
+            path="/logiciels"
+            element={<PageBuilderPage route="/logiciels" fallback={<DownloadableProductsPage />} />}
+          />
+          <Route
+            path="/comptapro"
+            element={<PageBuilderPage route="/comptapro" fallback={<ComptaProSubscriptionPage />} />}
+          />
           <Route path="/comptapro/:planSlug" element={<ComptaProPlanDetailPage />} />
-          <Route path="/comptasso" element={<ComptAssoSubscriptionPage />} />
+          <Route
+            path="/comptasso"
+            element={<PageBuilderPage route="/comptasso" fallback={<ComptAssoSubscriptionPage />} />}
+          />
           <Route path="/comptasso/:planSlug" element={<ComptAssoLanding />} />
+          {["/faq", "/cgv", "/mentions-legales", "/confidentialite", "/cookies"].map((path) => (
+            <Route
+              key={path}
+              path={path}
+              element={<PageBuilderPage route={path} fallback={<LegalPage slugOverride={path.replace("/", "")} />} />}
+            />
+          ))}
           <Route path="/découverte" element={<DiscoveryPage />} />
           <Route path="/decouverte" element={<Navigate to="/découverte" replace />} />
           <Route path="/panier" element={<CartPage />} />
@@ -119,7 +141,7 @@ const App: React.FC = () => {
             <Route path="/compte/parametres" element={<AccountSettingsPage />} />
             <Route path="/compte/informations" element={<AccountProfilePage />} />
           </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={NotFoundRedirect} />
         </Route>
 
         <Route path="/mon-espace-pro" element={<ProSpacePage />} />

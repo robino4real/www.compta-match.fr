@@ -12,8 +12,13 @@ interface LegalPageDto {
   updatedAt?: string;
 }
 
-const LegalPage: React.FC = () => {
-  const { legalSlug } = useParams<{ legalSlug: string }>();
+type LegalPageProps = {
+  slugOverride?: string;
+};
+
+const LegalPage: React.FC<LegalPageProps> = ({ slugOverride }) => {
+  const { legalSlug: routeSlug } = useParams<{ legalSlug: string }>();
+  const legalSlug = slugOverride || routeSlug;
   const [page, setPage] = useState<LegalPageDto | null>(null);
   const [structuredData, setStructuredData] = useState<any[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +26,10 @@ const LegalPage: React.FC = () => {
 
   useEffect(() => {
     const loadPage = async () => {
-      if (!legalSlug) return;
+      if (!legalSlug) {
+        setIsLoading(false);
+        return;
+      }
       try {
         setIsLoading(true);
         setError(null);
