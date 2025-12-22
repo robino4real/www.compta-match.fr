@@ -77,6 +77,8 @@ const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 };
 
 const App: React.FC = () => {
+  const NotFoundRedirect = <Navigate to="/" replace />;
+
   const MainLayoutWrapper: React.FC = () => (
     <MainLayout>
       <Outlet />
@@ -139,7 +141,7 @@ const App: React.FC = () => {
             <Route path="/compte/parametres" element={<AccountSettingsPage />} />
             <Route path="/compte/informations" element={<AccountProfilePage />} />
           </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={NotFoundRedirect} />
         </Route>
 
         <Route path="/mon-espace-pro" element={<ProSpacePage />} />
