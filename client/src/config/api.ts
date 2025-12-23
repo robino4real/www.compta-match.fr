@@ -8,19 +8,11 @@ const normalizePath = (path: string) => {
   return prefixed.replace(/\/+/g, "/");
 };
 
+const DEFAULT_API_BASE_URL = "https://api.compta-match.fr";
+
 const inferBaseUrl = () => {
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return appendApiSuffix(import.meta.env.VITE_API_BASE_URL);
-  }
-
-  if (typeof window !== "undefined" && window.location?.origin) {
-    // Utilise un chemin relatif lorsque le front et l'API partagent le même
-    // domaine pour éviter les erreurs de connexion liées aux différences de
-    // port ou de protocole (http/https).
-    return "/api";
-  }
-
-  return "http://localhost:4000/api";
+  const base = import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL;
+  return appendApiSuffix(base);
 };
 
 export const API_BASE_URL = inferBaseUrl();

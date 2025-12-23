@@ -131,6 +131,8 @@ ensureAdminAccount().catch((error) => {
   console.error("[admin] Impossible de vérifier/créer le compte administrateur", error);
 });
 
-app.listen(env.port, () => {
-  console.log(`Serveur ComptaMatch démarré sur le port ${env.port}`);
+const HOST = "0.0.0.0";
+
+app.listen(env.port, HOST, () => {
+  console.log(`Serveur ComptaMatch démarré sur http://${HOST}:${env.port} (IPv4 uniquement)`);
 });
