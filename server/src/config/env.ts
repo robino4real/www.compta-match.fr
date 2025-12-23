@@ -30,6 +30,11 @@ const rawApiBaseUrl = appendApiSuffix(
   process.env.API_BASE_URL || process.env.FRONTEND_BASE_URL || "http://localhost:4000"
 );
 
+const defaultCorsOrigins = [
+  "https://compta-match.fr",
+  "https://www.compta-match.fr",
+];
+
 const extraCorsOrigins = (process.env.ALLOWED_CORS_ORIGINS || "")
   .split(/[,\s]+/)
   .map((origin) => origin.trim())
@@ -38,9 +43,14 @@ const extraCorsOrigins = (process.env.ALLOWED_CORS_ORIGINS || "")
 const frontendOrigin = normalizeOrigin(rawFrontendBaseUrl);
 const apiOrigin = normalizeOrigin(rawApiBaseUrl.replace(/\/api$/, ""));
 const allowCorsOrigins = Array.from(
-  new Set([frontendOrigin, apiOrigin, ...extraCorsOrigins.map(normalizeOrigin)].filter(
-    (value): value is string => Boolean(value)
-  ))
+  new Set(
+    [
+      ...defaultCorsOrigins,
+      frontendOrigin,
+      apiOrigin,
+      ...extraCorsOrigins.map(normalizeOrigin),
+    ].filter((value): value is string => Boolean(value))
+  )
 );
 
 const isCrossSite = frontendOrigin && apiOrigin && frontendOrigin !== apiOrigin;
