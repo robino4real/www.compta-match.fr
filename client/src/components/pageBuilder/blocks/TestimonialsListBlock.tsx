@@ -1,4 +1,5 @@
 import React from "react";
+import { resolveAssetUrl } from "../../../lib/resolveAssetUrl";
 
 interface TestimonialsListBlockProps {
   data: any;
@@ -25,7 +26,11 @@ const TestimonialsListBlock: React.FC<TestimonialsListBlockProps> = ({ data }) =
             <div className="flex items-center gap-3">
               {item.avatarUrl ? (
                 <div className="h-14 w-14 overflow-hidden rounded-full bg-slate-100">
-                  <img src={item.avatarUrl} alt={item.name || "Avatar"} className="h-full w-full object-cover" />
+                  <img
+                    src={resolveAssetUrl(item.avatarUrl)}
+                    alt={item.name || "Avatar"}
+                    className="h-full w-full object-cover"
+                  />
                 </div>
               ) : (
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-500">
