@@ -1,4 +1,5 @@
 import React from "react";
+import { resolveAssetUrl } from "../../../lib/resolveAssetUrl";
 
 import { API_BASE_URL } from "../../../config/api";
 
@@ -75,14 +76,14 @@ const ProductListBlock: React.FC<ProductListBlockProps> = ({ data }) => {
         {products.map((product) => (
           <div
             key={product.id}
-            className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
-          >
-            {product.imageUrl && (
-              <img
-                src={product.imageUrl}
-                alt={product.name}
-                className="mb-4 h-40 w-full rounded-lg object-cover"
-              />
+          className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+        >
+          {product.imageUrl && (
+            <img
+              src={resolveAssetUrl(product.imageUrl)}
+              alt={product.name}
+              className="mb-4 h-40 w-full rounded-lg object-cover"
+            />
             )}
             <h3 className="text-base font-semibold text-black">{product.name}</h3>
             {product.shortDescription && (

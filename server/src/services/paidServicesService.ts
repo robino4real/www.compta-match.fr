@@ -1,5 +1,6 @@
 import { PaidServicePlan, PaidServiceType, Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma";
+import { normalizeUploadUrl } from "../utils/assetPaths";
 
 function sanitizeString(value: unknown) {
   if (typeof value === "string") {
@@ -7,6 +8,12 @@ function sanitizeString(value: unknown) {
     return trimmed.length ? trimmed : null;
   }
   return null;
+}
+
+function sanitizeUpload(value: unknown) {
+  const normalized = normalizeUploadUrl(typeof value === "string" ? value : undefined);
+  if (normalized) return normalized;
+  return sanitizeString(value);
 }
 
 function normalizeBoolean(value: unknown, fallback: boolean) {
@@ -269,7 +276,7 @@ export async function createSection(data: {
     data: {
       title: data.title.trim(),
       body: data.body,
-      imageUrl: sanitizeString(data.imageUrl),
+      imageUrl: sanitizeUpload(data.imageUrl),
       sortOrder: normalizeInt(data.sortOrder, 0),
       isPublished: normalizeBoolean(data.isPublished, true),
       serviceType: data.serviceType || PaidServiceType.COMPTAPRO,
@@ -292,7 +299,7 @@ export async function updateSection(
       imageUrl:
         typeof data.imageUrl === "undefined"
           ? existing.imageUrl
-          : sanitizeString(data.imageUrl),
+          : sanitizeUpload(data.imageUrl),
       sortOrder:
         typeof data.sortOrder === "undefined"
           ? existing.sortOrder

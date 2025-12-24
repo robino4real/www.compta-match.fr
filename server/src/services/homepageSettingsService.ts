@@ -1,5 +1,6 @@
 import { HomepageSettings } from "@prisma/client";
 import { prisma } from "../config/prisma";
+import { normalizeUploadUrl } from "../utils/assetPaths";
 
 type FeatureCard = { title: string; text: string; iconUrl?: string };
 
@@ -127,6 +128,12 @@ function sanitize(value: unknown): string | undefined {
   return undefined;
 }
 
+function sanitizeUpload(value: unknown): string | undefined {
+  const normalized = normalizeUploadUrl(typeof value === "string" ? value : undefined);
+  if (normalized) return normalized;
+  return sanitize(value);
+}
+
 function sanitizeFeatureList(value: unknown): FeatureCard[] | undefined {
   if (!Array.isArray(value)) return undefined;
 
@@ -134,7 +141,7 @@ function sanitizeFeatureList(value: unknown): FeatureCard[] | undefined {
     .map((entry) => ({
       title: sanitize((entry as any)?.title) || "",
       text: sanitize((entry as any)?.text) || "",
-      iconUrl: sanitize((entry as any)?.iconUrl) || "",
+      iconUrl: sanitizeUpload((entry as any)?.iconUrl) || "",
     }))
     .filter((entry) => entry.title || entry.text || entry.iconUrl);
 
@@ -155,7 +162,7 @@ function sanitizeHeroSections(value: unknown): HeroSection[] | undefined {
         subtitle: sanitize((entry as any)?.subtitle) || "",
         buttonLabel: sanitize((entry as any)?.buttonLabel) || "",
         buttonLink: sanitize((entry as any)?.buttonLink) || "",
-        illustrationUrl: sanitize((entry as any)?.illustrationUrl) || "",
+        illustrationUrl: sanitizeUpload((entry as any)?.illustrationUrl) || "",
         align,
       };
     })
@@ -202,7 +209,7 @@ function sanitizeBlocks(value: unknown): HomepageContentBlock[] | undefined {
         buttonLink: sanitize((entry as any)?.buttonLink) || "",
         bullets,
         badge: sanitize((entry as any)?.badge) || "",
-        imageUrl: sanitize((entry as any)?.imageUrl) || "",
+        imageUrl: sanitizeUpload((entry as any)?.imageUrl) || "",
         mutedText: sanitize((entry as any)?.mutedText) || "",
         imagePosition,
         revealAnimation,
@@ -328,17 +335,14 @@ export async function updateHomepageSettings(
   );
   const defaultHeroIllustrationUrl =
     DEFAULT_HOME_SETTINGS.heroIllustrationUrl ?? "";
-  const heroIllustrationUrl = withDefault(
-    payload.heroIllustrationUrl,
-    existing.heroIllustrationUrl ?? defaultHeroIllustrationUrl
+  const heroIllustrationUrl = sanitizeUpload(
+    withDefault(payload.heroIllustrationUrl, existing.heroIllustrationUrl ?? defaultHeroIllustrationUrl)
   );
-  const navbarLogoUrl = withDefault(
-    payload.navbarLogoUrl,
-    existing.navbarLogoUrl ?? DEFAULT_HOME_SETTINGS.navbarLogoUrl ?? ""
+  const navbarLogoUrl = sanitizeUpload(
+    withDefault(payload.navbarLogoUrl, existing.navbarLogoUrl ?? DEFAULT_HOME_SETTINGS.navbarLogoUrl ?? "")
   );
-  const faviconUrl = withDefault(
-    payload.faviconUrl,
-    existing.faviconUrl ?? DEFAULT_HOME_SETTINGS.faviconUrl ?? ""
+  const faviconUrl = sanitizeUpload(
+    withDefault(payload.faviconUrl, existing.faviconUrl ?? DEFAULT_HOME_SETTINGS.faviconUrl ?? "")
   );
 
   const seoTitle = withDefault(

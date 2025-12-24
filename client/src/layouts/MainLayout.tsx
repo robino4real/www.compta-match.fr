@@ -3,6 +3,7 @@ import { MainNavbar } from "../components/layout/MainNavbar";
 import { useHomepageSettings } from "../hooks/useHomepageSettings";
 import Footer from "../components/Footer";
 import { useLocation } from "react-router-dom";
+import { resolveAssetUrl } from "../lib/resolveAssetUrl";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -41,8 +42,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   );
 
   React.useEffect(() => {
-    const faviconCandidate = data.branding?.faviconUrl?.trim() || data.branding?.navbarLogoUrl?.trim();
-    if (!faviconCandidate) return;
+    const faviconCandidate =
+      data.branding?.faviconUrl?.trim() || data.branding?.navbarLogoUrl?.trim();
+    const resolvedFavicon = resolveAssetUrl(faviconCandidate);
+    if (!resolvedFavicon) return;
 
     let link = document.querySelector<HTMLLinkElement>("link[rel='icon']");
     if (!link) {
@@ -51,7 +54,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       document.head.appendChild(link);
     }
 
-    link.href = faviconCandidate;
+    link.href = resolvedFavicon;
   }, [data.branding?.faviconUrl, data.branding?.navbarLogoUrl]);
 
   return (

@@ -31,6 +31,11 @@ Ce guide décrit le packaging local (macOS ou environnement de build) et l'uploa
   npx prisma generate
   npm run build
   ```
+- Téléversements : les fichiers envoyés via le back-office sont stockés dans `DOWNLOADS_STORAGE_DIR` (défaut : `/home/<user>/comptamatch_uploads`).
+- L'API sert ces fichiers en statique sous `/uploads` (ex: `https://api.compta-match.fr/uploads/<fichier>`). Les URL stockées en base doivent rester **relatives** (`/uploads/xxx`).
+- Variables d'env clés :
+  - `PUBLIC_BASE_URL=https://api.compta-match.fr` (construction des URL absolues côté API)
+  - `VITE_API_BASE_URL=https://api.compta-match.fr` côté front : le helper `resolveAssetUrl` préfixe automatiquement les chemins `/uploads/` et corrige les anciennes URL `compta-match.fr/uploads`.
 - Contenu à déployer dans l'application Node cPanel (nodevenv) :
   - `server/dist/` (build TypeScript)
   - `server/node_modules/.prisma` et `server/node_modules/@prisma` (client Prisma généré)
@@ -50,6 +55,9 @@ Ce guide décrit le packaging local (macOS ou environnement de build) et l'uploa
 - [ ] Placer le `.htaccess` SPA dans `public_html/`.
 - [ ] Compiler le back (`npm ci`, `npx prisma generate`, `npm run build`) en local.
 - [ ] Uploader `server/dist`, `server/node_modules` (dont `.prisma`), `server/package*.json`, `server/prisma` et le `.env` privé dans le répertoire nodevenv du sous-domaine `api.compta-match.fr`.
+- [ ] (Legacy) Normaliser les URL d'upload existantes :
+  - `cd server`
+  - `npx ts-node src/scripts/migrate-upload-urls.ts`
 - [ ] Configurer l'application Node cPanel : Root `server/`, Startup file `dist/index.js`, Node 20.
 - [ ] Vérifier que le backend n'est **pas** attaché au domaine racine.
 - [ ] DNS : aucun AAAA sur le domaine ni le sous-domaine.

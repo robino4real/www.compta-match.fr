@@ -1,4 +1,5 @@
 import React from "react";
+import { resolveAssetUrl } from "../lib/resolveAssetUrl";
 import { Link, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
 import {
@@ -247,7 +248,11 @@ const ComptaProSubscriptionPage: React.FC = () => {
                             index % 2 === 1 ? "order-1 lg:order-2" : ""
                           }`}
                         >
-                          <img src={section.imageUrl} alt={section.title} className="w-full h-auto object-cover" />
+                          <img
+                            src={resolveAssetUrl(section.imageUrl)}
+                            alt={section.title}
+                            className="w-full h-auto object-cover"
+                          />
                         </div>
                       )}
                     </section>

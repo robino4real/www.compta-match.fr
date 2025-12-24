@@ -1,5 +1,6 @@
 import { ArticleStatus, Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma";
+import { normalizeUploadUrl } from "../utils/assetPaths";
 
 function normalizeSlug(value: string) {
   const normalized = value
@@ -19,6 +20,12 @@ function sanitizeString(value?: string | null) {
     return trimmed.length > 0 ? trimmed : null;
   }
   return null;
+}
+
+function sanitizeUpload(value?: string | null) {
+  const normalized = normalizeUploadUrl(value ?? undefined);
+  if (normalized) return normalized;
+  return sanitizeString(value);
 }
 
 function sanitizeBoolean(value: unknown, fallback: boolean) {
@@ -94,12 +101,12 @@ export async function createArticle(data: Prisma.ArticleUncheckedCreateInput) {
     content: data.content,
     status: data.status ?? ArticleStatus.DRAFT,
     excerpt: sanitizeString(data.excerpt),
-    coverImageUrl: sanitizeString(data.coverImageUrl),
+    coverImageUrl: sanitizeUpload(data.coverImageUrl),
     seoTitle: sanitizeString(data.seoTitle),
     seoDescription: sanitizeString(data.seoDescription),
     index: sanitizeBoolean((data as any).index, true),
     follow: sanitizeBoolean((data as any).follow, true),
-    ogImageUrl: sanitizeString((data as any).ogImageUrl),
+    ogImageUrl: sanitizeUpload((data as any).ogImageUrl),
     category: sanitizeString(data.category),
     readTimeMinutes: normalizeReadTime(data.readTimeMinutes),
     publishedAt:
@@ -136,7 +143,7 @@ export async function updateArticle(
     coverImageUrl:
       typeof data.coverImageUrl === "undefined"
         ? existing.coverImageUrl
-        : sanitizeString(String(data.coverImageUrl)),
+        : sanitizeUpload(String(data.coverImageUrl)),
     seoTitle:
       typeof data.seoTitle === "undefined"
         ? existing.seoTitle
@@ -156,7 +163,7 @@ export async function updateArticle(
     ogImageUrl:
       typeof (data as any).ogImageUrl === "undefined"
         ? existing.ogImageUrl
-        : sanitizeString((data as any).ogImageUrl),
+        : sanitizeUpload((data as any).ogImageUrl),
     category:
       typeof data.category === "undefined"
         ? existing.category

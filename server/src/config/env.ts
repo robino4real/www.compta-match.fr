@@ -70,6 +70,10 @@ export const env = {
   allowCorsOrigins,
   cookieSameSite,
   cookieSecure,
+  publicBaseUrl:
+    process.env.PUBLIC_BASE_URL ||
+    apiOrigin ||
+    rawApiBaseUrl.replace(/\/api$/, "").replace(/\/$/, ""),
   downloadsStorageDir:
     process.env.DOWNLOADS_STORAGE_DIR ||
     `/home/${process.env.USER || "node"}/comptamatch_uploads`,

@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
 import { uploadAdminImage } from "../../lib/adminUpload";
+import { resolveAssetUrl } from "../../lib/resolveAssetUrl";
 
 type StatusFilter = "active" | "archived" | "all";
 
@@ -625,7 +626,7 @@ const AdminDownloadsPage: React.FC = () => {
                 {thumbnailUrl && (
                   <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700">
                     <img
-                      src={thumbnailUrl}
+                      src={resolveAssetUrl(thumbnailUrl)}
                       alt="Prévisualisation de la vignette"
                       className="h-10 w-10 rounded object-cover"
                     />
@@ -896,12 +897,12 @@ const AdminDownloadsPage: React.FC = () => {
               <div className="grid gap-4 lg:grid-cols-2">
                 <div className="flex flex-col gap-3 md:flex-row">
                   <div className="h-28 w-full rounded-lg bg-slate-100 md:w-40">
-                    {thumbnailUrl ? (
-                      <img
-                        src={thumbnailUrl}
-                        alt="Aperçu visuel"
-                        className="h-full w-full rounded-lg object-cover"
-                      />
+                  {thumbnailUrl ? (
+                    <img
+                      src={resolveAssetUrl(thumbnailUrl)}
+                      alt="Aperçu visuel"
+                      className="h-full w-full rounded-lg object-cover"
+                    />
                     ) : (
                       <div className="flex h-full items-center justify-center text-[11px] text-slate-400">
                         Aucun visuel
@@ -1046,7 +1047,7 @@ const AdminDownloadsPage: React.FC = () => {
                             <div className="h-10 w-10 overflow-hidden rounded-lg bg-slate-100">
                               {product.thumbnailUrl ? (
                                 <img
-                                  src={product.thumbnailUrl}
+                                  src={resolveAssetUrl(product.thumbnailUrl)}
                                   alt="vignette"
                                   className="h-full w-full object-cover"
                                 />
