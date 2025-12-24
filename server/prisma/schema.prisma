@@ -15,6 +15,7 @@ model User {
   isEmailVerified Boolean @default(false)
   firstName String?
   lastName  String?
+  accountType AccountType @default(INDIVIDUAL)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
