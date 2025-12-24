@@ -1,4 +1,5 @@
 import React from "react";
+import { resolveAssetUrl } from "../../../lib/resolveAssetUrl";
 
 interface FeaturesListBlockProps {
   data: any;
@@ -21,7 +22,7 @@ const FeaturesListBlock: React.FC<FeaturesListBlockProps> = ({ data }) => {
             {item.imageUrl && (
               <div className="overflow-hidden rounded-2xl bg-slate-100">
                 <img
-                  src={item.imageUrl}
+                  src={resolveAssetUrl(item.imageUrl)}
                   alt={item.title || "Illustration de l'avantage"}
                   className="h-44 w-full object-cover"
                 />

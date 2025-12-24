@@ -6,6 +6,7 @@ import {
 import { formatPrice } from "../../lib/formatPrice";
 import { useCart } from "../../context/CartContext";
 import { buildApiUrl } from "../../config/api";
+import { resolveAssetUrl } from "../../lib/resolveAssetUrl";
 
 const skeletonItems = Array.from({ length: 3 });
 const CARD_WIDTH = 320;
@@ -39,6 +40,15 @@ const normalizeProduct = (product: any): DownloadableProduct => {
     ? [heroImageUrl]
     : [];
 
+  const resolvedHeroImageUrl = resolveAssetUrl(heroImageUrl || undefined) || undefined;
+  const resolvedCardImageUrl = resolveAssetUrl(
+    product?.cardImageUrl || product?.thumbnailUrl || product?.ogImageUrl ||
+      (Array.isArray(product?.screenshots) ? product.screenshots.find(Boolean) : undefined)
+  );
+  const resolvedGalleryUrls = galleryUrls
+    .map((url: string) => resolveAssetUrl(url))
+    .filter(Boolean) as string[];
+
   return {
     id: product?.id ?? "",
     slug: product?.slug ?? "",
@@ -54,17 +64,14 @@ const normalizeProduct = (product: any): DownloadableProduct => {
       : Array.isArray(product?.featureBullets)
       ? product.featureBullets.filter(Boolean)
       : undefined,
-    cardImageUrl:
-      product?.cardImageUrl ||
-      product?.thumbnailUrl ||
-      product?.ogImageUrl ||
-      (Array.isArray(product?.screenshots)
-        ? product.screenshots.find(Boolean)
-        : undefined),
-    heroImageUrl: heroImageUrl || undefined,
-    galleryUrls: galleryUrls.length ? galleryUrls : undefined,
+    cardImageUrl: resolvedCardImageUrl || undefined,
+    heroImageUrl: resolvedHeroImageUrl,
+    galleryUrls: resolvedGalleryUrls.length ? resolvedGalleryUrls : undefined,
     detailSlides: Array.isArray(product?.detailSlides)
-      ? product.detailSlides
+      ? product.detailSlides.map((slide: any) => ({
+          ...slide,
+          imageUrl: resolveAssetUrl(slide?.imageUrl),
+        }))
       : undefined,
     isPublished: product?.isPublished ?? product?.isActive ?? undefined,
     category: product?.category ?? null,
@@ -552,7 +559,7 @@ export const DownloadableProductsSection: React.FC = () => {
             {currentSlide.imageUrl ? (
               <img
                 key={currentSlide.imageUrl}
-                src={currentSlide.imageUrl}
+                src={resolveAssetUrl(currentSlide.imageUrl)}
                 alt={selectedProduct.name}
                 className={`h-full w-full object-cover transition-opacity duration-300 ${
                   isFading ? "opacity-40" : "opacity-100"

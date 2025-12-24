@@ -3,6 +3,7 @@ import fs from "fs";
 import { DownloadPlatform } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { createDownloadableProduct } from "./adminController";
+import { normalizeUploadUrl } from "../utils/assetPaths";
 
 type StatusFilter = "active" | "archived" | "all";
 
@@ -10,6 +11,13 @@ type DetailSlideInput = {
   imageUrl?: string | null;
   description?: string | null;
 };
+
+function sanitizeUploadField(value?: string | null) {
+  const normalized = normalizeUploadUrl(value ?? undefined);
+  if (normalized) return normalized;
+  if (typeof value === "string" && value.trim()) return value.trim();
+  return null;
+}
 
 const SUPPORTED_PLATFORMS: DownloadPlatform[] = [
   DownloadPlatform.WINDOWS,
@@ -51,7 +59,7 @@ function parseDetailSlides(raw: unknown): DetailSlideInput[] | undefined {
           const { imageUrl, description } = entry as DetailSlideInput;
           if (typeof imageUrl === "string" && imageUrl.trim().length > 0) {
             return {
-              imageUrl: imageUrl.trim(),
+              imageUrl: normalizeUploadUrl(imageUrl) ?? imageUrl.trim(),
               description:
                 typeof description === "string"
                   ? description.trim()
@@ -217,8 +225,7 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
     }
 
     if (typeof cardImageUrl !== "undefined") {
-      updateData.cardImageUrl =
-        cardImageUrl === null ? null : String(cardImageUrl).trim();
+      updateData.cardImageUrl = sanitizeUploadField(cardImageUrl);
     }
 
     if (typeof priceCents !== "undefined") {
@@ -254,12 +261,11 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
     }
 
     if (typeof ogImageUrl !== "undefined") {
-      updateData.ogImageUrl = ogImageUrl === null ? null : String(ogImageUrl).trim();
+      updateData.ogImageUrl = sanitizeUploadField(ogImageUrl);
     }
 
     if (typeof thumbnailUrl !== "undefined") {
-      updateData.thumbnailUrl =
-        thumbnailUrl === null ? null : String(thumbnailUrl).trim();
+      updateData.thumbnailUrl = sanitizeUploadField(thumbnailUrl);
     }
 
     if (typeof categoryId !== "undefined") {
@@ -285,7 +291,11 @@ export async function updateDownloadableProduct(req: Request, res: Response) {
 
     const parsedDetailSlides = parseDetailSlides(detailSlides);
     if (typeof detailSlides !== "undefined") {
-      updateData.detailSlides = parsedDetailSlides ?? [];
+      updateData.detailSlides =
+        parsedDetailSlides?.map((slide) => ({
+          ...slide,
+          imageUrl: sanitizeUploadField(slide.imageUrl),
+        })) ?? [];
     }
 
     if (typeof detailHtml !== "undefined") {

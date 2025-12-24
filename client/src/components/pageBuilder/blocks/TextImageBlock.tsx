@@ -1,4 +1,5 @@
 import React from "react";
+import { resolveAssetUrl } from "../../../lib/resolveAssetUrl";
 import { resolveTextAlignment, resolveTextTemplate } from "./textTemplates";
 
 interface TextImageBlockProps {
@@ -46,7 +47,11 @@ const TextImageBlock: React.FC<TextImageBlockProps> = ({ data }) => {
     <div className="grid items-center gap-8 md:grid-cols-2">
       {imageFirst && imageUrl && (
         <div className="flex justify-center">
-          <img src={imageUrl} alt={title || "Illustration"} className={imageClasses} />
+          <img
+            src={resolveAssetUrl(imageUrl)}
+            alt={title || "Illustration"}
+            className={imageClasses}
+          />
         </div>
       )}
 
@@ -62,7 +67,11 @@ const TextImageBlock: React.FC<TextImageBlockProps> = ({ data }) => {
 
       {!imageFirst && imageUrl && (
         <div className="flex justify-center">
-          <img src={imageUrl} alt={title || "Illustration"} className={imageClasses} />
+          <img
+            src={resolveAssetUrl(imageUrl)}
+            alt={title || "Illustration"}
+            className={imageClasses}
+          />
         </div>
       )}
     </div>

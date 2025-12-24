@@ -2,6 +2,7 @@ import { buildApiUrl } from "../config/api";
 
 export type AdminUploadResponse = {
   url: string;
+  absoluteUrl?: string;
   filename?: string;
   mimeType?: string;
   size?: number;

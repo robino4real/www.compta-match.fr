@@ -1,4 +1,5 @@
 import React from "react";
+import { resolveAssetUrl } from "../../../lib/resolveAssetUrl";
 
 interface ImageBlockProps {
   data: any;
@@ -20,7 +21,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ data }) => {
   return (
     <div className="flex justify-center">
       <img
-        src={imageUrl}
+        src={resolveAssetUrl(imageUrl)}
         alt={alt || "Image"}
         className={`${imageClasses} w-full object-contain`}
       />

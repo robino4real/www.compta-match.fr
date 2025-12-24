@@ -1,5 +1,6 @@
 import { CompanySettings, VatRegime } from "@prisma/client";
 import { prisma } from "../config/prisma";
+import { normalizeUploadUrl } from "../utils/assetPaths";
 
 const DEFAULT_SETTINGS: Omit<CompanySettings, "id" | "createdAt" | "updatedAt"> = {
   companyName: "ComptaMatch",
@@ -42,18 +43,35 @@ export async function updateCompanySettings(
   const existing = await prisma.companySettings.findFirst();
 
   if (!existing) {
+    const normalizedLogoUrl = normalizeUploadUrl(payload.logoUrl as any);
+    const trimmedLogoUrl =
+      typeof payload.logoUrl === "string" ? payload.logoUrl.trim() : payload.logoUrl ?? null;
     return prisma.companySettings.create({
       data: {
         id: 1,
         ...DEFAULT_SETTINGS,
         ...payload,
+        logoUrl:
+          typeof payload.logoUrl === "undefined"
+            ? DEFAULT_SETTINGS.logoUrl
+            : normalizedLogoUrl ?? trimmedLogoUrl,
       },
     });
   }
 
+  const normalizedLogoUrl = normalizeUploadUrl(payload.logoUrl as any);
+  const trimmedLogoUrl =
+    typeof payload.logoUrl === "string" ? payload.logoUrl.trim() : payload.logoUrl ?? null;
+
   return prisma.companySettings.update({
     where: { id: existing.id },
-    data: payload,
+    data: {
+      ...payload,
+      logoUrl:
+        typeof payload.logoUrl === "undefined"
+          ? payload.logoUrl
+          : normalizedLogoUrl ?? trimmedLogoUrl,
+    },
   });
 }
 

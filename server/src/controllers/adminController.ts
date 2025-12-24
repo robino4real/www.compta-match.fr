@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { DownloadPlatform } from "@prisma/client";
 import fs from "fs";
 import { prisma } from "../config/prisma";
+import { buildPublicUploadUrl, normalizeUploadUrl, UPLOADS_PREFIX } from "../utils/assetPaths";
 
 type DetailSlideInput = {
   imageUrl?: string | null;
@@ -12,6 +13,13 @@ const SUPPORTED_PLATFORMS: DownloadPlatform[] = [
   DownloadPlatform.WINDOWS,
   DownloadPlatform.MACOS,
 ];
+
+function sanitizeUploadField(value?: string | null) {
+  const normalized = normalizeUploadUrl(value ?? undefined);
+  if (normalized) return normalized;
+  if (typeof value === "string" && value.trim()) return value.trim();
+  return null;
+}
 
 function parsePlatform(raw: unknown): DownloadPlatform | null {
   if (typeof raw !== "string") return null;
@@ -29,7 +37,7 @@ function parseDetailSlides(raw: unknown): DetailSlideInput[] | undefined {
           const { imageUrl, description } = entry as DetailSlideInput;
           if (typeof imageUrl === "string" && imageUrl.trim().length > 0) {
             return {
-              imageUrl: imageUrl.trim(),
+              imageUrl: sanitizeUploadField(imageUrl),
               description:
                 typeof description === "string"
                   ? description.trim()
@@ -169,10 +177,14 @@ export async function createDownloadableProduct(req: Request, res: Response) {
         name,
         shortDescription: shortDescription || null,
         longDescription: longDescription || null,
-        cardImageUrl: cardImageUrl || null,
-        thumbnailUrl: thumbnailUrl || null,
+        cardImageUrl: sanitizeUploadField(cardImageUrl),
+        thumbnailUrl: sanitizeUploadField(thumbnailUrl),
         featureBullets: parsedFeatureBullets,
-        detailSlides: parsedDetailSlides ?? [],
+        detailSlides:
+          parsedDetailSlides?.map((slide) => ({
+            ...slide,
+            imageUrl: sanitizeUploadField(slide.imageUrl),
+          })) ?? [],
         detailHtml: detailHtml || null,
         priceCents: Math.round(price),
         currency: "EUR",
@@ -222,11 +234,12 @@ export async function adminUploadAsset(req: Request, res: Response) {
         .json({ message: "Seuls les fichiers image peuvent être importés." });
     }
 
-    const baseUrl = `${req.protocol}://${req.get("host")}`;
-    const url = `${baseUrl}/uploads/${encodeURIComponent(file.filename)}`;
+    const relativeUrl = `${UPLOADS_PREFIX}${encodeURIComponent(file.filename)}`;
+    const absoluteUrl = buildPublicUploadUrl(relativeUrl);
 
     return res.status(201).json({
-      url,
+      url: relativeUrl,
+      absoluteUrl,
       filename: file.filename,
       size: file.size,
       mimeType: file.mimetype,

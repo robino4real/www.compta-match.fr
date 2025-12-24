@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
 import { uploadAdminImage } from "../../lib/adminUpload";
+import { resolveAssetUrl } from "../../lib/resolveAssetUrl";
 
 interface AdminDownloadProduct {
   id: string;
@@ -571,7 +572,7 @@ const AdminDownloadEditPage: React.FC = () => {
             {cardImageUrl && (
               <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700">
                 <img
-                  src={cardImageUrl}
+                  src={resolveAssetUrl(cardImageUrl)}
                   alt="Prévisualisation de la vignette"
                   className="h-12 w-12 rounded object-cover"
                 />
@@ -615,7 +616,7 @@ const AdminDownloadEditPage: React.FC = () => {
             {thumbnailUrl && (
               <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700">
                 <img
-                  src={thumbnailUrl}
+                  src={resolveAssetUrl(thumbnailUrl)}
                   alt="Prévisualisation du visuel"
                   className="h-10 w-10 rounded object-cover"
                 />
@@ -716,7 +717,7 @@ const AdminDownloadEditPage: React.FC = () => {
                     {slide.imageUrl && (
                       <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2 text-[11px] text-slate-700">
                         <img
-                          src={slide.imageUrl}
+                          src={resolveAssetUrl(slide.imageUrl)}
                           alt="Aperçu du visuel"
                           className="h-12 w-12 rounded object-cover"
                         />
