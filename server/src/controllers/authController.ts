@@ -162,6 +162,7 @@ export async function register(req: Request, res: Response) {
         email: normalizedEmail,
         passwordHash,
         role: "user",
+        accountType: normalizedAccountType as AccountType,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         profile: {

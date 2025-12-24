@@ -145,8 +145,11 @@ export async function updateAccountProfile(req: Request, res: Response) {
       billingCity: billingCity?.trim() || null,
       billingCountry: billingCountry?.trim() || null,
       phone: phone?.trim() || null,
-      accountType: resolvedAccountType || undefined,
     };
+
+    const accountTypeUpdate = resolvedAccountType
+      ? { accountType: resolvedAccountType }
+      : {};
 
     const [user, profile] = await prisma.$transaction([
       prisma.user.update({
@@ -154,6 +157,7 @@ export async function updateAccountProfile(req: Request, res: Response) {
         data: {
           firstName: sanitizedData.firstName,
           lastName: sanitizedData.lastName,
+          ...accountTypeUpdate,
         },
         select: { id: true, email: true, firstName: true, lastName: true },
       }),
@@ -162,9 +166,9 @@ export async function updateAccountProfile(req: Request, res: Response) {
         create: {
           userId,
           ...sanitizedData,
-          accountType: sanitizedData.accountType || AccountType.INDIVIDUAL,
+          accountType: resolvedAccountType || AccountType.INDIVIDUAL,
         },
-        update: { ...sanitizedData },
+        update: { ...sanitizedData, ...accountTypeUpdate },
       }),
     ]);
 
