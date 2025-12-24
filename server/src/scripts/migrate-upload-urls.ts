@@ -39,12 +39,17 @@ function normalizeValue<T>(value: T): { value: T; changed: boolean } {
 
   if (value && typeof value === "object" && !(value instanceof Date)) {
     let changed = false;
-    const next: Record<string, unknown> = Array.isArray(value) ? [] : {};
+    const next: Record<string, unknown> | unknown[] = Array.isArray(value) ? [] : {};
 
     for (const [key, entry] of Object.entries(value)) {
       const result = normalizeValue(entry as any);
       changed = changed || result.changed;
-      next[key] = result.value;
+
+      if (Array.isArray(next)) {
+        next[Number(key)] = result.value;
+      } else {
+        next[key] = result.value;
+      }
     }
 
     return { value: next as T, changed };
