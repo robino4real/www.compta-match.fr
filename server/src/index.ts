@@ -26,6 +26,7 @@ import accountRoutes from "./routes/accountRoutes";
 import { ensureAdminAccount } from "./services/adminAccountService";
 import { robotsTxtHandler, sitemapHandler } from "./controllers/seoController";
 import paidServicesRoutes from "./routes/paidServicesRoutes";
+import { handleOrderDownloadByToken } from "./controllers/downloadController";
 
 const app = express();
 const apiRouter = Router();
@@ -66,6 +67,11 @@ apiRouter.use("/public", publicRoutes);
 apiRouter.use("/downloadable-products", downloadableProductRoutes);
 apiRouter.use("/paid-services", paidServicesRoutes);
 apiRouter.use(attachUserToRequest);
+apiRouter.get(
+  "/download/:token",
+  requireAuth,
+  handleOrderDownloadByToken
+);
 apiRouter.use("/payments", paymentRoutes);
 apiRouter.use("/catalog", catalogRoutes);
 apiRouter.use("/cart", cartRoutes);

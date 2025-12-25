@@ -29,6 +29,7 @@ interface DownloadConfirmationResponse {
     totalPaid: number;
     firstProductName?: string;
   };
+  orderDownloadToken?: string;
   download: { token: string; productName?: string } | null;
   message?: string;
 }

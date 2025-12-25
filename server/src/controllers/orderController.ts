@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
 import { generateDownloadLinksForOrder } from "../services/downloadLinkService";
@@ -9,6 +10,14 @@ interface AuthenticatedRequest extends Request {
     email?: string;
     role?: string;
   };
+}
+
+function generateOrderDownloadToken() {
+  if (typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return crypto.randomBytes(32).toString("hex");
 }
 
 export async function createDownloadableOrder(req: Request, res: Response) {
@@ -83,6 +92,7 @@ export async function createDownloadableOrder(req: Request, res: Response) {
         currency: "EUR",
         paidAt: new Date(),
         status: "PAID", // paiement simulé pour le moment
+        downloadToken: generateOrderDownloadToken(),
         items: {
           create: normalizedItems.map((it) => ({
             productId: it.productId,

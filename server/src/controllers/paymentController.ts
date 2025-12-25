@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { Request, Response } from "express";
 import { DownloadPlatform, PromoCode } from "@prisma/client";
 import { prisma } from "../config/prisma";
@@ -108,6 +109,14 @@ function buildOrderItemsPayload(
     binaryId: it.binaryId,
     platform: it.platform,
   }));
+}
+
+function generateOrderDownloadToken() {
+  if (typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return crypto.randomBytes(32).toString("hex");
 }
 
 /**
@@ -222,6 +231,7 @@ export async function createDownloadCheckoutSession(
           currency,
           status: "PAID",
           paidAt: new Date(),
+          downloadToken: generateOrderDownloadToken(),
           promoCodeId: appliedPromo ? appliedPromo.id : null,
           billingNameSnapshot: billingName,
           billingEmailSnapshot: billingInfo.email,
@@ -590,6 +600,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
         currency: webhookCurrency,
         status: "PAID",
         paidAt: new Date(),
+        downloadToken: generateOrderDownloadToken(),
         promoCodeId: promoCodeId || null,
         stripeSessionId: session.id,
         stripePaymentIntentId: (session as any).payment_intent || null,
@@ -729,6 +740,7 @@ export async function getDownloadCheckoutConfirmation(
         firstProductName:
           primaryItem?.productNameSnapshot || primaryItem?.product?.name || "",
       },
+      orderDownloadToken: order.downloadToken,
       download:
         activeDownloadLink && primaryItem
           ? {

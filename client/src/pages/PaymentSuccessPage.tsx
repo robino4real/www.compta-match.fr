@@ -27,6 +27,7 @@ const PaymentSuccessPage: React.FC = () => {
       totalPaid: number;
       firstProductName?: string;
     };
+    orderDownloadToken?: string;
     download: { token: string; productName?: string } | null;
   } | null>(null);
 
@@ -90,6 +91,8 @@ const PaymentSuccessPage: React.FC = () => {
 
   const downloadUrl = confirmation?.download?.token
     ? `${API_BASE_URL}/downloads/${confirmation.download.token}`
+    : confirmation?.orderDownloadToken
+      ? `${API_BASE_URL}/download/${confirmation.orderDownloadToken}`
     : null;
 
   return (
