@@ -11,6 +11,7 @@ import {
   sendInvoiceAvailableEmail,
   sendOrderConfirmationEmail,
 } from "../services/transactionalEmailService";
+import { env } from "../config/env";
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -212,10 +213,11 @@ export async function createDownloadCheckoutSession(
     const billingName = `${billingInfo.firstName} ${billingInfo.lastName}`.trim();
     const billingAddress = buildBillingAddress(billingInfo);
 
+    const frontendBaseUrl = env.frontendBaseUrl.replace(/\/$/, "");
     const baseSuccessUrl =
-      process.env.STRIPE_SUCCESS_URL || "http://localhost:5173/paiement/success";
+      process.env.STRIPE_SUCCESS_URL || `${frontendBaseUrl}/paiement/success`;
     const cancelUrl =
-      process.env.STRIPE_CANCEL_URL || "http://localhost:5173/paiement/cancel";
+      process.env.STRIPE_CANCEL_URL || `${frontendBaseUrl}/paiement/cancel`;
 
     if (payableCents <= 0) {
       const currency =

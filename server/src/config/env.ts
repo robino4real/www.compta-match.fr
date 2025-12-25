@@ -25,9 +25,17 @@ const normalizeOrigin = (value?: string | null) => {
   }
 };
 
-const rawFrontendBaseUrl = process.env.FRONTEND_BASE_URL || "http://localhost:5173";
+const appEnv = process.env.APP_ENV || process.env.NODE_ENV || "development";
+const defaultFrontendBaseUrl =
+  appEnv === "production" ? "https://compta-match.fr" : "http://localhost:5173";
+
+const rawFrontendBaseUrl =
+  process.env.FRONTEND_URL || process.env.FRONTEND_BASE_URL || defaultFrontendBaseUrl;
 const rawApiBaseUrl = appendApiSuffix(
-  process.env.API_BASE_URL || process.env.FRONTEND_BASE_URL || "http://localhost:4000"
+  process.env.API_BASE_URL ||
+    process.env.FRONTEND_BASE_URL ||
+    process.env.FRONTEND_URL ||
+    "http://localhost:4000"
 );
 
 const defaultCorsOrigins = [
