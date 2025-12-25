@@ -78,6 +78,8 @@ export const env = {
   allowCorsOrigins,
   cookieSameSite,
   cookieSecure,
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
   publicBaseUrl:
     process.env.PUBLIC_BASE_URL ||
     apiOrigin ||

@@ -2,7 +2,6 @@ import { Router } from "express";
 import {
   createDownloadCheckoutSession,
   getDownloadCheckoutConfirmation,
-  handleStripeWebhook,
 } from "../controllers/paymentController";
 import {
   attachUserToRequest,
@@ -28,12 +27,5 @@ router.get(
   requireAuth,
   getDownloadCheckoutConfirmation
 );
-
-/**
- * Webhook Stripe.
- * Pas d'authentification ici : Stripe appelle directement cette URL.
- * ⚠️ Signature non vérifiée (adapter avant la mise en production).
- */
-router.post("/stripe-webhook", handleStripeWebhook);
 
 export default router;

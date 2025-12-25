@@ -27,11 +27,23 @@ import { ensureAdminAccount } from "./services/adminAccountService";
 import { robotsTxtHandler, sitemapHandler } from "./controllers/seoController";
 import paidServicesRoutes from "./routes/paidServicesRoutes";
 import { handleOrderDownloadByToken } from "./controllers/downloadController";
+import { handleStripeWebhook } from "./controllers/paymentController";
 
 const app = express();
 const apiRouter = Router();
 
 app.set("trust proxy", 1);
+
+console.log("[config] Frontend base URL:", env.frontendBaseUrl);
+console.log("[config] API base URL:", env.apiBaseUrl);
+console.log(
+  "[config] Stripe mode:",
+  process.env.STRIPE_SECRET_KEY?.startsWith("sk_live") ? "live" : "test"
+);
+console.log(
+  "[config] Stripe webhook secret present:",
+  Boolean(env.stripeWebhookSecret)
+);
 
 app.use((req, res, next) => {
   const requestOrigin = req.headers.origin as string | undefined;
@@ -55,6 +67,13 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// Webhook Stripe : doit recevoir le corps RAW pour la vérification de signature.
+app.post(
+  "/api/payments/stripe-webhook",
+  express.raw({ type: "application/json" }),
+  handleStripeWebhook
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

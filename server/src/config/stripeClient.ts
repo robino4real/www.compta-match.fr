@@ -1,6 +1,7 @@
 import Stripe from "stripe";
+import { env } from "./env";
 
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const stripeSecretKey = env.stripeSecretKey;
 
 if (!stripeSecretKey) {
   // On lève une erreur au démarrage si la clé manque,

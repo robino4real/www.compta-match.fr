@@ -35,6 +35,7 @@ import {
 import {
   adminGetOrder,
   adminListOrders,
+  adminListRecentOrders,
   adminMarkOrderRefunded,
   adminRegenerateDownloadLink,
 } from "../controllers/adminOrderController";
@@ -597,6 +598,13 @@ router.post(
   attachUserToRequest,
   requireAdmin,
   adminRegenerateDownloadLink
+);
+
+router.get(
+  "/debug/last-orders",
+  attachUserToRequest,
+  requireAdmin,
+  adminListRecentOrders
 );
 
 export default router;

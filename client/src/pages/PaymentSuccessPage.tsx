@@ -1,7 +1,11 @@
 import React from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
-import { fetchDownloadConfirmation } from "../services/paymentsApi";
+import {
+  fetchDownloadConfirmation,
+  fetchOrderStatusBySession,
+  OrderStatusResponse,
+} from "../services/paymentsApi";
 
 const ONE_HOUR_SECONDS = 3600;
 
@@ -18,6 +22,9 @@ const PaymentSuccessPage: React.FC = () => {
   );
   const [remainingSeconds, setRemainingSeconds] = React.useState(ONE_HOUR_SECONDS);
   const [loading, setLoading] = React.useState(true);
+  const [pendingMessage, setPendingMessage] = React.useState<string | null>(
+    null
+  );
   const [error, setError] = React.useState<string | null>(null);
   const [confirmation, setConfirmation] = React.useState<{
     order: {
@@ -54,27 +61,70 @@ const PaymentSuccessPage: React.FC = () => {
 
     const controller = new AbortController();
 
-    const fetchConfirmation = async () => {
-      try {
-        const data = await fetchDownloadConfirmation(
-          { sessionId, orderId },
-          controller.signal
-        );
-        setConfirmation(data);
-      } catch (err) {
-        if (controller.signal.aborted) return;
-        console.error("Erreur lors de la récupération de la confirmation", err);
-        const message =
-          err instanceof Error && err.message
-            ? err.message
-            : "Impossible de charger la confirmation de paiement. Merci de réessayer.";
-        setError(message);
-      } finally {
-        setLoading(false);
+    const applyStatus = (status: OrderStatusResponse) => {
+      if (status.status === "PAID" && status.order) {
+        setConfirmation({
+          status: status.status,
+          order: {
+            id: status.order.id,
+            paidAt: status.order.paidAt || new Date().toISOString(),
+            currency: status.order.currency || "EUR",
+            totalPaid: status.order.totalPaid || 0,
+            firstProductName: status.order.firstProductName,
+          },
+          orderDownloadToken: status.orderDownloadToken || undefined,
+          download: status.download || null,
+          message: status.message,
+        });
+        setPendingMessage(null);
+        setError(null);
+        return true;
       }
+
+      setPendingMessage(
+        status.message || "Paiement en cours de validation, merci de patienter..."
+      );
+      return false;
     };
 
-    fetchConfirmation();
+    const pollStatus = async (attempt = 0) => {
+      if (controller.signal.aborted) return;
+
+      try {
+        if (orderId) {
+          const data = await fetchDownloadConfirmation({
+            sessionId,
+            orderId,
+          });
+          if (applyStatus({ ...data, status: data.status || "PAID" })) {
+            setLoading(false);
+            return;
+          }
+        } else if (sessionId) {
+          const status = await fetchOrderStatusBySession(sessionId);
+          if (applyStatus(status)) {
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (err) {
+        if (!controller.signal.aborted) {
+          console.error("Erreur lors du polling de la commande", err);
+        }
+      }
+
+      if (attempt >= 10) {
+        setLoading(false);
+        setError(
+          "La validation prend plus de temps que prévu. Vous pouvez actualiser ou contacter le support."
+        );
+        return;
+      }
+
+      setTimeout(() => pollStatus(attempt + 1), 2000);
+    };
+
+    pollStatus();
 
     return () => controller.abort();
   }, [searchParams]);
@@ -102,6 +152,12 @@ const PaymentSuccessPage: React.FC = () => {
           {loading && (
             <div className="mb-6 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
               Vérification de votre paiement en cours...
+            </div>
+          )}
+
+          {pendingMessage && !confirmation && (
+            <div className="mb-6 rounded-2xl bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-800">
+              {pendingMessage}
             </div>
           )}
 
