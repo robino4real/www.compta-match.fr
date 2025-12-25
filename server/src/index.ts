@@ -70,7 +70,7 @@ app.use((req, res, next) => {
 
 // Webhook Stripe : doit recevoir le corps RAW pour la vérification de signature.
 app.post(
-  "/api/payments/stripe-webhook",
+  "/api/payments/stripe/webhook",
   express.raw({ type: "application/json" }),
   handleStripeWebhook
 );

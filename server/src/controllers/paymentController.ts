@@ -399,6 +399,8 @@ export async function handleStripeWebhook(req: Request, res: Response) {
       env.stripeWebhookSecret
     );
 
+    console.log("[Stripe webhook] received", event.type, correlationId);
+
     if (event.type !== "checkout.session.completed") {
       return res.status(200).json({ received: true });
     }
