@@ -1,7 +1,8 @@
 # Plan de test manuel Stripe (mode test)
 
 1. **Préparation**
-   - Saisir `STRIPE_SECRET_KEY` et `STRIPE_WEBHOOK_SECRET` dans `.env`.
+   - Saisir `STRIPE_SECRET_KEY` et `STRIPE_WEBHOOK_SECRET` (`whsec_...`) dans `.env`.
+   - Configurer le webhook Stripe (mode test) vers l'URL publique `https://compta-match.fr/api/payments/stripe/webhook` et y associer le secret `STRIPE_WEBHOOK_SECRET`.
    - Démarrer le serveur local (`npm run dev` côté API) avec `STRIPE_WEBHOOK_SECRET` configuré.
 2. **Création produit**
    - Créer un produit téléchargeable actif via le back-office admin.
