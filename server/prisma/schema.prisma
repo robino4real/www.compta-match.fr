@@ -55,7 +55,7 @@ model Order {
   createdAt DateTime    @default(now())
   paidAt    DateTime?
   status    OrderStatus @default(PAID)
-  downloadToken String  @unique
+  downloadToken String? @unique
 
   totalBeforeDiscount Int
   discountAmount      Int @default(0)
