@@ -32,6 +32,21 @@ interface DownloadConfirmationResponse {
   orderDownloadToken?: string;
   download: { token: string; productName?: string } | null;
   message?: string;
+  status?: string;
+}
+
+export interface OrderStatusResponse {
+  status: string;
+  order?: {
+    id: string;
+    paidAt?: string | null;
+    currency?: string;
+    totalPaid?: number;
+    firstProductName?: string;
+  };
+  orderDownloadToken?: string | null;
+  download?: { token: string; productName?: string } | null;
+  message?: string;
 }
 
 export async function createDownloadCheckoutSession(options: {
@@ -53,6 +68,16 @@ export async function createDownloadCheckoutSession(options: {
         acceptedLicense: options.acceptedLicense,
       }),
     }
+  );
+}
+
+export async function fetchOrderStatusBySession(
+  sessionId: string,
+  signal?: AbortSignal
+): Promise<OrderStatusResponse> {
+  return apiFetch<OrderStatusResponse>(
+    `${API_BASE_URL}/orders/by-session/${sessionId}`,
+    { method: "GET", signal }
   );
 }
 

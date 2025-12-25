@@ -11,21 +11,27 @@ export async function generateDownloadLinksForOrder(orderId: string, userId: str
 
   if (orderWithItems.items.length === 0) return;
 
-  await prisma.$transaction(
-    orderWithItems.items.map((item) =>
-      prisma.downloadLink.create({
-        data: {
-          orderItemId: item.id,
-          userId,
-          productId: item.productId,
-          token: crypto.randomBytes(24).toString("hex"),
-          status: "ACTIVE",
-          maxDownloads: 1,
-          downloadCount: 0,
-        },
-      })
-    )
-  );
+  for (const item of orderWithItems.items) {
+    const existing = await prisma.downloadLink.findFirst({
+      where: { orderItemId: item.id },
+    });
+
+    if (existing) {
+      continue;
+    }
+
+    await prisma.downloadLink.create({
+      data: {
+        orderItemId: item.id,
+        userId,
+        productId: item.productId,
+        token: crypto.randomBytes(24).toString("hex"),
+        status: "ACTIVE",
+        maxDownloads: 1,
+        downloadCount: 0,
+      },
+    });
+  }
 }
 
 export async function regenerateDownloadLinkForOrderItem(orderItemId: string) {

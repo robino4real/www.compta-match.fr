@@ -112,3 +112,26 @@ export async function adminMarkOrderRefunded(req: Request, res: Response) {
       .json({ message: "Impossible de mettre à jour le statut." });
   }
 }
+
+export async function adminListRecentOrders(req: Request, res: Response) {
+  const limit = Math.min(Number(req.query.limit) || 20, 100);
+
+  try {
+    const orders = await prisma.order.findMany({
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      include: {
+        user: { select: { id: true, email: true } },
+        items: true,
+        invoice: true,
+      },
+    });
+
+    return res.json({ orders, limit });
+  } catch (error) {
+    console.error("[admin] Impossible de lister les dernières commandes", error);
+    return res.status(500).json({
+      message: "Impossible de récupérer les dernières commandes pour le debug.",
+    });
+  }
+}

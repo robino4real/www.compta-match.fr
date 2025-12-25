@@ -35,8 +35,17 @@ export async function listPromoCodes(req: Request, res: Response) {
     });
 
     return res.status(200).json({ promos });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erreur lors de la liste des codes promo :", error);
+
+    if (error?.code === "P2022") {
+      return res.status(503).json({
+        message:
+          "La colonne productCategoryId est absente en base. Merci d'appliquer le script SQL de correction.",
+        promos: [],
+      });
+    }
+
     return res.status(500).json({
       message: "Erreur lors de la récupération des codes promo.",
     });

@@ -167,3 +167,56 @@ export async function listUserOrders(req: Request, res: Response) {
     });
   }
 }
+
+export async function getOrderByStripeSession(req: Request, res: Response) {
+  const request = req as AuthenticatedRequest;
+  const userId = request.user?.id;
+  const { sessionId } = req.params as { sessionId: string };
+
+  if (!userId) {
+    return res.status(401).json({ message: "Non authentifié." });
+  }
+
+  if (!sessionId) {
+    return res.status(400).json({ message: "Identifiant de session manquant." });
+  }
+
+  const order = await prisma.order.findFirst({
+    where: { stripeSessionId: sessionId, userId },
+    include: {
+      items: { include: { downloadLinks: true, product: true } },
+      invoice: true,
+    },
+  });
+
+  if (!order) {
+    return res.status(202).json({ message: "Commande en validation." });
+  }
+
+  const activeDownloadLink = order.items
+    .flatMap((item) => item.downloadLinks)
+    .find((link) => link.status === "ACTIVE");
+
+  const primaryItem = order.items[0];
+
+  return res.json({
+    status: order.status,
+    order: {
+      id: order.id,
+      paidAt: order.paidAt,
+      currency: order.currency,
+      totalPaid: order.totalPaid,
+      firstProductName:
+        primaryItem?.productNameSnapshot || primaryItem?.product?.name || "",
+    },
+    orderDownloadToken: order.downloadToken,
+    download:
+      activeDownloadLink && primaryItem
+        ? {
+            token: activeDownloadLink.token,
+            productName:
+              primaryItem.productNameSnapshot || primaryItem.product?.name,
+          }
+        : null,
+  });
+}
