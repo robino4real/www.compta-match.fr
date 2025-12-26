@@ -352,17 +352,20 @@ async function createDownloadCheckoutSession(req, res) {
     }
 }
 async function handleStripeWebhook(req, res) {
-    const signatureHeader = req.headers["stripe-signature"];
-    const signature = Array.isArray(signatureHeader)
-        ? signatureHeader[0]
-        : signatureHeader;
     const correlationId = crypto_1.default.randomUUID?.() || `stripe-${Date.now()}`;
+    const rawSignatureHeader = req.headers["stripe-signature"];
+    const signature = Array.isArray(rawSignatureHeader)
+        ? rawSignatureHeader.find((value) => typeof value === "string")
+        : typeof rawSignatureHeader === "string"
+            ? rawSignatureHeader
+            : undefined;
     const rawBody = req.body;
-    const webhookSecret = env_1.env.stripeMode === "test"
-        ? env_1.env.stripeWebhookSecretTest || env_1.env.stripeWebhookSecret
-        : env_1.env.stripeMode === "live"
-            ? env_1.env.stripeWebhookSecretLive || env_1.env.stripeWebhookSecret
-            : env_1.env.stripeWebhookSecret;
+    const webhookSecret = env_1.env.stripeActiveWebhookSecret;
+    console.log(`[Stripe webhook] inbound correlationId=${correlationId} method=${req.method} url=${req.originalUrl}`);
+    console.log(`[Stripe webhook] headers content-type=${req.headers["content-type"] || "unknown"} content-length=${req.headers["content-length"] || "unknown"}`, correlationId);
+    console.log(`[Stripe webhook] stripe-signature header type=${Array.isArray(rawSignatureHeader) ? "array" : typeof rawSignatureHeader}`, { isArray: Array.isArray(rawSignatureHeader) }, correlationId);
+    console.log(`[Stripe webhook] body diagnostic type=${typeof rawBody} isBuffer=${Buffer.isBuffer(rawBody)} bufferLength=${Buffer.isBuffer(rawBody) ? rawBody.length : "n/a"}`, correlationId);
+    console.log(`[Stripe webhook] webhook secret selection mode=${env_1.env.stripeMode} source=${env_1.env.stripeActiveWebhookSecretSource || "none"} present=${Boolean(webhookSecret)}`, correlationId);
     if (!webhookSecret) {
         console.error("[Stripe webhook] Secret manquant dans l'env. Ignoré.", correlationId);
         return res.status(500).json({ received: false });

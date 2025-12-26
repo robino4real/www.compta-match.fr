@@ -9,7 +9,7 @@ router.get(["/", "/health"], async (_req, res) => {
     ok: true,
     database: "unknown",
     stripeKeyPresent: Boolean(env.stripeSecretKey),
-    stripeWebhookConfigured: Boolean(env.stripeWebhookSecret),
+    stripeWebhookConfigured: Boolean(env.stripeActiveWebhookSecret),
     emailSettings: "unknown",
   };
 
