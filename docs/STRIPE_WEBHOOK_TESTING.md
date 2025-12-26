@@ -23,3 +23,8 @@ curl -H "Cookie: session=..." http://localhost:4000/api/payments/stripe/debug-la
 ```
 
 Les logs complets sont persistés en base (`WebhookEventLog`) avec l'ID d'événement Stripe, le `checkout.session` et le `payment_intent` associés.
+
+## Vérifications rapides en base après un paiement réel
+
+- `WebhookEventLog` : contrôler que l'enregistrement du `checkout.session.completed` possède bien la colonne `orderId` renseignée (jointure sur `eventId` retourné par Stripe).
+- `Order` : vérifier que la commande liée (via `orderId` ou `stripeSessionId`) est passée à `status = "PAID"` et que `stripeEventId`/`stripePaymentIntentId` sont renseignés.
