@@ -28,3 +28,16 @@ Les logs complets sont persistés en base (`WebhookEventLog`) avec l'ID d'évén
 
 - `WebhookEventLog` : contrôler que l'enregistrement du `checkout.session.completed` possède bien la colonne `orderId` renseignée (jointure sur `eventId` retourné par Stripe).
 - `Order` : vérifier que la commande liée (via `orderId` ou `stripeSessionId`) est passée à `status = "PAID"` et que `stripeEventId`/`stripePaymentIntentId` sont renseignés.
+
+## Sanity-check du webhook en production de test
+
+- Lancer un webhook de test depuis le CLI Stripe :
+
+```bash
+stripe trigger checkout.session.completed
+```
+
+- Attendu :
+  - le serveur répond `200` sur `/api/payments/stripe/webhook` avec un payload valide ;
+  - plus aucun `StripeSignatureVerificationError` ni `[Stripe webhook] Signature Stripe manquante` dans les logs passenger ;
+  - un `curl` sans header `Stripe-Signature` doit renvoyer `400 Missing Stripe-Signature`.

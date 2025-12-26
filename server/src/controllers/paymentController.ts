@@ -181,7 +181,7 @@ type OrderWithRelations = Prisma.OrderGetPayload<{
 type CheckoutProcessingResult = {
   orderId?: string;
   message?: string;
-  status?: "PROCESSED" | "ERROR";
+  status?: "PROCESSED" | "ERROR" | "NOT_FOUND";
 };
 
 /**
@@ -482,11 +482,21 @@ export async function createDownloadCheckoutSession(
 
 
 export async function handleStripeWebhook(req: Request, res: Response) {
-  const signature = req.headers["stripe-signature"] as string | undefined;
+  const signatureHeader = req.headers["stripe-signature"];
+  const signature = Array.isArray(signatureHeader)
+    ? signatureHeader[0]
+    : signatureHeader;
   const correlationId = crypto.randomUUID?.() || `stripe-${Date.now()}`;
   const rawBody = (req as any).body;
 
-  if (!env.stripeWebhookSecret) {
+  const webhookSecret =
+    env.stripeMode === "test"
+      ? env.stripeWebhookSecretTest || env.stripeWebhookSecret
+      : env.stripeMode === "live"
+      ? env.stripeWebhookSecretLive || env.stripeWebhookSecret
+      : env.stripeWebhookSecret;
+
+  if (!webhookSecret) {
     console.error(
       "[Stripe webhook] Secret manquant dans l'env. Ignoré.",
       correlationId
@@ -501,12 +511,23 @@ export async function handleStripeWebhook(req: Request, res: Response) {
 
   let event: Stripe.Event;
 
-  try {
-    event = stripe.webhooks.constructEvent(
-      Buffer.isBuffer(rawBody) ? rawBody : Buffer.from(rawBody || ""),
-      signature,
-      env.stripeWebhookSecret
+  if (!Buffer.isBuffer(rawBody)) {
+    const receivedType = Array.isArray(rawBody)
+      ? "array"
+      : rawBody === null
+      ? "null"
+      : typeof rawBody;
+
+    console.error(
+      `[Stripe webhook] Body non-raw (Buffer attendu). Type reçu: ${receivedType}`,
+      correlationId
     );
+
+    return res.status(400).send("Invalid raw body");
+  }
+
+  try {
+    event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch (error) {
     console.error(
       "[Stripe webhook] Erreur de vérification de signature :",
@@ -744,6 +765,7 @@ async function processCheckoutCompletedEvent(
         eventId: stripeEventId,
         sessionId,
         clientReferenceId,
+        metadataOrderId: metaOrderId,
         resolvedBy,
       },
       correlationId
@@ -752,7 +774,7 @@ async function processCheckoutCompletedEvent(
     return {
       message:
         "Order introuvable (metadata absente + pas de match stripeSessionId)",
-      status: "ERROR",
+      status: "NOT_FOUND",
     };
   }
 
