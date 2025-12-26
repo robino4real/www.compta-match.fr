@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createDownloadCheckoutSession,
   getDownloadCheckoutConfirmation,
+  getStripeSessionById,
   listRecentStripeWebhookEvents,
 } from "../controllers/paymentController";
 import {
@@ -35,6 +36,13 @@ router.get(
   attachUserToRequest,
   requireAdmin,
   listRecentStripeWebhookEvents
+);
+
+router.get(
+  "/stripe/session/:id",
+  attachUserToRequest,
+  requireAdmin,
+  getStripeSessionById
 );
 
 export default router;

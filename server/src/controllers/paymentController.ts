@@ -373,6 +373,7 @@ export async function createDownloadCheckoutSession(
     const metadata: Stripe.MetadataParam = {
       userId: String(userId),
       orderId: order.id,
+      environment: env.nodeEnv,
     };
 
     if (normalizedItems?.length) {
@@ -443,12 +444,17 @@ export async function createDownloadCheckoutSession(
       success_url: successUrl,
       cancel_url: cancelUrl,
       customer_email: billingInfo.email,
+      client_reference_id: order.id,
       metadata,
     });
 
     await prisma.order.update({
       where: { id: order.id },
-      data: { stripeSessionId: session.id },
+      data: {
+        stripeSessionId: session.id,
+        stripePaymentIntentId:
+          extractPaymentIntentId(session.payment_intent) || undefined,
+      },
     });
 
     return res.status(201).json({ url: session.url });
@@ -490,14 +496,14 @@ export async function handleStripeWebhook(req: Request, res: Response) {
 
   if (!signature) {
     console.error("[Stripe webhook] Signature Stripe manquante", correlationId);
-    return res.status(400).json({ received: false });
+    return res.status(400).send("Missing Stripe-Signature");
   }
 
   let event: Stripe.Event;
 
   try {
     event = stripe.webhooks.constructEvent(
-      rawBody,
+      Buffer.isBuffer(rawBody) ? rawBody : Buffer.from(rawBody || ""),
       signature,
       env.stripeWebhookSecret
     );
@@ -508,17 +514,26 @@ export async function handleStripeWebhook(req: Request, res: Response) {
       correlationId
     );
 
-    return res.status(400).json({ received: false });
+    return res.status(400).send("Webhook signature verification failed");
   }
 
   const sessionLike = event.data?.object as
-    | { id?: string | null; payment_intent?: unknown | null }
+    | {
+        id?: string | null;
+        payment_intent?: unknown | null;
+        metadata?: Record<string, unknown> | null;
+        client_reference_id?: string | null;
+      }
     | undefined;
   const sessionId = sessionLike?.id || null;
   const paymentIntentId = extractPaymentIntentId(sessionLike?.payment_intent);
   const metadataOrderId =
     typeof (sessionLike as any)?.metadata?.orderId === "string"
       ? ((sessionLike as any).metadata.orderId as string)
+      : null;
+  const clientReferenceId =
+    typeof sessionLike?.client_reference_id === "string"
+      ? sessionLike.client_reference_id
       : null;
 
   const existingLog = await prisma.webhookEventLog.findUnique({
@@ -538,19 +553,18 @@ export async function handleStripeWebhook(req: Request, res: Response) {
     status: WebhookEventStatus.RECEIVED,
     sessionId,
     paymentIntentId,
-    orderId: metadataOrderId,
+    orderId: metadataOrderId || clientReferenceId,
     rawPayload: {
       eventId: event.id,
       type: event.type,
       sessionId,
       paymentIntentId,
-      orderId: metadataOrderId,
+      orderId: metadataOrderId || clientReferenceId,
     },
   });
 
   console.log(
-    "[Stripe webhook] received",
-    { type: event.type, sessionId, paymentIntentId },
+    `[Stripe webhook] received type=${event.type} eventId=${event.id} sessionId=${sessionId} orderId=${metadataOrderId || clientReferenceId || "unknown"}`,
     correlationId
   );
 
@@ -575,7 +589,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
         status: statusForLog,
         sessionId,
         paymentIntentId,
-        orderId: result?.orderId || metadataOrderId,
+        orderId: result?.orderId || metadataOrderId || clientReferenceId,
         message:
           result?.message ||
           (statusForLog === WebhookEventStatus.ERROR
@@ -644,6 +658,27 @@ export async function listRecentStripeWebhookEvents(req: Request, res: Response)
   }
 }
 
+export async function getStripeSessionById(req: Request, res: Response) {
+  const sessionId = req.params.id;
+
+  if (!sessionId) {
+    return res.status(400).json({ message: "Identifiant de session requis" });
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    return res.status(200).json({ session });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Impossible de récupérer la session Stripe.";
+    console.error(
+      "[Stripe webhook] Impossible de récupérer la session Stripe",
+      { sessionId, error: errorMessage }
+    );
+    return res.status(404).json({ message: "Session Stripe introuvable" });
+  }
+}
+
 async function processCheckoutCompletedEvent(
   session: Stripe.Checkout.Session,
   stripeEventId: string,
@@ -651,6 +686,10 @@ async function processCheckoutCompletedEvent(
 ) {
   const metadata = session?.metadata || {};
   const metaOrderId = metadata.orderId as string | undefined;
+  const clientReferenceId =
+    typeof session.client_reference_id === "string"
+      ? session.client_reference_id
+      : undefined;
   const userIdFromMetadata = metadata.userId as string | undefined;
   const itemsJson = metadata.items as string | undefined;
   const billingNameFromMetadata =
@@ -665,7 +704,8 @@ async function processCheckoutCompletedEvent(
   const sessionId = session?.id || null;
 
   let order: OrderWithRelations | null = null;
-  let resolvedBy: "metadata" | "stripeSessionId" | "unknown" = "unknown";
+  let resolvedBy: "metadata" | "client_reference_id" | "stripeSessionId" | "unknown" =
+    "unknown";
 
   if (metaOrderId) {
     order = await prisma.order.findUnique({
@@ -674,6 +714,16 @@ async function processCheckoutCompletedEvent(
     });
     if (order) {
       resolvedBy = "metadata";
+    }
+  }
+
+  if (!order && clientReferenceId) {
+    order = await prisma.order.findUnique({
+      where: { id: clientReferenceId },
+      include: { items: true, invoice: true },
+    });
+    if (order) {
+      resolvedBy = "client_reference_id";
     }
   }
 
@@ -690,7 +740,12 @@ async function processCheckoutCompletedEvent(
   if (!order) {
     console.error(
       "[Stripe webhook] Order introuvable pour checkout.session.completed",
-      { eventId: stripeEventId, sessionId, resolvedBy },
+      {
+        eventId: stripeEventId,
+        sessionId,
+        clientReferenceId,
+        resolvedBy,
+      },
       correlationId
     );
 
