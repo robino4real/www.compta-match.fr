@@ -240,12 +240,12 @@ const PaymentSuccessPage: React.FC = () => {
                         Lien de téléchargement en cours de préparation...
                       </button>
                     )}
-                    <Link
-                      to="/compte/commandes"
-                      className="flex w-full items-center justify-center rounded-full border border-slate-500 px-4 py-3 text-sm font-semibold text-white transition hover:border-white"
-                    >
-                      Accéder à mon espace client
-                    </Link>
+                  <Link
+                    to="/compte/commandes"
+                    className="flex w-full items-center justify-center rounded-full border border-slate-500 px-4 py-3 text-sm font-semibold text-white transition hover:border-white"
+                  >
+                    Voir mes commandes
+                  </Link>
                   </div>
 
                   <div className="mt-4 rounded-2xl bg-slate-800 px-4 py-3 text-sm font-semibold">

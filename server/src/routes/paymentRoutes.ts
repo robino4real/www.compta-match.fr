@@ -2,10 +2,12 @@ import { Router } from "express";
 import {
   createDownloadCheckoutSession,
   getDownloadCheckoutConfirmation,
+  listRecentStripeWebhookEvents,
 } from "../controllers/paymentController";
 import {
   attachUserToRequest,
   requireAuth,
+  requireAdmin,
 } from "../middleware/authMiddleware";
 
 const router = Router();
@@ -26,6 +28,13 @@ router.get(
   attachUserToRequest,
   requireAuth,
   getDownloadCheckoutConfirmation
+);
+
+router.get(
+  "/stripe/debug-last-events",
+  attachUserToRequest,
+  requireAdmin,
+  listRecentStripeWebhookEvents
 );
 
 export default router;

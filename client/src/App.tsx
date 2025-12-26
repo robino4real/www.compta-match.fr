@@ -129,7 +129,11 @@ const App: React.FC = () => {
           <Route path="/decouverte" element={<Navigate to="/découverte" replace />} />
           <Route path="/panier" element={<CartPage />} />
           <Route path="/commande" element={<CheckoutPage />} />
-          <Route path="/paiement/success" element={<PaymentSuccessPage />} />
+          <Route path="/checkout/success" element={<PaymentSuccessPage />} />
+          <Route
+            path="/paiement/success"
+            element={<Navigate to="/checkout/success" replace />}
+          />
           <Route path="/paiement/cancel" element={<PaymentCancelPage />} />
           <Route path="/auth/login" element={<AuthLoginPage />} />
           <Route path="/auth/register" element={<AuthRegisterPage />} />

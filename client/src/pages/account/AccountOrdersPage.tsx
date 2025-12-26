@@ -29,6 +29,16 @@ const statusColor: Record<string, string> = {
   PAID: "bg-emerald-50 text-emerald-700",
   PENDING: "bg-amber-50 text-amber-700",
   FAILED: "bg-rose-50 text-rose-700",
+  REFUNDED: "bg-sky-50 text-sky-700",
+  CANCELLED: "bg-slate-100 text-slate-700",
+};
+
+const statusLabel: Record<string, string> = {
+  PAID: "Payé",
+  PENDING: "En attente",
+  FAILED: "Échec",
+  REFUNDED: "Remboursé",
+  CANCELLED: "Annulée",
 };
 
 const AccountOrdersPage: React.FC = () => {
@@ -155,7 +165,7 @@ const AccountOrdersPage: React.FC = () => {
                             statusColor[order.status] || "bg-slate-100 text-slate-700"
                           }`}
                         >
-                          {order.status}
+                          {statusLabel[order.status] || order.status}
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-700">

@@ -1,6 +1,12 @@
 import crypto from "crypto";
 import { Request, Response } from "express";
-import { DownloadPlatform, PromoCode } from "@prisma/client";
+import Stripe from "stripe";
+import {
+  DownloadPlatform,
+  Prisma,
+  PromoCode,
+  WebhookEventStatus,
+} from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { stripe } from "../config/stripeClient";
 import { createInvoiceForOrder } from "../services/invoiceService";
@@ -120,6 +126,58 @@ function generateOrderDownloadToken() {
   return crypto.randomBytes(32).toString("hex");
 }
 
+function extractPaymentIntentId(value: unknown) {
+  if (!value) return null;
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (typeof (value as Stripe.PaymentIntent).id === "string") {
+    return (value as Stripe.PaymentIntent).id;
+  }
+
+  return null;
+}
+
+async function upsertWebhookLog(params: {
+  eventId: string;
+  type: string;
+  status?: WebhookEventStatus;
+  sessionId?: string | null;
+  paymentIntentId?: string | null;
+  orderId?: string | null;
+  message?: string | null;
+  rawPayload?: Prisma.InputJsonValue | null;
+}) {
+  return prisma.webhookEventLog.upsert({
+    where: { eventId: params.eventId },
+    update: {
+      type: params.type,
+      status: params.status,
+      sessionId: params.sessionId || undefined,
+      paymentIntentId: params.paymentIntentId || undefined,
+      orderId: params.orderId || undefined,
+      message: params.message || undefined,
+      rawPayload: params.rawPayload || undefined,
+    },
+    create: {
+      eventId: params.eventId,
+      type: params.type,
+      status: params.status || WebhookEventStatus.RECEIVED,
+      sessionId: params.sessionId || undefined,
+      paymentIntentId: params.paymentIntentId || undefined,
+      orderId: params.orderId || undefined,
+      message: params.message || undefined,
+      rawPayload: params.rawPayload || undefined,
+    },
+  });
+}
+
+type OrderWithRelations = Prisma.OrderGetPayload<{
+  include: { items: true; invoice: true };
+}>;
+
 /**
  * Création d'une session Stripe Checkout pour les logiciels téléchargeables.
  * Nécessite un utilisateur connecté.
@@ -217,7 +275,7 @@ export async function createDownloadCheckoutSession(
     const baseSuccessUrl =
       process.env.STRIPE_SUCCESS_URL || `${frontendBaseUrl}/checkout/success`;
     const cancelUrl =
-      process.env.STRIPE_CANCEL_URL || `${frontendBaseUrl}/checkout/cancel`;
+      process.env.STRIPE_CANCEL_URL || `${frontendBaseUrl}/panier`;
 
     if (payableCents <= 0) {
       const currency =
@@ -382,302 +440,441 @@ export async function createDownloadCheckoutSession(
 
 export async function handleStripeWebhook(req: Request, res: Response) {
   const signature = req.headers["stripe-signature"] as string | undefined;
-  const correlationId = `stripe-${Date.now()}`;
+  const correlationId = crypto.randomUUID?.() || `stripe-${Date.now()}`;
+  const rawBody = (req as any).body;
 
   if (!env.stripeWebhookSecret) {
     console.error(
       "[Stripe webhook] Secret manquant dans l'env. Ignoré.",
       correlationId
     );
-    return res.status(500).json({ received: true });
+    return res.status(500).json({ received: false });
   }
 
+  if (!signature) {
+    console.error("[Stripe webhook] Signature Stripe manquante", correlationId);
+    return res.status(400).json({ received: false });
+  }
+
+  let event: Stripe.Event;
+
   try {
-    const event = stripe.webhooks.constructEvent(
-      (req as any).body,
-      signature || "",
+    event = stripe.webhooks.constructEvent(
+      rawBody,
+      signature,
       env.stripeWebhookSecret
     );
+  } catch (error) {
+    console.error(
+      "[Stripe webhook] Erreur de vérification de signature :",
+      error,
+      correlationId
+    );
 
-    console.log("[Stripe webhook] received", event.type, correlationId);
+    return res.status(400).json({ received: false });
+  }
 
-    if (event.type !== "checkout.session.completed") {
-      return res.status(200).json({ received: true });
-    }
+  const sessionLike = event.data?.object as
+    | { id?: string | null; payment_intent?: unknown | null }
+    | undefined;
+  const sessionId = sessionLike?.id || null;
+  const paymentIntentId = extractPaymentIntentId(sessionLike?.payment_intent);
 
-    const session = event.data?.object as any;
-    const metadata = session?.metadata || {};
-    const userId = metadata.userId as string | undefined;
-    const orderId = metadata.orderId as string | undefined;
-    const itemsJson = metadata.items as string | undefined;
-    const promoCodeId = metadata.promoCodeId || "";
-    const promoDiscountCentsRaw = metadata.promoDiscountCents || "0";
-    const promoDiscountCents = Number(promoDiscountCentsRaw) || 0;
-    const promoCodeUsed = metadata.promoCode || "";
-    const billingNameFromMetadata =
-      (metadata.billingName as string | undefined)?.trim() || "";
-    const billingEmailFromMetadata =
-      (metadata.billingEmail as string | undefined)?.trim() || "";
-    const billingAddressFromMetadata =
-      (metadata.billingAddress as string | undefined)?.trim() || "";
-    const acceptedTerms = metadata.acceptedTerms === "true";
-    const acceptedLicense = metadata.acceptedLicense === "true";
+  const existingLog = await prisma.webhookEventLog.findUnique({
+    where: { eventId: event.id },
+  });
 
-    if (!userId || !itemsJson) {
-      console.error(
-        "[Stripe webhook] metadata manquante (userId ou items). Session id :",
-        session?.id,
+  if (existingLog?.status === WebhookEventStatus.PROCESSED) {
+    console.log(
+      "[Stripe webhook] événement déjà traité", event.id, correlationId
+    );
+    return res.status(200).json({ received: true, idempotent: true });
+  }
+
+  await upsertWebhookLog({
+    eventId: event.id,
+    type: event.type,
+    status: WebhookEventStatus.RECEIVED,
+    sessionId,
+    paymentIntentId,
+    rawPayload: {
+      eventId: event.id,
+      type: event.type,
+      sessionId,
+      paymentIntentId,
+    },
+  });
+
+  console.log(
+    "[Stripe webhook] received",
+    { type: event.type, sessionId, paymentIntentId },
+    correlationId
+  );
+
+  try {
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const result = await processCheckoutCompletedEvent(
+        session,
+        event.id,
         correlationId
       );
-      return res.status(200).json({ received: true });
-    }
 
-    const normalizePlatform = (
-      value: unknown
-    ): DownloadPlatform | undefined => {
-      if (typeof value !== "string") return undefined;
-      const upper = value.trim().toUpperCase();
-      return upper === "WINDOWS" || upper === "MACOS"
-        ? (upper as DownloadPlatform)
-        : undefined;
-    };
-
-    let parsedItems: {
-      productId: string;
-      quantity: number;
-      binaryId?: string | null;
-      platform?: DownloadPlatform | null;
-    }[] = [];
-    try {
-      const raw = JSON.parse(itemsJson);
-      if (Array.isArray(raw)) {
-        parsedItems = raw.map((it: any) => ({
-          productId: String(it.productId),
-          quantity:
-            it.quantity && Number(it.quantity) > 0
-              ? Number(it.quantity)
-              : 1,
-          binaryId: it.binaryId ? String(it.binaryId) : null,
-          platform: normalizePlatform(it.platform) || null,
-        }));
-      }
-    } catch (err) {
-      console.error(
-        "[Stripe webhook] Impossible de parser metadata.items :",
-        err,
-        correlationId
-      );
-      return res.status(200).json({ received: true });
-    }
-
-    if (parsedItems.length === 0) {
-      console.error(
-        "[Stripe webhook] Liste des produits vide après parsing metadata.items.",
-        correlationId
-      );
-      return res.status(200).json({ received: true });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      console.error(
-        "[Stripe webhook] Utilisateur introuvable pour userId :",
-        userId,
-        correlationId
-      );
-      return res.status(200).json({ received: true });
-    }
-
-    const productIds = parsedItems.map((it) => it.productId);
-
-    const products = await prisma.downloadableProduct.findMany({
-      where: {
-        id: { in: productIds },
-        isActive: true,
-      },
-      include: { binaries: true },
-    });
-
-    if (products.length === 0) {
-      console.error(
-        "[Stripe webhook] Aucun produit valide trouvé pour la commande. userId :",
-        userId,
-        correlationId
-      );
-      return res.status(200).json({ received: true });
-    }
-
-    const productMap = products.reduce<
-      Record<string, (typeof products)[number]>
-    >((acc, p) => {
-      acc[p.id] = p;
-      return acc;
-    }, {});
-
-    const hasInvalidBinary = parsedItems.some((item) => {
-      const product = productMap[item.productId];
-      if (!product) return true;
-
-      if (!product.binaries?.length) return false;
-
-      if (item.binaryId) {
-        return !product.binaries.some((binary) => binary.id === item.binaryId);
-      }
-
-      if (item.platform) {
-        return !product.binaries.some(
-          (binary) => binary.platform === item.platform
-        );
-      }
-
-      return false;
-    });
-
-    if (hasInvalidBinary) {
-      console.error(
-        "[Stripe webhook] Binaire sélectionné introuvable pour la commande. userId :",
-        userId,
-        correlationId
-      );
-      return res.status(200).json({ received: true });
-    }
-
-    const payableCents = session.amount_total || 0;
-    const currency =
-      (session.currency as string | undefined)?.toUpperCase() ||
-      products[0]?.currency ||
-      "EUR";
-
-    let order = orderId
-      ? await prisma.order.findUnique({ where: { id: orderId } })
-      : null;
-
-    if (!order && session?.id) {
-      order = await prisma.order.findFirst({
-        where: { stripeSessionId: session.id },
-      });
-    }
-
-    if (order && order.status === "PAID") {
-      return res.status(200).json({ received: true });
-    }
-
-    if (!order) {
-      order = await prisma.order.create({
-        data: {
-          userId,
-          totalBeforeDiscount: payableCents,
-          discountAmount: promoDiscountCents > 0 ? promoDiscountCents : 0,
-          totalPaid: payableCents,
-          currency,
-          status: "PENDING",
-          promoCodeId: promoCodeId || null,
-          stripeSessionId: session?.id || null,
-          stripePaymentIntentId:
-            typeof session?.payment_intent === "string"
-              ? session.payment_intent
-              : null,
-          acceptedTerms,
-          acceptedLicense,
-          billingNameSnapshot: billingNameFromMetadata || null,
-          billingEmailSnapshot: billingEmailFromMetadata || null,
-          billingAddressSnapshot: billingAddressFromMetadata || null,
-          items: { create: buildOrderItemsPayload(parsedItems, productMap) },
-        },
-      });
-    }
-
-    const orderItems = await prisma.orderItem.findMany({
-      where: { orderId: order.id },
-    });
-
-    if (orderItems.length === 0) {
-      await prisma.order.update({
-        where: { id: order.id },
-        data: {
-          items: { create: buildOrderItemsPayload(parsedItems, productMap) },
-        },
-      });
-    }
-
-    const orderUpdatePayload: any = {
-      status: "PAID",
-      paidAt: new Date(),
-      stripeSessionId: session?.id || order.stripeSessionId,
-      stripePaymentIntentId:
-        typeof session?.payment_intent === "string"
-          ? session.payment_intent
-          : order.stripePaymentIntentId,
-      totalPaid: payableCents || order.totalPaid,
-      currency,
-      billingNameSnapshot:
-        order.billingNameSnapshot || billingNameFromMetadata || null,
-      billingEmailSnapshot:
-        order.billingEmailSnapshot || billingEmailFromMetadata || null,
-      billingAddressSnapshot:
-        order.billingAddressSnapshot || billingAddressFromMetadata || null,
-    };
-
-    await prisma.order.update({
-      where: { id: order.id },
-      data: orderUpdatePayload,
-    });
-
-    await generateDownloadLinksForOrder(order.id, userId);
-
-    const orderWithRelations = await prisma.order.findUnique({
-      where: { id: order.id },
-      include: { items: true, invoice: true },
-    });
-
-    let invoice = orderWithRelations?.invoice || null;
-    if (!invoice && orderWithRelations) {
-      invoice = await createInvoiceForOrder({
-        order: orderWithRelations,
-        user,
-        billingEmail:
-          billingEmailFromMetadata || orderWithRelations.billingEmailSnapshot ||
-          user.email,
-        billingName:
-          billingNameFromMetadata || orderWithRelations.billingNameSnapshot ||
-          undefined,
-        billingAddress:
-          billingAddressFromMetadata || orderWithRelations.billingAddressSnapshot,
-      });
-    }
-
-    if (promoCodeId && promoDiscountCents > 0) {
-      await prisma.promoCode.update({
-        where: { id: promoCodeId },
-        data: {
-          currentUses: {
-            increment: 1,
-          },
-        },
+      await upsertWebhookLog({
+        eventId: event.id,
+        type: event.type,
+        status: WebhookEventStatus.PROCESSED,
+        sessionId,
+        paymentIntentId,
+        orderId: result?.orderId,
+        message: result?.message || "checkout.session.completed traité",
       });
 
-      if (promoCodeUsed) {
-        console.log(
-          "[Stripe webhook] Code promo appliqué et incrémenté :",
-          promoCodeUsed,
-          correlationId
-        );
-      }
+      return res.status(200).json({ received: true });
     }
 
-    await sendOrderConfirmationEmail(order.id);
-    if (invoice) {
-      await sendInvoiceAvailableEmail(invoice.id);
+    if (event.type === "payment_intent.succeeded") {
+      await upsertWebhookLog({
+        eventId: event.id,
+        type: event.type,
+        status: WebhookEventStatus.PROCESSED,
+        sessionId,
+        paymentIntentId,
+        message: "payment_intent.succeeded reçu (aucune action requise)",
+      });
+
+      return res.status(200).json({ received: true });
     }
+
+    await upsertWebhookLog({
+      eventId: event.id,
+      type: event.type,
+      status: WebhookEventStatus.PROCESSED,
+      sessionId,
+      paymentIntentId,
+      message: "Type d'événement ignoré",
+    });
 
     return res.status(200).json({ received: true });
   } catch (error) {
     console.error("[Stripe webhook] Erreur dans le handler :", error);
+
+    await upsertWebhookLog({
+      eventId: event.id,
+      type: event.type,
+      status: WebhookEventStatus.ERROR,
+      sessionId,
+      paymentIntentId,
+      message:
+        error instanceof Error ? error.message : "Erreur inconnue dans le webhook",
+    });
+
     return res.status(400).json({ received: false });
   }
+}
+
+export async function listRecentStripeWebhookEvents(req: Request, res: Response) {
+  try {
+    const events = await prisma.webhookEventLog.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    });
+
+    return res.status(200).json({ events });
+  } catch (error) {
+    console.error("[Stripe webhook] Erreur lors de la lecture des logs :", error);
+    return res.status(500).json({ message: "Impossible de récupérer les logs." });
+  }
+}
+
+async function processCheckoutCompletedEvent(
+  session: Stripe.Checkout.Session,
+  stripeEventId: string,
+  correlationId: string
+) {
+  const metadata = session?.metadata || {};
+  const userId = metadata.userId as string | undefined;
+  const orderId = metadata.orderId as string | undefined;
+  const itemsJson = metadata.items as string | undefined;
+  const promoCodeId = metadata.promoCodeId || "";
+  const promoDiscountCentsRaw = metadata.promoDiscountCents || "0";
+  const promoDiscountCents = Number(promoDiscountCentsRaw) || 0;
+  const promoCodeUsed = metadata.promoCode || "";
+  const billingNameFromMetadata =
+    (metadata.billingName as string | undefined)?.trim() || "";
+  const billingEmailFromMetadata =
+    (metadata.billingEmail as string | undefined)?.trim() || "";
+  const billingAddressFromMetadata =
+    (metadata.billingAddress as string | undefined)?.trim() || "";
+  const acceptedTerms = metadata.acceptedTerms === "true";
+  const acceptedLicense = metadata.acceptedLicense === "true";
+  const paymentIntentId = extractPaymentIntentId(session.payment_intent);
+
+  if (!userId || !itemsJson) {
+    console.error(
+      "[Stripe webhook] metadata manquante (userId ou items). Session id :",
+      session?.id,
+      correlationId
+    );
+    return { message: "metadata manquante" };
+  }
+
+  const normalizePlatform = (
+    value: unknown
+  ): DownloadPlatform | undefined => {
+    if (typeof value !== "string") return undefined;
+    const upper = value.trim().toUpperCase();
+    return upper === "WINDOWS" || upper === "MACOS"
+      ? (upper as DownloadPlatform)
+      : undefined;
+  };
+
+  let parsedItems: {
+    productId: string;
+    quantity: number;
+    binaryId?: string | null;
+    platform?: DownloadPlatform | null;
+  }[] = [];
+  try {
+    const raw = JSON.parse(itemsJson);
+    if (Array.isArray(raw)) {
+      parsedItems = raw.map((it: any) => ({
+        productId: String(it.productId),
+        quantity:
+          it.quantity && Number(it.quantity) > 0 ? Number(it.quantity) : 1,
+        binaryId: it.binaryId ? String(it.binaryId) : null,
+        platform: normalizePlatform(it.platform) || null,
+      }));
+    }
+  } catch (err) {
+    console.error(
+      "[Stripe webhook] Impossible de parser metadata.items :",
+      err,
+      correlationId
+    );
+    return { message: "items invalides" };
+  }
+
+  if (parsedItems.length === 0) {
+    console.error(
+      "[Stripe webhook] Liste des produits vide après parsing metadata.items.",
+      correlationId
+    );
+    return { message: "aucun produit" };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    console.error(
+      "[Stripe webhook] Utilisateur introuvable pour userId :",
+      userId,
+      correlationId
+    );
+    return { message: "utilisateur introuvable" };
+  }
+
+  const productIds = parsedItems.map((it) => it.productId);
+
+  const products = await prisma.downloadableProduct.findMany({
+    where: {
+      id: { in: productIds },
+      isActive: true,
+    },
+    include: { binaries: true },
+  });
+
+  if (products.length === 0) {
+    console.error(
+      "[Stripe webhook] Aucun produit valide trouvé pour la commande. userId :",
+      userId,
+      correlationId
+    );
+    return { message: "produits invalides" };
+  }
+
+  const productMap = products.reduce<
+    Record<string, (typeof products)[number]>
+  >((acc, p) => {
+    acc[p.id] = p;
+    return acc;
+  }, {});
+
+  const hasInvalidBinary = parsedItems.some((item) => {
+    const product = productMap[item.productId];
+    if (!product) return true;
+
+    if (!product.binaries?.length) return false;
+
+    if (item.binaryId) {
+      return !product.binaries.some((binary) => binary.id === item.binaryId);
+    }
+
+    if (item.platform) {
+      return !product.binaries.some((binary) => binary.platform === item.platform);
+    }
+
+    return false;
+  });
+
+  if (hasInvalidBinary) {
+    console.error(
+      "[Stripe webhook] Binaire sélectionné introuvable pour la commande. userId :",
+      userId,
+      correlationId
+    );
+    return { message: "binaire invalide" };
+  }
+
+  const payableCents = session.amount_total || 0;
+  const currency =
+    (session.currency as string | undefined)?.toUpperCase() ||
+    products[0]?.currency ||
+    "EUR";
+
+  const searchConditions: Prisma.OrderWhereInput[] = [];
+
+  if (orderId) {
+    searchConditions.push({ id: orderId });
+  }
+
+  if (session?.id) {
+    searchConditions.push({ stripeSessionId: session.id });
+  }
+
+  if (paymentIntentId) {
+    searchConditions.push({ stripePaymentIntentId: paymentIntentId });
+  }
+
+  let order: OrderWithRelations | null = null;
+  let orderWasAlreadyPaid = false;
+
+  for (const condition of searchConditions) {
+    order = await prisma.order.findFirst({
+      where: { ...condition, userId },
+      include: { items: true, invoice: true },
+    });
+
+    if (order) {
+      orderWasAlreadyPaid = order.status === "PAID";
+      break;
+    }
+  }
+
+  if (!order) {
+    order = await prisma.order.create({
+      data: {
+        userId,
+        totalBeforeDiscount: payableCents,
+        discountAmount: promoDiscountCents > 0 ? promoDiscountCents : 0,
+        totalPaid: payableCents,
+        currency,
+        status: "PENDING",
+        paidAt: null,
+        downloadToken: null,
+        promoCodeId: promoCodeId || null,
+        stripeSessionId: session?.id || null,
+        stripePaymentIntentId: paymentIntentId,
+        stripeEventId,
+        acceptedTerms,
+        acceptedLicense,
+        billingNameSnapshot: billingNameFromMetadata || null,
+        billingEmailSnapshot: billingEmailFromMetadata || null,
+        billingAddressSnapshot: billingAddressFromMetadata || null,
+        items: { create: buildOrderItemsPayload(parsedItems, productMap) },
+      },
+      include: { items: true, invoice: true },
+    });
+  }
+
+  const orderAlreadyPaid = orderWasAlreadyPaid || order.status === "PAID";
+
+  if (!order.items?.length) {
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        items: { create: buildOrderItemsPayload(parsedItems, productMap) },
+      },
+    });
+  }
+
+  const orderUpdatePayload: any = {
+    status: "PAID",
+    paidAt: order.paidAt || new Date(),
+    stripeSessionId: session?.id || order.stripeSessionId,
+    stripePaymentIntentId: paymentIntentId || order.stripePaymentIntentId,
+    stripeEventId: order.stripeEventId || stripeEventId,
+    totalPaid: payableCents || order.totalPaid,
+    currency,
+    billingNameSnapshot:
+      order.billingNameSnapshot || billingNameFromMetadata || null,
+    billingEmailSnapshot:
+      order.billingEmailSnapshot || billingEmailFromMetadata || null,
+    billingAddressSnapshot:
+      order.billingAddressSnapshot || billingAddressFromMetadata || null,
+    downloadToken: order.downloadToken || generateOrderDownloadToken(),
+  };
+
+  await prisma.order.update({
+    where: { id: order.id },
+    data: orderUpdatePayload,
+  });
+
+  await generateDownloadLinksForOrder(order.id, userId);
+
+  const orderWithRelations = await prisma.order.findUnique({
+    where: { id: order.id },
+    include: { items: true, invoice: true },
+  });
+
+  let invoice = orderWithRelations?.invoice || null;
+  if (!invoice && orderWithRelations) {
+    invoice = await createInvoiceForOrder({
+      order: orderWithRelations,
+      user,
+      billingEmail:
+        billingEmailFromMetadata || orderWithRelations.billingEmailSnapshot ||
+        user.email,
+      billingName:
+        billingNameFromMetadata || orderWithRelations.billingNameSnapshot ||
+        undefined,
+      billingAddress:
+        billingAddressFromMetadata || orderWithRelations.billingAddressSnapshot,
+    });
+  }
+
+  const invoiceCreatedNow = !orderWithRelations?.invoice && Boolean(invoice);
+
+  if (!orderAlreadyPaid && promoCodeId && promoDiscountCents > 0) {
+    await prisma.promoCode.update({
+      where: { id: promoCodeId },
+      data: {
+        currentUses: {
+          increment: 1,
+        },
+      },
+    });
+
+    if (promoCodeUsed) {
+      console.log(
+        "[Stripe webhook] Code promo appliqué et incrémenté :",
+        promoCodeUsed,
+        correlationId
+      );
+    }
+  }
+
+  if (!orderAlreadyPaid) {
+    await sendOrderConfirmationEmail(order.id);
+  }
+
+  if (invoice && (invoiceCreatedNow || !orderAlreadyPaid)) {
+    await sendInvoiceAvailableEmail(invoice.id);
+  }
+
+  return { orderId: order.id, message: "Commande validée" };
 }
 
 export async function getDownloadCheckoutConfirmation(
