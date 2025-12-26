@@ -36,13 +36,12 @@ app.set("trust proxy", 1);
 
 console.log("[config] Frontend base URL:", env.frontendBaseUrl);
 console.log("[config] API base URL:", env.apiBaseUrl);
-console.log(
-  "[config] Stripe mode:",
-  process.env.STRIPE_SECRET_KEY?.startsWith("sk_live") ? "live" : "test"
-);
+console.log("[config] Stripe mode:", env.stripeMode);
 console.log(
   "[config] Stripe webhook secret present:",
-  Boolean(env.stripeWebhookSecret)
+  Boolean(env.stripeActiveWebhookSecret),
+  "source=",
+  env.stripeActiveWebhookSecretSource || "none"
 );
 
 app.use((req, res, next) => {
@@ -71,7 +70,7 @@ app.use((req, res, next) => {
 // Webhook Stripe : doit recevoir le corps RAW pour la vérification de signature.
 app.post(
   "/api/payments/stripe/webhook",
-  express.raw({ type: "application/json" }),
+  express.raw({ type: "*/*" }),
   handleStripeWebhook
 );
 

@@ -482,19 +482,38 @@ export async function createDownloadCheckoutSession(
 
 
 export async function handleStripeWebhook(req: Request, res: Response) {
-  const signatureHeader = req.headers["stripe-signature"];
-  const signature = Array.isArray(signatureHeader)
-    ? signatureHeader[0]
-    : signatureHeader;
   const correlationId = crypto.randomUUID?.() || `stripe-${Date.now()}`;
+  const rawSignatureHeader = req.headers["stripe-signature"];
+  const signature = Array.isArray(rawSignatureHeader)
+    ? rawSignatureHeader.find((value) => typeof value === "string")
+    : typeof rawSignatureHeader === "string"
+    ? rawSignatureHeader
+    : undefined;
   const rawBody = (req as any).body;
+  const webhookSecret = env.stripeActiveWebhookSecret;
 
-  const webhookSecret =
-    env.stripeMode === "test"
-      ? env.stripeWebhookSecretTest || env.stripeWebhookSecret
-      : env.stripeMode === "live"
-      ? env.stripeWebhookSecretLive || env.stripeWebhookSecret
-      : env.stripeWebhookSecret;
+  console.log(
+    `[Stripe webhook] inbound correlationId=${correlationId} method=${req.method} url=${req.originalUrl}`
+  );
+  console.log(
+    `[Stripe webhook] headers content-type=${req.headers["content-type"] || "unknown"} content-length=${req.headers["content-length"] || "unknown"}`,
+    correlationId
+  );
+  console.log(
+    `[Stripe webhook] stripe-signature header type=${Array.isArray(rawSignatureHeader) ? "array" : typeof rawSignatureHeader}`,
+    { isArray: Array.isArray(rawSignatureHeader) },
+    correlationId
+  );
+  console.log(
+    `[Stripe webhook] body diagnostic type=${typeof rawBody} isBuffer=${Buffer.isBuffer(rawBody)} bufferLength=${Buffer.isBuffer(rawBody) ? rawBody.length : "n/a"}`,
+    correlationId
+  );
+  console.log(
+    `[Stripe webhook] webhook secret selection mode=${env.stripeMode} source=${env.stripeActiveWebhookSecretSource || "none"} present=${Boolean(
+      webhookSecret
+    )}`,
+    correlationId
+  );
 
   if (!webhookSecret) {
     console.error(

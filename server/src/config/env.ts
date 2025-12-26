@@ -26,6 +26,28 @@ const normalizeOrigin = (value?: string | null) => {
 };
 
 const appEnv = process.env.APP_ENV || process.env.NODE_ENV || "development";
+const stripeMode: "test" | "live" = process.env.STRIPE_MODE === "live" ? "live" : "test";
+const stripeWebhookSecretFallback = process.env.STRIPE_WEBHOOK_SECRET;
+const stripeWebhookSecretTest = process.env.STRIPE_WEBHOOK_SECRET_TEST;
+const stripeWebhookSecretLive = process.env.STRIPE_WEBHOOK_SECRET_LIVE;
+
+const stripeActiveWebhookSecret =
+  stripeMode === "live"
+    ? stripeWebhookSecretLive || stripeWebhookSecretFallback
+    : stripeWebhookSecretTest || stripeWebhookSecretFallback;
+
+const stripeActiveWebhookSecretSource =
+  stripeMode === "live"
+    ? stripeWebhookSecretLive
+      ? "STRIPE_WEBHOOK_SECRET_LIVE"
+      : stripeWebhookSecretFallback
+      ? "STRIPE_WEBHOOK_SECRET"
+      : null
+    : stripeWebhookSecretTest
+    ? "STRIPE_WEBHOOK_SECRET_TEST"
+    : stripeWebhookSecretFallback
+    ? "STRIPE_WEBHOOK_SECRET"
+    : null;
 const defaultFrontendBaseUrl =
   appEnv === "production" ? "https://compta-match.fr" : "http://localhost:5173";
 
@@ -78,11 +100,13 @@ export const env = {
   allowCorsOrigins,
   cookieSameSite,
   cookieSecure,
-  stripeMode: process.env.STRIPE_MODE as "test" | "live" | undefined,
+  stripeMode,
   stripeSecretKey: process.env.STRIPE_SECRET_KEY,
-  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
-  stripeWebhookSecretTest: process.env.STRIPE_WEBHOOK_SECRET_TEST,
-  stripeWebhookSecretLive: process.env.STRIPE_WEBHOOK_SECRET_LIVE,
+  stripeWebhookSecret: stripeWebhookSecretFallback,
+  stripeWebhookSecretTest,
+  stripeWebhookSecretLive,
+  stripeActiveWebhookSecret,
+  stripeActiveWebhookSecretSource,
   publicBaseUrl:
     process.env.PUBLIC_BASE_URL ||
     apiOrigin ||
