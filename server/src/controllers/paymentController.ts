@@ -178,6 +178,12 @@ type OrderWithRelations = Prisma.OrderGetPayload<{
   include: { items: true; invoice: true };
 }>;
 
+type CheckoutProcessingResult = {
+  orderId?: string;
+  message?: string;
+  status?: "PROCESSED" | "ERROR";
+};
+
 /**
  * Création d'une session Stripe Checkout pour les logiciels téléchargeables.
  * Nécessite un utilisateur connecté.
@@ -389,6 +395,30 @@ export async function createDownloadCheckoutSession(
 
     const successUrl = buildSuccessUrl(baseSuccessUrl);
 
+    if (order.stripeSessionId) {
+      try {
+        const existingSession = await stripe.checkout.sessions.retrieve(
+          order.stripeSessionId
+        );
+
+        if (existingSession?.url) {
+          console.log(
+            "[Stripe checkout] Session existante réutilisée",
+            existingSession.id,
+            order.id
+          );
+
+          return res.status(200).json({ url: existingSession.url });
+        }
+      } catch (err) {
+        console.warn(
+          "[Stripe checkout] Impossible de récupérer la session existante",
+          order.stripeSessionId,
+          err
+        );
+      }
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [
@@ -411,7 +441,7 @@ export async function createDownloadCheckoutSession(
 
     await prisma.order.update({
       where: { id: order.id },
-      data: { stripeSessionId: session.id },
+      data: { stripeSessionId: order.stripeSessionId || session.id },
     });
 
     return res.status(201).json({ url: session.url });
@@ -479,6 +509,10 @@ export async function handleStripeWebhook(req: Request, res: Response) {
     | undefined;
   const sessionId = sessionLike?.id || null;
   const paymentIntentId = extractPaymentIntentId(sessionLike?.payment_intent);
+  const metadataOrderId =
+    typeof (sessionLike as any)?.metadata?.orderId === "string"
+      ? ((sessionLike as any).metadata.orderId as string)
+      : null;
 
   const existingLog = await prisma.webhookEventLog.findUnique({
     where: { eventId: event.id },
@@ -497,11 +531,13 @@ export async function handleStripeWebhook(req: Request, res: Response) {
     status: WebhookEventStatus.RECEIVED,
     sessionId,
     paymentIntentId,
+    orderId: metadataOrderId,
     rawPayload: {
       eventId: event.id,
       type: event.type,
       sessionId,
       paymentIntentId,
+      orderId: metadataOrderId,
     },
   });
 
@@ -514,20 +550,34 @@ export async function handleStripeWebhook(req: Request, res: Response) {
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
+      console.log(
+        "[Stripe webhook] checkout.session.completed reçu",
+        { eventId: event.id, sessionId: session.id },
+        correlationId
+      );
       const result = await processCheckoutCompletedEvent(
         session,
         event.id,
         correlationId
       );
 
+      const statusForLog =
+        result?.status === "ERROR"
+          ? WebhookEventStatus.ERROR
+          : WebhookEventStatus.PROCESSED;
+
       await upsertWebhookLog({
         eventId: event.id,
         type: event.type,
-        status: WebhookEventStatus.PROCESSED,
+        status: statusForLog,
         sessionId,
         paymentIntentId,
         orderId: result?.orderId,
-        message: result?.message || "checkout.session.completed traité",
+        message:
+          result?.message ||
+          (statusForLog === WebhookEventStatus.ERROR
+            ? "checkout.session.completed en erreur"
+            : "checkout.session.completed traité"),
       });
 
       return res.status(200).json({ received: true });
@@ -616,7 +666,7 @@ async function processCheckoutCompletedEvent(
       session?.id,
       correlationId
     );
-    return { message: "metadata manquante" };
+    return { message: "metadata manquante", status: "ERROR" };
   }
 
   const normalizePlatform = (
@@ -652,7 +702,7 @@ async function processCheckoutCompletedEvent(
       err,
       correlationId
     );
-    return { message: "items invalides" };
+    return { message: "items invalides", status: "ERROR" };
   }
 
   if (parsedItems.length === 0) {
@@ -660,7 +710,7 @@ async function processCheckoutCompletedEvent(
       "[Stripe webhook] Liste des produits vide après parsing metadata.items.",
       correlationId
     );
-    return { message: "aucun produit" };
+    return { message: "aucun produit", status: "ERROR" };
   }
 
   const user = await prisma.user.findUnique({
@@ -673,8 +723,10 @@ async function processCheckoutCompletedEvent(
       userId,
       correlationId
     );
-    return { message: "utilisateur introuvable" };
+    return { message: "utilisateur introuvable", status: "ERROR" };
   }
+
+  let orderOwner = user;
 
   const productIds = parsedItems.map((it) => it.productId);
 
@@ -692,7 +744,7 @@ async function processCheckoutCompletedEvent(
       userId,
       correlationId
     );
-    return { message: "produits invalides" };
+    return { message: "produits invalides", status: "ERROR" };
   }
 
   const productMap = products.reduce<
@@ -725,7 +777,7 @@ async function processCheckoutCompletedEvent(
       userId,
       correlationId
     );
-    return { message: "binaire invalide" };
+    return { message: "binaire invalide", status: "ERROR" };
   }
 
   const payableCents = session.amount_total || 0;
@@ -752,10 +804,19 @@ async function processCheckoutCompletedEvent(
   let orderWasAlreadyPaid = false;
 
   for (const condition of searchConditions) {
+    const conditionWithUser = userId ? { ...condition, userId } : condition;
+
     order = await prisma.order.findFirst({
-      where: { ...condition, userId },
+      where: conditionWithUser,
       include: { items: true, invoice: true },
     });
+
+    if (!order && userId) {
+      order = await prisma.order.findFirst({
+        where: condition,
+        include: { items: true, invoice: true },
+      });
+    }
 
     if (order) {
       orderWasAlreadyPaid = order.status === "PAID";
@@ -764,32 +825,63 @@ async function processCheckoutCompletedEvent(
   }
 
   if (!order) {
-    order = await prisma.order.create({
-      data: {
-        userId,
-        totalBeforeDiscount: payableCents,
-        discountAmount: promoDiscountCents > 0 ? promoDiscountCents : 0,
-        totalPaid: payableCents,
-        currency,
-        status: "PENDING",
-        paidAt: null,
-        downloadToken: null,
-        promoCodeId: promoCodeId || null,
-        stripeSessionId: session?.id || null,
-        stripePaymentIntentId: paymentIntentId,
-        stripeEventId,
-        acceptedTerms,
-        acceptedLicense,
-        billingNameSnapshot: billingNameFromMetadata || null,
-        billingEmailSnapshot: billingEmailFromMetadata || null,
-        billingAddressSnapshot: billingAddressFromMetadata || null,
-        items: { create: buildOrderItemsPayload(parsedItems, productMap) },
+    console.error(
+      "[Stripe webhook] Commande introuvable pour la session",
+      {
+        orderIdFromMetadata: orderId,
+        sessionId: session.id,
+        paymentIntentId,
       },
-      include: { items: true, invoice: true },
+      correlationId
+    );
+
+    return { message: "commande introuvable", status: "ERROR" };
+  }
+
+  console.log(
+    "[Stripe webhook] checkout.session.completed résolution de commande",
+    { eventId: stripeEventId, sessionId: session.id, orderId: order.id },
+    correlationId
+  );
+
+  if (order.userId !== user.id) {
+    console.warn(
+      "[Stripe webhook] userId du webhook différent de celui de la commande",
+      { metadataUserId: user.id, orderUserId: order.userId },
+      correlationId
+    );
+    const refreshedOwner = await prisma.user.findUnique({
+      where: { id: order.userId },
     });
+
+    if (refreshedOwner) {
+      orderOwner = refreshedOwner;
+    }
+  }
+
+  if (!orderOwner) {
+    console.error(
+      "[Stripe webhook] Impossible de résoudre l'utilisateur propriétaire de la commande",
+      order.id,
+      correlationId
+    );
+    return { orderId: order.id, message: "utilisateur manquant", status: "ERROR" };
   }
 
   const orderAlreadyPaid = orderWasAlreadyPaid || order.status === "PAID";
+
+  if (order.stripeEventId === stripeEventId) {
+    console.log(
+      "[Stripe webhook] Événement déjà appliqué sur la commande",
+      { orderId: order.id, stripeEventId },
+      correlationId
+    );
+    return {
+      orderId: order.id,
+      message: "événement déjà traité",
+      status: "PROCESSED",
+    };
+  }
 
   if (!order.items?.length) {
     await prisma.order.update({
@@ -805,7 +897,7 @@ async function processCheckoutCompletedEvent(
     paidAt: order.paidAt || new Date(),
     stripeSessionId: session?.id || order.stripeSessionId,
     stripePaymentIntentId: paymentIntentId || order.stripePaymentIntentId,
-    stripeEventId: order.stripeEventId || stripeEventId,
+    stripeEventId: stripeEventId,
     totalPaid: payableCents || order.totalPaid,
     currency,
     billingNameSnapshot:
@@ -822,7 +914,13 @@ async function processCheckoutCompletedEvent(
     data: orderUpdatePayload,
   });
 
-  await generateDownloadLinksForOrder(order.id, userId);
+  console.log(
+    "[Stripe webhook] Commande passée en PAID",
+    { orderId: order.id },
+    correlationId
+  );
+
+  await generateDownloadLinksForOrder(order.id, order.userId);
 
   const orderWithRelations = await prisma.order.findUnique({
     where: { id: order.id },
@@ -833,10 +931,10 @@ async function processCheckoutCompletedEvent(
   if (!invoice && orderWithRelations) {
     invoice = await createInvoiceForOrder({
       order: orderWithRelations,
-      user,
+      user: orderOwner,
       billingEmail:
         billingEmailFromMetadata || orderWithRelations.billingEmailSnapshot ||
-        user.email,
+        orderOwner.email,
       billingName:
         billingNameFromMetadata || orderWithRelations.billingNameSnapshot ||
         undefined,
@@ -874,7 +972,7 @@ async function processCheckoutCompletedEvent(
     await sendInvoiceAvailableEmail(invoice.id);
   }
 
-  return { orderId: order.id, message: "Commande validée" };
+  return { orderId: order.id, message: "Commande validée", status: "PROCESSED" };
 }
 
 export async function getDownloadCheckoutConfirmation(
