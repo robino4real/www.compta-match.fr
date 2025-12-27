@@ -212,7 +212,7 @@ export async function handleOrderDownloadByToken(req: Request, res: Response) {
           orderItemId: downloadableItem.id,
           userId,
           productId: downloadableItem.productId,
-          token: crypto.randomBytes(24).toString("hex"),
+          token: crypto.randomBytes(32).toString("hex"),
           status: "ACTIVE",
           maxDownloads: 1,
           downloadCount: 0,

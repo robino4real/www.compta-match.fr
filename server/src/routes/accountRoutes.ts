@@ -1,7 +1,9 @@
 import { Router } from "express";
 import {
   changePassword,
+  generateOrderDownloadLink,
   getAccountOrders,
+  getAccountOrderDetail,
   getAccountProfile,
   getAccountSettings,
   getAccountSubscriptions,
@@ -13,6 +15,8 @@ const router = Router();
 
 router.get("/subscriptions", getAccountSubscriptions);
 router.get("/orders", getAccountOrders);
+router.get("/orders/:orderId", getAccountOrderDetail);
+router.post("/orders/:orderId/download-link", generateOrderDownloadLink);
 router.get("/profile", getAccountProfile);
 router.put("/profile", updateAccountProfile);
 router.get("/settings", getAccountSettings);
