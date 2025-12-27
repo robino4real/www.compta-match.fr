@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import AdminLayout from "./layouts/AdminLayout";
+import WebAppLayout from "./layouts/WebAppLayout";
 
 import HomePage from "./pages/HomePage";
 import { useAdminAuth } from "./context/AdminAuthContext";
@@ -38,6 +39,7 @@ import DiscoveryPage from "./pages/DiscoveryPage";
 import FaqPage from "./pages/FaqPage";
 import AdminPaidServicesPage from "./pages/admin/AdminPaidServicesPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { WebAppProvider, WebAppRouteType } from "./context/WebAppContext";
 import MonProfilPage from "./pages/account/MonProfilPage";
 import AccountSubscriptionsPage from "./pages/account/AccountSubscriptionsPage";
 import AccountOrdersPage from "./pages/account/AccountOrdersPage";
@@ -54,6 +56,11 @@ import AuthRegisterPage from "./pages/AuthRegisterPage";
 import ProSpacePage from "./pages/ProSpacePage";
 import AssoSpacePage from "./pages/AssoSpacePage";
 import PageBuilderPage from "./pages/PageBuilderPage";
+import WebAppSubscriptionsPage from "./pages/app/WebAppSubscriptionsPage";
+import WebAppSettingsPage from "./pages/app/WebAppSettingsPage";
+import WebAppHomePage from "./pages/app/WebAppHomePage";
+import WebAppAccountingPage from "./pages/app/WebAppAccountingPage";
+import WebAppDocumentsPage from "./pages/app/WebAppDocumentsPage";
 
 const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { admin, isLoading } = useAdminAuth();
@@ -95,6 +102,14 @@ const App: React.FC = () => {
         <Outlet />
       </AdminLayout>
     </RequireAdmin>
+  );
+
+  const WebAppLayoutWrapper: React.FC<{ routeType: WebAppRouteType }> = ({ routeType }) => (
+    <WebAppProvider initialType={routeType}>
+      <WebAppLayout>
+        <Outlet />
+      </WebAppLayout>
+    </WebAppProvider>
   );
 
   return (
@@ -162,6 +177,53 @@ const App: React.FC = () => {
             <Route path="/compte/informations" element={<AccountProfilePage />} />
           </Route>
           <Route path="*" element={NotFoundRedirect} />
+        </Route>
+
+        <Route element={<ProtectedRoute />}>
+          <Route
+            path="/app/comptapro/:ficheId/*"
+            element={<WebAppLayoutWrapper routeType="comptapro" />}
+          >
+            <Route index element={<WebAppHomePage expectedType="COMPTAPRO" routeType="comptapro" />} />
+            <Route
+              path="comptabilite"
+              element={<WebAppAccountingPage expectedType="COMPTAPRO" routeType="comptapro" />}
+            />
+            <Route
+              path="documents"
+              element={<WebAppDocumentsPage expectedType="COMPTAPRO" routeType="comptapro" />}
+            />
+            <Route
+              path="abonnements"
+              element={<WebAppSubscriptionsPage expectedType="COMPTAPRO" routeType="comptapro" />}
+            />
+            <Route
+              path="parametres"
+              element={<WebAppSettingsPage expectedType="COMPTAPRO" routeType="comptapro" />}
+            />
+          </Route>
+          <Route
+            path="/app/comptasso/:ficheId/*"
+            element={<WebAppLayoutWrapper routeType="comptasso" />}
+          >
+            <Route index element={<WebAppHomePage expectedType="COMPTASSO" routeType="comptasso" />} />
+            <Route
+              path="comptabilite"
+              element={<WebAppAccountingPage expectedType="COMPTASSO" routeType="comptasso" />}
+            />
+            <Route
+              path="documents"
+              element={<WebAppDocumentsPage expectedType="COMPTASSO" routeType="comptasso" />}
+            />
+            <Route
+              path="abonnements"
+              element={<WebAppSubscriptionsPage expectedType="COMPTASSO" routeType="comptasso" />}
+            />
+            <Route
+              path="parametres"
+              element={<WebAppSettingsPage expectedType="COMPTASSO" routeType="comptasso" />}
+            />
+          </Route>
         </Route>
 
         <Route path="/mon-espace-pro" element={<ProSpacePage />} />

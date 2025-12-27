@@ -20,6 +20,12 @@ interface CustomSpace {
   contactEmail?: string;
 }
 
+interface AppFicheSummary {
+  id: string;
+  name: string;
+  type: "COMPTAPRO" | "COMPTASSO";
+}
+
 const ProSpacePage: React.FC = () => {
   const { user, login, isLoading: isAuthLoading } = useAuth();
 
@@ -31,6 +37,10 @@ const ProSpacePage: React.FC = () => {
   const [subscriptions, setSubscriptions] = React.useState<UserSubscription[]>([]);
   const [spacesError, setSpacesError] = React.useState<string | null>(null);
   const [isFetchingSpaces, setIsFetchingSpaces] = React.useState(false);
+
+  const [appFiches, setAppFiches] = React.useState<AppFicheSummary[]>([]);
+  const [isFetchingFiches, setIsFetchingFiches] = React.useState(false);
+  const [ficheError, setFicheError] = React.useState<string | null>(null);
 
   const [customSpaces, setCustomSpaces] = React.useState<CustomSpace[]>([]);
   const [isSpaceModalOpen, setIsSpaceModalOpen] = React.useState(false);
@@ -74,6 +84,40 @@ const ProSpacePage: React.FC = () => {
   React.useEffect(() => {
     fetchSubscriptions();
   }, [fetchSubscriptions]);
+
+  const fetchAppFiches = React.useCallback(async () => {
+    if (!user) return;
+
+    setIsFetchingFiches(true);
+    setFicheError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/app/fiches?type=COMPTAPRO`, {
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.message || "Impossible de récupérer vos fiches.");
+      }
+
+      setAppFiches((data?.fiches as AppFicheSummary[]) || []);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Une erreur s'est produite lors du chargement de vos fiches.";
+      setFicheError(message);
+      setAppFiches([]);
+    } finally {
+      setIsFetchingFiches(false);
+    }
+  }, [user]);
+
+  React.useEffect(() => {
+    fetchAppFiches();
+  }, [fetchAppFiches]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -201,6 +245,59 @@ const ProSpacePage: React.FC = () => {
             Retrouvez vos abonnements et créez de nouveaux espaces pour chacune de vos structures.
           </p>
         </div>
+
+        <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Fiches sécurisées ComptaPro
+              </p>
+              <p className="text-sm text-slate-600">
+                Cliquez pour ouvrir la WebApp dans un nouvel onglet (accès protégé).
+              </p>
+            </div>
+            {isFetchingFiches && (
+              <span className="text-xs font-semibold text-slate-500">Chargement...</span>
+            )}
+          </div>
+
+          {ficheError && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              {ficheError}
+            </div>
+          )}
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {appFiches.map((fiche) => (
+              <a
+                key={fiche.id}
+                href={`/app/comptapro/${fiche.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex flex-col justify-between rounded-2xl border border-slate-200 px-5 py-4 shadow-sm transition hover:-translate-y-1 hover:border-black hover:shadow-lg"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-lg font-semibold text-slate-900">{fiche.name}</h3>
+                    <span className="text-base text-slate-400 transition group-hover:text-black">↗</span>
+                  </div>
+                  <p className="text-sm text-slate-600">
+                    Accès direct à la WebApp ComptaPro pour cette fiche.
+                  </p>
+                </div>
+                <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                  ID fiche : {fiche.id}
+                </div>
+              </a>
+            ))}
+          </div>
+
+          {!isFetchingFiches && !ficheError && appFiches.length === 0 && (
+            <p className="text-sm text-slate-600">
+              Aucune fiche ComptaPro disponible pour le moment. Vous pourrez les ouvrir ici dès qu'elles seront créées.
+            </p>
+          )}
+        </section>
 
         {spacesError && (
           <div className="mx-auto max-w-2xl rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
