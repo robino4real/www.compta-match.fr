@@ -3,6 +3,14 @@ import { prisma } from "../config/prisma";
 import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import { FicheRequest } from "../middleware/ficheAccessMiddleware";
 import { appErrors } from "../utils/appErrors";
+import { HttpError } from "../utils/errors";
+import { assertTablesExist } from "../utils/dbReadiness";
+
+const ACCOUNTING_TABLES = ["AppFiche", "AccountingEntry"];
+
+async function ensureAccountingTables() {
+  await assertTablesExist(ACCOUNTING_TABLES, "app-accounting");
+}
 
 function getContext(req: Request) {
   const { fiche } = req as FicheRequest;
@@ -19,6 +27,7 @@ export async function getAccountingSummary(req: Request, res: Response) {
   }
 
   try {
+    await ensureAccountingTables();
     const [entriesCount, lastEntry] = await Promise.all([
       prisma.accountingEntry.count({ where: { ficheId: fiche.id, ownerId: user.id } }),
       prisma.accountingEntry.findFirst({
@@ -36,6 +45,9 @@ export async function getAccountingSummary(req: Request, res: Response) {
       },
     });
   } catch (error) {
+    if (error instanceof HttpError) {
+      return appErrors.internal(res, error.message);
+    }
     console.error("[comptabilite] Erreur lors du chargement du résumé", error);
     return appErrors.internal(res);
   }
@@ -49,6 +61,7 @@ export async function listAccountingEntries(req: Request, res: Response) {
   }
 
   try {
+    await ensureAccountingTables();
     const items = await prisma.accountingEntry.findMany({
       where: { ficheId: fiche.id, ownerId: user.id },
       orderBy: [
@@ -59,6 +72,9 @@ export async function listAccountingEntries(req: Request, res: Response) {
 
     return res.json({ ok: true, data: { items } });
   } catch (error) {
+    if (error instanceof HttpError) {
+      return appErrors.internal(res, error.message);
+    }
     console.error("[comptabilite] Erreur lors du chargement des écritures", error);
     return appErrors.internal(res);
   }
@@ -96,6 +112,7 @@ export async function createAccountingEntry(req: Request, res: Response) {
   const amountCents = Math.round(parsedAmount * 100);
 
   try {
+    await ensureAccountingTables();
     const item = await prisma.accountingEntry.create({
       data: {
         ficheId: fiche.id,
@@ -109,6 +126,9 @@ export async function createAccountingEntry(req: Request, res: Response) {
 
     return res.status(201).json({ ok: true, data: { item } });
   } catch (error) {
+    if (error instanceof HttpError) {
+      return appErrors.internal(res, error.message);
+    }
     console.error("[comptabilite] Erreur lors de la création d'une écriture", error);
     return appErrors.internal(res, "Impossible d'enregistrer cette écriture pour le moment.");
   }

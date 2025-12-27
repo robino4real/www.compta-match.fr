@@ -1,5 +1,9 @@
--- Add account type enum and column for user profiles
-CREATE TYPE "AccountType" AS ENUM ('INDIVIDUAL', 'PROFESSIONAL', 'ASSOCIATION');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'AccountType') THEN
+    CREATE TYPE "AccountType" AS ENUM ('INDIVIDUAL', 'PROFESSIONAL', 'ASSOCIATION');
+  END IF;
+END $$;
 
 ALTER TABLE "UserProfile"
 ADD COLUMN IF NOT EXISTS "accountType" "AccountType" NOT NULL DEFAULT 'INDIVIDUAL';

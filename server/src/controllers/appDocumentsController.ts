@@ -7,6 +7,8 @@ import { prisma } from "../config/prisma";
 import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import { FicheRequest } from "../middleware/ficheAccessMiddleware";
 import { appErrors } from "../utils/appErrors";
+import { HttpError } from "../utils/errors";
+import { assertTablesExist } from "../utils/dbReadiness";
 
 interface DocumentRequest extends AuthenticatedRequest, FicheRequest {
   file?: Express.Multer.File;
@@ -16,6 +18,11 @@ interface DocumentRequest extends AuthenticatedRequest, FicheRequest {
 const DOCUMENT_MAX_SIZE = 20 * 1024 * 1024; // 20MB
 const ALLOWED_MIME_TYPES = ["application/pdf", "image/jpeg", "image/png"];
 const documentsStorageRoot = path.join(process.cwd(), "server/storage/documents");
+const DOCUMENT_TABLES = ["AppFiche", "AccountingDocument"];
+
+async function ensureDocumentTables() {
+  await assertTablesExist(DOCUMENT_TABLES, "app-documents");
+}
 
 function ensureSafeContext(req: FicheRequest) {
   const { fiche } = req as FicheRequest;
@@ -87,6 +94,7 @@ export async function listDocuments(req: FicheRequest, res: Response) {
   const { fiche, user } = ensureSafeContext(req);
 
   try {
+    await ensureDocumentTables();
     const items = await prisma.accountingDocument.findMany({
       where: { ficheId: fiche.id, ownerId: user.id },
       orderBy: { createdAt: "desc" },
@@ -101,6 +109,9 @@ export async function listDocuments(req: FicheRequest, res: Response) {
 
     return res.json({ ok: true, data: { items: items.map(toResponseItem) } });
   } catch (error) {
+    if (error instanceof HttpError) {
+      return appErrors.internal(res, error.message);
+    }
     console.error("[documents] Erreur lors de la liste des documents", error);
     return appErrors.internal(res);
   }
@@ -118,6 +129,7 @@ export async function uploadDocument(req: FicheRequest, res: Response) {
   const storagePath = path.relative(process.cwd(), documentReq.file.path);
 
   try {
+    await ensureDocumentTables();
     const created = await prisma.accountingDocument.create({
       data: {
         id: docId,
@@ -140,6 +152,9 @@ export async function uploadDocument(req: FicheRequest, res: Response) {
 
     return res.status(201).json({ ok: true, data: { item: toResponseItem(created) } });
   } catch (error) {
+    if (error instanceof HttpError) {
+      return appErrors.internal(res, error.message);
+    }
     console.error("[documents] Erreur lors de l'upload d'un document", error);
     return appErrors.internal(res, "Impossible d'enregistrer ce document pour le moment.");
   }
@@ -154,6 +169,7 @@ export async function downloadDocument(req: FicheRequest, res: Response) {
   }
 
   try {
+    await ensureDocumentTables();
     const document = await prisma.accountingDocument.findFirst({
       where: { id: docId, ficheId: fiche.id, ownerId: user.id },
     });
@@ -181,6 +197,9 @@ export async function downloadDocument(req: FicheRequest, res: Response) {
       }
     });
   } catch (error) {
+    if (error instanceof HttpError) {
+      return appErrors.internal(res, error.message);
+    }
     console.error("[documents] Erreur lors de la récupération du document", error);
     return appErrors.internal(res);
   }
@@ -195,6 +214,7 @@ export async function deleteDocument(req: FicheRequest, res: Response) {
   }
 
   try {
+    await ensureDocumentTables();
     const document = await prisma.accountingDocument.findFirst({
       where: { id: docId, ficheId: fiche.id, ownerId: user.id },
     });
@@ -216,6 +236,9 @@ export async function deleteDocument(req: FicheRequest, res: Response) {
 
     return res.json({ ok: true });
   } catch (error) {
+    if (error instanceof HttpError) {
+      return appErrors.internal(res, error.message);
+    }
     console.error("[documents] Erreur lors de la suppression du document", error);
     return appErrors.internal(res);
   }

@@ -21,11 +21,18 @@ import {
   updateGeoIdentitySingleton,
   updateSeoSettingsSingleton,
 } from "../services/seoGeoAdminService";
+import { HttpError } from "../utils/errors";
 
 function handleError(res: Response, error: unknown, fallbackMessage: string) {
   if (error instanceof ValidationError) {
     return res
       .status(error.status)
+      .json({ ok: false, error: { message: error.message, code: error.code } });
+  }
+
+  if (error instanceof HttpError) {
+    return res
+      .status(error.statusCode)
       .json({ ok: false, error: { message: error.message, code: error.code } });
   }
 

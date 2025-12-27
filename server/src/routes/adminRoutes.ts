@@ -75,6 +75,7 @@ import {
   adminGetHomepageSettings,
   adminSaveHomepageSettings,
 } from "../controllers/homepageSettingsController";
+import { getAdminDbStatus } from "../controllers/adminDbStatusController";
 import {
   adminGetCustomerDetail,
   adminListCustomers,
@@ -147,6 +148,8 @@ const upload = multer({ storage });
 
 // GET /admin/users
 router.get("/users", attachUserToRequest, requireAdmin, listUsers);
+
+router.get("/db-status", attachUserToRequest, requireAdmin, getAdminDbStatus);
 
 router.get(
   "/customers",

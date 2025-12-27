@@ -33,6 +33,7 @@ import { renderIndexWithSeo } from "./utils/seoRenderer";
 import { FicheRequest } from "./middleware/ficheAccessMiddleware";
 import { prisma } from "./config/prisma";
 import { AuthenticatedRequest } from "./middleware/authMiddleware";
+import { logCriticalSchemaStatus } from "./utils/dbReadiness";
 
 const app = express();
 const apiRouter = Router();
@@ -48,6 +49,24 @@ console.log(
   "source=",
   env.stripeActiveWebhookSecretSource || "none"
 );
+
+const CRITICAL_TABLES = [
+  "SeoSettingsV2",
+  "PageSeo",
+  "ProductSeo",
+  "GeoIdentity",
+  "GeoFaqItem",
+  "GeoAnswer",
+  "AppFiche",
+  "AccountingEntry",
+  "AccountingDocument",
+];
+const CRITICAL_COLUMNS = [
+  { table: "AppFiche", column: "currency" },
+  { table: "AppFiche", column: "fiscalYearStartMonth" },
+];
+
+void logCriticalSchemaStatus(CRITICAL_TABLES, CRITICAL_COLUMNS);
 
 app.use((req, res, next) => {
   const requestOrigin = req.headers.origin as string | undefined;

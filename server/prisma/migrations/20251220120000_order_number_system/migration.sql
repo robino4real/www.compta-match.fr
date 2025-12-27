@@ -1,8 +1,16 @@
--- CreateEnum
-CREATE TYPE "OrderType" AS ENUM ('DOWNLOADABLE', 'SUBSCRIPTION');
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'OrderType') THEN
+        CREATE TYPE "OrderType" AS ENUM ('DOWNLOADABLE', 'SUBSCRIPTION');
+    END IF;
+END $$;
 
--- CreateEnum
-CREATE TYPE "SubscriptionBrand" AS ENUM ('CP', 'CA');
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'SubscriptionBrand') THEN
+        CREATE TYPE "SubscriptionBrand" AS ENUM ('CP', 'CA');
+    END IF;
+END $$;
 
 -- AddColumns
 ALTER TABLE "Order" ADD COLUMN     "orderNumber" TEXT;
