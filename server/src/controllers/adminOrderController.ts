@@ -133,7 +133,8 @@ export async function adminCancelOrder(req: AuthenticatedRequest, res: Response)
       return res.status(400).json({ message: "Cette commande est supprimée." });
     }
 
-    if (![OrderStatus.PENDING, OrderStatus.PAID].includes(order.status)) {
+    const cancellableStatuses: OrderStatus[] = [OrderStatus.PENDING, OrderStatus.PAID];
+    if (!cancellableStatuses.includes(order.status)) {
       return res
         .status(400)
         .json({ message: "Seules les commandes en attente ou payées peuvent être annulées." });

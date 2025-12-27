@@ -73,7 +73,7 @@ export async function adminListCustomers(req: Request, res: Response) {
   if (cityFilter.trim()) {
     where.profile = {
       ...(where.profile as Prisma.UserProfileNullableRelationFilter),
-      billingCity: { contains: cityFilter.trim(), mode: "insensitive" },
+      is: { billingCity: { contains: cityFilter.trim(), mode: "insensitive" } },
     };
   }
 
@@ -177,7 +177,7 @@ export async function adminGetCustomerDetail(req: Request, res: Response) {
           createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
         },
         _count: { _all: true },
-        orderBy: { _count: { _all: "desc" } },
+        orderBy: { _count: { id: "desc" } },
         take: 5,
       }),
     ]);
