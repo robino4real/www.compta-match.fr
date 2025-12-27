@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { useCart } from "../context/CartContext";
 import { API_BASE_URL } from "../config/api";
 import {
   fetchDownloadConfirmation,
@@ -17,6 +18,7 @@ const formatDuration = (seconds: number) => {
 
 const PaymentSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const { clearCart } = useCart();
   const [downloadStartedAt, setDownloadStartedAt] = React.useState<number | null>(
     null
   );
@@ -139,6 +141,12 @@ const PaymentSuccessPage: React.FC = () => {
     }
     return undefined;
   }, [confirmation]);
+
+  React.useEffect(() => {
+    if (confirmation) {
+      clearCart();
+    }
+  }, [confirmation, clearCart]);
 
   const handleStartDownload = () => {
     if (!downloadStartedAt) {
