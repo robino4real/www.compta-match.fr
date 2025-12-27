@@ -122,7 +122,10 @@ export async function updateSeoSettingsSingleton(payload: Record<string, unknown
   return prisma.seoSettingsV2.upsert({
     where: { singletonKey: SEO_SINGLETON_KEY },
     update: data,
-    create: { singletonKey: SEO_SINGLETON_KEY, ...data },
+    create: {
+      singletonKey: SEO_SINGLETON_KEY,
+      ...(data as Prisma.SeoSettingsV2CreateInput),
+    },
   });
 }
 
@@ -156,7 +159,10 @@ export async function updateGeoIdentitySingleton(payload: Record<string, unknown
   return prisma.geoIdentity.upsert({
     where: { singletonKey: GEO_SINGLETON_KEY },
     update: data,
-    create: { singletonKey: GEO_SINGLETON_KEY, ...data },
+    create: {
+      singletonKey: GEO_SINGLETON_KEY,
+      ...(data as Prisma.GeoIdentityCreateInput),
+    },
   });
 }
 
@@ -380,7 +386,10 @@ export async function savePageSeo(pageId: string, payload: Record<string, unknow
   return prisma.pageSeo.upsert({
     where: { pageId: validId },
     update: data,
-    create: { pageId: validId, ...data },
+    create: {
+      ...(data as Prisma.PageSeoUncheckedCreateInput),
+      pageId: validId,
+    },
   });
 }
 
@@ -413,7 +422,10 @@ export async function saveProductSeo(productId: string, payload: Record<string, 
   return prisma.productSeo.upsert({
     where: { productId: validId },
     update: data,
-    create: { productId: validId, ...data },
+    create: {
+      ...(data as Prisma.ProductSeoUncheckedCreateInput),
+      productId: validId,
+    },
   });
 }
 

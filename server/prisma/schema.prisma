@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-1.1.x"]
 }
 
@@ -9,26 +9,27 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  passwordHash String @default("")
-  role      String   @default("user")
-  isEmailVerified Boolean @default(false)
-  firstName String?
-  lastName  String?
-  accountType AccountType @default(INDIVIDUAL)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String      @id @default(cuid())
+  email           String      @unique
+  passwordHash    String      @default("")
+  role            String      @default("user")
+  isEmailVerified Boolean     @default(false)
+  firstName       String?
+  lastName        String?
+  accountType     AccountType @default(INDIVIDUAL)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
-  orders Order[]
-  downloadLinks DownloadLink[]
-  analyticsEvents AnalyticsEvent[]
-  userEvents UserEvent[]
-  auditLogs AuditLog[]
+  orders              Order[]
+  downloadLinks       DownloadLink[]
+  analyticsEvents     AnalyticsEvent[]
+  userEvents          UserEvent[]
+  auditLogs           AuditLog[]
   adminTwoFactorCodes AdminTwoFactorCode[]
-  profile UserProfile?
-  settings UserSettings?
-  subscriptions UserSubscription[]
+  profile             UserProfile?
+  settings            UserSettings?
+  subscriptions       UserSubscription[]
+  appFiches           AppFiche[]
 }
 
 enum OrderStatus {
@@ -63,25 +64,30 @@ enum AccountType {
   ENTREPRENEUR
 }
 
+enum AppFicheType {
+  COMPTAPRO
+  COMPTASSO
+}
+
 model Order {
-  id        String      @id @default(cuid())
-  userId    String
-  user      User        @relation(fields: [userId], references: [id])
-  createdAt DateTime    @default(now())
-  paidAt    DateTime?
-  status    OrderStatus @default(PAID)
-  isDeleted Boolean     @default(false)
-  deletedAt DateTime?
-  downloadToken String? @unique
-  orderNumber String    @unique
-  orderType   OrderType @default(DOWNLOADABLE)
+  id                String             @id @default(cuid())
+  userId            String
+  user              User               @relation(fields: [userId], references: [id])
+  createdAt         DateTime           @default(now())
+  paidAt            DateTime?
+  status            OrderStatus        @default(PAID)
+  isDeleted         Boolean            @default(false)
+  deletedAt         DateTime?
+  downloadToken     String?            @unique
+  orderNumber       String             @unique
+  orderType         OrderType          @default(DOWNLOADABLE)
   subscriptionBrand SubscriptionBrand?
 
   totalBeforeDiscount Int
-  discountAmount      Int @default(0)
+  discountAmount      Int    @default(0)
   totalPaid           Int
-  stripeFeeAmount     Int @default(0)
-  currency            String      @default("EUR")
+  stripeFeeAmount     Int    @default(0)
+  currency            String @default("EUR")
 
   promoCodeId String?
   promoCode   PromoCode? @relation(fields: [promoCodeId], references: [id])
@@ -90,11 +96,11 @@ model Order {
   stripePaymentIntentId String? @unique
   stripeEventId         String? @unique
 
-  billingNameSnapshot   String?
-  billingEmailSnapshot  String?
+  billingNameSnapshot    String?
+  billingEmailSnapshot   String?
   billingAddressSnapshot String?
-  acceptedTerms         Boolean   @default(false)
-  acceptedLicense       Boolean   @default(false)
+  acceptedTerms          Boolean @default(false)
+  acceptedLicense        Boolean @default(false)
 
   items   OrderItem[]
   invoice Invoice?
@@ -107,45 +113,45 @@ enum WebhookEventStatus {
 }
 
 model WebhookEventLog {
-  id              String              @id @default(cuid())
-  eventId         String              @unique
+  id              String             @id @default(cuid())
+  eventId         String             @unique
   type            String
-  status          WebhookEventStatus  @default(RECEIVED)
+  status          WebhookEventStatus @default(RECEIVED)
   sessionId       String?
   paymentIntentId String?
   orderId         String?
   message         String?
   rawPayload      Json?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 }
 
 model OrderItem {
-  id               String             @id @default(cuid())
-  orderId          String
-  order            Order              @relation(fields: [orderId], references: [id])
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
 
-  productId        String
-  product          DownloadableProduct @relation(fields: [productId], references: [id])
+  productId String
+  product   DownloadableProduct @relation(fields: [productId], references: [id])
 
   /// Variante sélectionnée (Windows ou MacOS)
-  platform         DownloadPlatform?
+  platform DownloadPlatform?
 
   /// Binaire sélectionné pour cette commande
-  binaryId         String?
-  binary           DownloadableBinary? @relation(fields: [binaryId], references: [id])
+  binaryId String?
+  binary   DownloadableBinary? @relation(fields: [binaryId], references: [id])
 
   productNameSnapshot String
   priceCents          Int
-  quantity            Int                @default(1)
+  quantity            Int    @default(1)
   lineTotal           Int
 
   downloadLinks DownloadLink[]
 }
 
 model DownloadableProduct {
-  id               String   @id @default(cuid())
-  slug             String   @unique
+  id               String                @id @default(cuid())
+  slug             String                @unique
   name             String
   shortDescription String?
   longDescription  String?
@@ -155,39 +161,39 @@ model DownloadableProduct {
   detailSlides     Json?
   detailHtml       String?
   priceCents       Int
-  currency         String   @default("EUR")
-  isActive         Boolean  @default(true)
-  isArchived       Boolean  @default(false)
+  currency         String                @default("EUR")
+  isActive         Boolean               @default(true)
+  isArchived       Boolean               @default(false)
   archivedAt       DateTime?
   seoTitle         String?
   seoDescription   String?
-  index            Boolean  @default(true)
-  follow           Boolean  @default(true)
+  index            Boolean               @default(true)
+  follow           Boolean               @default(true)
   ogImageUrl       String?
   categoryId       String?
   category         DownloadableCategory? @relation(fields: [categoryId], references: [id])
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
 
   /// Nom original du fichier lors de l'upload (ex: ComptaMini-1.0.0.exe)
-  fileName     String
+  fileName String
 
   /// Taille du fichier en octets
-  fileSize     Int
+  fileSize Int
 
   /// Type MIME du fichier (ex: application/x-msdownload, application/zip)
   fileMimeType String?
 
   /// Chemin de stockage interne sur le serveur (ex: "downloads/uuid-xxx.exe")
-  storagePath  String
+  storagePath String
 
   /// Fichiers téléchargeables associés (par plateforme)
-  binaries     DownloadableBinary[]
+  binaries DownloadableBinary[]
 
-  items OrderItem[]
-  downloadLinks DownloadLink[]
+  items                  OrderItem[]
+  downloadLinks          DownloadLink[]
   productAnalyticsEvents ProductAnalyticsEvent[]
-  seoOverride   ProductSeo?
+  seoOverride            ProductSeo?
 }
 
 model DownloadableCategory {
@@ -197,7 +203,7 @@ model DownloadableCategory {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  products DownloadableProduct[]
+  products   DownloadableProduct[]
   promoCodes PromoCode[]
 }
 
@@ -214,23 +220,23 @@ enum ArticleStatus {
 }
 
 model DownloadLink {
-  id               String             @id @default(cuid())
-  orderItemId      String
-  orderItem        OrderItem          @relation(fields: [orderItemId], references: [id])
+  id          String    @id @default(cuid())
+  orderItemId String
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id])
 
   userId    String?
-  user      User?    @relation(fields: [userId], references: [id])
+  user      User?                @relation(fields: [userId], references: [id])
   productId String?
   product   DownloadableProduct? @relation(fields: [productId], references: [id])
 
-  token            String             @unique
-  status           DownloadLinkStatus @default(ACTIVE)
-  maxDownloads     Int                @default(1)
-  downloadCount    Int                @default(0)
-  createdAt        DateTime           @default(now())
+  token             String             @unique
+  status            DownloadLinkStatus @default(ACTIVE)
+  maxDownloads      Int                @default(1)
+  downloadCount     Int                @default(0)
+  createdAt         DateTime           @default(now())
   firstDownloadedAt DateTime?
-  expiresAt        DateTime?
-  lastDownloadedAt DateTime?
+  expiresAt         DateTime?
+  lastDownloadedAt  DateTime?
 }
 
 enum DownloadPlatform {
@@ -239,24 +245,24 @@ enum DownloadPlatform {
 }
 
 model DownloadableBinary {
-  id          String            @id @default(cuid())
-  productId   String
-  product     DownloadableProduct @relation(fields: [productId], references: [id])
-  platform    DownloadPlatform
-  fileName    String
-  fileSize    Int
+  id           String              @id @default(cuid())
+  productId    String
+  product      DownloadableProduct @relation(fields: [productId], references: [id])
+  platform     DownloadPlatform
+  fileName     String
+  fileSize     Int
   fileMimeType String?
-  storagePath String
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  storagePath  String
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
 
   orderItems OrderItem[]
 }
 
 model StripeSettings {
-  id                 Int      @id @default(1)
-  useLiveMode        Boolean  @default(false)
-  defaultCurrency    String   @default("EUR")
+  id                 Int     @id @default(1)
+  useLiveMode        Boolean @default(false)
+  defaultCurrency    String  @default("EUR")
   testPublishableKey String?
   livePublishableKey String?
 
@@ -265,8 +271,8 @@ model StripeSettings {
 }
 
 model PromoCode {
-  id            String   @id @default(cuid())
-  code          String   @unique
+  id            String  @id @default(cuid())
+  code          String  @unique
   description   String?
   discountType  String
   discountValue Int
@@ -282,17 +288,17 @@ model PromoCode {
   isReferral Boolean @default(false)
 
   /// Informations de parrainage
-  sponsorName    String?
-  sponsorEmail   String?
-  sponsorPhone   String?
-  sponsorAddress String?
+  sponsorName     String?
+  sponsorEmail    String?
+  sponsorPhone    String?
+  sponsorAddress  String?
   sponsorBankName String?
   sponsorIban     String?
   sponsorBic      String?
-  referralRate   Int?
+  referralRate    Int?
 
   maxUses     Int?
-  currentUses Int      @default(0)
+  currentUses Int  @default(0)
 
   isActive Boolean @default(true)
 
@@ -311,27 +317,27 @@ enum PromoTargetType {
 }
 
 model CompanySettings {
-  id               Int      @id @default(1)
-  companyName      String
-  legalForm        String
-  tradeName        String?
-  addressLine1     String
-  addressLine2     String?
-  postalCode       String
-  city             String
-  country          String
-  siren            String?
-  siret            String?
-  rcsCity          String?
-  vatNumber        String?
-  vatRegime        VatRegime @default(NO_VAT_293B)
-  vatCustomMention String?
-  capital          String?
-  contactEmail     String
-  supportEmail     String?
-  websiteUrl       String?
+  id                Int       @id @default(1)
+  companyName       String
+  legalForm         String
+  tradeName         String?
+  addressLine1      String
+  addressLine2      String?
+  postalCode        String
+  city              String
+  country           String
+  siren             String?
+  siret             String?
+  rcsCity           String?
+  vatNumber         String?
+  vatRegime         VatRegime @default(NO_VAT_293B)
+  vatCustomMention  String?
+  capital           String?
+  contactEmail      String
+  supportEmail      String?
+  websiteUrl        String?
   invoiceFooterText String?
-  logoUrl          String?
+  logoUrl           String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -353,38 +359,38 @@ model Invoice {
   totalTTC Int
   currency String @default("EUR")
 
-  sellerName           String?
-  sellerLegalForm      String?
-  sellerAddress        String?
-  sellerPostalCode     String?
-  sellerCity           String?
-  sellerCountry        String?
-  sellerSiren          String?
-  sellerSiret          String?
-  sellerRcsCity        String?
-  sellerVatNumber      String?
-  sellerVatRegime      String?
-  sellerVatMention     String?
-  sellerCapital        String?
-  sellerWebsiteUrl     String?
-  sellerContactEmail   String?
+  sellerName              String?
+  sellerLegalForm         String?
+  sellerAddress           String?
+  sellerPostalCode        String?
+  sellerCity              String?
+  sellerCountry           String?
+  sellerSiren             String?
+  sellerSiret             String?
+  sellerRcsCity           String?
+  sellerVatNumber         String?
+  sellerVatRegime         String?
+  sellerVatMention        String?
+  sellerCapital           String?
+  sellerWebsiteUrl        String?
+  sellerContactEmail      String?
   sellerInvoiceFooterText String?
-  sellerLogoUrl        String?
+  sellerLogoUrl           String?
 
   pdfPath   String?
   createdAt DateTime @default(now())
 }
 
 model EmailSettings {
-  id                   Int      @id @default(1)
-  providerType         String   @default("OTHER")
-  fromNameDefault      String
-  fromEmailDefault     String
-  replyToEmailDefault  String?
+  id                  Int     @id @default(1)
+  providerType        String  @default("OTHER")
+  fromNameDefault     String
+  fromEmailDefault    String
+  replyToEmailDefault String?
 
-  ordersFromEmail      String?
-  billingEmail         String?
-  supportEmail         String?
+  ordersFromEmail       String?
+  billingEmail          String?
+  supportEmail          String?
   technicalContactEmail String?
 
   smtpHost     String?
@@ -412,19 +418,19 @@ model EmailTemplate {
 }
 
 model LegalPage {
-  id          String   @id @default(cuid())
-  key         String   @unique
-  title       String
-  slug        String   @unique
-  content     String   @default("")
-  isPublished Boolean  @default(false)
-  seoTitle        String?
-  seoDescription  String?
-  index           Boolean  @default(true)
-  follow          Boolean  @default(true)
-  ogImageUrl      String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  key            String   @unique
+  title          String
+  slug           String   @unique
+  content        String   @default("")
+  isPublished    Boolean  @default(false)
+  seoTitle       String?
+  seoDescription String?
+  index          Boolean  @default(true)
+  follow         Boolean  @default(true)
+  ogImageUrl     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Article {
@@ -449,37 +455,37 @@ model Article {
 }
 
 model SeoSettings {
-  id                    Int      @id @default(1)
-  siteName              String
-  siteTagline           String?
-  defaultTitle          String?
-  titleTemplate         String?
+  id                     Int      @id @default(1)
+  siteName               String
+  siteTagline            String?
+  defaultTitle           String?
+  titleTemplate          String?
   defaultMetaDescription String?
-  defaultOgImageUrl     String?
-  twitterHandle         String?
-  facebookPageUrl       String?
-  linkedinPageUrl       String?
-  indexSite             Boolean  @default(true)
-  defaultRobotsIndex    String?  @default("index")
-  defaultRobotsFollow   String?  @default("follow")
-  canonicalBaseUrl      String?
-  customRobotsTxt       String?
-  enableSitemap         Boolean  @default(true)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  defaultOgImageUrl      String?
+  twitterHandle          String?
+  facebookPageUrl        String?
+  linkedinPageUrl        String?
+  indexSite              Boolean  @default(true)
+  defaultRobotsIndex     String?  @default("index")
+  defaultRobotsFollow    String?  @default("follow")
+  canonicalBaseUrl       String?
+  customRobotsTxt        String?
+  enableSitemap          Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 }
 
 model SeoStaticPage {
-  id             String   @id @default(cuid())
-  key            String   @unique
-  route          String
-  title          String?
+  id              String   @id @default(cuid())
+  key             String   @unique
+  route           String
+  title           String?
   metaDescription String?
-  index          Boolean  @default(true)
-  follow         Boolean  @default(true)
-  ogImageUrl     String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  index           Boolean  @default(true)
+  follow          Boolean  @default(true)
+  ogImageUrl      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 enum BrandTone {
@@ -489,69 +495,69 @@ enum BrandTone {
 }
 
 model SeoSettingsV2 {
-  id                     String  @id @default(cuid())
-  singletonKey           String  @unique @default("global")
+  id                     String   @id @default(cuid())
+  singletonKey           String   @unique @default("global")
   siteName               String?
   defaultTitle           String?
   defaultDescription     String?
   defaultOgImageUrl      String?
   canonicalBaseUrl       String?
-  defaultRobotsIndex     Boolean @default(true)
-  defaultRobotsFollow    Boolean @default(true)
+  defaultRobotsIndex     Boolean  @default(true)
+  defaultRobotsFollow    Boolean  @default(true)
   robotsTxt              String?
-  sitemapEnabled         Boolean @default(true)
-  sitemapIncludePages    Boolean @default(true)
-  sitemapIncludeProducts Boolean @default(true)
-  sitemapIncludeArticles Boolean @default(false)
+  sitemapEnabled         Boolean  @default(true)
+  sitemapIncludePages    Boolean  @default(true)
+  sitemapIncludeProducts Boolean  @default(true)
+  sitemapIncludeArticles Boolean  @default(false)
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 }
 
 model PageSeo {
-  id           String     @id @default(cuid())
-  pageId       String
-  page         CustomPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  title        String?
-  description  String?
-  ogImageUrl   String?
-  canonicalUrl String?
-  robotsIndex  Boolean?
-  robotsFollow Boolean?
+  id             String     @id @default(cuid())
+  pageId         String
+  page           CustomPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  title          String?
+  description    String?
+  ogImageUrl     String?
+  canonicalUrl   String?
+  robotsIndex    Boolean?
+  robotsFollow   Boolean?
   jsonLdOverride Json?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   @@unique([pageId])
 }
 
 model ProductSeo {
-  id           String               @id @default(cuid())
+  id           String              @id @default(cuid())
   productId    String
-  product      DownloadableProduct  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product      DownloadableProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
   title        String?
   description  String?
   ogImageUrl   String?
   canonicalUrl String?
   robotsIndex  Boolean?
   robotsFollow Boolean?
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
 
   @@unique([productId])
 }
 
 model GeoIdentity {
-  id               String    @id @default(cuid())
-  singletonKey     String    @unique @default("global")
+  id               String     @id @default(cuid())
+  singletonKey     String     @unique @default("global")
   shortDescription String?
   longDescription  String?
   targetAudience   String?
   positioning      String?
   differentiation  String?
   brandTone        BrandTone?
-  language         String?   @default("fr")
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  language         String?    @default("fr")
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 }
 
 model GeoFaqItem {
@@ -588,11 +594,11 @@ model AnalyticsEvent {
 }
 
 model ProductAnalyticsEvent {
-  id        String   @id @default(cuid())
+  id        String              @id @default(cuid())
   productId String
   product   DownloadableProduct @relation(fields: [productId], references: [id])
-  type      String   // 'view' | 'add_to_cart'
-  createdAt DateTime @default(now())
+  type      String // 'view' | 'add_to_cart'
+  createdAt DateTime            @default(now())
 
   @@index([productId, type, createdAt])
 }
@@ -606,14 +612,14 @@ enum UserEventType {
 }
 
 model UserEvent {
-  id        String   @id @default(cuid())
+  id        String        @id @default(cuid())
   userId    String?
-  user      User?    @relation(fields: [userId], references: [id])
+  user      User?         @relation(fields: [userId], references: [id])
   sessionId String
   eventType UserEventType
   page      String?
   metadata  Json?
-  createdAt DateTime @default(now())
+  createdAt DateTime      @default(now())
 
   @@index([eventType, createdAt])
   @@index([userId, createdAt])
@@ -691,16 +697,16 @@ model HomepageSettings {
 }
 
 model CustomPage {
-  id        String        @id @default(cuid())
-  key       String        @unique
-  route     String        @unique
+  id        String   @id @default(cuid())
+  key       String   @unique
+  route     String   @unique
   name      String
-  status    String        @default("ACTIVE")
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  sections  PageSection[]
-  seo       PageSeo?
+  sections PageSection[]
+  seo      PageSeo?
 }
 
 model PageSection {
@@ -721,14 +727,14 @@ model PageSection {
 }
 
 model PageBlock {
-  id        String       @id @default(cuid())
+  id        String      @id @default(cuid())
   sectionId String
-  section   PageSection  @relation(fields: [sectionId], references: [id])
+  section   PageSection @relation(fields: [sectionId], references: [id])
   order     Int
   type      String
   data      Json
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 }
 
 model WhyChooseItem {
@@ -744,40 +750,40 @@ model WhyChooseItem {
 }
 
 model PaidServicePlan {
-  id            String   @id @default(cuid())
-  slug          String   @unique
+  id            String          @id @default(cuid())
+  slug          String          @unique
   name          String
   subtitle      String?
   priceAmount   Decimal
   priceCurrency String
   pricePeriod   String
-  isHighlighted Boolean  @default(false)
-  isPublished   Boolean  @default(false)
-  sortOrder     Int      @default(0)
+  isHighlighted Boolean         @default(false)
+  isPublished   Boolean         @default(false)
+  sortOrder     Int             @default(0)
   stripePriceId String?
   serviceType   PaidServiceType @default(COMPTAPRO)
 
-  planARows PaidServiceFeatureRow[] @relation("PlanA")
-  planBRows PaidServiceFeatureRow[] @relation("PlanB")
+  planARows     PaidServiceFeatureRow[] @relation("PlanA")
+  planBRows     PaidServiceFeatureRow[] @relation("PlanB")
   subscriptions UserSubscription[]
 }
 
 model UserSubscription {
-  id               String              @id @default(cuid())
+  id               String             @id @default(cuid())
   userId           String
   planId           String
-  status           SubscriptionStatus  @default(ACTIVE)
+  status           SubscriptionStatus @default(ACTIVE)
   currentPeriodEnd DateTime?
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 
-  user User @relation(fields: [userId], references: [id])
+  user User            @relation(fields: [userId], references: [id])
   plan PaidServicePlan @relation(fields: [planId], references: [id])
 }
 
 model UserProfile {
-  id             String @id @default(cuid())
-  userId         String @unique
+  id             String      @id @default(cuid())
+  userId         String      @unique
   firstName      String?
   lastName       String?
   companyName    String?
@@ -794,12 +800,25 @@ model UserProfile {
 }
 
 model UserSettings {
-  id              String @id @default(cuid())
-  userId          String @unique
+  id              String  @id @default(cuid())
+  userId          String  @unique
   newsletterOptIn Boolean @default(false)
   alertsOptIn     Boolean @default(true)
 
   user User @relation(fields: [userId], references: [id])
+}
+
+model AppFiche {
+  id        String       @id @default(cuid())
+  type      AppFicheType
+  ownerId   String
+  name      String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  owner User @relation(fields: [ownerId], references: [id])
+
+  @@index([ownerId])
 }
 
 enum SubscriptionStatus {
@@ -809,10 +828,10 @@ enum SubscriptionStatus {
 }
 
 model PaidServiceFeatureRow {
-  id          String  @id @default(cuid())
+  id          String          @id @default(cuid())
   label       String
   description String?
-  sortOrder   Int     @default(0)
+  sortOrder   Int             @default(0)
   serviceType PaidServiceType @default(COMPTAPRO)
 
   planAId       String?
@@ -825,12 +844,12 @@ model PaidServiceFeatureRow {
 }
 
 model PaidServiceSection {
-  id          String  @id @default(cuid())
+  id          String          @id @default(cuid())
   title       String
   body        String
   imageUrl    String?
-  sortOrder   Int     @default(0)
-  isPublished Boolean @default(true)
+  sortOrder   Int             @default(0)
+  isPublished Boolean         @default(true)
   serviceType PaidServiceType @default(COMPTAPRO)
 }
 

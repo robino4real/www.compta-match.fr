@@ -23,12 +23,14 @@ import publicRoutes from "./routes/publicRoutes";
 import catalogRoutes from "./routes/catalogRoutes";
 import downloadableProductRoutes from "./routes/downloadableProductRoutes";
 import accountRoutes from "./routes/accountRoutes";
+import appRoutes from "./routes/appRoutes";
 import { ensureAdminAccount } from "./services/adminAccountService";
 import { robotsTxtHandler, sitemapHandler } from "./controllers/seoController";
 import paidServicesRoutes from "./routes/paidServicesRoutes";
 import { handleOrderDownloadByToken } from "./controllers/downloadController";
 import { handleStripeWebhook } from "./controllers/paymentController";
 import { renderIndexWithSeo } from "./utils/seoRenderer";
+import { FicheRequest, requireFicheAccess } from "./middleware/ficheAccessMiddleware";
 
 const app = express();
 const apiRouter = Router();
@@ -101,6 +103,7 @@ apiRouter.use("/admin", requireAdmin, adminRoutes);
 apiRouter.use("/orders", requireAuth, orderRoutes);
 apiRouter.use("/invoices", requireAuth, invoiceRoutes);
 apiRouter.use("/account", requireAuth, accountRoutes);
+apiRouter.use("/app", appRoutes);
 
 app.use("/api", apiRouter);
 app.get("/robots.txt", robotsTxtHandler);
@@ -127,6 +130,37 @@ if (!frontendDir) {
     frontendDirCandidates,
   );
 }
+
+const serveWebAppIndex = (res: express.Response) => {
+  const indexPath = frontendDir ? path.join(frontendDir, "index.html") : null;
+
+  if (indexPath && fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
+  }
+
+  return res.status(200).send("OK SECURED");
+};
+
+const secureWebAppRoute = (expectedType: "COMPTAPRO" | "COMPTASSO") =>
+  [
+    attachUserToRequest,
+    requireAuth,
+    requireFicheAccess,
+    (req: express.Request, res: express.Response) => {
+      const { fiche } = req as FicheRequest;
+
+      if (!fiche || fiche.type !== expectedType) {
+        return res.status(404).send("Ressource introuvable");
+      }
+
+      return serveWebAppIndex(res);
+    },
+  ] as const;
+
+app.get("/app/comptapro/:ficheId", ...secureWebAppRoute("COMPTAPRO"));
+app.get("/app/comptapro/:ficheId/*", ...secureWebAppRoute("COMPTAPRO"));
+app.get("/app/comptasso/:ficheId", ...secureWebAppRoute("COMPTASSO"));
+app.get("/app/comptasso/:ficheId/*", ...secureWebAppRoute("COMPTASSO"));
 
 if (frontendDir) {
   app.use(express.static(frontendDir));
