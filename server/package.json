@@ -8,6 +8,7 @@
     "start": "node dist/index.js",
     "prisma:generate": "prisma generate",
     "seed": "ts-node-dev --transpile-only prisma/seed.ts",
+    "backfill:order-numbers": "ts-node-dev --transpile-only src/scripts/backfillOrderNumbers.ts",
     "postinstall": "npm run prisma:generate",
     "test": "tsc -p tsconfig.tests.json && node --test dist-tests/tests/**/*.js"
   },

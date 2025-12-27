@@ -37,6 +37,16 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum OrderType {
+  DOWNLOADABLE
+  SUBSCRIPTION
+}
+
+enum SubscriptionBrand {
+  CP
+  CA
+}
+
 enum VatRegime {
   NO_VAT_293B
   STANDARD_VAT
@@ -57,6 +67,9 @@ model Order {
   paidAt    DateTime?
   status    OrderStatus @default(PAID)
   downloadToken String? @unique
+  orderNumber String    @unique
+  orderType   OrderType @default(DOWNLOADABLE)
+  subscriptionBrand SubscriptionBrand?
 
   totalBeforeDiscount Int
   discountAmount      Int @default(0)

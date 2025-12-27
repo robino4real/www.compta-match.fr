@@ -4,6 +4,7 @@ import { API_BASE_URL } from "../../config/api";
 
 interface AdminOrderItem {
   id: string;
+  orderNumber?: string;
   createdAt: string;
   paidAt?: string | null;
   totalPaid: number;
@@ -155,7 +156,9 @@ const AdminOrdersPage: React.FC = () => {
                       .toISOString()
                       .slice(0, 10)}
                   </td>
-                  <td className="px-3 py-2 align-top text-slate-800">{order.id}</td>
+                  <td className="px-3 py-2 align-top text-slate-800">
+                    {order.orderNumber || order.id}
+                  </td>
                   <td className="px-3 py-2 align-top text-slate-800">
                     {order.user?.email || "—"}
                   </td>

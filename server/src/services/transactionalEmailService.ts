@@ -130,7 +130,7 @@ export async function sendOrderConfirmationEmail(orderId: string): Promise<boole
     return false;
   }
 
-  const orderNumber = order.invoice?.invoiceNumber || order.id;
+  const orderNumber = order.orderNumber || order.invoice?.invoiceNumber || order.id;
   const orderDate = formatDate(order.paidAt || order.createdAt);
   const accountOrdersUrl = `${env.frontendBaseUrl}/mon-compte`;
   const orderSummaryHtml = buildOrderSummaryHtml(order as any);
@@ -277,7 +277,7 @@ export async function sendInvoiceAvailableEmail(
       invoiceNumber: invoice.invoiceNumber,
       invoiceDate: formatDate(invoice.issueDate),
       invoiceDownloadUrl: downloadUrl,
-      orderNumber: invoice.order.id,
+      orderNumber: invoice.order.orderNumber || invoice.order.id,
     },
   });
 }

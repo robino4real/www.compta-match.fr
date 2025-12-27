@@ -1,7 +1,9 @@
 import crypto from "crypto";
 import { Request, Response } from "express";
+import { OrderType } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { generateDownloadLinksForOrder } from "../services/downloadLinkService";
+import { generateOrderNumber } from "../services/orderNumberService";
 import { sendOrderConfirmationEmail } from "../services/transactionalEmailService";
 
 interface AuthenticatedRequest extends Request {
@@ -86,6 +88,8 @@ export async function createDownloadableOrder(req: Request, res: Response) {
     const order = await prisma.order.create({
       data: {
         userId,
+        orderNumber: await generateOrderNumber(OrderType.DOWNLOADABLE),
+        orderType: OrderType.DOWNLOADABLE,
         totalBeforeDiscount: totalCents,
         discountAmount: 0,
         totalPaid: totalCents,
@@ -203,6 +207,7 @@ export async function getOrderByStripeSession(req: Request, res: Response) {
     status: order.status,
     order: {
       id: order.id,
+      orderNumber: order.orderNumber,
       paidAt: order.paidAt,
       currency: order.currency,
       totalPaid: order.totalPaid,
