@@ -12,10 +12,23 @@ function parseRange(range?: string | string[]): DashboardRange {
   return "month";
 }
 
+function parseBoolean(value: string | string[] | undefined, defaultValue: boolean): boolean {
+  if (typeof value === "undefined") {
+    return defaultValue;
+  }
+
+  const normalized = Array.isArray(value) ? value[0] : value;
+  return ["true", "1", "yes", "on"].includes(normalized.toLowerCase());
+}
+
 export async function getDashboard(req: Request, res: Response) {
   try {
     const range = parseRange(req.query.range as string | string[] | undefined);
-    const stats = await getDashboardStats(range);
+    const includeTestAccount = parseBoolean(
+      req.query.includeTestAccount as string | string[] | undefined,
+      true
+    );
+    const stats = await getDashboardStats(range, { includeTestAccount });
     return res.json({ stats });
   } catch (error) {
     console.error("Erreur lors du chargement du dashboard admin", error);
