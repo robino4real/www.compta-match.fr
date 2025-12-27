@@ -158,153 +158,211 @@ const AdminCustomerDetailPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="rounded border border-slate-300 px-3 py-1 text-xs"
-        >
-          Retour
-        </button>
-        <div>
-          <h1 className="text-2xl font-semibold text-black">Fiche client</h1>
-          {customer && <p className="text-sm text-slate-600">{customer.email}</p>}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Retour
+          </button>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-semibold text-black">Fiche client</h1>
+              {customer?.accountType && (
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                  {accountTypeLabels[customer.accountType] || customer.accountType}
+                </span>
+              )}
+            </div>
+            {customer && <p className="text-sm text-slate-600">{customer.email}</p>}
+          </div>
         </div>
+        {customer && (
+          <div className="flex flex-wrap gap-2 text-xs text-slate-600">
+            <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">ID {customer.id}</span>
+            {customer.profile?.companyName && (
+              <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">
+                {customer.profile.companyName}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
-      {error && <p className="text-xs text-red-600">{error}</p>}
-      {message && <p className="text-xs text-emerald-700">{message}</p>}
-      {loading && <p className="text-xs text-slate-500">Chargement...</p>}
+      {(error || message || loading) && (
+        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs shadow-sm md:px-5">
+          {error && <p className="text-red-600">{error}</p>}
+          {message && <p className="text-emerald-700">{message}</p>}
+          {loading && <p className="text-slate-500">Chargement...</p>}
+        </div>
+      )}
 
       {!loading && customer && (
         <div className="grid gap-4 lg:grid-cols-3">
-          <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
-            <h2 className="text-lg font-semibold text-black">Profil client</h2>
-            <div className="grid gap-3 md:grid-cols-2">
-              <label className="text-sm text-slate-700">
-                Prénom
-                <input
-                  className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                  value={form.firstName}
-                  onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
-                />
-              </label>
-              <label className="text-sm text-slate-700">
-                Nom
-                <input
-                  className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                  value={form.lastName}
-                  onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
-                />
-              </label>
-              <label className="text-sm text-slate-700">
-                Email
-                <input
-                  className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                />
-              </label>
-              <label className="text-sm text-slate-700">
-                Société / Raison sociale
-                <input
-                  className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                  value={form.companyName}
-                  onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))}
-                />
-              </label>
-              <label className="text-sm text-slate-700">
-                Adresse
-                <input
-                  className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                  value={form.billingStreet}
-                  onChange={(e) => setForm((f) => ({ ...f, billingStreet: e.target.value }))}
-                />
-              </label>
-              <label className="text-sm text-slate-700">
-                Ville
-                <input
-                  className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                  value={form.billingCity}
-                  onChange={(e) => setForm((f) => ({ ...f, billingCity: e.target.value }))}
-                />
-              </label>
-              <label className="text-sm text-slate-700">
-                Code postal
-                <input
-                  className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                  value={form.billingZip}
-                  onChange={(e) => setForm((f) => ({ ...f, billingZip: e.target.value }))}
-                />
-              </label>
-              <label className="text-sm text-slate-700">
-                Pays
-                <input
-                  className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                  value={form.billingCountry}
-                  onChange={(e) => setForm((f) => ({ ...f, billingCountry: e.target.value }))}
-                />
-              </label>
-              <label className="text-sm text-slate-700">
-                Téléphone
-                <input
-                  className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                  value={form.phone}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                />
-              </label>
-              <label className="text-sm text-slate-700">
-                Type de compte
-                <select
-                  className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                  value={form.accountType}
-                  onChange={(e) => setForm((f) => ({ ...f, accountType: e.target.value }))}
-                >
-                  {Object.entries(accountTypeLabels).map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <div className="flex justify-end">
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold text-black">Profil client</h2>
               <button
                 type="button"
                 onClick={updateProfile}
                 disabled={saving}
-                className="rounded bg-black px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                className="rounded-full bg-black px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900 disabled:opacity-50"
               >
                 {saving ? "Sauvegarde..." : "Enregistrer"}
               </button>
             </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-3 rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Identité</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="text-sm text-slate-700">
+                    Prénom
+                    <input
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      value={form.firstName}
+                      onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
+                    />
+                  </label>
+                  <label className="text-sm text-slate-700">
+                    Nom
+                    <input
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      value={form.lastName}
+                      onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
+                    />
+                  </label>
+                  <label className="text-sm text-slate-700 sm:col-span-2">
+                    Société / Raison sociale
+                    <input
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      value={form.companyName}
+                      onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))}
+                    />
+                  </label>
+                  <label className="text-sm text-slate-700 sm:col-span-2">
+                    Type de compte
+                    <select
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      value={form.accountType}
+                      onChange={(e) => setForm((f) => ({ ...f, accountType: e.target.value }))}
+                    >
+                      {Object.entries(accountTypeLabels).map(([key, label]) => (
+                        <option key={key} value={key}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </div>
+
+              <div className="space-y-3 rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Contact</p>
+                <div className="space-y-3">
+                  <label className="text-sm text-slate-700">
+                    Email
+                    <input
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      value={form.email}
+                      onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                    />
+                  </label>
+                  <label className="text-sm text-slate-700">
+                    Téléphone
+                    <input
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      value={form.phone}
+                      onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                    />
+                  </label>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="text-sm text-slate-700 sm:col-span-2">
+                      Adresse
+                      <input
+                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                        value={form.billingStreet}
+                        onChange={(e) => setForm((f) => ({ ...f, billingStreet: e.target.value }))}
+                      />
+                    </label>
+                    <label className="text-sm text-slate-700">
+                      Ville
+                      <input
+                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                        value={form.billingCity}
+                        onChange={(e) => setForm((f) => ({ ...f, billingCity: e.target.value }))}
+                      />
+                    </label>
+                    <label className="text-sm text-slate-700">
+                      Code postal
+                      <input
+                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                        value={form.billingZip}
+                        onChange={(e) => setForm((f) => ({ ...f, billingZip: e.target.value }))}
+                      />
+                    </label>
+                    <label className="text-sm text-slate-700 sm:col-span-2">
+                      Pays
+                      <input
+                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                        value={form.billingCountry}
+                        onChange={(e) => setForm((f) => ({ ...f, billingCountry: e.target.value }))}
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-sm font-semibold text-black">Activité (analytics)</h3>
-            <p className="text-xs text-slate-700">Pages vues 7j : {analytics?.pageViews7 ?? 0}</p>
-            <p className="text-xs text-slate-700">Pages vues 30j : {analytics?.pageViews30 ?? 0}</p>
-            <div>
-              <p className="text-xs font-semibold text-slate-800">Pages les plus consultées</p>
-              <ul className="text-xs text-slate-700">
-                {(analytics?.topPages || []).map((page) => (
-                  <li key={page.page || "unknown"}>
-                    {page.page || "(non renseigné)"} – {page._count._all} vues
-                  </li>
-                ))}
-              </ul>
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-black">Activité</h3>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                Trafic 30 jours
+              </span>
             </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-800">Derniers événements</p>
-              <ul className="space-y-1 text-xs text-slate-700">
-                {(analytics?.lastEvents || []).map((event) => (
-                  <li key={event.id} className="rounded bg-slate-50 px-2 py-1">
-                    <span className="font-semibold">{event.eventType}</span> – {event.page || "(page inconnue)"} –
-                    {" "}
-                    {new Date(event.createdAt).toLocaleString()}
-                  </li>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Pages vues 7j</p>
+                <p className="text-xl font-semibold text-slate-900">{analytics?.pageViews7 ?? 0}</p>
+              </div>
+              <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Pages vues 30j</p>
+                <p className="text-xl font-semibold text-slate-900">{analytics?.pageViews30 ?? 0}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Pages les plus consultées</p>
+              <div className="space-y-1 rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-xs text-slate-700">
+                {(analytics?.topPages || []).length === 0 && <p>Aucune donnée.</p>}
+                {(analytics?.topPages || []).map((page) => (
+                  <div key={page.page || "unknown"} className="flex items-center justify-between gap-3">
+                    <span className="truncate">{page.page || "(non renseigné)"}</span>
+                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                      {page._count._all} vues
+                    </span>
+                  </div>
                 ))}
-              </ul>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Derniers événements</p>
+              <div className="space-y-2 rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-xs text-slate-700">
+                {(analytics?.lastEvents || []).length === 0 && <p>Aucun événement récent.</p>}
+                {(analytics?.lastEvents || []).map((event) => (
+                  <div key={event.id} className="flex flex-col gap-1 rounded-lg bg-white px-3 py-2 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-slate-900">{event.eventType}</span>
+                      <span className="text-[11px] text-slate-500">{new Date(event.createdAt).toLocaleString()}</span>
+                    </div>
+                    <span className="text-slate-700">{event.page || "(page inconnue)"}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -312,9 +370,14 @@ const AdminCustomerDetailPage: React.FC = () => {
 
       {!loading && orders.length > 0 && (
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-black">Commandes</h2>
-            <p className="text-xs text-slate-600">Actions sensibles loggées.</p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-black">Commandes</h2>
+              <p className="text-xs text-slate-600">Historique des actions sensibles (annulation, remboursement, suppression).</p>
+            </div>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+              {orders.length} commande{orders.length > 1 ? "s" : ""}
+            </span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
@@ -329,33 +392,35 @@ const AdminCustomerDetailPage: React.FC = () => {
               </thead>
               <tbody>
                 {orders.map((order) => (
-                  <tr key={order.id} className="border-b">
-                    <td className="px-3 py-2">{order.orderNumber || order.id}</td>
-                    <td className="px-3 py-2">{new Date(order.createdAt).toISOString().slice(0, 10)}</td>
-                    <td className="px-3 py-2">{order.status}</td>
-                    <td className="px-3 py-2 text-right">{(order.totalPaid / 100).toFixed(2)} €</td>
-                    <td className="px-3 py-2 space-x-2">
-                      <button
-                        type="button"
-                        onClick={() => handleOrderAction(order.id, "cancel")}
-                        className="rounded border border-slate-300 px-2 py-1 text-xs"
-                      >
-                        Annuler
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleOrderAction(order.id, "refund")}
-                        className="rounded border border-slate-300 px-2 py-1 text-xs"
-                      >
-                        Rembourser
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleOrderAction(order.id, "delete")}
-                        className="rounded border border-red-200 px-2 py-1 text-xs text-red-700"
-                      >
-                        Supprimer
-                      </button>
+                  <tr key={order.id} className="border-b last:border-0">
+                    <td className="px-3 py-2 font-semibold text-slate-900">{order.orderNumber || order.id}</td>
+                    <td className="px-3 py-2 text-slate-700">{new Date(order.createdAt).toISOString().slice(0, 10)}</td>
+                    <td className="px-3 py-2 text-slate-700">{order.status}</td>
+                    <td className="px-3 py-2 text-right font-semibold text-slate-900">{(order.totalPaid / 100).toFixed(2)} €</td>
+                    <td className="px-3 py-2">
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleOrderAction(order.id, "cancel")}
+                          className="rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                        >
+                          Annuler
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleOrderAction(order.id, "refund")}
+                          className="rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                        >
+                          Rembourser
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleOrderAction(order.id, "delete")}
+                          className="rounded-full border border-red-200 px-3 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-50"
+                        >
+                          Supprimer
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

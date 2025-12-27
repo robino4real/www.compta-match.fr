@@ -497,53 +497,90 @@ const AdminDownloadsPage: React.FC = () => {
     { label: "Mise en avant (vignette ou bullets)", done: Boolean(thumbnailUrl || featureBullets.length) },
   ];
 
+  const activeProducts = products.filter((product) => product.isActive && !product.isArchived);
+  const archivedProducts = products.filter((product) => product.isArchived);
+  const draftProducts = products.filter((product) => !product.isActive && !product.isArchived);
+  const totalSizeBytes = products.reduce((total, product) => total + (product.fileSize || 0), 0);
+
   return (
-    <div className="space-y-6">
-      <section className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 rounded-2xl p-6 text-white shadow-sm">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <div className="space-y-8">
+      <section className="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 p-6 text-white shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-1">
             <p className="text-xs uppercase tracking-[0.2em] text-slate-200">Back-office</p>
             <h1 className="text-2xl font-semibold">Articles téléchargeables</h1>
             <p className="text-sm text-slate-200/80">
-              Concevez un produit prêt à la vente : identité, pitch, packaging et contrôle qualité
-              réunis dans un seul onglet.
+              Présentez un produit clair : identité, packaging, fichier et SEO sont rassemblés ici pour une fiche aérée.
             </p>
           </div>
-          <div className="rounded-xl bg-white/10 px-4 py-3 text-sm backdrop-blur">
-            <p className="text-xs uppercase tracking-wide text-slate-200">Assistant live</p>
-            <p className="font-semibold">{name || "Nouveau logiciel"}</p>
-            <p className="text-xs text-slate-200">{slug || "slug-auto"}</p>
+          <div className="flex flex-wrap gap-3">
+            <div className="rounded-xl bg-white/10 px-4 py-3 text-sm backdrop-blur">
+              <p className="text-[11px] uppercase tracking-wide text-slate-200">Brouillon actif</p>
+              <p className="font-semibold">{name || "Nouveau logiciel"}</p>
+              <p className="text-xs text-slate-200">{slug || "slug-auto"}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-left text-xs md:grid-cols-4">
+              <div className="rounded-lg bg-white/10 px-3 py-2">
+                <p className="text-slate-200/70">Actifs</p>
+                <p className="text-lg font-semibold">{activeProducts.length}</p>
+              </div>
+              <div className="rounded-lg bg-white/10 px-3 py-2">
+                <p className="text-slate-200/70">Brouillons</p>
+                <p className="text-lg font-semibold">{draftProducts.length}</p>
+              </div>
+              <div className="rounded-lg bg-white/10 px-3 py-2">
+                <p className="text-slate-200/70">Archivés</p>
+                <p className="text-lg font-semibold">{archivedProducts.length}</p>
+              </div>
+              <div className="rounded-lg bg-white/10 px-3 py-2">
+                <p className="text-slate-200/70">Volume</p>
+                <p className="text-lg font-semibold">{formatFileSize(totalSizeBytes)}</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="grid gap-5 lg:grid-cols-3">
+      <section className="grid gap-6 xl:grid-cols-3">
         <form
           onSubmit={handleSubmit}
-          className="lg:col-span-2 space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+          className="xl:col-span-2 space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-black">Créer un nouveau produit</h2>
-              <p className="text-xs text-slate-600">
-                Renseignez chaque zone : nous gardons la validation et la mise en forme cohérente.
-              </p>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Création rapide</p>
+              <h2 className="text-xl font-semibold text-black">Composer un produit téléchargeable</h2>
+              <p className="text-xs text-slate-600">Sections courtes et rangées pour garder un œil sur l&apos;essentiel.</p>
             </div>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-white hover:text-black hover:border hover:border-black disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isSubmitting ? "Création en cours..." : "Publier"}
-            </button>
+            <div className="flex items-center gap-2">
+              <div className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-700">
+                {pricePreview ? `${pricePreview.euros} € TTC` : "Tarif non défini"}
+              </div>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-white hover:text-black hover:border hover:border-black disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isSubmitting ? "Création en cours..." : "Publier"}
+              </button>
+            </div>
           </div>
 
           {error && <p className="text-[11px] text-red-600">{error}</p>}
           {success && <p className="text-[11px] text-emerald-600">{success}</p>}
 
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
-              <p className="text-xs font-semibold text-slate-700">Identité & pitch</p>
+            <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-slate-900">Identité & pitch</p>
+                <button
+                  type="button"
+                  onClick={copySlugToClipboard}
+                  className="rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 transition hover:border-black hover:text-black"
+                >
+                  Copier le slug
+                </button>
+              </div>
               <div className="space-y-1">
                 <label className="block text-[11px] font-medium text-slate-800">Nom *</label>
                 <input
@@ -567,16 +604,7 @@ const AdminDownloadsPage: React.FC = () => {
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
                   placeholder="comptamini-compta-generale"
                 />
-                <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
-                  <p>Généré automatiquement. Vous pouvez le personnaliser si besoin.</p>
-                  <button
-                    type="button"
-                    onClick={copySlugToClipboard}
-                    className="rounded-full border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-700 transition hover:border-black hover:text-black"
-                  >
-                    Copier
-                  </button>
-                </div>
+                <p className="text-[11px] text-slate-500">Généré automatiquement, modifiable si besoin.</p>
               </div>
               <div className="space-y-1">
                 <label className="block text-[11px] font-medium text-slate-800">Catégorie</label>
@@ -602,45 +630,36 @@ const AdminDownloadsPage: React.FC = () => {
                   Sélectionnez une catégorie pour organiser la vitrine Logiciels.
                 </p>
               </div>
-              <div className="space-y-1">
-                <label className="block text-[11px] font-medium text-slate-800">Vignette / visuel</label>
+              <div className="space-y-2 rounded-lg border border-dashed border-slate-300 bg-white p-3">
+                <div className="flex items-center justify-between text-[11px] font-medium text-slate-800">
+                  <span>Vignette / visuel</span>
+                  {isUploadingThumbnail && <span className="text-amber-700">Import...</span>}
+                </div>
                 <input
                   type="url"
                   value={thumbnailUrl}
                   onChange={(e) => setThumbnailUrl(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
                   placeholder="https://cdn.exemple.com/visuels/comptamini.png"
                 />
                 <div className="flex items-center gap-3 text-[11px] text-slate-500">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleThumbnailUpload}
-                    className="text-[11px]"
-                  />
-                  {isUploadingThumbnail && <span>Import en cours...</span>}
+                  <input type="file" accept="image/*" onChange={handleThumbnailUpload} className="text-[11px]" />
+                  {thumbnailUploadError && <span className="text-red-600">{thumbnailUploadError}</span>}
                 </div>
-                {thumbnailUploadError && (
-                  <p className="text-[11px] text-red-600">{thumbnailUploadError}</p>
-                )}
                 {thumbnailUrl && (
-                  <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700">
+                  <div className="flex items-center gap-2 rounded-lg bg-slate-50 p-2 text-[11px] text-slate-700">
                     <img
                       src={resolveAssetUrl(thumbnailUrl)}
                       alt="Prévisualisation de la vignette"
                       className="h-10 w-10 rounded object-cover"
                     />
-                    <button
-                      type="button"
-                      className="text-slate-500 hover:text-black"
-                      onClick={() => setThumbnailUrl("")}
-                    >
+                    <button type="button" className="text-slate-500 hover:text-black" onClick={() => setThumbnailUrl("")}>
                       Supprimer
                     </button>
                   </div>
                 )}
                 <p className="text-[11px] text-slate-500">
-                  URL d&apos;aperçu affichée dans la vitrine et dans la fiche produit. Vous pouvez saisir une URL ou importer un visuel depuis votre ordinateur.
+                  URL d&apos;aperçu affichée dans la vitrine et sur la fiche produit. Upload direct ou collage d&apos;URL possible.
                 </p>
               </div>
               <div className="space-y-1">
@@ -985,21 +1004,28 @@ const AdminDownloadsPage: React.FC = () => {
               <h3 className="text-sm font-semibold text-black">Centre de pilotage</h3>
               <p className="text-xs text-slate-600">Filtrez vos ressources et accédez à l&apos;édition avancée.</p>
             </div>
-            <div className="flex items-center gap-2">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800"
-              >
-                <option value="active">Actifs</option>
-                <option value="archived">Archivés</option>
-                <option value="all">Tous</option>
-              </select>
+            <div className="flex flex-wrap items-center gap-2">
+              {["active", "archived", "all"].map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => setStatusFilter(status as StatusFilter)}
+                  className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition ${
+                    statusFilter === status
+                      ? "border-black bg-black text-white"
+                      : "border-slate-300 bg-white text-slate-700 hover:border-black hover:text-black"
+                  }`}
+                >
+                  {status === "active" && "Actifs"}
+                  {status === "archived" && "Archivés"}
+                  {status === "all" && "Tous"}
+                </button>
+              ))}
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                className="rounded-full border border-slate-300 px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
                 placeholder="Recherche par nom ou slug"
               />
             </div>
