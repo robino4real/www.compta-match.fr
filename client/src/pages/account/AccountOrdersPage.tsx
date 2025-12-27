@@ -99,7 +99,7 @@ const AccountOrdersPage: React.FC = () => {
 
   return (
     <main className="bg-white min-h-screen py-10">
-      <div className="max-w-5xl mx-auto px-4 lg:px-8 space-y-6">
+      <div className="mx-auto w-full px-4 lg:px-8 space-y-6">
         <div className="flex">
           <button
             onClick={() => navigate("/compte")}
