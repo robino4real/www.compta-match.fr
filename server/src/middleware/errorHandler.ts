@@ -19,7 +19,7 @@ export function errorHandler(
   });
 
   res.status(httpError.statusCode).json({
-    error: httpError.code,
-    message: httpError.message,
+    ok: false,
+    error: { code: httpError.code, message: httpError.message },
   });
 }

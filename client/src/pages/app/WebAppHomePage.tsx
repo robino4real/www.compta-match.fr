@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useWebApp, WebAppRouteType, WebAppType } from "../../context/WebAppContext";
 import { useWebAppContextLoader } from "../../hooks/useWebAppContextLoader";
+import WebAppErrorPage from "../../components/app/WebAppErrorPage";
 
 interface WebAppHomePageProps {
   expectedType: WebAppType;
@@ -52,11 +53,7 @@ const WebAppHomePage: React.FC<WebAppHomePageProps> = ({ expectedType, routeType
   }
 
   if (error || !hasContext || !context.fiche) {
-    return (
-      <div className="rounded-2xl border border-rose-200 bg-rose-50 px-6 py-5 text-sm text-rose-700">
-        {error || "Impossible de charger le contexte de la fiche."}
-      </div>
-    );
+    return <WebAppErrorPage status={error?.status} message={error?.message} routeType={routeType} />;
   }
 
   const fiche = context.fiche;

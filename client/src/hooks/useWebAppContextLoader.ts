@@ -1,7 +1,7 @@
 import React from "react";
 import { useParams } from "react-router-dom";
-import { API_BASE_URL } from "../config/api";
 import { useWebApp, WebAppRouteType, WebAppType } from "../context/WebAppContext";
+import { WebAppApiError, webAppFetch } from "../lib/webAppFetch";
 
 interface FicheContextResponse {
   ok: boolean;
@@ -31,7 +31,7 @@ export function useWebAppContextLoader({
     Boolean(context.user);
 
   const [isLoading, setIsLoading] = React.useState(!hasCachedContext);
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<WebAppApiError | null>(null);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -39,7 +39,7 @@ export function useWebAppContextLoader({
     const loadContext = async () => {
       if (!ficheId) {
         if (!isMounted) return;
-        setError("Identifiant de fiche manquant.");
+        setError(new WebAppApiError("Ressource introuvable", 404, "NOT_FOUND"));
         setIsLoading(false);
         setContext({ type: routeType, fiche: null, user: null });
         return;
@@ -58,23 +58,12 @@ export function useWebAppContextLoader({
       setError(null);
 
       try {
-        const response = await fetch(`${API_BASE_URL}/app/fiche/${ficheId}/context`, {
-          credentials: "include",
-        });
-        const data = (await response.json()) as FicheContextResponse & { message?: string };
-
-        if (!response.ok) {
-          const message =
-            response.status === 403
-              ? "Accès interdit"
-              : response.status === 404
-              ? "Fiche introuvable"
-              : data?.message || "Impossible de charger le contexte de la fiche.";
-          throw new Error(message);
-        }
+        const data = await webAppFetch<FicheContextResponse>(
+          `/api/app/${routeType}/fiche/${ficheId}/context`
+        );
 
         if (data.fiche.type !== expectedType) {
-          throw new Error("Fiche introuvable");
+          throw new WebAppApiError("Ressource introuvable", 404, "NOT_FOUND");
         }
 
         if (!isMounted) return;
@@ -83,11 +72,11 @@ export function useWebAppContextLoader({
         setError(null);
       } catch (fetchError) {
         if (!isMounted) return;
-        const message =
-          fetchError instanceof Error
-            ? fetchError.message
-            : "Impossible de charger le contexte de la fiche.";
-        setError(message);
+        const appError =
+          fetchError instanceof WebAppApiError
+            ? fetchError
+            : new WebAppApiError("Impossible de charger le contexte de la fiche.");
+        setError(appError);
         setContext({ type: routeType, fiche: null, user: null });
       } finally {
         if (!isMounted) return;

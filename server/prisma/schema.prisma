@@ -30,6 +30,8 @@ model User {
   settings            UserSettings?
   subscriptions       UserSubscription[]
   appFiches           AppFiche[]
+  accountingEntries   AccountingEntry[]
+  accountingDocuments AccountingDocument[]
 }
 
 enum OrderStatus {
@@ -813,12 +815,53 @@ model AppFiche {
   type      AppFicheType
   ownerId   String
   name      String
+  currency  String       @default("EUR")
+  fiscalYearStartMonth Int @default(1)
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
   owner User @relation(fields: [ownerId], references: [id])
 
+  accountingEntries AccountingEntry[]
+  accountingDocuments AccountingDocument[]
+
   @@index([ownerId])
+}
+
+model AccountingEntry {
+  id         String   @id @default(cuid())
+  ficheId    String
+  ownerId    String
+  date       DateTime
+  label      String
+  amountCents Int
+  account    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  fiche AppFiche @relation(fields: [ficheId], references: [id])
+  owner User     @relation(fields: [ownerId], references: [id])
+
+  @@index([ficheId, ownerId])
+}
+
+model AccountingDocument {
+  id           String   @id @default(cuid())
+  ficheId      String
+  ownerId      String
+  filename     String
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+  storagePath  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  fiche AppFiche @relation(fields: [ficheId], references: [id])
+  owner User     @relation(fields: [ownerId], references: [id])
+
+  @@index([ficheId, ownerId])
+  @@unique([ownerId, storagePath])
 }
 
 enum SubscriptionStatus {
