@@ -10,6 +10,11 @@ import {
 import { getRangeBounds, getTimelineBucket, TimelineBucket } from "../utils/dashboardRange";
 
 const ORDER_STATUS_PAID = "PAID";
+const TEST_ACCOUNT_EMAIL = "lesbazeilles@yahoo.fr";
+
+type DashboardStatsOptions = {
+  includeTestAccount?: boolean;
+};
 
 function buildDateFilter(from: Date | null, to: Date | null) {
   if (!from && !to) return undefined;
@@ -67,14 +72,32 @@ function bucketizeOrder(date: Date, bucket: TimelineBucket) {
   };
 }
 
-async function computeSales(range: DashboardRange) {
+function buildOrderUserFilter(includeTestAccount: boolean) {
+  if (includeTestAccount) {
+    return {};
+  }
+
+  return { user: { email: { not: TEST_ACCOUNT_EMAIL } } };
+}
+
+function buildUserFilter(includeTestAccount: boolean) {
+  if (includeTestAccount) {
+    return undefined;
+  }
+
+  return { email: { not: TEST_ACCOUNT_EMAIL } };
+}
+
+async function computeSales(range: DashboardRange, includeTestAccount: boolean) {
   const { from, to } = getRangeBounds(range);
   const dateFilter = buildDateFilter(from, to);
+  const userFilter = buildOrderUserFilter(includeTestAccount);
 
   const paidOrders = await prisma.order.findMany({
     where: {
       status: ORDER_STATUS_PAID,
       ...(dateFilter ? dateFilter : {}),
+      ...userFilter,
     },
     include: {
       items: true,
@@ -122,19 +145,26 @@ async function computeSales(range: DashboardRange) {
   };
 }
 
-async function computeCustomers(range: DashboardRange): Promise<DashboardCustomerStats> {
+async function computeCustomers(
+  range: DashboardRange,
+  includeTestAccount: boolean
+): Promise<DashboardCustomerStats> {
   const { from, to } = getRangeBounds(range);
   const dateFilter = buildDateFilter(from, to);
   const newUsersDateFilter = from || to ? { createdAt: { gte: from ?? undefined, lte: to ?? undefined } } : {};
+  const orderUserFilter = buildOrderUserFilter(includeTestAccount);
+  const userFilter = buildUserFilter(includeTestAccount);
 
   const [totalRegisteredUsers, newUsersInRange, customersWithOrdersAllTime, customersWithOrdersInRange] =
     await Promise.all([
-      prisma.user.count(),
-      prisma.user.count({ where: newUsersDateFilter }),
-      prisma.order.groupBy({ by: ["userId"], where: { status: ORDER_STATUS_PAID } }),
+      prisma.user.count({ where: userFilter }),
+      prisma.user.count({
+        where: userFilter ? { ...newUsersDateFilter, ...userFilter } : newUsersDateFilter,
+      }),
+      prisma.order.groupBy({ by: ["userId"], where: { status: ORDER_STATUS_PAID, ...orderUserFilter } }),
       prisma.order.groupBy({
         by: ["userId"],
-        where: { status: ORDER_STATUS_PAID, ...(dateFilter ? dateFilter : {}) },
+        where: { status: ORDER_STATUS_PAID, ...(dateFilter ? dateFilter : {}), ...orderUserFilter },
       }),
     ]);
 
@@ -147,11 +177,15 @@ async function computeCustomers(range: DashboardRange): Promise<DashboardCustome
   };
 }
 
-async function computeProductSales(range: DashboardRange): Promise<DashboardProductSales[]> {
+async function computeProductSales(
+  range: DashboardRange,
+  includeTestAccount: boolean
+): Promise<DashboardProductSales[]> {
   const { from, to } = getRangeBounds(range);
   const dateFilter = buildDateFilter(from, to);
   const products = await prisma.downloadableProduct.findMany({ select: { id: true, name: true } });
   const productMap = new Map(products.map((p) => [p.id, p.name]));
+  const userFilter = buildOrderUserFilter(includeTestAccount);
 
   const [salesInRange, salesAllTime] = await Promise.all([
     prisma.orderItem.groupBy({
@@ -160,13 +194,14 @@ async function computeProductSales(range: DashboardRange): Promise<DashboardProd
         order: {
           status: ORDER_STATUS_PAID,
           ...(dateFilter ? dateFilter : {}),
+          ...userFilter,
         },
       },
       _count: { _all: true },
     }),
     prisma.orderItem.groupBy({
       by: ["productId"],
-      where: { order: { status: ORDER_STATUS_PAID } },
+      where: { order: { status: ORDER_STATUS_PAID, ...userFilter } },
       _count: { _all: true },
     }),
   ]);
@@ -240,11 +275,14 @@ async function computeProductInteractions(range: DashboardRange): Promise<Dashbo
   });
 }
 
-export async function getDashboardStats(range: DashboardRange): Promise<DashboardStatsResponse> {
+export async function getDashboardStats(
+  range: DashboardRange,
+  { includeTestAccount = true }: DashboardStatsOptions = {}
+): Promise<DashboardStatsResponse> {
   const [sales, customers, productSales, productInteractions] = await Promise.all([
-    computeSales(range),
-    computeCustomers(range),
-    computeProductSales(range),
+    computeSales(range, includeTestAccount),
+    computeCustomers(range, includeTestAccount),
+    computeProductSales(range, includeTestAccount),
     computeProductInteractions(range),
   ]);
 

@@ -97,12 +97,17 @@ const AdminDashboardPage: React.FC = () => {
   const [stats, setStats] = React.useState<DashboardStatsResponse | null>(null);
   const [loading, setLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [includeTestAccount, setIncludeTestAccount] = React.useState<boolean>(true);
 
   const fetchStats = React.useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${API_BASE_URL}/admin/dashboard?range=${range}`, {
+      const params = new URLSearchParams({
+        range,
+        includeTestAccount: includeTestAccount ? "true" : "false",
+      });
+      const response = await fetch(`${API_BASE_URL}/admin/dashboard?${params.toString()}`, {
         method: "GET",
         credentials: "include",
       });
@@ -119,7 +124,7 @@ const AdminDashboardPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [range]);
+  }, [range, includeTestAccount]);
 
   React.useEffect(() => {
     fetchStats();
@@ -138,6 +143,15 @@ const AdminDashboardPage: React.FC = () => {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+              checked={includeTestAccount}
+              onChange={(event) => setIncludeTestAccount(event.target.checked)}
+            />
+            Inclure les données du compte test (lesbazeilles@yahoo.fr)
+          </label>
           <label htmlFor="dashboard-range" className="text-sm font-medium text-slate-700">
             Période
           </label>
