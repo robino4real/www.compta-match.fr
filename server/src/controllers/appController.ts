@@ -3,15 +3,14 @@ import { AppFicheType } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import { FicheRequest } from "../middleware/ficheAccessMiddleware";
+import { appErrors } from "../utils/appErrors";
 
 export function getFicheContext(req: Request, res: Response) {
   const { fiche } = req as FicheRequest;
   const { user } = req as AuthenticatedRequest;
 
   if (!fiche || !user) {
-    return res
-      .status(500)
-      .json({ message: "Impossible de charger le contexte de la fiche." });
+    return appErrors.internal(res, "Impossible de charger le contexte de la fiche.");
   }
 
   return res.json({
@@ -25,7 +24,7 @@ export async function listUserFiches(req: Request, res: Response) {
   const { user } = req as AuthenticatedRequest;
 
   if (!user) {
-    return res.status(401).json({ message: "Non authentifié." });
+    return appErrors.unauthorized(res);
   }
 
   const typeParam = (req.query.type as string | undefined)?.toUpperCase();
@@ -47,6 +46,6 @@ export async function listUserFiches(req: Request, res: Response) {
     return res.json({ fiches });
   } catch (error) {
     console.error("[fiche] Erreur lors du chargement des fiches utilisateur", error);
-    return res.status(500).json({ message: "Impossible de récupérer vos fiches pour le moment." });
+    return appErrors.internal(res, "Impossible de récupérer vos fiches pour le moment.");
   }
 }

@@ -22,7 +22,19 @@ declare module "multer" {
     interface StorageEngine {}
   }
 
-  function multer(options?: { storage?: multer.StorageEngine }): multer.Multer;
+  interface MulterOptions {
+    storage?: multer.StorageEngine;
+    limits?: {
+      fileSize?: number;
+    };
+    fileFilter?: (
+      req: any,
+      file: Express.Multer.File,
+      callback: (error: Error | null, acceptFile: boolean) => void
+    ) => void;
+  }
+
+  function multer(options?: MulterOptions): multer.Multer;
   export = multer;
 }
 

@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { prisma } from "../config/prisma";
 import { env } from "../config/env";
 import { verifyJwt } from "../utils/jwt";
+import { appErrors } from "../utils/appErrors";
 
 declare global {
   namespace Express {
@@ -85,7 +86,7 @@ export async function attachUserToRequest(
 
 export function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   if (!req.user) {
-    return res.status(401).json({ message: "Non authentifié." });
+    return appErrors.unauthorized(res);
   }
 
   return next();
@@ -93,11 +94,11 @@ export function requireAuth(req: AuthenticatedRequest, res: Response, next: Next
 
 export function requireAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   if (!req.user) {
-    return res.status(401).json({ message: "Non authentifié." });
+    return appErrors.unauthorized(res);
   }
 
   if (req.user.role !== "admin") {
-    return res.status(403).json({ message: "Accès réservé à l'administrateur." });
+    return appErrors.forbidden(res, "Accès réservé à l'administrateur.");
   }
 
   return next();

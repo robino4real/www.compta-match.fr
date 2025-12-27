@@ -1,6 +1,7 @@
 import React from "react";
 import { useWebApp, WebAppRouteType, WebAppType } from "../../context/WebAppContext";
 import { useWebAppContextLoader } from "../../hooks/useWebAppContextLoader";
+import WebAppErrorPage from "../../components/app/WebAppErrorPage";
 
 interface WebAppEntryPageProps {
   expectedType: WebAppType;
@@ -37,7 +38,7 @@ const WebAppEntryPage: React.FC<WebAppEntryPageProps> = ({ expectedType, routeTy
       )}
 
       {!isLoading && error && (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-6 py-5 text-sm text-rose-700">{error}</div>
+        <WebAppErrorPage status={error.status} message={error.message} routeType={routeType} />
       )}
 
       {!isLoading && !error && hasContext && context.fiche && context.user && (

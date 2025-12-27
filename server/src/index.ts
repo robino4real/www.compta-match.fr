@@ -30,7 +30,9 @@ import paidServicesRoutes from "./routes/paidServicesRoutes";
 import { handleOrderDownloadByToken } from "./controllers/downloadController";
 import { handleStripeWebhook } from "./controllers/paymentController";
 import { renderIndexWithSeo } from "./utils/seoRenderer";
-import { FicheRequest, requireFicheAccess } from "./middleware/ficheAccessMiddleware";
+import { FicheRequest } from "./middleware/ficheAccessMiddleware";
+import { prisma } from "./config/prisma";
+import { AuthenticatedRequest } from "./middleware/authMiddleware";
 
 const app = express();
 const apiRouter = Router();
@@ -141,21 +143,57 @@ const serveWebAppIndex = (res: express.Response) => {
   return res.status(200).send("OK SECURED");
 };
 
-const secureWebAppRoute = (expectedType: "COMPTAPRO" | "COMPTASSO") =>
-  [
-    attachUserToRequest,
-    requireAuth,
-    requireFicheAccess,
-    (req: express.Request, res: express.Response) => {
-      const { fiche } = req as FicheRequest;
+const ensureWebAppAuthenticated: express.RequestHandler = (req, res, next) => {
+  const { user } = req as AuthenticatedRequest;
+
+  if (!user) {
+    // Pour les routes WebApp HTML, on redirige vers la page de connexion au lieu d'une réponse JSON.
+    return res.redirect(302, "/auth/login");
+  }
+
+  return next();
+};
+
+const ensureWebAppFicheAccess = (expectedType: "COMPTAPRO" | "COMPTASSO"): express.RequestHandler =>
+  async (req, res, next) => {
+    const { ficheId } = req.params as { ficheId?: string };
+    const { user } = req as AuthenticatedRequest;
+
+    if (!ficheId) {
+      return res.status(404).send("Ressource introuvable");
+    }
+
+    try {
+      const fiche = await prisma.appFiche.findUnique({ where: { id: ficheId } });
 
       if (!fiche || fiche.type !== expectedType) {
         return res.status(404).send("Ressource introuvable");
       }
 
-      return serveWebAppIndex(res);
-    },
-  ] as const;
+      if (!user || fiche.ownerId !== user.id) {
+        return res.status(403).send("Accès interdit");
+      }
+
+      (req as FicheRequest).fiche = fiche;
+
+      return next();
+    } catch (error) {
+      console.error("[webapp] Erreur lors du contrôle d'accès fiche", error);
+      return res.status(500).send("Erreur interne du serveur");
+    }
+  };
+
+// SECURITY REQUIRED: Les routes WebApp HTML renvoient directement une page 403/404 ou redirigent vers la connexion.
+const secureWebAppRoute = (expectedType: "COMPTAPRO" | "COMPTASSO") =>
+  [attachUserToRequest, ensureWebAppAuthenticated, ensureWebAppFicheAccess(expectedType), (req: express.Request, res: express.Response) => {
+    const { fiche } = req as FicheRequest;
+
+    if (!fiche || fiche.type !== expectedType) {
+      return res.status(404).send("Ressource introuvable");
+    }
+
+    return serveWebAppIndex(res);
+  }] as const;
 
 app.get("/app/comptapro/:ficheId", ...secureWebAppRoute("COMPTAPRO"));
 app.get("/app/comptapro/:ficheId/*", ...secureWebAppRoute("COMPTAPRO"));
