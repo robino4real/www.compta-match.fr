@@ -18,6 +18,7 @@ interface OrderItemSummary {
 
 interface OrderSummary {
   id: string;
+  orderNumber?: string;
   createdAt: string;
   status: string;
   totalPaid: number;
@@ -176,7 +177,7 @@ const AccountOrdersPage: React.FC = () => {
                         {new Date(order.createdAt).toLocaleDateString("fr-FR")}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-slate-900">
-                        {order.id.slice(0, 8)}…
+                        {order.orderNumber || `${order.id.slice(0, 8)}…`}
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-700">
                         <div className="flex flex-col gap-1">

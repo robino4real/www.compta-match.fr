@@ -25,6 +25,7 @@ interface OrderItemDto {
 
 interface OrderDetailDto {
   id: string;
+  orderNumber?: string;
   createdAt: string;
   paidAt?: string | null;
   status: string;
@@ -140,7 +141,9 @@ const AdminOrderDetailPage: React.FC = () => {
     <div className="space-y-4 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-black">Commande {order.id}</h1>
+          <h1 className="text-xl font-semibold text-black">
+            Commande {order.orderNumber || order.id}
+          </h1>
           <p className="text-xs text-slate-600">
             Détails de la commande et gestion des liens de téléchargement.
           </p>

@@ -24,6 +24,19 @@ Principales variables attendues en production :
 - Le schéma Prisma est défini dans `server/prisma/schema.prisma`.
 - Les migrations ont été régénérées : une base neuve peut être créée via `prisma migrate deploy` ou directement avec le script SQL `docs/bootstrap.sql` (utile dans phpPgAdmin).
 
+## Numéros de commande
+- Chaque commande possède désormais un `orderNumber` unique et lisible :
+  - `PTXXXXXXXXXX` pour les produits téléchargeables ;
+  - `CPXXXXXXXXXX` pour les abonnements ComptaPro ;
+  - `CAXXXXXXXXXX` pour les abonnements ComptaAsso.
+- Les numéros sont générés à la création de commande, vérifiés en base pour éviter les collisions, et ne doivent jamais être modifiés après coup.
+- Backfill : pour ajouter un numéro aux commandes existantes ou corriger un format hérité, exécuter côté serveur (avec les variables d'env DB configurées) :
+  ```bash
+  cd server
+  npm run backfill:order-numbers
+  ```
+  Le script regénère les numéros manquants au bon format et journalise les mises à jour.
+
 ## Lancement en local
 1. Installer les dépendances :
    ```bash
@@ -45,6 +58,11 @@ Principales variables attendues en production :
    cd client
    npm run dev
    ```
+
+### Vérifier les numéros de commande en local
+1. Créer une commande (panier gratuit ou paiement test Stripe) via le front.
+2. Ouvrir `/compte/commandes` puis le détail pour vérifier l'affichage du nouveau numéro (prefixe PT/CP/CA + 10 chiffres).
+3. Contrôler en base que le champ `orderNumber` est bien renseigné et unique (table `Order`).
 
 ## Vérifications locales : espace client / commandes
 1. Démarrer l'API :

@@ -30,6 +30,7 @@ const PaymentSuccessPage: React.FC = () => {
   const [confirmation, setConfirmation] = React.useState<{
     order: {
       id: string;
+      orderNumber?: string;
       paidAt: string;
       currency: string;
       totalPaid: number;
@@ -68,6 +69,7 @@ const PaymentSuccessPage: React.FC = () => {
           status: status.status,
           order: {
             id: status.order.id,
+            orderNumber: status.order.orderNumber,
             paidAt: status.order.paidAt || new Date().toISOString(),
             currency: status.order.currency || "EUR",
             totalPaid: status.order.totalPaid || 0,
@@ -239,7 +241,7 @@ const PaymentSuccessPage: React.FC = () => {
                     })}
                   </p>
                   <p className="text-sm text-emerald-700">
-                    Commande #{confirmation.order.id}
+                    Commande #{confirmation.order.orderNumber || confirmation.order.id}
                   </p>
                 </div>
               </div>

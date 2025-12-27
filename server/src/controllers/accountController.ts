@@ -143,10 +143,13 @@ function buildDownloadState(order: OrderWithRelations) {
 function serializeOrderDetail(order: OrderWithRelations) {
   return {
     id: order.id,
+    orderNumber: order.orderNumber,
     createdAt: order.createdAt,
     status: order.status,
     totalPaid: order.totalPaid,
     currency: order.currency,
+    orderType: order.orderType,
+    subscriptionBrand: order.subscriptionBrand,
     billingName: order.billingNameSnapshot,
     billingEmail: order.billingEmailSnapshot,
     invoice: order.invoice

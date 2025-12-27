@@ -24,6 +24,7 @@ interface CheckoutSessionResponse {
 interface DownloadConfirmationResponse {
   order: {
     id: string;
+    orderNumber?: string;
     paidAt: string;
     currency: string;
     totalPaid: number;
@@ -39,6 +40,7 @@ export interface OrderStatusResponse {
   status: string;
   order?: {
     id: string;
+    orderNumber?: string;
     paidAt?: string | null;
     currency?: string;
     totalPaid?: number;

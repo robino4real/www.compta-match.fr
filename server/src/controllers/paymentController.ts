@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import Stripe from "stripe";
 import {
   DownloadPlatform,
+  OrderType,
   Prisma,
   PromoCode,
   WebhookEventStatus,
@@ -11,6 +12,7 @@ import { prisma } from "../config/prisma";
 import { stripe } from "../config/stripeClient";
 import { createInvoiceForOrder } from "../services/invoiceService";
 import { generateDownloadLinksForOrder } from "../services/downloadLinkService";
+import { generateOrderNumber } from "../services/orderNumberService";
 import { validatePromoCodeForTotal } from "../services/promoService";
 import { computeCartTotals, CartItemInput } from "../services/cartService";
 import {
@@ -291,6 +293,8 @@ export async function createDownloadCheckoutSession(
       const order = await prisma.order.create({
         data: {
           userId,
+          orderNumber: await generateOrderNumber(OrderType.DOWNLOADABLE),
+          orderType: OrderType.DOWNLOADABLE,
           totalBeforeDiscount: totalCents,
           discountAmount: promoDiscountCents > 0 ? promoDiscountCents : 0,
           totalPaid: 0,
@@ -353,6 +357,8 @@ export async function createDownloadCheckoutSession(
     const order = await prisma.order.create({
       data: {
         userId,
+        orderNumber: await generateOrderNumber(OrderType.DOWNLOADABLE),
+        orderType: OrderType.DOWNLOADABLE,
         totalBeforeDiscount: totalCents,
         discountAmount: promoDiscountCents > 0 ? promoDiscountCents : 0,
         totalPaid: payableCents,
@@ -1132,6 +1138,7 @@ export async function getDownloadCheckoutConfirmation(
       status: order.status,
       order: {
         id: order.id,
+        orderNumber: order.orderNumber,
         paidAt: order.paidAt,
         currency: order.currency,
         totalPaid: order.totalPaid,

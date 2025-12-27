@@ -19,6 +19,7 @@ interface OrderItemDetail {
 
 interface OrderDetail {
   id: string;
+  orderNumber?: string;
   createdAt: string;
   status: string;
   totalPaid: number;
@@ -231,7 +232,9 @@ const AccountOrderDetailPage: React.FC = () => {
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Commande</p>
           <h1 className="text-2xl md:text-3xl font-semibold text-slate-900">
-            {order ? `Commande ${order.id.slice(0, 8)}…` : "Détail de la commande"}
+            {order
+              ? `Commande ${order.orderNumber || `${order.id.slice(0, 8)}…`}`
+              : "Détail de la commande"}
           </h1>
           <p className="text-sm text-slate-600 mt-2">
             Retrouvez les informations de paiement, la facture et vos téléchargements sécurisés.
