@@ -187,6 +187,7 @@ model DownloadableProduct {
   items OrderItem[]
   downloadLinks DownloadLink[]
   productAnalyticsEvents ProductAnalyticsEvent[]
+  seoOverride   ProductSeo?
 }
 
 model DownloadableCategory {
@@ -481,6 +482,97 @@ model SeoStaticPage {
   updatedAt      DateTime @updatedAt
 }
 
+enum BrandTone {
+  PROFESSIONAL
+  PEDAGOGICAL
+  DIRECT
+}
+
+model SeoSettingsV2 {
+  id                     String  @id @default(cuid())
+  singletonKey           String  @unique @default("global")
+  siteName               String?
+  defaultTitle           String?
+  defaultDescription     String?
+  defaultOgImageUrl      String?
+  canonicalBaseUrl       String?
+  defaultRobotsIndex     Boolean @default(true)
+  defaultRobotsFollow    Boolean @default(true)
+  robotsTxt              String?
+  sitemapEnabled         Boolean @default(true)
+  sitemapIncludePages    Boolean @default(true)
+  sitemapIncludeProducts Boolean @default(true)
+  sitemapIncludeArticles Boolean @default(false)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+model PageSeo {
+  id           String     @id @default(cuid())
+  pageId       String
+  page         CustomPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  title        String?
+  description  String?
+  ogImageUrl   String?
+  canonicalUrl String?
+  robotsIndex  Boolean?
+  robotsFollow Boolean?
+  jsonLdOverride Json?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([pageId])
+}
+
+model ProductSeo {
+  id           String               @id @default(cuid())
+  productId    String
+  product      DownloadableProduct  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  title        String?
+  description  String?
+  ogImageUrl   String?
+  canonicalUrl String?
+  robotsIndex  Boolean?
+  robotsFollow Boolean?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  @@unique([productId])
+}
+
+model GeoIdentity {
+  id               String    @id @default(cuid())
+  singletonKey     String    @unique @default("global")
+  shortDescription String?
+  longDescription  String?
+  targetAudience   String?
+  positioning      String?
+  differentiation  String?
+  brandTone        BrandTone?
+  language         String?   @default("fr")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model GeoFaqItem {
+  id        String   @id @default(cuid())
+  order     Int      @default(0)
+  question  String
+  answer    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GeoAnswer {
+  id          String   @id @default(cuid())
+  order       Int      @default(0)
+  question    String
+  shortAnswer String?
+  longAnswer  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model AnalyticsEvent {
   id        String   @id @default(cuid())
   userId    String?
@@ -608,6 +700,7 @@ model CustomPage {
   updatedAt DateTime      @updatedAt
 
   sections  PageSection[]
+  seo       PageSeo?
 }
 
 model PageSection {

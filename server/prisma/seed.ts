@@ -134,8 +134,37 @@ async function seedCustomPages() {
   }
 }
 
+async function seedSeoGeo() {
+  await prisma.seoSettingsV2.upsert({
+    where: { singletonKey: "global" },
+    update: {},
+    create: {
+      singletonKey: "global",
+      canonicalBaseUrl: "https://www.compta-match.fr",
+      defaultRobotsIndex: true,
+      defaultRobotsFollow: true,
+      robotsTxt:
+        "User-agent: *\nAllow: /\nSitemap: https://www.compta-match.fr/sitemap.xml",
+      sitemapEnabled: true,
+      sitemapIncludePages: true,
+      sitemapIncludeProducts: true,
+      sitemapIncludeArticles: false,
+    },
+  });
+
+  await prisma.geoIdentity.upsert({
+    where: { singletonKey: "global" },
+    update: { language: "fr" },
+    create: {
+      singletonKey: "global",
+      language: "fr",
+    },
+  });
+}
+
 async function main() {
   await seedCustomPages();
+  await seedSeoGeo();
 }
 
 main()

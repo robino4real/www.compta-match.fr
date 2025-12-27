@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
 import { uploadAdminImage } from "../../lib/adminUpload";
 import { resolveAssetUrl } from "../../lib/resolveAssetUrl";
+import SeoOverrideEditor from "../../components/admin/SeoOverrideEditor";
 
 interface AdminDownloadProduct {
   id: string;
@@ -478,6 +479,14 @@ const AdminDownloadEditPage: React.FC = () => {
           Retour à la liste
         </button>
       </section>
+
+      {id && (
+        <SeoOverrideEditor
+          targetType="product"
+          targetId={id}
+          targetLabel={product.name}
+        />
+      )}
 
       <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
         {saveError && <p className="text-xs text-red-600">{saveError}</p>}

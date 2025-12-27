@@ -106,6 +106,27 @@ import {
   adminUpdatePageBlock,
   adminUpdatePageSection,
 } from "../controllers/pageBuilderController";
+import {
+  adminCreateGeoAnswer,
+  adminCreateGeoFaq,
+  adminDeleteGeoAnswer,
+  adminDeleteGeoFaq,
+  adminGetGeoIdentity,
+  adminGetPageSeo,
+  adminGetProductSeo,
+  adminGetSeoSettingsV2,
+  adminListGeoAnswers,
+  adminListGeoFaq,
+  adminRunSeoGeoDiagnostics,
+  adminReorderGeoAnswers,
+  adminReorderGeoFaq,
+  adminSavePageSeo,
+  adminSaveProductSeo,
+  adminUpdateGeoAnswer,
+  adminUpdateGeoFaq,
+  adminUpdateGeoIdentity,
+  adminUpdateSeoSettingsV2,
+} from "../controllers/seoGeoAdminController";
 
 const router = Router();
 
@@ -456,6 +477,42 @@ router.post(
   requireAdmin,
   adminReorderPageSections
 );
+
+router.get("/seo-settings", attachUserToRequest, requireAdmin, adminGetSeoSettingsV2);
+router.put("/seo-settings", attachUserToRequest, requireAdmin, adminUpdateSeoSettingsV2);
+
+router.get("/geo-identity", attachUserToRequest, requireAdmin, adminGetGeoIdentity);
+router.put("/geo-identity", attachUserToRequest, requireAdmin, adminUpdateGeoIdentity);
+
+router.get("/geo-faq", attachUserToRequest, requireAdmin, adminListGeoFaq);
+router.post("/geo-faq", attachUserToRequest, requireAdmin, adminCreateGeoFaq);
+router.put("/geo-faq/:id", attachUserToRequest, requireAdmin, adminUpdateGeoFaq);
+router.delete("/geo-faq/:id", attachUserToRequest, requireAdmin, adminDeleteGeoFaq);
+router.patch("/geo-faq/reorder", attachUserToRequest, requireAdmin, adminReorderGeoFaq);
+
+router.get("/geo-answers", attachUserToRequest, requireAdmin, adminListGeoAnswers);
+router.post("/geo-answers", attachUserToRequest, requireAdmin, adminCreateGeoAnswer);
+router.put("/geo-answers/:id", attachUserToRequest, requireAdmin, adminUpdateGeoAnswer);
+router.delete("/geo-answers/:id", attachUserToRequest, requireAdmin, adminDeleteGeoAnswer);
+router.patch(
+  "/geo-answers/reorder",
+  attachUserToRequest,
+  requireAdmin,
+  adminReorderGeoAnswers
+);
+
+router.get(
+  "/seo-geo/diagnostics",
+  attachUserToRequest,
+  requireAdmin,
+  adminRunSeoGeoDiagnostics
+);
+
+router.get("/page-seo/:pageId", attachUserToRequest, requireAdmin, adminGetPageSeo);
+router.put("/page-seo/:pageId", attachUserToRequest, requireAdmin, adminSavePageSeo);
+
+router.get("/product-seo/:productId", attachUserToRequest, requireAdmin, adminGetProductSeo);
+router.put("/product-seo/:productId", attachUserToRequest, requireAdmin, adminSaveProductSeo);
 
 router.put(
   "/sections/:sectionId",
