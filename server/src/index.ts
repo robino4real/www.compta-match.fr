@@ -28,6 +28,7 @@ import { robotsTxtHandler, sitemapHandler } from "./controllers/seoController";
 import paidServicesRoutes from "./routes/paidServicesRoutes";
 import { handleOrderDownloadByToken } from "./controllers/downloadController";
 import { handleStripeWebhook } from "./controllers/paymentController";
+import { renderIndexWithSeo } from "./utils/seoRenderer";
 
 const app = express();
 const apiRouter = Router();
@@ -131,7 +132,7 @@ if (frontendDir) {
   app.use(express.static(frontendDir));
 }
 
-app.get("*", (req, res, next) => {
+app.get("*", async (req, res, next) => {
   if (req.path.startsWith("/api")) {
     return next();
   }
@@ -146,7 +147,12 @@ app.get("*", (req, res, next) => {
     return res.status(404).send("Interface front-end introuvable.");
   }
 
-  return res.sendFile(indexPath);
+  try {
+    await renderIndexWithSeo({ req, res, indexPath });
+  } catch (error) {
+    console.error("[seo] Rendu SEO côté serveur impossible, fallback index.html", error);
+    return res.sendFile(indexPath);
+  }
 });
 
 app.use(errorHandler);

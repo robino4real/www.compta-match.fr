@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
 import { TEXT_ALIGNMENT_OPTIONS, TEXT_TEMPLATE_OPTIONS } from "../../components/pageBuilder/blocks/textTemplates";
 import { uploadAdminImage } from "../../lib/adminUpload";
+import SeoOverrideEditor from "../../components/admin/SeoOverrideEditor";
 
 type SectionType =
   | "FULL_WIDTH"
@@ -1442,6 +1443,8 @@ const AdminPageDetailPage: React.FC = () => {
           </button>
         </div>
       </section>
+
+      <SeoOverrideEditor targetType="page" targetId={page.id} targetLabel={page.name} />
 
       <section className="grid gap-4 md:grid-cols-[2fr,3fr]">
         <div className="space-y-4">
