@@ -171,8 +171,8 @@ const PaymentSuccessPage: React.FC = () => {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-white py-12">
-      <div className="mx-auto max-w-5xl px-4 lg:px-8">
-        <section className="rounded-3xl border border-slate-200/70 bg-white/70 px-6 py-8 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur md:px-10 md:py-12">
+      <div className="w-full px-4 lg:px-8">
+        <section className="w-full rounded-3xl border border-slate-200/70 bg-white/70 px-6 py-8 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur md:px-10 md:py-12">
           {loading && (
             <div className="mb-6 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
               Vérification de votre paiement en cours...
