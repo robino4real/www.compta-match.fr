@@ -35,6 +35,7 @@ import ComptAssoSubscriptionPage from "./pages/ComptAssoSubscriptionPage";
 import ComptAssoLanding from "./pages/ComptAssoPlanDetailPage";
 import CompareOffersPage from "./pages/CompareOffersPage";
 import DiscoveryPage from "./pages/DiscoveryPage";
+import FaqPage from "./pages/FaqPage";
 import AdminPaidServicesPage from "./pages/admin/AdminPaidServicesPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MonProfilPage from "./pages/account/MonProfilPage";
@@ -125,7 +126,18 @@ const App: React.FC = () => {
             <Route
               key={path}
               path={path}
-              element={<PageBuilderPage route={path} fallback={<LegalPage slugOverride={path.replace("/", "")} />} />}
+              element={
+                <PageBuilderPage
+                  route={path}
+                  fallback={
+                    path === "/faq" ? (
+                      <FaqPage />
+                    ) : (
+                      <LegalPage slugOverride={path.replace("/", "")} />
+                    )
+                  }
+                />
+              }
             />
           ))}
           <Route path="/découverte" element={<DiscoveryPage />} />

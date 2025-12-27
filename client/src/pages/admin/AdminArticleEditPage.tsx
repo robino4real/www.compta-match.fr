@@ -1,6 +1,8 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
+import ArticleContentBuilder from "../../components/admin/ArticleContentBuilder";
+import { uploadAdminImage } from "../../lib/adminUpload";
 
 type ArticleStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 
@@ -50,6 +52,7 @@ const AdminArticleEditPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
+  const [isUploadingCover, setIsUploadingCover] = React.useState(false);
 
   const loadArticle = React.useCallback(async () => {
     if (!id) return;
@@ -182,19 +185,33 @@ const AdminArticleEditPage: React.FC = () => {
       })
     : null;
 
+  const handleCoverUpload = async (file: File | null) => {
+    if (!file) return;
+    try {
+      setIsUploadingCover(true);
+      const upload = await uploadAdminImage(file);
+      handleChange("coverImageUrl", upload.url);
+    } catch (err) {
+      console.error("Impossible de téléverser la couverture", err);
+      setError("Téléversement impossible. Merci de réessayer.");
+    } finally {
+      setIsUploadingCover(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-          Administration
-        </p>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-semibold text-black">
-              {isNew ? "Ajouter un article" : "Modifier l'article"}
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+              Création d'article
+            </p>
+            <h1 className="text-2xl font-semibold text-black">
+              {isNew ? "Nouvel article" : "Édition d'un article"}
             </h1>
-            <p className="text-xs text-slate-600">
-              Saisie du titre, du permalien et du contenu avant publication.
+            <p className="text-sm text-slate-600">
+              Composez vos pages, images et CTA comme dans un builder WordPress.
             </p>
           </div>
           <button
@@ -208,64 +225,110 @@ const AdminArticleEditPage: React.FC = () => {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
+        <div className="space-y-5 lg:col-span-2">
           {isLoading && (
             <p className="text-xs text-slate-600">Chargement de l'article...</p>
           )}
           {error && <p className="text-xs text-red-600">{error}</p>}
           {success && <p className="text-xs text-emerald-700">{success}</p>}
 
-          <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-800">Titre *</label>
-              <input
-                type="text"
-                value={form.title}
-                onChange={(e) => handleChange("title", e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-3 text-lg font-semibold text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
-                placeholder="Titre de l'article"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-slate-700">Lien permanent (slug)</label>
-              <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
-                <span className="text-slate-500">/articles/</span>
+          <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-800">Titre *</label>
                 <input
                   type="text"
-                  value={form.slug}
-                  onChange={(e) => handleChange("slug", slugify(e.target.value))}
-                  className="flex-1 bg-transparent text-sm font-semibold text-slate-900 outline-none"
-                  placeholder="comptabilite-micro-entreprise"
+                  value={form.title}
+                  onChange={(e) => handleChange("title", e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-lg font-semibold text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                  placeholder="Titre de l'article"
                 />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-800">Lien permanent (slug)</label>
+                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                  <span className="text-slate-500">/articles/</span>
+                  <input
+                    type="text"
+                    value={form.slug}
+                    onChange={(e) => handleChange("slug", slugify(e.target.value))}
+                    className="flex-1 bg-transparent text-sm font-semibold text-slate-900 outline-none"
+                    placeholder="comptabilite-micro-entreprise"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-800">Résumé court</label>
+                <textarea
+                  value={form.excerpt}
+                  onChange={(e) => handleChange("excerpt", e.target.value)}
+                  rows={4}
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                  placeholder="Résumé affiché dans les listes et pour le SEO"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-800">Couverture</label>
+                <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  {form.coverImageUrl && (
+                    <div className="overflow-hidden rounded-lg border border-slate-200">
+                      <img
+                        src={form.coverImageUrl}
+                        alt="Couverture"
+                        className="h-36 w-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-[11px] font-semibold text-slate-700 hover:border-black hover:text-black">
+                      Importer
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleCoverUpload(e.target.files?.[0] || null)}
+                        disabled={isUploadingCover}
+                      />
+                    </label>
+                    <input
+                      type="text"
+                      value={form.coverImageUrl}
+                      onChange={(e) => handleChange("coverImageUrl", e.target.value)}
+                      className="flex-1 min-w-[200px] rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                      placeholder="https://..."
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-800">Résumé court</label>
-              <textarea
-                value={form.excerpt}
-                onChange={(e) => handleChange("excerpt", e.target.value)}
-                rows={3}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
-                placeholder="Résumé affiché dans les listes et pour le SEO"
-              />
+          <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-slate-800">
+                  Construction des pages
+                </h2>
+                <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700">
+                  Builder libre
+                </span>
+              </div>
+              <p className="text-xs text-slate-600">
+                Ajoutez des titres, paragraphes, listes, images ou CTA pour modéliser chaque page de l'article.
+              </p>
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-800">Contenu</label>
-              <textarea
-                value={form.content}
-                onChange={(e) => handleChange("content", e.target.value)}
-                rows={14}
-                className="w-full rounded-lg border border-slate-300 px-3 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
-                placeholder="Contenu principal de l'article (HTML ou texte avec mises en forme simples)."
-              />
-            </div>
+
+            <ArticleContentBuilder
+              value={form.content}
+              onChange={(next) => handleChange("content", next)}
+            />
           </div>
 
-          <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-slate-800">SEO</h2>
+          <div className="space-y-3 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-sm font-semibold text-slate-800">SEO avancé</h2>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-800">Titre SEO</label>
@@ -273,7 +336,7 @@ const AdminArticleEditPage: React.FC = () => {
                   type="text"
                   value={form.seoTitle}
                   onChange={(e) => handleChange("seoTitle", e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
                   placeholder="Si vide, le titre principal sera utilisé"
                 />
               </div>
@@ -283,7 +346,7 @@ const AdminArticleEditPage: React.FC = () => {
                   value={form.seoDescription}
                   onChange={(e) => handleChange("seoDescription", e.target.value)}
                   rows={3}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
                   placeholder="150-160 caractères recommandés"
                 />
               </div>
@@ -292,9 +355,9 @@ const AdminArticleEditPage: React.FC = () => {
         </div>
 
         <div className="space-y-4">
-          <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-800">Statut de publication</h2>
+              <h2 className="text-sm font-semibold text-slate-800">Publication</h2>
               {publishedLabel && (
                 <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700">
                   Publié le {publishedLabel}
@@ -346,7 +409,7 @@ const AdminArticleEditPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="space-y-2">
               <label className="text-xs font-semibold text-slate-800">Catégorie</label>
               <input
@@ -369,17 +432,7 @@ const AdminArticleEditPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-800">Image mise en avant (URL)</label>
-              <input
-                type="text"
-                value={form.coverImageUrl}
-                onChange={(e) => handleChange("coverImageUrl", e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
-                placeholder="https://..."
-              />
-            </div>
+          <div className="space-y-3 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="space-y-2">
               <label className="text-xs font-semibold text-slate-800">Temps de lecture (minutes)</label>
               <input
