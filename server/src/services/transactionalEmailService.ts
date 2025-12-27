@@ -233,6 +233,39 @@ export async function sendDownloadLinkRegeneratedEmail(
   });
 }
 
+export async function sendRefundConfirmationEmail(
+  user: User,
+  order: Order,
+  refundId?: string
+): Promise<boolean> {
+  const settings = await getOrCreateEmailSettings();
+  const subject = `Confirmation de remboursement - commande ${order.orderNumber || order.id}`;
+  const amount = formatAmount(order.totalPaid, order.currency);
+  const html =
+    `Bonjour ${buildUserDisplayName(user)},<br /><br />` +
+    `Nous confirmons le remboursement de votre commande ${order.orderNumber || order.id}.` +
+    `<br />Montant remboursé : <strong>${amount}</strong>.` +
+    (refundId ? `<br />Référence Stripe : ${refundId}.` : "") +
+    `<br /><br />L'équipe ComptaMatch.`;
+
+  const text =
+    `Bonjour ${buildUserDisplayName(user)},\n\n` +
+    `Votre commande ${order.orderNumber || order.id} a été remboursée.\n` +
+    `Montant : ${amount}.` +
+    (refundId ? `\nRéférence Stripe : ${refundId}.` : "") +
+    `\n\nL'équipe ComptaMatch.`;
+
+  return sendEmail({
+    to: user.email,
+    subject,
+    html,
+    text,
+    fromEmail: settings.ordersFromEmail || settings.fromEmailDefault,
+    fromName: settings.fromNameDefault || "ComptaMatch",
+    replyTo: settings.replyToEmailDefault || null,
+  });
+}
+
 export async function sendAdminLoginOtpEmail(
   code: string,
   toEmail: string,

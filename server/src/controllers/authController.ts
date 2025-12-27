@@ -145,11 +145,15 @@ export async function register(req: Request, res: Response) {
     });
   }
 
-  if (!["PROFESSIONAL", "ASSOCIATION", "INDIVIDUAL"].includes(normalizedAccountType)) {
+  if (
+    !["PROFESSIONAL", "ASSOCIATION", "INDIVIDUAL", "COMPANY", "ENTREPRENEUR"].includes(
+      normalizedAccountType
+    )
+  ) {
     return res.status(400).json({
       error: "INVALID_ACCOUNT_TYPE",
       message:
-        "Le statut du compte doit être renseigné (professionnel, association ou particulier).",
+        "Le statut du compte doit être renseigné (professionnel, association, société ou entrepreneur).",
     });
   }
 

@@ -23,6 +23,8 @@ model User {
   orders Order[]
   downloadLinks DownloadLink[]
   analyticsEvents AnalyticsEvent[]
+  userEvents UserEvent[]
+  auditLogs AuditLog[]
   adminTwoFactorCodes AdminTwoFactorCode[]
   profile UserProfile?
   settings UserSettings?
@@ -57,6 +59,8 @@ enum AccountType {
   INDIVIDUAL
   PROFESSIONAL
   ASSOCIATION
+  COMPANY
+  ENTREPRENEUR
 }
 
 model Order {
@@ -66,6 +70,8 @@ model Order {
   createdAt DateTime    @default(now())
   paidAt    DateTime?
   status    OrderStatus @default(PAID)
+  isDeleted Boolean     @default(false)
+  deletedAt DateTime?
   downloadToken String? @unique
   orderNumber String    @unique
   orderType   OrderType @default(DOWNLOADABLE)
@@ -497,6 +503,41 @@ model ProductAnalyticsEvent {
   createdAt DateTime @default(now())
 
   @@index([productId, type, createdAt])
+}
+
+enum UserEventType {
+  PAGE_VIEW
+  CLICK
+  PRODUCT_VIEW
+  ADD_TO_CART
+  CHECKOUT_START
+}
+
+model UserEvent {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  sessionId String
+  eventType UserEventType
+  page      String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([eventType, createdAt])
+  @@index([userId, createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  admin      User     @relation(fields: [adminId], references: [id])
+  action     String
+  targetType String
+  targetId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([action, createdAt])
 }
 
 model AdminTwoFactorCode {

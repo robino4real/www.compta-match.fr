@@ -356,6 +356,8 @@ export async function updateAccountProfile(req: Request, res: Response) {
     if (normalized === "PROFESSIONAL") return "PROFESSIONAL";
     if (normalized === "ASSOCIATION") return "ASSOCIATION";
     if (normalized === "INDIVIDUAL") return "INDIVIDUAL";
+    if (normalized === "COMPANY") return "COMPANY";
+    if (normalized === "ENTREPRENEUR") return "ENTREPRENEUR";
     return null;
   };
 
@@ -364,7 +366,7 @@ export async function updateAccountProfile(req: Request, res: Response) {
     if (accountType && !resolvedAccountType) {
       return res.status(400).json({
         message:
-          "Statut de compte invalide. Valeurs autorisées : INDIVIDUAL, PROFESSIONAL ou ASSOCIATION.",
+          "Statut de compte invalide. Valeurs autorisées : INDIVIDUAL, PROFESSIONAL, ASSOCIATION, COMPANY ou ENTREPRENEUR.",
       });
     }
 
