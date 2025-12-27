@@ -256,13 +256,15 @@ export async function generateOrderDownloadLink(req: Request, res: Response) {
         .json({ message: "Cette commande ne contient pas de produit téléchargeable." });
     }
 
+    if (downloadableItem.downloadLinks.length > 0) {
+      return res.status(400).json({
+        message:
+          "Un lien a déjà été généré pour cette commande. Contactez le support ou l'admin pour un nouveau lien.",
+      });
+    }
+
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 60 * 60 * 1000);
-
-    await prisma.downloadLink.updateMany({
-      where: { orderItemId: downloadableItem.id, status: "ACTIVE" },
-      data: { status: "EXPIRED", expiresAt: now },
-    });
 
     const link = await prisma.downloadLink.create({
       data: {

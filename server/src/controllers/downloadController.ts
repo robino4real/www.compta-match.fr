@@ -202,36 +202,14 @@ export async function handleOrderDownloadByToken(req: Request, res: Response) {
       });
     }
 
-    let activeLink = downloadableItem.downloadLinks.find(
-      (link) => link.status === "ACTIVE"
+    const sortedLinks = [...downloadableItem.downloadLinks].sort(
+      (a, b) => new Date(a.createdAt || "").getTime() - new Date(b.createdAt || "").getTime()
     );
+    const latestLink = sortedLinks[sortedLinks.length - 1];
 
-    if (!activeLink) {
-      const createdLink = await prisma.downloadLink.create({
-        data: {
-          orderItemId: downloadableItem.id,
-          userId,
-          productId: downloadableItem.productId,
-          token: crypto.randomBytes(32).toString("hex"),
-          status: "ACTIVE",
-          maxDownloads: 1,
-          downloadCount: 0,
-        },
-        include: {
-          orderItem: {
-            include: {
-              order: true,
-              product: { include: { binaries: true } },
-              binary: true,
-            },
-          },
-        },
-      });
-
-      activeLink = createdLink;
-    } else {
+    if (latestLink) {
       const hydratedLink = await prisma.downloadLink.findUnique({
-        where: { id: activeLink.id },
+        where: { id: latestLink.id },
         include: {
           orderItem: {
             include: {
@@ -247,10 +225,31 @@ export async function handleOrderDownloadByToken(req: Request, res: Response) {
         return res.status(404).json({ message: "Lien de téléchargement introuvable." });
       }
 
-      activeLink = hydratedLink;
+      return streamDownloadForLink(hydratedLink, userId, res);
     }
 
-    return streamDownloadForLink(activeLink, userId, res);
+    const createdLink = await prisma.downloadLink.create({
+      data: {
+        orderItemId: downloadableItem.id,
+        userId,
+        productId: downloadableItem.productId,
+        token: crypto.randomBytes(32).toString("hex"),
+        status: "ACTIVE",
+        maxDownloads: 1,
+        downloadCount: 0,
+      },
+      include: {
+        orderItem: {
+          include: {
+            order: true,
+            product: { include: { binaries: true } },
+            binary: true,
+          },
+        },
+      },
+    });
+
+    return streamDownloadForLink(createdLink, userId, res);
   } catch (error) {
     console.error(
       "Erreur lors du téléchargement d'un produit via commande :",
