@@ -1,6 +1,8 @@
+import crypto from "crypto";
 import { Request, Response } from "express";
+import { AccountType, Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma";
-import { AccountType } from "@prisma/client";
+import { env } from "../config/env";
 import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import { hashPassword, verifyPassword } from "../utils/password";
 
@@ -12,6 +14,12 @@ function getAuthenticatedUserId(req: Request): string | null {
 function sendUnauthenticated(res: Response) {
   return res.status(401).json({ message: "Non authentifié." });
 }
+
+const buildInvoiceDownloadUrl = (invoiceId: string) =>
+  `${env.apiBaseUrl.replace(/\/$/, "")}/invoices/${invoiceId}/download`;
+
+const buildDownloadUrl = (token: string) =>
+  `${env.apiBaseUrl.replace(/\/$/, "")}/downloads/${token}`;
 
 export async function getAccountSubscriptions(req: Request, res: Response) {
   const userId = getAuthenticatedUserId(req);
@@ -51,11 +59,234 @@ export async function getAccountOrders(req: Request, res: Response) {
       orderBy: { createdAt: "desc" },
     });
 
-    return res.json({ orders });
+    const normalizedOrders = orders.map((order) => ({
+      ...order,
+      invoice: order.invoice
+        ? {
+            ...order.invoice,
+            downloadUrl: buildInvoiceDownloadUrl(order.invoice.id),
+          }
+        : null,
+    }));
+
+    return res.json({ orders: normalizedOrders });
   } catch (error) {
     console.error("[account] Erreur lors de la récupération des commandes", error);
     return res.status(500).json({
       message: "Impossible de récupérer vos commandes pour le moment.",
+    });
+  }
+}
+
+type OrderWithRelations = Prisma.OrderGetPayload<{
+  include: {
+    invoice: true;
+    items: {
+      include: {
+        product: { include: { binaries: true } };
+        binary: true;
+        downloadLinks: true;
+      };
+    };
+  };
+}>;
+
+function findDownloadableItem(order: OrderWithRelations) {
+  return order.items.find(
+    (item) =>
+      Boolean(item.product?.storagePath) ||
+      (Array.isArray(item.product?.binaries) && item.product.binaries.length > 0)
+  );
+}
+
+function buildDownloadState(order: OrderWithRelations) {
+  const downloadableItem = findDownloadableItem(order);
+  const now = new Date();
+
+  if (!downloadableItem) {
+    return {
+      hasDownloadableProduct: false,
+      activeLink: null,
+      isExpired: false,
+    };
+  }
+
+  const sortedLinks = [...downloadableItem.downloadLinks].sort(
+    (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+  );
+
+  const activeLink = sortedLinks.find(
+    (link) =>
+      link.status === "ACTIVE" && (!link.expiresAt || link.expiresAt.getTime() > now.getTime())
+  );
+
+  const latestLink = sortedLinks[0];
+
+  return {
+    hasDownloadableProduct: true,
+    activeLink: activeLink
+      ? {
+          token: activeLink.token,
+          expiresAt: activeLink.expiresAt,
+          downloadUrl: buildDownloadUrl(activeLink.token),
+          remainingSeconds: activeLink.expiresAt
+            ? Math.max(0, Math.floor((activeLink.expiresAt.getTime() - now.getTime()) / 1000))
+            : null,
+        }
+      : null,
+    isExpired: latestLink?.expiresAt
+      ? latestLink.expiresAt.getTime() <= now.getTime()
+      : false,
+  };
+}
+
+function serializeOrderDetail(order: OrderWithRelations) {
+  return {
+    id: order.id,
+    createdAt: order.createdAt,
+    status: order.status,
+    totalPaid: order.totalPaid,
+    currency: order.currency,
+    billingName: order.billingNameSnapshot,
+    billingEmail: order.billingEmailSnapshot,
+    invoice: order.invoice
+      ? {
+          ...order.invoice,
+          downloadUrl: buildInvoiceDownloadUrl(order.invoice.id),
+        }
+      : null,
+    items: order.items.map((item) => ({
+      id: item.id,
+      productId: item.productId,
+      productName: item.productNameSnapshot || item.product?.name || "Produit",
+      quantity: item.quantity,
+      lineTotal: item.lineTotal,
+      platform: item.platform,
+    })),
+  };
+}
+
+export async function getAccountOrderDetail(req: Request, res: Response) {
+  const userId = getAuthenticatedUserId(req);
+  if (!userId) {
+    return sendUnauthenticated(res);
+  }
+
+  const { orderId } = req.params as { orderId?: string };
+
+  if (!orderId) {
+    return res.status(400).json({ message: "Identifiant de commande manquant." });
+  }
+
+  try {
+    const order = await prisma.order.findFirst({
+      where: { id: orderId, userId },
+      include: {
+        invoice: true,
+        items: {
+          include: {
+            product: { include: { binaries: true } },
+            binary: true,
+            downloadLinks: true,
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: "Commande introuvable." });
+    }
+
+    const download = buildDownloadState(order);
+
+    return res.json({ order: serializeOrderDetail(order), download });
+  } catch (error) {
+    console.error("[account] Erreur lors de la récupération du détail commande", error);
+    return res.status(500).json({
+      message: "Impossible de récupérer le détail de cette commande pour le moment.",
+    });
+  }
+}
+
+export async function generateOrderDownloadLink(req: Request, res: Response) {
+  const userId = getAuthenticatedUserId(req);
+  if (!userId) {
+    return sendUnauthenticated(res);
+  }
+
+  const { orderId } = req.params as { orderId?: string };
+
+  if (!orderId) {
+    return res.status(400).json({ message: "Identifiant de commande manquant." });
+  }
+
+  try {
+    const order = await prisma.order.findFirst({
+      where: { id: orderId, userId },
+      include: {
+        invoice: true,
+        items: {
+          include: {
+            product: { include: { binaries: true } },
+            binary: true,
+            downloadLinks: true,
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: "Commande introuvable." });
+    }
+
+    if (order.status !== "PAID") {
+      return res
+        .status(400)
+        .json({ message: "La commande doit être réglée pour générer un téléchargement." });
+    }
+
+    const downloadableItem = findDownloadableItem(order);
+
+    if (!downloadableItem) {
+      return res
+        .status(400)
+        .json({ message: "Cette commande ne contient pas de produit téléchargeable." });
+    }
+
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 60 * 60 * 1000);
+
+    await prisma.downloadLink.updateMany({
+      where: { orderItemId: downloadableItem.id, status: "ACTIVE" },
+      data: { status: "EXPIRED", expiresAt: now },
+    });
+
+    const link = await prisma.downloadLink.create({
+      data: {
+        orderItemId: downloadableItem.id,
+        userId: order.userId,
+        productId: downloadableItem.productId,
+        token: crypto.randomBytes(32).toString("hex"),
+        status: "ACTIVE",
+        maxDownloads: 50,
+        downloadCount: 0,
+        expiresAt,
+      },
+    });
+
+    return res.status(201).json({
+      message: "Lien de téléchargement généré.",
+      link: {
+        token: link.token,
+        expiresAt: link.expiresAt,
+        downloadUrl: buildDownloadUrl(link.token),
+        remainingSeconds: Math.max(0, Math.floor((expiresAt.getTime() - now.getTime()) / 1000)),
+      },
+    });
+  } catch (error) {
+    console.error("[account] Erreur lors de la génération du lien de téléchargement", error);
+    return res.status(500).json({
+      message: "Impossible de générer le lien, contactez le support.",
     });
   }
 }

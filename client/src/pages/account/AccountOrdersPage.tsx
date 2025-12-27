@@ -11,6 +11,7 @@ interface InvoiceSummary {
 interface OrderItemSummary {
   id: string;
   product?: { name: string } | null;
+  productName?: string;
   lineTotal: number;
   quantity: number;
 }
@@ -76,6 +77,25 @@ const AccountOrdersPage: React.FC = () => {
     }).format(amount / 100);
   };
 
+  const renderSkeleton = () => (
+    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <div className="divide-y divide-slate-100">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div
+            key={index}
+            className="flex flex-col gap-2 px-6 py-4 md:grid md:grid-cols-6 md:items-center animate-pulse"
+          >
+            <div className="h-4 rounded-full bg-slate-100" />
+            <div className="h-4 rounded-full bg-slate-100" />
+            <div className="h-4 rounded-full bg-slate-100" />
+            <div className="h-6 rounded-full bg-slate-100 md:col-span-2" />
+            <div className="h-8 rounded-full bg-slate-100" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <main className="bg-white min-h-screen py-10">
       <div className="max-w-5xl mx-auto px-4 lg:px-8 space-y-6">
@@ -106,11 +126,7 @@ const AccountOrdersPage: React.FC = () => {
           </p>
         </div>
 
-        {isLoading && (
-          <div className="rounded-2xl border border-slate-200 bg-white px-6 py-6 text-sm text-slate-600 shadow-sm">
-            Chargement de vos commandes...
-          </div>
-        )}
+        {isLoading && renderSkeleton()}
 
         {error && (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-6 py-4 text-sm text-amber-800 shadow-sm">
@@ -137,6 +153,9 @@ const AccountOrdersPage: React.FC = () => {
                       N° commande
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      Produit(s)
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
                       Montant TTC
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
@@ -144,6 +163,9 @@ const AccountOrdersPage: React.FC = () => {
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
                       Facture
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -155,6 +177,15 @@ const AccountOrdersPage: React.FC = () => {
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-slate-900">
                         {order.id.slice(0, 8)}…
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-700">
+                        <div className="flex flex-col gap-1">
+                          {(order.items || []).map((item) => (
+                            <span key={item.id} className="line-clamp-1">
+                              {item.productName || item.product?.name || "Produit"}
+                            </span>
+                          ))}
+                        </div>
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-slate-900">
                         {formatPrice(order.totalPaid, order.currency)}
@@ -169,9 +200,9 @@ const AccountOrdersPage: React.FC = () => {
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-700">
-                        {order.invoice?.pdfPath ? (
+                        {order.invoice?.downloadUrl || order.invoice?.pdfPath ? (
                           <a
-                            href={order.invoice.pdfPath}
+                            href={order.invoice.downloadUrl || order.invoice.pdfPath}
                             className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900 underline-offset-4 hover:underline"
                           >
                             Télécharger
@@ -193,6 +224,24 @@ const AccountOrdersPage: React.FC = () => {
                         ) : (
                           <span className="text-xs text-slate-500">En attente</span>
                         )}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-700">
+                        <button
+                          onClick={() => navigate(`/compte/commandes/${order.id}`)}
+                          className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-800 transition hover:border-black hover:text-black"
+                        >
+                          Voir détail
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.6}
+                            stroke="currentColor"
+                            className="h-4 w-4"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m9 5 7 7-7 7" />
+                          </svg>
+                        </button>
                       </td>
                     </tr>
                   ))}

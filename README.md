@@ -46,6 +46,21 @@ Principales variables attendues en production :
    npm run dev
    ```
 
+## Vérifications locales : espace client / commandes
+1. Démarrer l'API :
+   ```bash
+   cd server
+   npm run dev
+   ```
+2. Démarrer le front :
+   ```bash
+   cd client
+   npm run dev
+   ```
+3. Depuis `http://localhost:5173`, se connecter avec un compte client.
+4. Ouvrir `/compte/commandes` pour lister les commandes et accéder à la facture.
+5. Ouvrir `/compte/commandes/:orderId` pour tester le détail, générer un lien de téléchargement (valable 1h) et vérifier le compte à rebours.
+
 ## Authentification
 - `POST /api/auth/register` : crée un utilisateur, hash du mot de passe, retourne `{ user, token }` + cookie httpOnly.
 - `POST /api/auth/login` : vérifie email/mot de passe, retourne `{ user, token }` + cookie httpOnly. Si l'email correspond à l'admin, déclenche un OTP envoyé à `ADMIN_PERSONAL_EMAIL`.

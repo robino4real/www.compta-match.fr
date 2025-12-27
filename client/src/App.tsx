@@ -38,6 +38,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import MonProfilPage from "./pages/account/MonProfilPage";
 import AccountSubscriptionsPage from "./pages/account/AccountSubscriptionsPage";
 import AccountOrdersPage from "./pages/account/AccountOrdersPage";
+import AccountOrderDetailPage from "./pages/account/AccountOrderDetailPage";
 import AccountSettingsPage from "./pages/account/AccountSettingsPage";
 import AccountProfilePage from "./pages/account/AccountProfilePage";
 import CartPage from "./pages/CartPage";
@@ -142,6 +143,7 @@ const App: React.FC = () => {
             <Route path="/compte" element={<MonProfilPage />} />
             <Route path="/compte/abonnements" element={<AccountSubscriptionsPage />} />
             <Route path="/compte/commandes" element={<AccountOrdersPage />} />
+            <Route path="/compte/commandes/:orderId" element={<AccountOrderDetailPage />} />
             <Route path="/compte/parametres" element={<AccountSettingsPage />} />
             <Route path="/compte/informations" element={<AccountProfilePage />} />
           </Route>
