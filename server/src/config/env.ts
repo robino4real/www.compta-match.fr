@@ -118,4 +118,5 @@ export const env = {
   adminBackofficePassword: process.env.ADMIN_BACKOFFICE_PASSWORD,
   jwtSecret: process.env.JWT_SECRET || "dev-secret-change-me",
   nodeEnv: process.env.NODE_ENV || "development",
+  trackingEnabled: (process.env.TRACKING_ENABLED || "true").toLowerCase() === "true",
 };

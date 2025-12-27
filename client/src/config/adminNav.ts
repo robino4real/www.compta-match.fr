@@ -26,7 +26,10 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
   },
   {
     title: "Clients",
-    items: [{ label: "Base client", href: "/admin/clients" }],
+    items: [
+      { label: "Portefeuille client", href: "/admin/customers" },
+      { label: "Base client", href: "/admin/clients" },
+    ],
   },
   {
     title: "Contenus",

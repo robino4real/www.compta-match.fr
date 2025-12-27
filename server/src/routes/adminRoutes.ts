@@ -36,8 +36,10 @@ import {
   adminGetOrder,
   adminListOrders,
   adminListRecentOrders,
-  adminMarkOrderRefunded,
   adminRegenerateDownloadLink,
+  adminCancelOrder,
+  adminRefundOrder,
+  adminSoftDeleteOrder,
 } from "../controllers/adminOrderController";
 import {
   listPromoCodes,
@@ -73,6 +75,11 @@ import {
   adminGetHomepageSettings,
   adminSaveHomepageSettings,
 } from "../controllers/homepageSettingsController";
+import {
+  adminGetCustomerDetail,
+  adminListCustomers,
+  adminUpdateCustomer,
+} from "../controllers/adminCustomerController";
 import {
   adminGetSeoSettings,
   adminListSeoStaticPages,
@@ -119,6 +126,27 @@ const upload = multer({ storage });
 
 // GET /admin/users
 router.get("/users", attachUserToRequest, requireAdmin, listUsers);
+
+router.get(
+  "/customers",
+  attachUserToRequest,
+  requireAdmin,
+  adminListCustomers
+);
+
+router.get(
+  "/customers/:customerId",
+  attachUserToRequest,
+  requireAdmin,
+  adminGetCustomerDetail
+);
+
+router.put(
+  "/customers/:customerId",
+  attachUserToRequest,
+  requireAdmin,
+  adminUpdateCustomer
+);
 
 router.post(
   "/downloads",
@@ -591,7 +619,19 @@ router.post(
   "/orders/:id/refund",
   attachUserToRequest,
   requireAdmin,
-  adminMarkOrderRefunded
+  adminRefundOrder
+);
+router.post(
+  "/orders/:id/cancel",
+  attachUserToRequest,
+  requireAdmin,
+  adminCancelOrder
+);
+router.delete(
+  "/orders/:id",
+  attachUserToRequest,
+  requireAdmin,
+  adminSoftDeleteOrder
 );
 router.post(
   "/orders/:orderItemId/regenerate-link",
