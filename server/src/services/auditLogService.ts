@@ -15,7 +15,7 @@ export async function recordAuditLog(
         action,
         targetType,
         targetId,
-        metadata: metadata ?? null,
+        metadata: metadata ?? undefined,
       },
     });
   } catch (error) {

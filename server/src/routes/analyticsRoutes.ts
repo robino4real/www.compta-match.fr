@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { $Enums } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { env } from "../config/env";
 import { attachUserToRequest, AuthenticatedRequest } from "../middleware/authMiddleware";
@@ -9,12 +10,12 @@ const rateLimitWindowMs = 60 * 1000;
 const rateLimitMaxEvents = 50;
 const rateLimitBuckets = new Map<string, RateLimitBucket>();
 
-const allowedEventTypes = new Set([
-  "PAGE_VIEW",
-  "CLICK",
-  "PRODUCT_VIEW",
-  "ADD_TO_CART",
-  "CHECKOUT_START",
+const allowedEventTypes = new Set<$Enums.UserEventType>([
+  $Enums.UserEventType.PAGE_VIEW,
+  $Enums.UserEventType.CLICK,
+  $Enums.UserEventType.PRODUCT_VIEW,
+  $Enums.UserEventType.ADD_TO_CART,
+  $Enums.UserEventType.CHECKOUT_START,
 ]);
 
 function isRateLimited(key: string) {
@@ -45,7 +46,9 @@ router.post("/track", attachUserToRequest, async (req: AuthenticatedRequest, res
 
     const { type, page, metadata, sessionId } = req.body || {};
 
-    if (!type || typeof type !== "string" || !allowedEventTypes.has(type.toUpperCase())) {
+    const normalizedType = typeof type === "string" ? type.toUpperCase() : "";
+
+    if (!normalizedType || !allowedEventTypes.has(normalizedType as $Enums.UserEventType)) {
       return res.status(400).json({ message: "Type d'événement invalide." });
     }
 
@@ -55,7 +58,7 @@ router.post("/track", attachUserToRequest, async (req: AuthenticatedRequest, res
 
     await prisma.userEvent.create({
       data: {
-        eventType: type.toUpperCase(),
+        eventType: normalizedType as $Enums.UserEventType,
         page: typeof page === "string" ? page.slice(0, 500) : null,
         metadata: metadata ?? null,
         sessionId: resolvedSessionId,
