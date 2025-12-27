@@ -34,7 +34,12 @@ function parseCookies(header?: string): Record<string, string> {
     const key = rawKey.trim();
     const value = rest.join("=").trim();
     if (key) {
-      acc[key] = decodeURIComponent(value);
+      try {
+        acc[key] = decodeURIComponent(value);
+      } catch (error) {
+        console.warn(`[cookies] Échec du décodage du cookie "${key}"`, error);
+        acc[key] = value;
+      }
     }
     return acc;
   }, {});

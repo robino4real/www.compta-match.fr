@@ -40,17 +40,14 @@ export async function computeCartTotals(
   }));
 
   const productIds = normalizedItems.map((it) => it.productId);
+  const uniqueProductIds = Array.from(new Set(productIds));
   const products = await prisma.downloadableProduct.findMany({
     where: {
-      id: { in: productIds },
+      id: { in: uniqueProductIds },
       isActive: true,
     },
     include: { binaries: true },
   });
-
-  if (products.length !== normalizedItems.length) {
-    throw new Error("INVALID_PRODUCTS");
-  }
 
   const productMap = products.reduce<Record<string, (typeof products)[number]>>(
     (acc, p) => {
@@ -59,6 +56,11 @@ export async function computeCartTotals(
     },
     {}
   );
+
+  const missingProduct = normalizedItems.find((item) => !productMap[item.productId]);
+  if (missingProduct) {
+    throw new Error("INVALID_PRODUCTS");
+  }
 
   const normalizedItemsWithBinaries = normalizedItems.map((item) => {
     const product = productMap[item.productId];
