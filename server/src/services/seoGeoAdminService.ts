@@ -1,5 +1,7 @@
 import { BrandTone, Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma";
+import { assertTablesExist } from "../utils/dbReadiness";
+import { HttpError } from "../utils/errors";
 
 type DiagnosticLevel = "ok" | "warning" | "error";
 
@@ -41,6 +43,25 @@ export class ValidationError extends Error {
 
 const SEO_SINGLETON_KEY = "global";
 const GEO_SINGLETON_KEY = "global";
+const SEO_GEO_TABLES = [
+  "SeoSettingsV2",
+  "PageSeo",
+  "ProductSeo",
+  "GeoIdentity",
+  "GeoFaqItem",
+  "GeoAnswer",
+];
+
+let lastSeoGeoCheckAt = 0;
+const SEO_GEO_CHECK_TTL = 60_000;
+
+async function ensureSeoGeoTables() {
+  const now = Date.now();
+  if (now - lastSeoGeoCheckAt < SEO_GEO_CHECK_TTL) return;
+
+  await assertTablesExist(SEO_GEO_TABLES, "seo-geo");
+  lastSeoGeoCheckAt = now;
+}
 
 function normalizeString(value: unknown, maxLength?: number): string | null | undefined {
   if (typeof value === "string") {
@@ -83,6 +104,7 @@ function mapNotFound(error: unknown, message: string) {
 }
 
 export async function getSeoSettingsSingleton() {
+  await ensureSeoGeoTables();
   return prisma.seoSettingsV2.upsert({
     where: { singletonKey: SEO_SINGLETON_KEY },
     update: {},
@@ -91,6 +113,7 @@ export async function getSeoSettingsSingleton() {
 }
 
 export async function updateSeoSettingsSingleton(payload: Record<string, unknown>) {
+  await ensureSeoGeoTables();
   const data: Prisma.SeoSettingsV2UpdateInput = {};
 
   const siteName = normalizeString(payload.siteName, 180);
@@ -130,6 +153,7 @@ export async function updateSeoSettingsSingleton(payload: Record<string, unknown
 }
 
 export async function getGeoIdentitySingleton() {
+  await ensureSeoGeoTables();
   return prisma.geoIdentity.upsert({
     where: { singletonKey: GEO_SINGLETON_KEY },
     update: {},
@@ -138,6 +162,7 @@ export async function getGeoIdentitySingleton() {
 }
 
 export async function updateGeoIdentitySingleton(payload: Record<string, unknown>) {
+  await ensureSeoGeoTables();
   const data: Prisma.GeoIdentityUpdateInput = {};
 
   const shortDescription = normalizeString(payload.shortDescription, 260);
@@ -167,6 +192,7 @@ export async function updateGeoIdentitySingleton(payload: Record<string, unknown
 }
 
 export async function listGeoFaqItems() {
+  await ensureSeoGeoTables();
   return prisma.geoFaqItem.findMany({
     orderBy: [
       { order: "asc" },
@@ -176,6 +202,7 @@ export async function listGeoFaqItems() {
 }
 
 export async function createGeoFaqItem(payload: Record<string, unknown>) {
+  await ensureSeoGeoTables();
   const question = normalizeString(payload.question, 500);
   const answer = normalizeString(payload.answer, 5000);
 
@@ -196,6 +223,7 @@ export async function createGeoFaqItem(payload: Record<string, unknown>) {
 }
 
 export async function updateGeoFaqItem(id: string, payload: Record<string, unknown>) {
+  await ensureSeoGeoTables();
   const question = normalizeString(payload.question, 500);
   const answer = normalizeString(payload.answer, 5000);
 
@@ -221,6 +249,7 @@ export async function updateGeoFaqItem(id: string, payload: Record<string, unkno
 }
 
 export async function deleteGeoFaqItem(id: string) {
+  await ensureSeoGeoTables();
   try {
     await prisma.geoFaqItem.delete({ where: { id } });
   } catch (error) {
@@ -230,6 +259,7 @@ export async function deleteGeoFaqItem(id: string) {
 }
 
 export async function reorderGeoFaqItems(ids: string[]) {
+  await ensureSeoGeoTables();
   if (!Array.isArray(ids) || ids.length === 0) {
     throw new ValidationError("Liste d'IDs requise pour le réordonnancement");
   }
@@ -261,6 +291,7 @@ export async function reorderGeoFaqItems(ids: string[]) {
 }
 
 export async function listGeoAnswers() {
+  await ensureSeoGeoTables();
   return prisma.geoAnswer.findMany({
     orderBy: [
       { order: "asc" },
@@ -270,6 +301,7 @@ export async function listGeoAnswers() {
 }
 
 export async function createGeoAnswer(payload: Record<string, unknown>) {
+  await ensureSeoGeoTables();
   const question = normalizeString(payload.question, 500);
   if (!question) {
     throw new ValidationError("La question est obligatoire");
@@ -292,6 +324,7 @@ export async function createGeoAnswer(payload: Record<string, unknown>) {
 }
 
 export async function updateGeoAnswer(id: string, payload: Record<string, unknown>) {
+  await ensureSeoGeoTables();
   const question = normalizeString(payload.question, 500);
   const shortAnswer = normalizeString(payload.shortAnswer, 1000);
   const longAnswer = normalizeString(payload.longAnswer, 5000);
@@ -315,6 +348,7 @@ export async function updateGeoAnswer(id: string, payload: Record<string, unknow
 }
 
 export async function deleteGeoAnswer(id: string) {
+  await ensureSeoGeoTables();
   try {
     await prisma.geoAnswer.delete({ where: { id } });
   } catch (error) {
@@ -324,6 +358,7 @@ export async function deleteGeoAnswer(id: string) {
 }
 
 export async function reorderGeoAnswers(ids: string[]) {
+  await ensureSeoGeoTables();
   if (!Array.isArray(ids) || ids.length === 0) {
     throw new ValidationError("Liste d'IDs requise pour le réordonnancement");
   }

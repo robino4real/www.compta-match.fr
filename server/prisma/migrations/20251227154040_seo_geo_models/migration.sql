@@ -1,5 +1,9 @@
--- CreateEnum
-CREATE TYPE "BrandTone" AS ENUM ('PROFESSIONAL', 'PEDAGOGICAL', 'DIRECT');
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'BrandTone') THEN
+        CREATE TYPE "BrandTone" AS ENUM ('PROFESSIONAL', 'PEDAGOGICAL', 'DIRECT');
+    END IF;
+END $$;
 
 -- CreateTable
 CREATE TABLE "SeoSettingsV2" (

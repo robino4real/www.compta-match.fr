@@ -7,6 +7,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "prisma:generate": "prisma generate",
+    "prisma:status": "prisma migrate status",
+    "prisma:diff": "prisma migrate diff --from-schema-datamodel prisma/schema.prisma --to-url \"$DATABASE_URL\" --script",
     "seed": "ts-node-dev --transpile-only prisma/seed.ts",
     "backfill:order-numbers": "ts-node-dev --transpile-only src/scripts/backfillOrderNumbers.ts",
     "postinstall": "npm run prisma:generate",
