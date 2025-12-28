@@ -10,6 +10,19 @@ import {
 } from "../services/transactionalEmailService";
 import { AuthenticatedRequest } from "../middleware/authMiddleware";
 
+function resolveOrderId(req: Request): string | undefined {
+  const params = req.params as { id?: string; orderId?: string };
+  const body = req.body as { id?: string; orderId?: string };
+  const candidate = params.id || params.orderId || body?.id || body?.orderId;
+
+  if (typeof candidate !== "string") {
+    return undefined;
+  }
+
+  const trimmed = candidate.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
 export async function adminListOrders(req: Request, res: Response) {
   const { email, status, promoCode } = req.query as Record<string, string>;
 
@@ -121,7 +134,15 @@ export async function adminMarkOrderRefunded(req: Request, res: Response) {
 }
 
 export async function adminCancelOrder(req: AuthenticatedRequest, res: Response) {
-  const { orderId } = req.params as { orderId: string };
+  const orderId = resolveOrderId(req);
+
+  if (!orderId) {
+    return res
+      .status(400)
+      .json({ ok: false, error: { code: "BAD_REQUEST", message: "Missing order id" } });
+  }
+
+  console.debug(`[adminCancelOrder] orderId=${orderId}`);
 
   try {
     const order = await prisma.order.findUnique({ where: { id: orderId }, include: { user: true } });
@@ -159,7 +180,15 @@ export async function adminCancelOrder(req: AuthenticatedRequest, res: Response)
 }
 
 export async function adminSoftDeleteOrder(req: AuthenticatedRequest, res: Response) {
-  const { orderId } = req.params as { orderId: string };
+  const orderId = resolveOrderId(req);
+
+  if (!orderId) {
+    return res
+      .status(400)
+      .json({ ok: false, error: { code: "BAD_REQUEST", message: "Missing order id" } });
+  }
+
+  console.debug(`[adminSoftDeleteOrder] orderId=${orderId}`);
 
   try {
     const order = await prisma.order.findUnique({ where: { id: orderId } });
@@ -190,7 +219,15 @@ export async function adminSoftDeleteOrder(req: AuthenticatedRequest, res: Respo
 }
 
 export async function adminRefundOrder(req: AuthenticatedRequest, res: Response) {
-  const { orderId } = req.params as { orderId: string };
+  const orderId = resolveOrderId(req);
+
+  if (!orderId) {
+    return res
+      .status(400)
+      .json({ ok: false, error: { code: "BAD_REQUEST", message: "Missing order id" } });
+  }
+
+  console.debug(`[adminRefundOrder] orderId=${orderId}`);
 
   try {
     const order = await prisma.order.findUnique({

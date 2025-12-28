@@ -57,11 +57,15 @@ const publicRoutes_1 = __importDefault(require("./routes/publicRoutes"));
 const catalogRoutes_1 = __importDefault(require("./routes/catalogRoutes"));
 const downloadableProductRoutes_1 = __importDefault(require("./routes/downloadableProductRoutes"));
 const accountRoutes_1 = __importDefault(require("./routes/accountRoutes"));
+const appRoutes_1 = __importDefault(require("./routes/appRoutes"));
 const adminAccountService_1 = require("./services/adminAccountService");
 const seoController_1 = require("./controllers/seoController");
 const paidServicesRoutes_1 = __importDefault(require("./routes/paidServicesRoutes"));
 const downloadController_1 = require("./controllers/downloadController");
 const paymentController_1 = require("./controllers/paymentController");
+const seoRenderer_1 = require("./utils/seoRenderer");
+const prisma_1 = require("./config/prisma");
+const dbReadiness_1 = require("./utils/dbReadiness");
 const app = (0, express_1.default)();
 const apiRouter = (0, express_1.Router)();
 app.set("trust proxy", 1);
@@ -69,6 +73,22 @@ console.log("[config] Frontend base URL:", env_1.env.frontendBaseUrl);
 console.log("[config] API base URL:", env_1.env.apiBaseUrl);
 console.log("[config] Stripe mode:", env_1.env.stripeMode);
 console.log("[config] Stripe webhook secret present:", Boolean(env_1.env.stripeActiveWebhookSecret), "source=", env_1.env.stripeActiveWebhookSecretSource || "none");
+const CRITICAL_TABLES = [
+    "SeoSettingsV2",
+    "PageSeo",
+    "ProductSeo",
+    "GeoIdentity",
+    "GeoFaqItem",
+    "GeoAnswer",
+    "AppFiche",
+    "AccountingEntry",
+    "AccountingDocument",
+];
+const CRITICAL_COLUMNS = [
+    { table: "AppFiche", column: "currency" },
+    { table: "AppFiche", column: "fiscalYearStartMonth" },
+];
+void (0, dbReadiness_1.logCriticalSchemaStatus)(CRITICAL_TABLES, CRITICAL_COLUMNS);
 app.use((req, res, next) => {
     const requestOrigin = req.headers.origin;
     const isAllowedOrigin = !env_1.env.allowCorsOrigins.length ||
@@ -108,6 +128,7 @@ apiRouter.use("/admin", authMiddleware_1.requireAdmin, adminRoutes_1.default);
 apiRouter.use("/orders", authMiddleware_1.requireAuth, orderRoutes_1.default);
 apiRouter.use("/invoices", authMiddleware_1.requireAuth, invoiceRoutes_1.default);
 apiRouter.use("/account", authMiddleware_1.requireAuth, accountRoutes_1.default);
+apiRouter.use("/app", appRoutes_1.default);
 app.use("/api", apiRouter);
 app.get("/robots.txt", seoController_1.robotsTxtHandler);
 app.get("/sitemap.xml", seoController_1.sitemapHandler);
@@ -127,10 +148,59 @@ const frontendDir = frontendDirCandidates.find((candidate) => fs_1.default.exist
 if (!frontendDir) {
     console.warn("[frontend] Aucun build front trouvé. Attendu dans l'un des chemins suivants :", frontendDirCandidates);
 }
+const serveWebAppIndex = (res) => {
+    const indexPath = frontendDir ? path_1.default.join(frontendDir, "index.html") : null;
+    if (indexPath && fs_1.default.existsSync(indexPath)) {
+        return res.sendFile(indexPath);
+    }
+    return res.status(200).send("OK SECURED");
+};
+const ensureWebAppAuthenticated = (req, res, next) => {
+    const { user } = req;
+    if (!user) {
+        // Pour les routes WebApp HTML, on redirige vers la page de connexion au lieu d'une réponse JSON.
+        return res.redirect(302, "/auth/login");
+    }
+    return next();
+};
+const ensureWebAppFicheAccess = (expectedType) => async (req, res, next) => {
+    const { ficheId } = req.params;
+    const { user } = req;
+    if (!ficheId) {
+        return res.status(404).send("Ressource introuvable");
+    }
+    try {
+        const fiche = await prisma_1.prisma.appFiche.findUnique({ where: { id: ficheId } });
+        if (!fiche || fiche.type !== expectedType) {
+            return res.status(404).send("Ressource introuvable");
+        }
+        if (!user || fiche.ownerId !== user.id) {
+            return res.status(403).send("Accès interdit");
+        }
+        req.fiche = fiche;
+        return next();
+    }
+    catch (error) {
+        console.error("[webapp] Erreur lors du contrôle d'accès fiche", error);
+        return res.status(500).send("Erreur interne du serveur");
+    }
+};
+// SECURITY REQUIRED: Les routes WebApp HTML renvoient directement une page 403/404 ou redirigent vers la connexion.
+const secureWebAppRoute = (expectedType) => [authMiddleware_1.attachUserToRequest, ensureWebAppAuthenticated, ensureWebAppFicheAccess(expectedType), (req, res) => {
+        const { fiche } = req;
+        if (!fiche || fiche.type !== expectedType) {
+            return res.status(404).send("Ressource introuvable");
+        }
+        return serveWebAppIndex(res);
+    }];
+app.get("/app/comptapro/:ficheId", ...secureWebAppRoute("COMPTAPRO"));
+app.get("/app/comptapro/:ficheId/*", ...secureWebAppRoute("COMPTAPRO"));
+app.get("/app/comptasso/:ficheId", ...secureWebAppRoute("COMPTASSO"));
+app.get("/app/comptasso/:ficheId/*", ...secureWebAppRoute("COMPTASSO"));
 if (frontendDir) {
     app.use(express_1.default.static(frontendDir));
 }
-app.get("*", (req, res, next) => {
+app.get("*", async (req, res, next) => {
     if (req.path.startsWith("/api")) {
         return next();
     }
@@ -141,7 +211,13 @@ app.get("*", (req, res, next) => {
     if (!fs_1.default.existsSync(indexPath)) {
         return res.status(404).send("Interface front-end introuvable.");
     }
-    return res.sendFile(indexPath);
+    try {
+        await (0, seoRenderer_1.renderIndexWithSeo)({ req, res, indexPath });
+    }
+    catch (error) {
+        console.error("[seo] Rendu SEO côté serveur impossible, fallback index.html", error);
+        return res.sendFile(indexPath);
+    }
 });
 app.use(errorHandler_1.errorHandler);
 (0, adminAccountService_1.ensureAdminAccount)().catch((error) => {

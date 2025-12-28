@@ -14,6 +14,7 @@ const prisma_1 = require("../config/prisma");
 const stripeClient_1 = require("../config/stripeClient");
 const invoiceService_1 = require("../services/invoiceService");
 const downloadLinkService_1 = require("../services/downloadLinkService");
+const orderNumberService_1 = require("../services/orderNumberService");
 const promoService_1 = require("../services/promoService");
 const cartService_1 = require("../services/cartService");
 const transactionalEmailService_1 = require("../services/transactionalEmailService");
@@ -199,6 +200,8 @@ async function createDownloadCheckoutSession(req, res) {
             const order = await prisma_1.prisma.order.create({
                 data: {
                     userId,
+                    orderNumber: await (0, orderNumberService_1.generateOrderNumber)(client_1.OrderType.DOWNLOADABLE),
+                    orderType: client_1.OrderType.DOWNLOADABLE,
                     totalBeforeDiscount: totalCents,
                     discountAmount: promoDiscountCents > 0 ? promoDiscountCents : 0,
                     totalPaid: 0,
@@ -254,6 +257,8 @@ async function createDownloadCheckoutSession(req, res) {
         const order = await prisma_1.prisma.order.create({
             data: {
                 userId,
+                orderNumber: await (0, orderNumberService_1.generateOrderNumber)(client_1.OrderType.DOWNLOADABLE),
+                orderType: client_1.OrderType.DOWNLOADABLE,
                 totalBeforeDiscount: totalCents,
                 discountAmount: promoDiscountCents > 0 ? promoDiscountCents : 0,
                 totalPaid: payableCents,
@@ -788,6 +793,7 @@ async function getDownloadCheckoutConfirmation(req, res) {
             status: order.status,
             order: {
                 id: order.id,
+                orderNumber: order.orderNumber,
                 paidAt: order.paidAt,
                 currency: order.currency,
                 totalPaid: order.totalPaid,
