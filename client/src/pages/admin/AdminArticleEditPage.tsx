@@ -10,7 +10,7 @@ interface ArticleForm {
   title: string;
   slug: string;
   authorName: string;
-  category: string;
+  category: "ARTICLE" | "TUTORIAL";
   excerpt: string;
   coverImageUrl: string;
   readTimeMinutes: string;
@@ -19,6 +19,7 @@ interface ArticleForm {
   seoDescription: string;
   status: ArticleStatus;
   publishedAt?: string | null;
+  youtubeUrl: string;
 }
 
 const slugify = (value: string) =>
@@ -30,6 +31,23 @@ const slugify = (value: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)+/g, "");
 
+const isValidYoutubeUrl = (value: string) => {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    const host = url.hostname.toLowerCase();
+    return (
+      host === "youtu.be" ||
+      host === "www.youtu.be" ||
+      host === "youtube.com" ||
+      host === "www.youtube.com" ||
+      host.endsWith(".youtube.com")
+    );
+  } catch (error) {
+    return false;
+  }
+};
+
 const AdminArticleEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const isNew = !id;
@@ -39,7 +57,7 @@ const AdminArticleEditPage: React.FC = () => {
     title: "",
     slug: "",
     authorName: "",
-    category: "",
+    category: "ARTICLE",
     excerpt: "",
     coverImageUrl: "",
     readTimeMinutes: "",
@@ -47,6 +65,7 @@ const AdminArticleEditPage: React.FC = () => {
     seoTitle: "",
     seoDescription: "",
     status: "DRAFT",
+    youtubeUrl: "",
   });
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -76,7 +95,7 @@ const AdminArticleEditPage: React.FC = () => {
         title: article.title || "",
         slug: article.slug || "",
         authorName: article.authorName || "",
-        category: article.category || "",
+        category: article.category || "ARTICLE",
         excerpt: article.excerpt || "",
         coverImageUrl: article.coverImageUrl || "",
         readTimeMinutes: article.readTimeMinutes?.toString?.() || "",
@@ -85,6 +104,7 @@ const AdminArticleEditPage: React.FC = () => {
         seoDescription: article.seoDescription || "",
         status: article.status || "DRAFT",
         publishedAt: article.publishedAt,
+        youtubeUrl: article.youtubeUrl || "",
       });
     } catch (err: any) {
       console.error("Erreur lors du chargement de l'article", err);
@@ -129,9 +149,17 @@ const AdminArticleEditPage: React.FC = () => {
         return;
       }
 
+      const trimmedYoutube = form.youtubeUrl.trim();
+      if (trimmedYoutube && !isValidYoutubeUrl(trimmedYoutube)) {
+        setError("Le lien YouTube doit provenir de youtube.com ou youtu.be.");
+        setIsSubmitting(false);
+        return;
+      }
+
       const payload = {
         ...form,
         readTimeMinutes: readTime,
+        youtubeUrl: trimmedYoutube || null,
         status:
           statusOverride === "DRAFT" && form.publishedAt
             ? form.status
@@ -409,20 +437,35 @@ const AdminArticleEditPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-slate-800">Catégorie</label>
+            <select
+              value={form.category}
+              onChange={(e) => handleChange("category", e.target.value as ArticleForm["category"])}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+            >
+              <option value="ARTICLE">Articles</option>
+              <option value="TUTORIAL">Tutoriels</option>
+            </select>
+            <p className="text-xs text-slate-500">Sélectionnez "Tutoriels" pour afficher la vidéo sur la page publique.</p>
+          </div>
+          {form.category === "TUTORIAL" && (
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-800">Catégorie</label>
+              <label className="text-xs font-semibold text-slate-800">Lien vidéo YouTube</label>
               <input
-                type="text"
-                value={form.category}
-                onChange={(e) => handleChange("category", e.target.value)}
+                type="url"
+                value={form.youtubeUrl}
+                onChange={(e) => handleChange("youtubeUrl", e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=..."
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
-                placeholder="Comptabilité, Micro-entreprise..."
               />
+              <p className="text-xs text-slate-500">Coller un lien YouTube (youtube.com ou youtu.be).</p>
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-800">Auteur</label>
-              <input
+          )}
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-slate-800">Auteur</label>
+            <input
                 type="text"
                 value={form.authorName}
                 onChange={(e) => handleChange("authorName", e.target.value)}

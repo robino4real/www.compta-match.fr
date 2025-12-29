@@ -6,6 +6,7 @@ import {
   publicGetDownloadableProduct,
   publicListDownloadableProducts,
 } from "../controllers/catalogController";
+import { publicGetPublishedFaq } from "../controllers/clientQuestionController";
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.get("/pages/by-route", publicGetCustomPageByRoute);
 router.get("/products", publicListDownloadableProducts);
 router.get("/downloadable-products", publicListDownloadableProducts);
 router.get("/products/:slug", publicGetDownloadableProduct);
+router.get("/faq", publicGetPublishedFaq);
 
 export default router;

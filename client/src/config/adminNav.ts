@@ -29,6 +29,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
     items: [
       { label: "Portefeuille client", href: "/admin/customers" },
       { label: "Base client", href: "/admin/clients" },
+      { label: "Questions client", href: "/admin/client-questions" },
     ],
   },
   {

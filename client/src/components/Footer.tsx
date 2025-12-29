@@ -20,7 +20,7 @@ const Footer: React.FC = () => {
             Comparer les offres
           </Link>
           <Link to="/faq" className={linkClasses}>
-            FAQ
+            Articles et FAQ
           </Link>
           <Link to="/cgv" className={linkClasses}>
             Conditions générales de vente
