@@ -3,10 +3,13 @@ import path from "path";
 import PDFDocument from "pdfkit";
 import { prisma } from "../config/prisma";
 
-const primaryColor = "#0f172a";
-const accentColor = "#2563eb";
-const lightGray = "#f3f4f6";
+const primaryColor = "#111827";
+const accentColor = "#1f2937";
+const lightGray = "#f8fafc";
 const mediumGray = "#6b7280";
+const subtleBorder = "#e5e7eb";
+
+const pageMargin = 56.7; // 20mm
 
 function formatCurrency(amount: number, currency = "EUR"): string {
   return `${(amount / 100).toFixed(2)} ${currency}`;
@@ -37,73 +40,55 @@ export async function generateInvoicePdf(invoiceId: string) {
   const absolutePath = path.join(__dirname, "../../", pdfPath);
   fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
 
-  const doc = new PDFDocument({ margin: 40 });
+  const doc = new PDFDocument({ size: "A4", margin: pageMargin });
   const writeStream = fs.createWriteStream(absolutePath);
   doc.pipe(writeStream);
 
   let currentPage = 1;
 
   const addFooter = () => {
-    const footerY = doc.page.height - 60;
+    const footerY = doc.page.height - pageMargin + 10;
     doc
       .fontSize(9)
       .fillColor(mediumGray)
-      .text("Facture générée automatiquement", 40, footerY, {
-        width: doc.page.width - 80,
+      .text("Facture générée automatiquement", doc.page.margins.left, footerY, {
+        width: doc.page.width - pageMargin * 2,
       })
-      .text(`Page ${currentPage}`, 40, footerY + 14, {
+      .text(`Page ${currentPage}`, doc.page.margins.left, footerY + 14, {
         align: "right",
-        width: doc.page.width - 80,
+        width: doc.page.width - pageMargin * 2,
       })
       .fillColor(primaryColor);
   };
 
   const goToNextPageWithHeader = () => {
     addFooter();
-    doc.addPage({ margin: 40 });
+    doc.addPage({ size: "A4", margin: pageMargin });
     currentPage += 1;
+    drawHeader();
   };
 
   const drawHeader = () => {
-    const availableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-    const headerTop = doc.y;
+    const contentWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+    const startX = doc.page.margins.left;
+    const startY = doc.page.margins.top;
+    const logoMaxWidth = 140;
+    const logoMaxHeight = 50;
+    const spacing = 18;
 
     if (invoice.sellerLogoUrl) {
       try {
-        doc.image(invoice.sellerLogoUrl, doc.page.margins.left, headerTop, {
-          fit: [140, 60],
+        doc.image(invoice.sellerLogoUrl, startX, startY, {
+          fit: [logoMaxWidth, logoMaxHeight],
+          valign: "top",
         });
       } catch (e) {
         console.warn("Logo introuvable pour la facture", invoice.id);
       }
     }
 
-    doc
-      .fontSize(22)
-      .fillColor(primaryColor)
-      .text("FACTURE", doc.page.margins.left, headerTop, {
-        align: "right",
-        width: availableWidth,
-      })
-      .moveDown(0.2)
-      .fontSize(11)
-      .fillColor(mediumGray)
-      .text(`N° ${invoice.invoiceNumber}`, doc.page.margins.left, doc.y, {
-        align: "right",
-        width: availableWidth,
-      })
-      .text(`Date : ${formatDate(invoice.issueDate)}`, doc.page.margins.left, doc.y, {
-        align: "right",
-        width: availableWidth,
-      })
-      .moveDown(1.5)
-      .fillColor(primaryColor);
-  };
-
-  const drawInfoColumns = () => {
-    const startY = doc.y;
-    const columnWidth = (doc.page.width - doc.page.margins.left - doc.page.margins.right - 20) / 2;
-
+    const sellerInfoX = startX + logoMaxWidth + 16;
+    const sellerInfoWidth = contentWidth - logoMaxWidth - 16;
     const sellerLines = [
       invoice.sellerName,
       invoice.sellerLegalForm,
@@ -114,82 +99,147 @@ export async function generateInvoicePdf(invoiceId: string) {
       invoice.sellerWebsiteUrl,
       invoice.sellerSiret ? `SIRET : ${invoice.sellerSiret}` : "",
       invoice.sellerSiren ? `SIREN : ${invoice.sellerSiren}` : "",
-      invoice.sellerRcsCity ? `RCS : ${invoice.sellerRcsCity}` : "",
       invoice.sellerVatNumber ? `TVA : ${invoice.sellerVatNumber}` : "",
+      invoice.sellerRcsCity ? `RCS : ${invoice.sellerRcsCity}` : "",
       invoice.sellerCapital || "",
     ].filter(Boolean);
 
-    const clientLines = [
-      invoice.billingName,
-      invoice.billingEmail,
-      invoice.billingAddress,
-    ].filter(Boolean);
-
-    const boxY = startY;
-    const boxHeight = Math.max(
-      doc.heightOfString(sellerLines.join("\n"), { width: columnWidth }),
-      doc.heightOfString(clientLines.join("\n"), { width: columnWidth })
-    ) + 30;
-
     doc
-      .roundedRect(doc.page.margins.left, boxY, columnWidth, boxHeight, 8)
-      .fill(lightGray);
-    doc
-      .roundedRect(doc.page.margins.left + columnWidth + 20, boxY, columnWidth, boxHeight, 8)
-      .fill(lightGray);
-
-    doc
-      .fillColor(primaryColor)
-      .fontSize(12)
-      .text("Entreprise", doc.page.margins.left + 14, boxY + 12)
-      .fontSize(10)
-      .fillColor(primaryColor)
-      .text(sellerLines.join("\n"), { width: columnWidth - 28 })
       .fontSize(12)
       .fillColor(primaryColor)
-      .text("Client", doc.page.margins.left + columnWidth + 34, boxY + 12)
-      .fontSize(10)
-      .fillColor(primaryColor)
-      .text(clientLines.join("\n"), doc.page.margins.left + columnWidth + 34, doc.y, {
-        width: columnWidth - 28,
+      .text(sellerLines.join("\n"), sellerInfoX, startY, {
+        width: sellerInfoWidth,
+        align: "right",
       });
 
-    doc.moveDown(2);
+    const sellerInfoHeight = doc.heightOfString(sellerLines.join("\n"), {
+      width: sellerInfoWidth,
+      align: "right",
+    });
+    const headerHeight = Math.max(logoMaxHeight, sellerInfoHeight);
+
+    doc
+      .moveTo(startX, startY + headerHeight + 8)
+      .lineTo(startX + contentWidth, startY + headerHeight + 8)
+      .lineWidth(1)
+      .strokeColor(subtleBorder)
+      .stroke();
+
+    doc
+      .fontSize(16)
+      .fillColor(primaryColor)
+      .text("Facture", startX, startY + headerHeight + spacing, {
+        width: contentWidth,
+        align: "right",
+        characterSpacing: 0.2,
+      })
+      .fontSize(10)
+      .fillColor(mediumGray)
+      .text(`N° ${invoice.invoiceNumber}`, startX, doc.y + 4, {
+        width: contentWidth,
+        align: "right",
+      })
+      .text(`Émise le ${formatDate(invoice.issueDate)}`, startX, doc.y + 2, {
+        width: contentWidth,
+        align: "right",
+      })
+      .fillColor(primaryColor);
+
+    doc.y = startY + headerHeight + spacing + 24;
+  };
+
+  const drawInfoColumns = () => {
+    const startX = doc.page.margins.left;
+    const contentWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+    const columnWidth = contentWidth / 2 - 10;
+    const padding = 14;
+    const startY = doc.y + 12;
+
+    const clientLines = [invoice.billingName, invoice.billingEmail, invoice.billingAddress].filter(Boolean);
+
+    const invoiceLines = [
+      `Facture n° ${invoice.invoiceNumber}`,
+      `Date d'émission : ${formatDate(invoice.issueDate)}`,
+      invoice.order?.orderNumber ? `Référence commande : ${invoice.order.orderNumber}` : "",
+      invoice.sellerVatRegime ? `TVA : ${invoice.sellerVatRegime}` : "",
+    ].filter(Boolean);
+
+    const leftHeight =
+      doc.heightOfString(["Client", "", ...clientLines].join("\n"), { width: columnWidth - padding * 2 }) +
+      padding * 2;
+    const rightHeight =
+      doc.heightOfString(["Facturation", "", ...invoiceLines].join("\n"), { width: columnWidth - padding * 2 }) +
+      padding * 2;
+    const boxHeight = Math.max(leftHeight, rightHeight);
+
+    doc
+      .lineWidth(1)
+      .strokeColor(subtleBorder)
+      .roundedRect(startX, startY, contentWidth / 2 - 6, boxHeight, 8)
+      .fillAndStroke(lightGray, subtleBorder);
+
+    doc
+      .roundedRect(startX + contentWidth / 2 + 6, startY, contentWidth / 2 - 6, boxHeight, 8)
+      .fillAndStroke(lightGray, subtleBorder);
+
+    doc
+      .fillColor(primaryColor)
+      .fontSize(12)
+      .text("Client", startX + padding, startY + padding)
+      .fontSize(10)
+      .fillColor(primaryColor)
+      .text(clientLines.join("\n"), startX + padding, doc.y + 4, {
+        width: columnWidth - padding * 2,
+      });
+
+    doc
+      .fillColor(primaryColor)
+      .fontSize(12)
+      .text("Facturation", startX + contentWidth / 2 + padding + 6, startY + padding)
+      .fontSize(10)
+      .fillColor(primaryColor)
+      .text(invoiceLines.join("\n"), startX + contentWidth / 2 + padding + 6, doc.y + 4, {
+        width: columnWidth - padding * 2,
+      });
+
+    doc.y = startY + boxHeight + 16;
   };
 
   const drawItemsTable = () => {
     const startX = doc.page.margins.left;
-    let y = doc.y + 10;
+    let y = doc.y + 14;
+    const contentWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
     const columnWidths = [
-      220,
-      70,
-      90,
-      90,
+      contentWidth * 0.48,
+      contentWidth * 0.14,
+      contentWidth * 0.18,
+      contentWidth * 0.2,
     ];
     const tableWidth = columnWidths.reduce((sum, width) => sum + width, 0);
-    const rowPadding = 10;
+    const rowPadding = 12;
 
     const drawHeaderRow = () => {
       doc
-        .fillColor("white")
-        .rect(startX, y, tableWidth, 26)
-        .fill(primaryColor)
+        .fillColor(primaryColor)
+        .rect(startX, y, tableWidth, 28)
+        .fill(subtleBorder)
         .fontSize(10)
-        .text("Désignation", startX + rowPadding, y + 8, { width: columnWidths[0] - rowPadding })
-        .text("Quantité", startX + columnWidths[0] + rowPadding, y + 8, {
-          width: columnWidths[1] - rowPadding,
+        .fillColor(primaryColor)
+        .text("Désignation", startX + rowPadding, y + 9, { width: columnWidths[0] - rowPadding * 2 })
+        .text("Quantité", startX + columnWidths[0] + rowPadding, y + 9, {
+          width: columnWidths[1] - rowPadding * 2,
           align: "right",
         })
-        .text("Prix unitaire", startX + columnWidths[0] + columnWidths[1] + rowPadding, y + 8, {
-          width: columnWidths[2] - rowPadding,
+        .text("Prix unitaire HT", startX + columnWidths[0] + columnWidths[1] + rowPadding, y + 9, {
+          width: columnWidths[2] - rowPadding * 2,
           align: "right",
         })
-        .text("Total", startX + columnWidths[0] + columnWidths[1] + columnWidths[2] + rowPadding, y + 8, {
-          width: columnWidths[3] - rowPadding,
+        .text("Total HT", startX + columnWidths[0] + columnWidths[1] + columnWidths[2] + rowPadding, y + 9, {
+          width: columnWidths[3] - rowPadding * 2,
           align: "right",
         });
-      y += 26;
-      doc.fillColor(primaryColor);
+      y += 28;
+      doc.fillColor(primaryColor).lineWidth(0.5).strokeColor(subtleBorder);
     };
 
     drawHeaderRow();
@@ -198,12 +248,11 @@ export async function generateInvoicePdf(invoiceId: string) {
       const designationHeight = doc.heightOfString(item.productNameSnapshot || "", {
         width: columnWidths[0] - rowPadding * 2,
       });
-      const rowHeight = Math.max(26, designationHeight + rowPadding);
+      const rowHeight = Math.max(28, designationHeight + rowPadding);
 
       if (y + rowHeight > doc.page.height - 120) {
         goToNextPageWithHeader();
-        doc.y = doc.page.margins.top;
-        y = doc.y + 10;
+        y = doc.y + 14;
         drawHeaderRow();
       }
 
@@ -255,11 +304,12 @@ export async function generateInvoicePdf(invoiceId: string) {
   };
 
   const drawTotals = () => {
-    const startX = doc.page.margins.left + 190;
-    let y = doc.y;
-    const rowHeight = 26;
-    const labelWidth = 180;
+    const contentWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
     const valueWidth = 120;
+    const labelWidth = 190;
+    const startX = doc.page.margins.left + contentWidth - (labelWidth + valueWidth);
+    let y = doc.y + 8;
+    const rowHeight = 28;
 
     const rows = [
       { label: "Sous-total", value: formatCurrency(invoice.totalHT, invoice.currency) },
@@ -271,37 +321,43 @@ export async function generateInvoicePdf(invoiceId: string) {
       },
     ];
 
-    rows.forEach((row) => {
-      if (y + rowHeight > doc.page.height - 120) {
-        goToNextPageWithHeader();
-        doc.y = doc.page.margins.top;
-        y = doc.y;
-      }
+      rows.forEach((row) => {
+        if (y + rowHeight > doc.page.height - 120) {
+          goToNextPageWithHeader();
+          y = doc.y + 8;
+        }
 
       if (row.highlight) {
         doc
           .roundedRect(startX, y, labelWidth + valueWidth, rowHeight, 6)
           .fill(accentColor)
           .fillColor("white");
+      } else {
+        doc
+          .roundedRect(startX, y, labelWidth + valueWidth, rowHeight, 6)
+          .strokeColor(subtleBorder)
+          .lineWidth(1)
+          .stroke();
       }
 
       doc
-        .fontSize(11)
-        .text(row.label, startX + 10, y + 7, { width: labelWidth - 20 })
-        .text(row.value, startX + labelWidth, y + 7, {
-          width: valueWidth - 20,
+        .fontSize(row.highlight ? 12 : 11)
+        .fillColor(row.highlight ? "white" : primaryColor)
+        .text(row.label, startX + 12, y + 8, { width: labelWidth - 24 })
+        .text(row.value, startX + labelWidth, y + 8, {
+          width: valueWidth - 24,
           align: "right",
         });
 
-      if (row.highlight) {
+      if (!row.highlight) {
         doc.fillColor(primaryColor);
       }
 
-      y += rowHeight + 4;
+      y += rowHeight + 6;
     });
 
     if (invoice.sellerVatMention) {
-      doc.moveDown(0.5).fontSize(9).fillColor(mediumGray).text(invoice.sellerVatMention);
+      doc.moveDown(0.8).fontSize(9).fillColor(mediumGray).text(invoice.sellerVatMention);
       doc.fillColor(primaryColor);
     }
   };
