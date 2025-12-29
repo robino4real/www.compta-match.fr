@@ -5,6 +5,10 @@ import {
   GeoIdentityResponse,
   DiagnosticsResponse,
   SeoSettingsResponse,
+  AutofillMode,
+  AutofillPreviewResponse,
+  applySeoGeoAutofill,
+  previewSeoGeoAutofill,
   createGeoAnswer,
   createGeoFaqItem,
   deleteGeoAnswer,
@@ -181,6 +185,22 @@ const AdminSeoPage: React.FC = () => {
   const [diagnosticsError, setDiagnosticsError] = React.useState<string | null>(null);
   const [hasRequestedDiagnostics, setHasRequestedDiagnostics] = React.useState(false);
   const [faqJsonCopied, setFaqJsonCopied] = React.useState(false);
+  const [autofillModalOpen, setAutofillModalOpen] = React.useState(false);
+  const [autofillPreview, setAutofillPreview] =
+    React.useState<AutofillPreviewResponse | null>(null);
+  const [autofillLoading, setAutofillLoading] = React.useState(false);
+  const [autofillApplying, setAutofillApplying] = React.useState(false);
+  const [autofillError, setAutofillError] = React.useState<string | null>(null);
+  const [autofillConfirmOverwrite, setAutofillConfirmOverwrite] = React.useState(false);
+  const [autofillOptions, setAutofillOptions] = React.useState({
+    includeGlobalSeo: true,
+    includeGeoIdentity: true,
+    includeGeoFaq: true,
+    includeGeoAnswers: true,
+    includePageSeo: false,
+    includeProductSeo: false,
+    mode: "FILL_ONLY_MISSING" as AutofillMode,
+  });
 
   const showToast = (message: string) => {
     setStatusMessage(message);
@@ -608,6 +628,108 @@ const AdminSeoPage: React.FC = () => {
     window.open(
       `https://search.google.com/search-console/inspect?resource_id=${property}`,
       "_blank"
+    );
+  };
+
+  const handleAutofillOptionChange = (
+    field: keyof typeof autofillOptions,
+    value: boolean | AutofillMode
+  ) => {
+    setAutofillOptions((prev) => ({ ...prev, [field]: value }));
+    setAutofillError(null);
+  };
+
+  const handlePreviewAutofill = async () => {
+    try {
+      setAutofillLoading(true);
+      setAutofillError(null);
+      const res = await previewSeoGeoAutofill(autofillOptions);
+      setAutofillPreview(res.data);
+    } catch (error: any) {
+      setAutofillError(error?.message || "Impossible de générer la prévisualisation.");
+    } finally {
+      setAutofillLoading(false);
+    }
+  };
+
+  const handleApplyAutofill = async () => {
+    if (!autofillPreview) {
+      setAutofillError("Générez une prévisualisation avant d'appliquer.");
+      return;
+    }
+
+    if (autofillOptions.mode === "OVERWRITE" && !autofillConfirmOverwrite) {
+      setAutofillError("Cochez la confirmation pour écraser les valeurs existantes.");
+      return;
+    }
+
+    try {
+      setAutofillApplying(true);
+      setAutofillError(null);
+      const res = await applySeoGeoAutofill({ ...autofillOptions, confirm: true });
+      setAutofillPreview(res.data);
+
+      if (res.data.applied.seoSettings) {
+        setSeoSettings(mapSeoSettingsToForm(res.data.applied.seoSettings as any));
+      }
+      if (res.data.applied.geoIdentity) {
+        setGeoIdentity(mapGeoIdentityToForm(res.data.applied.geoIdentity as any));
+      }
+      if (Array.isArray(res.data.applied.faqItems)) {
+        setFaqItems(res.data.applied.faqItems);
+      }
+      if (Array.isArray(res.data.applied.answers)) {
+        setAnswers(res.data.applied.answers);
+      }
+
+      showToast(res.message || "Champs auto-remplis");
+      setAutofillModalOpen(false);
+    } catch (error: any) {
+      setAutofillError(error?.message || "Impossible d'appliquer l'auto-remplissage.");
+    } finally {
+      setAutofillApplying(false);
+    }
+  };
+
+  const renderDiffRows = () => {
+    if (!autofillPreview || !autofillPreview.diff.length)
+      return <p className="text-sm text-slate-600">Aucun changement détecté.</p>;
+
+    const stringifyValue = (value: any) => {
+      if (value === null || value === undefined) return "—";
+      if (typeof value === "boolean") return value ? "Oui" : "Non";
+      if (typeof value === "number") return value.toString();
+      if (typeof value === "string") return value;
+      if (Array.isArray(value)) return value.join(", ");
+      return JSON.stringify(value);
+    };
+
+    return (
+      <div className="max-h-72 overflow-auto rounded-xl border border-slate-200">
+        <table className="min-w-full text-left text-sm">
+          <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-600">
+            <tr>
+              <th className="px-3 py-2">Champ</th>
+              <th className="px-3 py-2">Avant</th>
+              <th className="px-3 py-2">Après</th>
+            </tr>
+          </thead>
+          <tbody>
+            {autofillPreview.diff.map((row, index) => (
+              <tr key={`${row.target}-${row.field}-${index}`} className="border-t border-slate-100">
+                <td className="px-3 py-2 text-xs font-semibold text-slate-800">
+                  <div className="flex flex-col">
+                    <span>{row.target}</span>
+                    <span className="text-[11px] text-slate-500">{row.field}</span>
+                  </div>
+                </td>
+                <td className="px-3 py-2 text-xs text-slate-700">{stringifyValue(row.before)}</td>
+                <td className="px-3 py-2 text-xs text-emerald-700">{stringifyValue(row.after)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     );
   };
 
@@ -1355,6 +1477,140 @@ const AdminSeoPage: React.FC = () => {
 
   return (
     <div className="space-y-4">
+      {autofillModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-5xl space-y-4 rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
+                  Assistant Auto-remplissage
+                </p>
+                <h2 className="text-xl font-semibold text-black">Auto-remplir (optimal)</h2>
+                <p className="text-xs text-slate-600">
+                  Prévisualisez les champs proposés avant d'appliquer. Aucun appel IA externe, uniquement vos données existantes.
+                </p>
+              </div>
+              <button
+                className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-black hover:text-black"
+                onClick={() => setAutofillModalOpen(false)}
+              >
+                Fermer
+              </button>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-3 rounded-xl border border-slate-200 p-4">
+                <p className="text-sm font-semibold text-slate-900">Portée de l'auto-remplissage</p>
+                <div className="space-y-2 text-sm text-slate-700">
+                  {["includeGlobalSeo", "includeGeoIdentity", "includeGeoFaq", "includeGeoAnswers", "includePageSeo", "includeProductSeo"]
+                    .map((fieldKey) => {
+                      const labelMap: Record<string, string> = {
+                        includeGlobalSeo: "SEO global (paramètres)",
+                        includeGeoIdentity: "Identité GEO",
+                        includeGeoFaq: "FAQ GEO",
+                        includeGeoAnswers: "Réponses IA",
+                        includePageSeo: "SEO par page (si actif)",
+                        includeProductSeo: "SEO par produit (si actif)",
+                      };
+                      const typedField = fieldKey as keyof typeof autofillOptions;
+                      return (
+                        <label key={fieldKey} className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(autofillOptions[typedField])}
+                            onChange={(e) =>
+                              handleAutofillOptionChange(
+                                typedField,
+                                e.target.checked as boolean
+                              )
+                            }
+                          />
+                          <span>{labelMap[fieldKey]}</span>
+                        </label>
+                      );
+                    })}
+                </div>
+
+                <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                  <p className="font-semibold">Mode d'application</p>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="autofill-mode"
+                      checked={autofillOptions.mode === "FILL_ONLY_MISSING"}
+                      onChange={() => handleAutofillOptionChange("mode", "FILL_ONLY_MISSING")}
+                    />
+                    <span>Remplir uniquement les champs vides</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="autofill-mode"
+                      checked={autofillOptions.mode === "OVERWRITE"}
+                      onChange={() => {
+                        handleAutofillOptionChange("mode", "OVERWRITE");
+                        setAutofillConfirmOverwrite(false);
+                      }}
+                    />
+                    <span>Écraser les valeurs existantes (confirmation requise)</span>
+                  </label>
+                  {autofillOptions.mode === "OVERWRITE" && (
+                    <label className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-2 text-red-700">
+                      <input
+                        type="checkbox"
+                        checked={autofillConfirmOverwrite}
+                        onChange={(e) => setAutofillConfirmOverwrite(e.target.checked)}
+                      />
+                      <span>Je confirme écraser les contenus existants.</span>
+                    </label>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-700">
+                  <button
+                    type="button"
+                    onClick={handlePreviewAutofill}
+                    disabled={autofillLoading}
+                    className="rounded-lg border border-slate-300 px-3 py-2 hover:border-black hover:text-black disabled:opacity-60"
+                  >
+                    {autofillLoading ? "Prévisualisation..." : "Générer la prévisualisation"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleApplyAutofill}
+                    disabled={autofillApplying || autofillLoading}
+                    className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-800 hover:border-emerald-500 hover:text-emerald-900 disabled:opacity-60"
+                  >
+                    {autofillApplying ? "Application..." : "Appliquer"}
+                  </button>
+                </div>
+                {autofillError && (
+                  <p className="text-[11px] font-semibold text-red-600">{autofillError}</p>
+                )}
+              </div>
+
+              <div className="space-y-3 rounded-xl border border-slate-200 p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-slate-900">Diff avant / après</p>
+                  {autofillPreview && (
+                    <span className="text-[11px] font-semibold text-emerald-700">
+                      {autofillPreview.diff.length} champ(s) proposés
+                    </span>
+                  )}
+                </div>
+                {autofillPreview ? (
+                  renderDiffRows()
+                ) : (
+                  <p className="text-sm text-slate-600">
+                    Lancez une prévisualisation pour voir les valeurs suggérées.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-3">
@@ -1374,6 +1630,18 @@ const AdminSeoPage: React.FC = () => {
             </span>
           )}
           <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-700">
+            <button
+              type="button"
+              onClick={() => {
+                setAutofillModalOpen(true);
+                setAutofillPreview(null);
+                setAutofillError(null);
+                setAutofillConfirmOverwrite(false);
+              }}
+              className="rounded-full border border-emerald-200 px-3 py-1 text-emerald-700 hover:border-emerald-500 hover:text-emerald-900"
+            >
+              Auto-remplir (optimal)
+            </button>
             <button
               type="button"
               onClick={handleOpenRobots}

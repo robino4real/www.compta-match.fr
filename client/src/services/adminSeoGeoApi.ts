@@ -112,6 +112,48 @@ export interface DiagnosticsResponse {
   checks: DiagnosticCheck[];
 }
 
+export type AutofillMode = "FILL_ONLY_MISSING" | "OVERWRITE";
+
+export type SeoGeoAutofillRequest = {
+  includeGlobalSeo: boolean;
+  includeGeoIdentity: boolean;
+  includeGeoFaq: boolean;
+  includeGeoAnswers: boolean;
+  includePageSeo?: boolean;
+  includeProductSeo?: boolean;
+  mode?: AutofillMode;
+  confirm?: boolean;
+};
+
+export type AutofillSnapshot = {
+  seoSettings?: SeoSettingsResponse | null;
+  geoIdentity?: GeoIdentityResponse | null;
+  faqItems?: GeoFaqItemResponse[];
+  answers?: GeoAnswerResponse[];
+  pageSeo?: PageSeoResponse[];
+  productSeo?: ProductSeoResponse[];
+};
+
+export type AutofillDiff = {
+  target: string;
+  field: string;
+  before: any;
+  after: any;
+};
+
+export type AutofillPreviewResponse = {
+  current: AutofillSnapshot;
+  proposed: AutofillSnapshot;
+  diff: AutofillDiff[];
+};
+
+export type AutofillApplyResponse = {
+  applied: AutofillSnapshot;
+  proposed: AutofillSnapshot;
+  current: AutofillSnapshot;
+  diff: AutofillDiff[];
+};
+
 export async function fetchSeoSettings() {
   return apiFetch<ApiResponse<SeoSettingsResponse>>(buildApiUrl("/admin/seo-settings"));
 }
@@ -223,4 +265,18 @@ export async function updateProductSeo(
 
 export async function runSeoGeoDiagnostics() {
   return apiFetch<ApiResponse<DiagnosticsResponse>>(buildApiUrl("/admin/seo-geo/diagnostics"));
+}
+
+export async function previewSeoGeoAutofill(payload: SeoGeoAutofillRequest) {
+  return apiFetch<ApiResponse<AutofillPreviewResponse>>(buildApiUrl("/admin/seo-geo/autofill/preview"), {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function applySeoGeoAutofill(payload: SeoGeoAutofillRequest) {
+  return apiFetch<ApiResponse<AutofillApplyResponse>>(buildApiUrl("/admin/seo-geo/autofill/apply"), {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }

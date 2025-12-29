@@ -21,6 +21,10 @@ import {
   updateGeoIdentitySingleton,
   updateSeoSettingsSingleton,
 } from "../services/seoGeoAdminService";
+import {
+  applySeoGeoAutofill,
+  previewSeoGeoAutofill,
+} from "../services/seoGeoAutofillService";
 import { HttpError } from "../utils/errors";
 
 function handleError(res: Response, error: unknown, fallbackMessage: string) {
@@ -220,5 +224,23 @@ export async function adminSaveProductSeo(req: Request, res: Response) {
     return res.json({ ok: true, data: seo, message: "SEO produit enregistré" });
   } catch (error) {
     return handleError(res, error, "Impossible d'enregistrer le SEO produit");
+  }
+}
+
+export async function adminPreviewSeoGeoAutofill(req: Request, res: Response) {
+  try {
+    const preview = await previewSeoGeoAutofill(req.body || {});
+    return res.json({ ok: true, data: preview });
+  } catch (error) {
+    return handleError(res, error, "Impossible de préparer l'auto-remplissage");
+  }
+}
+
+export async function adminApplySeoGeoAutofill(req: Request, res: Response) {
+  try {
+    const result = await applySeoGeoAutofill(req.body || {});
+    return res.json({ ok: true, data: result, message: "Auto-remplissage appliqué" });
+  } catch (error) {
+    return handleError(res, error, "Impossible d'appliquer l'auto-remplissage");
   }
 }
