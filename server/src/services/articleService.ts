@@ -1,4 +1,4 @@
-import { ArticleStatus, Prisma } from "@prisma/client";
+import { ArticleStatus, Prisma, ArticleCategory } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { normalizeUploadUrl } from "../utils/assetPaths";
 
@@ -43,7 +43,7 @@ function normalizeReadTime(value: unknown) {
 
 export interface ArticleFilters {
   status?: ArticleStatus;
-  category?: string;
+  category?: ArticleCategory;
   search?: string;
   publishedOnly?: boolean;
 }
@@ -107,7 +107,8 @@ export async function createArticle(data: Prisma.ArticleUncheckedCreateInput) {
     index: sanitizeBoolean((data as any).index, true),
     follow: sanitizeBoolean((data as any).follow, true),
     ogImageUrl: sanitizeUpload((data as any).ogImageUrl),
-    category: sanitizeString(data.category),
+    category: (data as any).category ?? ArticleCategory.ARTICLE,
+    youtubeUrl: sanitizeString((data as any).youtubeUrl),
     readTimeMinutes: normalizeReadTime(data.readTimeMinutes),
     publishedAt:
       data.status === ArticleStatus.PUBLISHED && !data.publishedAt
@@ -165,9 +166,13 @@ export async function updateArticle(
         ? existing.ogImageUrl
         : sanitizeUpload((data as any).ogImageUrl),
     category:
-      typeof data.category === "undefined"
+      typeof (data as any).category === "undefined"
         ? existing.category
-        : sanitizeString(String(data.category)),
+        : ((data as any).category as ArticleCategory),
+    youtubeUrl:
+      typeof (data as any).youtubeUrl === "undefined"
+        ? existing.youtubeUrl
+        : sanitizeString((data as any).youtubeUrl),
     readTimeMinutes:
       typeof data.readTimeMinutes === "undefined"
         ? existing.readTimeMinutes

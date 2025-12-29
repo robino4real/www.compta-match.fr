@@ -34,6 +34,7 @@ import { FicheRequest } from "./middleware/ficheAccessMiddleware";
 import { prisma } from "./config/prisma";
 import { AuthenticatedRequest } from "./middleware/authMiddleware";
 import { logCriticalSchemaStatus } from "./utils/dbReadiness";
+import { clientCreateQuestion } from "./controllers/clientQuestionController";
 
 const app = express();
 const apiRouter = Router();
@@ -119,6 +120,7 @@ apiRouter.use("/catalog", catalogRoutes);
 apiRouter.use("/cart", cartRoutes);
 apiRouter.use("/legal-pages", legalPageRoutes);
 apiRouter.use("/articles", articleRoutes);
+apiRouter.post("/client/questions", requireAuth, clientCreateQuestion);
 apiRouter.use("/downloads", downloadRoutes);
 apiRouter.use("/admin", requireAdmin, adminRoutes);
 apiRouter.use("/orders", requireAuth, orderRoutes);

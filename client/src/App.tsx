@@ -37,6 +37,7 @@ import ComptAssoLanding from "./pages/ComptAssoPlanDetailPage";
 import CompareOffersPage from "./pages/CompareOffersPage";
 import DiscoveryPage from "./pages/DiscoveryPage";
 import FaqPage from "./pages/FaqPage";
+import ArticleDetailPage from "./pages/ArticleDetailPage";
 import AdminPaidServicesPage from "./pages/admin/AdminPaidServicesPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { WebAppProvider, WebAppRouteType } from "./context/WebAppContext";
@@ -61,6 +62,8 @@ import WebAppSettingsPage from "./pages/app/WebAppSettingsPage";
 import WebAppHomePage from "./pages/app/WebAppHomePage";
 import WebAppAccountingPage from "./pages/app/WebAppAccountingPage";
 import WebAppDocumentsPage from "./pages/app/WebAppDocumentsPage";
+import AdminClientQuestionsPage from "./pages/admin/AdminClientQuestionsPage";
+import AdminClientQuestionDetailPage from "./pages/admin/AdminClientQuestionDetailPage";
 
 const RequireAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { admin, isLoading } = useAdminAuth();
@@ -137,7 +140,7 @@ const App: React.FC = () => {
             element={<PageBuilderPage route="/comptasso" fallback={<ComptAssoSubscriptionPage />} />}
           />
           <Route path="/comptasso/:planSlug" element={<ComptAssoLanding />} />
-          {["/faq", "/cgv", "/mentions-legales", "/confidentialite", "/cookies"].map((path) => (
+          {["/articles", "/faq", "/cgv", "/mentions-legales", "/confidentialite", "/cookies"].map((path) => (
             <Route
               key={path}
               path={path}
@@ -145,7 +148,7 @@ const App: React.FC = () => {
                 <PageBuilderPage
                   route={path}
                   fallback={
-                    path === "/faq" ? (
+                    path === "/faq" || path === "/articles" ? (
                       <FaqPage />
                     ) : (
                       <LegalPage slugOverride={path.replace("/", "")} />
@@ -155,6 +158,7 @@ const App: React.FC = () => {
               }
             />
           ))}
+          <Route path="/articles/:slug" element={<ArticleDetailPage />} />
           <Route path="/découverte" element={<DiscoveryPage />} />
           <Route path="/decouverte" element={<Navigate to="/découverte" replace />} />
           <Route path="/panier" element={<CartPage />} />
@@ -249,6 +253,8 @@ const App: React.FC = () => {
           <Route path="articles" element={<AdminArticlesPage />} />
           <Route path="articles/new" element={<AdminArticleEditPage />} />
           <Route path="articles/:id" element={<AdminArticleEditPage />} />
+          <Route path="client-questions" element={<AdminClientQuestionsPage />} />
+          <Route path="client-questions/:id" element={<AdminClientQuestionDetailPage />} />
           <Route path="pages" element={<AdminPagesPage />} />
           <Route path="pages/:id" element={<AdminPageDetailPage />} />
           <Route path="homepage" element={<AdminHomepagePage />} />

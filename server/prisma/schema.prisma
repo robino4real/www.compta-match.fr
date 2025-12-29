@@ -32,6 +32,7 @@ model User {
   appFiches           AppFiche[]
   accountingEntries   AccountingEntry[]
   accountingDocuments AccountingDocument[]
+  clientQuestions     ClientQuestion[]
 }
 
 enum OrderStatus {
@@ -151,6 +152,21 @@ model OrderItem {
   downloadLinks DownloadLink[]
 }
 
+model ClientQuestion {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject   String?
+  question  String
+  answer    String?
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([published, createdAt])
+}
+
 model DownloadableProduct {
   id               String                @id @default(cuid())
   slug             String                @unique
@@ -219,6 +235,11 @@ enum ArticleStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+enum ArticleCategory {
+  ARTICLE
+  TUTORIAL
 }
 
 model DownloadLink {
@@ -451,7 +472,8 @@ model Article {
   index           Boolean       @default(true)
   follow          Boolean       @default(true)
   ogImageUrl      String?
-  category        String?
+  category        ArticleCategory @default(ARTICLE)
+  youtubeUrl      String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 }

@@ -70,6 +70,13 @@ import {
   adminListArticles,
   adminUpdateArticle,
 } from "../controllers/articleController";
+import {
+  adminGetClientQuestion,
+  adminListClientQuestions,
+  adminPublishClientQuestion,
+  adminUnpublishClientQuestion,
+  adminUpdateClientQuestion,
+} from "../controllers/clientQuestionController";
 import { getDashboard } from "../controllers/dashboardController";
 import {
   adminGetHomepageSettings,
@@ -419,6 +426,41 @@ router.put(
   attachUserToRequest,
   requireAdmin,
   adminUpdateArticle
+);
+
+router.get(
+  "/client-questions",
+  attachUserToRequest,
+  requireAdmin,
+  adminListClientQuestions
+);
+
+router.get(
+  "/client-questions/:id",
+  attachUserToRequest,
+  requireAdmin,
+  adminGetClientQuestion
+);
+
+router.put(
+  "/client-questions/:id",
+  attachUserToRequest,
+  requireAdmin,
+  adminUpdateClientQuestion
+);
+
+router.post(
+  "/client-questions/:id/publish",
+  attachUserToRequest,
+  requireAdmin,
+  adminPublishClientQuestion
+);
+
+router.post(
+  "/client-questions/:id/unpublish",
+  attachUserToRequest,
+  requireAdmin,
+  adminUnpublishClientQuestion
 );
 
 router.post(

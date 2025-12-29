@@ -7,7 +7,7 @@ interface ArticleRow {
   title: string;
   slug: string;
   authorName?: string | null;
-  category?: string | null;
+  category?: "ARTICLE" | "TUTORIAL" | null;
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   publishedAt?: string | null;
   createdAt?: string | null;
@@ -38,6 +38,12 @@ const statusLabel = (status: ArticleRow["status"]) => {
   if (status === "PUBLISHED") return "Publié";
   if (status === "ARCHIVED") return "Archivé";
   return "Brouillon";
+};
+
+const categoryLabel = (category?: ArticleRow["category"]) => {
+  if (category === "TUTORIAL") return "Tutoriel";
+  if (category === "ARTICLE") return "Article";
+  return "—";
 };
 
 const AdminArticlesPage: React.FC = () => {
@@ -128,13 +134,15 @@ const AdminArticlesPage: React.FC = () => {
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-700">Catégorie</label>
-            <input
-              type="text"
+            <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              placeholder="Ex : Comptabilité"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
-            />
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
+            >
+              <option value="">Toutes</option>
+              <option value="ARTICLE">Articles</option>
+              <option value="TUTORIAL">Tutoriels</option>
+            </select>
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-700">Recherche</label>
@@ -209,7 +217,7 @@ const AdminArticlesPage: React.FC = () => {
                       {article.authorName || "—"}
                     </td>
                     <td className="px-3 py-2 text-xs text-slate-600">
-                      {article.category || "—"}
+                      {categoryLabel(article.category)}
                     </td>
                     <td className="px-3 py-2">
                       <span

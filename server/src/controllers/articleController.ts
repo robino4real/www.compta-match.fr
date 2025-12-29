@@ -1,4 +1,4 @@
-import { Prisma, ArticleStatus } from "@prisma/client";
+import { Prisma, ArticleStatus, ArticleCategory } from "@prisma/client";
 import { Request, Response } from "express";
 import {
   createArticle,
@@ -22,6 +22,37 @@ function parseStatus(value?: string | null) {
   return undefined;
 }
 
+function parseCategory(value?: string | null) {
+  if (!value) return undefined;
+  const upper = value.toUpperCase();
+  if (upper === "ARTICLE") return ArticleCategory.ARTICLE;
+  if (upper === "TUTORIAL") return ArticleCategory.TUTORIAL;
+  return undefined;
+}
+
+function normalizeYoutubeUrl(value?: string | null) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  try {
+    const url = new URL(trimmed);
+    const host = url.hostname.toLowerCase();
+    const isYouTubeHost =
+      host === "youtu.be" ||
+      host === "www.youtu.be" ||
+      host === "youtube.com" ||
+      host === "www.youtube.com" ||
+      host.endsWith(".youtube.com");
+
+    if (!isYouTubeHost) return null;
+
+    return url.toString();
+  } catch (error) {
+    return null;
+  }
+}
+
 export async function adminListArticles(req: Request, res: Response) {
   const { status, category, search } = req.query as {
     status?: string;
@@ -32,7 +63,7 @@ export async function adminListArticles(req: Request, res: Response) {
   try {
     const articles = await listArticles({
       status: parseStatus(status),
-      category: category?.trim() || undefined,
+      category: parseCategory(category),
       search: search?.trim() || undefined,
     });
 
@@ -72,12 +103,14 @@ function normalizeIncomingPayload(body: any) {
       : readTime
       ? Number(readTime)
       : null;
+  const category = parseCategory(body?.category) ?? ArticleCategory.ARTICLE;
+  const youtubeUrl = normalizeYoutubeUrl(body?.youtubeUrl);
 
   return {
     title: body?.title?.trim?.(),
     slug: body?.slug?.trim?.(),
     authorName: body?.authorName?.trim?.() || null,
-    category: body?.category?.trim?.() || null,
+    category,
     excerpt: body?.excerpt?.trim?.() || null,
     coverImageUrl: body?.coverImageUrl?.trim?.() || null,
     readTimeMinutes,
@@ -98,11 +131,17 @@ function normalizeIncomingPayload(body: any) {
         : true,
     ogImageUrl: body?.ogImageUrl?.trim?.() || null,
     status,
+    youtubeUrl,
   };
 }
 
 export async function adminCreateArticle(req: Request, res: Response) {
-  const payload = normalizeIncomingPayload(req.body);
+  const requestedCategory = parseCategory(req.body?.category);
+  if (req.body?.category && !requestedCategory) {
+    return res.status(400).json({ message: "Catégorie invalide." });
+  }
+
+  const payload = normalizeIncomingPayload({ ...req.body, category: requestedCategory });
 
   if (!payload.title) {
     return res.status(400).json({ message: "Le titre est requis." });
@@ -116,6 +155,18 @@ export async function adminCreateArticle(req: Request, res: Response) {
     return res
       .status(400)
       .json({ message: "Le contenu doit être renseigné pour publier." });
+  }
+
+  if (!payload.category) {
+    return res
+      .status(400)
+      .json({ message: "La catégorie doit être renseignée." });
+  }
+
+  if (payload.youtubeUrl === null && req.body?.youtubeUrl) {
+    return res
+      .status(400)
+      .json({ message: "Le lien YouTube doit provenir de youtube.com ou youtu.be." });
   }
 
   try {
@@ -141,7 +192,12 @@ export async function adminCreateArticle(req: Request, res: Response) {
 
 export async function adminUpdateArticle(req: Request, res: Response) {
   const { id } = req.params;
-  const payload = normalizeIncomingPayload(req.body);
+  const requestedCategory = parseCategory(req.body?.category);
+  if (req.body?.category && !requestedCategory) {
+    return res.status(400).json({ message: "Catégorie invalide." });
+  }
+
+  const payload = normalizeIncomingPayload({ ...req.body, category: requestedCategory });
 
   if (!payload.title) {
     return res.status(400).json({ message: "Le titre est requis." });
@@ -155,6 +211,18 @@ export async function adminUpdateArticle(req: Request, res: Response) {
     return res
       .status(400)
       .json({ message: "Le contenu doit être renseigné pour publier." });
+  }
+
+  if (!payload.category) {
+    return res
+      .status(400)
+      .json({ message: "La catégorie doit être renseignée." });
+  }
+
+  if (payload.youtubeUrl === null && req.body?.youtubeUrl) {
+    return res
+      .status(400)
+      .json({ message: "Le lien YouTube doit provenir de youtube.com ou youtu.be." });
   }
 
   try {
@@ -181,11 +249,12 @@ export async function adminUpdateArticle(req: Request, res: Response) {
 
 export async function publicListArticles(req: Request, res: Response) {
   const { category, search } = req.query as { category?: string; search?: string };
+  const parsedCategory = parseCategory(category);
 
   try {
     const articles = await listArticles({
       publishedOnly: true,
-      category: category?.trim() || undefined,
+      category: parsedCategory,
       search: search?.trim() || undefined,
     });
 
