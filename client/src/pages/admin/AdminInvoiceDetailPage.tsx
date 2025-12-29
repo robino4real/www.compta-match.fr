@@ -40,20 +40,21 @@ interface InvoiceDetail {
 }
 
 const AdminInvoiceDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id, orderId } = useParams<{ id?: string; orderId?: string }>();
   const [invoice, setInvoice] = React.useState<InvoiceDetail | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
 
   const loadInvoice = async () => {
-    if (!id) return;
+    if (!id && !orderId) return;
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch(`${API_BASE_URL}/admin/invoices/${id}`, {
-        credentials: "include",
-      });
+      const targetUrl = orderId
+        ? `${API_BASE_URL}/admin/orders/${orderId}/invoice`
+        : `${API_BASE_URL}/admin/invoices/${id}`;
+      const response = await fetch(targetUrl, { credentials: "include" });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(data.message || "Impossible de charger la facture.");
@@ -70,32 +71,36 @@ const AdminInvoiceDetailPage: React.FC = () => {
   React.useEffect(() => {
     loadInvoice();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, orderId]);
 
   const handleDownload = () => {
     if (!invoice) return;
-    const url = `${API_BASE_URL}/admin/invoices/${invoice.id}/download`;
+    const activeOrderId = orderId || invoice?.order?.id;
+    const url = activeOrderId
+      ? `${API_BASE_URL}/admin/orders/${activeOrderId}/invoice/pdf`
+      : `${API_BASE_URL}/admin/invoices/${invoice.id}/download`;
     window.open(url, "_blank");
   };
 
   const handleRegenerate = async () => {
-    if (!invoice) return;
+    const targetOrderId = orderId || invoice?.order?.id;
+    if (!targetOrderId && !invoice) return;
     try {
       setSuccess(null);
       setError(null);
-      const response = await fetch(
-        `${API_BASE_URL}/admin/invoices/${invoice.id}/regenerate`,
-        {
-          method: "POST",
-          credentials: "include",
-        }
-      );
+      const url = targetOrderId
+        ? `${API_BASE_URL}/admin/orders/${targetOrderId}/invoice`
+        : `${API_BASE_URL}/admin/invoices/${invoice?.id}/regenerate`;
+      const response = await fetch(url, {
+        method: "POST",
+        credentials: "include",
+      });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(data.message || "Impossible de régénérer la facture.");
       }
       setInvoice(data.invoice as InvoiceDetail);
-      setSuccess("Facture régénérée et PDF mis à jour.");
+      setSuccess(data.message || "Facture régénérée et PDF mis à jour.");
     } catch (err: any) {
       console.error("Erreur régénération facture", err);
       setError(err?.message || "Impossible de régénérer la facture.");
@@ -110,7 +115,20 @@ const AdminInvoiceDetailPage: React.FC = () => {
   }
 
   if (!invoice) {
-    return <p className="text-xs text-red-600">{error || "Facture introuvable."}</p>;
+    return (
+      <div className="space-y-2 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+        <p className="text-xs text-red-600">{error || "Aucune facture trouvée pour cette commande."}</p>
+        {orderId && (
+          <button
+            type="button"
+            onClick={handleRegenerate}
+            className="rounded-full bg-black text-white px-3 py-2 text-xs font-semibold hover:bg-slate-800"
+          >
+            Générer la facture
+          </button>
+        )}
+      </div>
+    );
   }
 
   return (

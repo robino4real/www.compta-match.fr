@@ -34,7 +34,15 @@ interface OrderDetailDto {
   discountAmount: number;
   currency: string;
   promoCode?: { code: string } | null;
-  invoice?: { id: string; invoiceNumber: string } | null;
+  invoice?: {
+    id: string;
+    invoiceNumber: string;
+    issueDate?: string | null;
+    billingName?: string;
+    billingEmail?: string;
+    totalTTC?: number;
+    pdfPath?: string | null;
+  } | null;
   user?: { email: string; firstName?: string | null; lastName?: string | null } | null;
   items: OrderItemDto[];
 }
@@ -116,6 +124,33 @@ const AdminOrderDetailPage: React.FC = () => {
       console.error("Erreur régénération lien", err);
       setError(err?.message || "Impossible de régénérer le lien.");
     }
+  };
+
+  const handleGenerateInvoice = async () => {
+    if (!order) return;
+    try {
+      setError(null);
+      setSuccess(null);
+      const response = await fetch(`${API_BASE_URL}/admin/orders/${order.id}/invoice`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.message || "Impossible de générer la facture.");
+      }
+      setOrder((prev) => (prev ? { ...prev, invoice: data.invoice as OrderDetailDto["invoice"] } : prev));
+      setSuccess(data.message || "Facture prête.");
+    } catch (err: any) {
+      console.error("Erreur génération facture", err);
+      setError(err?.message || "Impossible de générer la facture.");
+    }
+  };
+
+  const handleDownloadInvoice = () => {
+    if (!order?.invoice) return;
+    const url = `${API_BASE_URL}/admin/orders/${order.id}/invoice/pdf`;
+    window.open(url, "_blank");
   };
 
   const formatCurrency = (amount: number, currency: string) =>
@@ -256,34 +291,55 @@ const AdminOrderDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {order.invoice?.id && (
-        <div className="space-y-2">
-          <h2 className="text-sm font-semibold text-black">Facture</h2>
-          <p className="text-xs text-slate-700">
-            Numéro : {order.invoice.invoiceNumber || "—"}
-          </p>
-          <div className="space-x-2">
-            <Link
-              to={`/admin/invoices/${order.invoice.id}`}
-              className="rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-black hover:text-black"
-            >
-              Voir la facture
-            </Link>
+      <div className="space-y-2">
+        <h2 className="text-sm font-semibold text-black">Facture</h2>
+        {order.invoice ? (
+          <>
+            <p className="text-xs text-slate-700">Numéro : {order.invoice.invoiceNumber || "—"}</p>
+            <p className="text-xs text-slate-700">
+              Émise le {order.invoice.issueDate ? new Date(order.invoice.issueDate).toISOString().slice(0, 10) : "—"}
+            </p>
+            <p className="text-xs text-slate-700">
+              Destinataire : {order.invoice.billingName || buyerName || "—"} ({
+                order.invoice.billingEmail || order.user?.email || "—"
+              })
+            </p>
+            <div className="space-x-2">
+              <Link
+                to={`/admin/orders/${order.id}/invoice`}
+                className="rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-black hover:text-black"
+              >
+                Voir le détail facture
+              </Link>
+              <button
+                type="button"
+                onClick={handleDownloadInvoice}
+                className="rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-black hover:text-black"
+              >
+                Télécharger le PDF
+              </button>
+              <button
+                type="button"
+                onClick={handleGenerateInvoice}
+                className="rounded-full bg-black text-white px-3 py-2 text-xs font-semibold hover:bg-slate-800"
+              >
+                Régénérer la facture
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="space-y-2 text-xs text-slate-700">
+            <p>Aucune facture générée pour cette commande.</p>
             <button
               type="button"
-              onClick={() =>
-                window.open(
-                  `${API_BASE_URL}/admin/invoices/${order.invoice?.id}/download`,
-                  "_blank"
-                )
-              }
-              className="rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-black hover:text-black"
+              onClick={handleGenerateInvoice}
+              className="rounded-full bg-black text-white px-3 py-2 text-xs font-semibold hover:bg-slate-800"
             >
-              Télécharger le PDF
+              Générer la facture
             </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
