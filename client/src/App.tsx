@@ -29,6 +29,7 @@ import AdminHomepagePage from "./pages/admin/AdminHomepagePage";
 import AdminSeoPage from "./pages/admin/AdminSeoPage";
 import AdminPagesPage from "./pages/admin/AdminPagesPage";
 import AdminPageDetailPage from "./pages/admin/AdminPageDetailPage";
+import AdminNewsletterPage from "./pages/admin/AdminNewsletterPage";
 import AnalyticsTracker from "./components/AnalyticsTracker";
 import DownloadableProductsPage from "./pages/DownloadableProductsPage";
 import ComptaProSubscriptionPage from "./pages/ComptaProSubscriptionPage";
@@ -257,6 +258,7 @@ const App: React.FC = () => {
           <Route path="articles" element={<AdminArticlesPage />} />
           <Route path="articles/new" element={<AdminArticleEditPage />} />
           <Route path="articles/:id" element={<AdminArticleEditPage />} />
+          <Route path="newsletter" element={<AdminNewsletterPage />} />
           <Route path="client-questions" element={<AdminClientQuestionsPage />} />
           <Route path="client-questions/:id" element={<AdminClientQuestionDetailPage />} />
           <Route path="pages" element={<AdminPagesPage />} />

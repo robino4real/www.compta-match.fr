@@ -143,6 +143,62 @@ import {
   adminUpdateGeoIdentity,
   adminUpdateSeoSettingsV2,
 } from "../controllers/seoGeoAdminController";
+import {
+  createSubscriber,
+  exportSubscribers,
+  getNewsletterKpis,
+  importSubscribers,
+  listSubscribers,
+  resubscribeSubscriber,
+  exportSubscriberData,
+  anonymizeSubscriberData,
+  unsubscribeSubscriber,
+  updateSubscriber,
+} from "../controllers/newsletterAdminController";
+import {
+  cancelCampaign,
+  createCampaign,
+  createTemplate,
+  deleteTemplate,
+  duplicateTemplate,
+  getCampaign,
+  getCampaignStats,
+  getNewsletterSettings,
+  getTemplate,
+  listCampaigns,
+  listTemplates,
+  previewRecipients,
+  scheduleCampaign,
+  sendCampaignNowHandler,
+  updateCampaign,
+  updateNewsletterSettings,
+  updateTemplate,
+} from "../controllers/newsletterCampaignController";
+import {
+  activateAutomation,
+  analyticsCampaigns,
+  analyticsCohorts,
+  analyticsOverview,
+  analyticsSegments,
+  createAutomation,
+  createSegment,
+  deleteSegment,
+  forceAutomationTick,
+  getAutomation,
+  getSegment,
+  listAutomationRuns,
+  listAutomations,
+  listSegments,
+  pauseAutomation,
+  previewSegmentCount,
+  updateAutomation,
+  updateSegment,
+} from "../controllers/newsletterSegmentController";
+import {
+  getDeliverabilityStatus,
+  listAlerts,
+  updateDeliverabilityStatus,
+} from "../controllers/newsletterDeliverabilityController";
 
 const router = Router();
 
@@ -177,6 +233,151 @@ router.put("/clients/:clientId", attachUserToRequest, requireAdmin, adminUpdateC
 router.get("/customers", attachUserToRequest, requireAdmin, adminListClients);
 router.get("/customers/:clientId", attachUserToRequest, requireAdmin, adminGetClientDetail);
 router.put("/customers/:clientId", attachUserToRequest, requireAdmin, adminUpdateCustomer);
+
+router.get(
+  "/newsletter/subscribers",
+  attachUserToRequest,
+  requireAdmin,
+  listSubscribers
+);
+router.post(
+  "/newsletter/subscribers",
+  attachUserToRequest,
+  requireAdmin,
+  createSubscriber
+);
+router.patch(
+  "/newsletter/subscribers/:id",
+  attachUserToRequest,
+  requireAdmin,
+  updateSubscriber
+);
+router.post(
+  "/newsletter/subscribers/:id/unsubscribe",
+  attachUserToRequest,
+  requireAdmin,
+  unsubscribeSubscriber
+);
+router.post(
+  "/newsletter/subscribers/:id/resubscribe",
+  attachUserToRequest,
+  requireAdmin,
+  resubscribeSubscriber
+);
+router.post(
+  "/newsletter/subscribers/:id/export",
+  attachUserToRequest,
+  requireAdmin,
+  exportSubscriberData
+);
+router.post(
+  "/newsletter/subscribers/:id/anonymize",
+  attachUserToRequest,
+  requireAdmin,
+  anonymizeSubscriberData
+);
+router.post(
+  "/newsletter/subscribers/import",
+  attachUserToRequest,
+  requireAdmin,
+  upload.single("file"),
+  importSubscribers
+);
+router.get(
+  "/newsletter/subscribers/export",
+  attachUserToRequest,
+  requireAdmin,
+  exportSubscribers
+);
+router.get(
+  "/newsletter/kpis",
+  attachUserToRequest,
+  requireAdmin,
+  getNewsletterKpis
+);
+router.get("/newsletter/templates", attachUserToRequest, requireAdmin, listTemplates);
+router.post("/newsletter/templates", attachUserToRequest, requireAdmin, createTemplate);
+router.get("/newsletter/templates/:id", attachUserToRequest, requireAdmin, getTemplate);
+router.patch("/newsletter/templates/:id", attachUserToRequest, requireAdmin, updateTemplate);
+router.post(
+  "/newsletter/templates/:id/duplicate",
+  attachUserToRequest,
+  requireAdmin,
+  duplicateTemplate
+);
+router.delete(
+  "/newsletter/templates/:id",
+  attachUserToRequest,
+  requireAdmin,
+  deleteTemplate
+);
+router.get("/newsletter/campaigns", attachUserToRequest, requireAdmin, listCampaigns);
+router.post("/newsletter/campaigns", attachUserToRequest, requireAdmin, createCampaign);
+router.get("/newsletter/campaigns/:id", attachUserToRequest, requireAdmin, getCampaign);
+router.patch("/newsletter/campaigns/:id", attachUserToRequest, requireAdmin, updateCampaign);
+router.post(
+  "/newsletter/campaigns/:id/schedule",
+  attachUserToRequest,
+  requireAdmin,
+  scheduleCampaign
+);
+router.post(
+  "/newsletter/campaigns/:id/send-now",
+  attachUserToRequest,
+  requireAdmin,
+  sendCampaignNowHandler
+);
+router.post(
+  "/newsletter/campaigns/:id/cancel",
+  attachUserToRequest,
+  requireAdmin,
+  cancelCampaign
+);
+router.get(
+  "/newsletter/campaigns/:id/stats",
+  attachUserToRequest,
+  requireAdmin,
+  getCampaignStats
+);
+router.get(
+  "/newsletter/campaigns/:id/recipients/preview",
+  attachUserToRequest,
+  requireAdmin,
+  previewRecipients
+);
+router.get(
+  "/newsletter/settings",
+  attachUserToRequest,
+  requireAdmin,
+  getNewsletterSettings
+);
+router.patch(
+  "/newsletter/settings",
+  attachUserToRequest,
+  requireAdmin,
+  updateNewsletterSettings
+);
+router.get("/newsletter/segments", attachUserToRequest, requireAdmin, listSegments);
+router.post("/newsletter/segments", attachUserToRequest, requireAdmin, createSegment);
+router.get("/newsletter/segments/:id", attachUserToRequest, requireAdmin, getSegment);
+router.patch("/newsletter/segments/:id", attachUserToRequest, requireAdmin, updateSegment);
+router.delete("/newsletter/segments/:id", attachUserToRequest, requireAdmin, deleteSegment);
+router.post("/newsletter/segments/:id/preview", attachUserToRequest, requireAdmin, previewSegmentCount);
+router.get("/newsletter/automations", attachUserToRequest, requireAdmin, listAutomations);
+router.post("/newsletter/automations", attachUserToRequest, requireAdmin, createAutomation);
+router.get("/newsletter/automations/:id", attachUserToRequest, requireAdmin, getAutomation);
+router.patch("/newsletter/automations/:id", attachUserToRequest, requireAdmin, updateAutomation);
+router.post("/newsletter/automations/:id/activate", attachUserToRequest, requireAdmin, activateAutomation);
+router.post("/newsletter/automations/:id/pause", attachUserToRequest, requireAdmin, pauseAutomation);
+router.get("/newsletter/automations/:id/runs", attachUserToRequest, requireAdmin, listAutomationRuns);
+router.post("/newsletter/automations/tick", attachUserToRequest, requireAdmin, forceAutomationTick);
+router.get("/newsletter/analytics/overview", attachUserToRequest, requireAdmin, analyticsOverview);
+router.get("/newsletter/analytics/campaigns", attachUserToRequest, requireAdmin, analyticsCampaigns);
+router.get("/newsletter/analytics/segments", attachUserToRequest, requireAdmin, analyticsSegments);
+router.get("/newsletter/analytics/cohorts", attachUserToRequest, requireAdmin, analyticsCohorts);
+router.get("/newsletter/deliverability", attachUserToRequest, requireAdmin, getDeliverabilityStatus);
+router.patch("/newsletter/deliverability", attachUserToRequest, requireAdmin, updateDeliverabilityStatus);
+router.get("/newsletter/alerts", attachUserToRequest, requireAdmin, listAlerts);
 
 router.post(
   "/downloads",
