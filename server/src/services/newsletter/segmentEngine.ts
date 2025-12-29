@@ -75,9 +75,16 @@ function evaluateCondition(condition: { field: string; op: string; value?: any }
     const end = typeof value[1] === "number" ? value[1] : coerceDate(value[1]);
     if (fieldValue instanceof Date || start instanceof Date || end instanceof Date) {
       const fv = coerceDate(fieldValue);
-      if (!fv || !(start instanceof Date) || !(end instanceof Date)) return false;
+      if (!fv) return false;
+      if (start == null && end == null) return true;
+      if (start == null) return fv <= (end as Date);
+      if (end == null) return fv >= (start as Date);
+      if (!(start instanceof Date) || !(end instanceof Date)) return false;
       return fv >= start && fv <= end;
     }
+    if (start == null && end == null) return true;
+    if (start == null) return fieldValue <= end!;
+    if (end == null) return fieldValue >= start!;
     return fieldValue >= start && fieldValue <= end;
   }
 

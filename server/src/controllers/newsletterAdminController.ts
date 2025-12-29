@@ -309,7 +309,7 @@ export async function anonymizeSubscriberData(req: Request, res: Response) {
         lastName: null,
         status: NewsletterSubscriberStatus.ANONYMIZED,
         tags: [],
-        preferencesJson: null,
+        preferencesJson: Prisma.DbNull,
         unsubscribedAt: new Date(),
       },
     });

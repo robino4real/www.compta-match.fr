@@ -10,6 +10,7 @@ import {
   unsubscribe,
 } from "../services/newsletterCampaignService";
 import { redactEmailSettings, upsertEmailSettings } from "../services/emailSettingsService";
+import { toInputJson } from "../services/newsletter/json";
 
 startNewsletterWorker();
 
@@ -52,7 +53,7 @@ export async function duplicateTemplate(req: Request, res: Response) {
       subjectDefault: template.subjectDefault,
       previewTextDefault: template.previewTextDefault,
       html: template.html,
-      designJson: template.designJson,
+      designJson: toInputJson(template.designJson),
     },
   });
   res.status(201).json(clone);
@@ -156,8 +157,8 @@ export async function previewRecipients(req: Request, res: Response) {
   const campaign = await prisma.newsletterCampaign.findUnique({ where: { id } });
   if (!campaign) return res.status(404).json({ error: "Campagne introuvable" });
   const audience = (campaign.audienceJson as any) || {};
-  const subscribers = await resolveAudience(audience);
-  res.json({ total: subscribers.length });
+  const resolved = await resolveAudience(audience);
+  res.json({ total: resolved.subscribers.length + resolved.manualEmails.length });
 }
 
 export async function getNewsletterSettings(req: Request, res: Response) {

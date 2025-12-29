@@ -40,7 +40,7 @@ export async function generateInvoicePdf(invoiceId: string) {
   const absolutePath = path.join(__dirname, "../../", pdfPath);
   fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
 
-  const doc = new PDFDocument({ size: "A4", margin: pageMargin });
+  const doc: PDFDocument = new PDFDocument({ size: "A4", margin: pageMargin });
   const writeStream = fs.createWriteStream(absolutePath);
   doc.pipe(writeStream);
 

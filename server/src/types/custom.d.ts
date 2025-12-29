@@ -56,6 +56,7 @@ declare namespace Express {
 
 declare module "pdfkit" {
   class PDFDocument {
+    [key: string]: any;
     constructor(options?: any);
     pipe(destination: NodeJS.WritableStream): NodeJS.WritableStream;
     fontSize(size: number): this;

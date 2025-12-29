@@ -1,7 +1,8 @@
 import crypto from "crypto";
-import { NewsletterPreferenceSource, NewsletterSubscriberStatus } from "@prisma/client";
+import { NewsletterPreferenceSource, NewsletterSubscriberStatus, Prisma } from "@prisma/client";
 import { prisma } from "../../config/prisma";
 import { hashEmail } from "./scoringEngine";
+import { toInputJson } from "./json";
 
 const PREFERENCE_SECRET = process.env.NEWSLETTER_SIGNING_SECRET || process.env.JWT_SECRET || "newsletter-secret";
 const TOKEN_VALIDITY_DAYS = 30;
@@ -43,8 +44,8 @@ export async function updatePreferences(
 ) {
   const subscriber = await prisma.newsletterSubscriber.findUnique({ where: { id: subscriberId } });
   if (!subscriber) return null;
-  const previous = subscriber.preferencesJson || {};
-  const data: any = { preferencesJson: newPrefs, updatedAt: new Date() };
+  const previous = toInputJson(subscriber.preferencesJson);
+  const data: any = { preferencesJson: toInputJson(newPrefs), updatedAt: new Date() };
   if (unsubscribe) {
     data.status = NewsletterSubscriberStatus.UNSUBSCRIBED;
     data.unsubscribedAt = new Date();
@@ -56,8 +57,8 @@ export async function updatePreferences(
   await prisma.newsletterPreferenceLog.create({
     data: {
       subscriberId,
-      previousPreferences: previous as any,
-      newPreferences: newPrefs,
+      previousPreferences: previous,
+      newPreferences: toInputJson(newPrefs),
       source,
     },
   });
@@ -72,8 +73,8 @@ export async function hardUnsubscribe(subscriberId: string, source: NewsletterPr
   await prisma.newsletterPreferenceLog.create({
     data: {
       subscriberId,
-      previousPreferences: subscriber.preferencesJson,
-      newPreferences: subscriber.preferencesJson,
+      previousPreferences: toInputJson(subscriber.preferencesJson),
+      newPreferences: toInputJson(subscriber.preferencesJson),
       source,
     },
   });
@@ -91,7 +92,7 @@ export async function anonymizeSubscriber(subscriberId: string) {
       firstName: null,
       lastName: null,
       status: NewsletterSubscriberStatus.ANONYMIZED,
-      preferencesJson: null,
+      preferencesJson: Prisma.DbNull,
       tags: [],
       unsubscribedAt: new Date(),
     },
