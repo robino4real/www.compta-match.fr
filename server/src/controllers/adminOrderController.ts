@@ -1,4 +1,6 @@
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, Prisma } from "@prisma/client";
+import fs from "fs";
+import path from "path";
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
 import { stripe } from "../config/stripeClient";
@@ -9,6 +11,8 @@ import {
   sendRefundConfirmationEmail,
 } from "../services/transactionalEmailService";
 import { AuthenticatedRequest } from "../middleware/authMiddleware";
+import { createInvoiceForOrder } from "../services/invoiceService";
+import { generateInvoicePdf } from "../services/pdfService";
 
 function resolveOrderId(req: Request): string | undefined {
   const params = req.params as { id?: string; orderId?: string };
@@ -23,13 +27,238 @@ function resolveOrderId(req: Request): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
+const SORT_WHITELIST: Record<string, Prisma.OrderOrderByWithRelationInput> = {
+  createdAt_desc: { createdAt: "desc" },
+  createdAt_asc: { createdAt: "asc" },
+  amount_desc: { totalPaid: "desc" },
+  amount_asc: { totalPaid: "asc" },
+};
+
+const DEFAULT_SORT = "createdAt_desc";
+const MAX_PAGE_SIZE = 100;
+
+function parseDateParam(dateString?: string): string | null {
+  if (!dateString) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    return null;
+  }
+  return dateString;
+}
+
+function getParisDate(dateString: string, endOfDay = false): Date {
+  const [year, month, day] = dateString.split("-").map(Number);
+  const baseDate = new Date(
+    Date.UTC(
+      year,
+      month - 1,
+      day,
+      endOfDay ? 23 : 0,
+      endOfDay ? 59 : 0,
+      endOfDay ? 59 : 0,
+      endOfDay ? 999 : 0
+    )
+  );
+
+  const parisDate = new Date(
+    baseDate.toLocaleString("en-US", { timeZone: "Europe/Paris" })
+  );
+  const offsetMinutes = (parisDate.getTime() - baseDate.getTime()) / 60000;
+
+  return new Date(baseDate.getTime() - offsetMinutes * 60000);
+}
+
+function getDefaultDateRange(): { from: string; to: string } {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Paris",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  const today = formatter.format(new Date());
+  const [year, month, day] = today.split("-").map(Number);
+  const start = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+  start.setUTCDate(start.getUTCDate() - 29);
+
+  return {
+    from: start.toISOString().slice(0, 10),
+    to: today,
+  };
+}
+
+export async function adminGetOrderInvoice(req: Request, res: Response) {
+  const { orderId } = req.params as { orderId: string };
+
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        invoice: {
+          include: {
+            order: {
+              include: { items: true, promoCode: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: "Commande introuvable." });
+    }
+
+    if (!order.invoice) {
+      return res.json({ invoice: null });
+    }
+
+    return res.json({ invoice: order.invoice });
+  } catch (error) {
+    console.error("Erreur récupération facture de commande", error);
+    return res
+      .status(500)
+      .json({ message: "Impossible de récupérer la facture associée." });
+  }
+}
+
+export async function adminCreateOrRegenerateInvoice(
+  req: Request,
+  res: Response
+) {
+  const { orderId } = req.params as { orderId: string };
+
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { invoice: true, user: true },
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: "Commande introuvable." });
+    }
+
+    if (order.status !== OrderStatus.PAID) {
+      return res
+        .status(400)
+        .json({ message: "La facture ne peut être générée que pour une commande payée." });
+    }
+
+    if (!order.user) {
+      return res
+        .status(400)
+        .json({ message: "Impossible de générer la facture sans client associé." });
+    }
+
+    let invoice = order.invoice;
+
+    if (!invoice) {
+      invoice = await createInvoiceForOrder({ order, user: order.user });
+    } else {
+      const regenerated = await generateInvoicePdf(invoice.id);
+      invoice = regenerated;
+    }
+
+    const enrichedInvoice = await prisma.invoice.findUnique({
+      where: { id: invoice.id },
+      include: { order: { include: { items: true, promoCode: true } } },
+    });
+
+    return res.json({ invoice: enrichedInvoice, message: "Facture prête." });
+  } catch (error) {
+    console.error("Erreur génération facture commande", error);
+    return res
+      .status(500)
+      .json({ message: "Impossible de générer ou régénérer la facture." });
+  }
+}
+
+export async function adminDownloadOrderInvoice(req: Request, res: Response) {
+  const { orderId } = req.params as { orderId: string };
+
+  try {
+    const invoice = await prisma.invoice.findUnique({
+      where: { orderId },
+      include: { order: true },
+    });
+
+    if (!invoice) {
+      return res.status(404).json({ message: "Facture introuvable" });
+    }
+
+    let pdfPath = invoice.pdfPath;
+    const absolutePath = pdfPath
+      ? path.join(__dirname, "../../", pdfPath)
+      : undefined;
+
+    if (!pdfPath || !absolutePath || !fs.existsSync(absolutePath)) {
+      const regenerated = await generateInvoicePdf(invoice.id);
+      pdfPath = regenerated.pdfPath;
+    }
+
+    const finalAbsolute = path.join(__dirname, "../../", pdfPath!);
+    return res.sendFile(finalAbsolute);
+  } catch (error) {
+    console.error("Erreur téléchargement facture commande", error);
+    return res
+      .status(500)
+      .json({ message: "Impossible de télécharger la facture associée." });
+  }
+}
+
 export async function adminListOrders(req: Request, res: Response) {
-  const { email, status, promoCode } = req.query as Record<string, string>;
+  const {
+    email,
+    status,
+    promoCode,
+    from: fromParam,
+    to: toParam,
+    sort: sortParam,
+    query,
+    page: pageParam,
+    pageSize: pageSizeParam,
+  } = req.query as Record<string, string>;
 
-  const where: any = {};
+  const { from: defaultFrom, to: defaultTo } = getDefaultDateRange();
 
-  if (status) {
-    where.status = status.toUpperCase();
+  const parsedFrom = parseDateParam(fromParam) ?? (fromParam ? null : defaultFrom);
+  const parsedTo = parseDateParam(toParam) ?? (toParam ? null : defaultTo);
+
+  if (!parsedFrom || !parsedTo) {
+    return res.status(400).json({ message: "Paramètres de date invalides." });
+  }
+
+  const fromDate = getParisDate(parsedFrom, false);
+  const toDate = getParisDate(parsedTo, true);
+
+  if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime())) {
+    return res.status(400).json({ message: "Paramètres de date invalides." });
+  }
+
+  if (fromDate > toDate) {
+    return res.status(400).json({ message: "La date de début doit précéder la date de fin." });
+  }
+
+  const normalizedStatus = status?.toUpperCase();
+  if (normalizedStatus && !Object.values(OrderStatus).includes(normalizedStatus as OrderStatus)) {
+    return res.status(400).json({ message: "Statut de commande invalide." });
+  }
+
+  const page = Math.max(parseInt(pageParam || "1", 10) || 1, 1);
+  const requestedPageSize = parseInt(pageSizeParam || "20", 10) || 20;
+  const pageSize = Math.min(Math.max(requestedPageSize, 1), MAX_PAGE_SIZE);
+  const skip = (page - 1) * pageSize;
+
+  const sortKey = sortParam && SORT_WHITELIST[sortParam] ? sortParam : DEFAULT_SORT;
+  const orderBy = SORT_WHITELIST[sortKey];
+
+  const where: Prisma.OrderWhereInput = {
+    createdAt: {
+      gte: fromDate,
+      lte: toDate,
+    },
+  };
+
+  if (normalizedStatus) {
+    where.status = normalizedStatus as OrderStatus;
   }
 
   if (promoCode) {
@@ -42,18 +271,37 @@ export async function adminListOrders(req: Request, res: Response) {
     };
   }
 
-  try {
-    const orders = await prisma.order.findMany({
-      where,
-      include: {
-        user: true,
-        promoCode: true,
-        invoice: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
+  if (query) {
+    where.OR = [
+      { id: query },
+      { orderNumber: { contains: query, mode: "insensitive" } },
+      { user: { email: { contains: query, mode: "insensitive" } } },
+      { invoice: { invoiceNumber: { contains: query, mode: "insensitive" } } },
+    ];
+  }
 
-    return res.json({ orders });
+  try {
+    const [items, total] = await prisma.$transaction([
+      prisma.order.findMany({
+        where,
+        include: {
+          user: true,
+          promoCode: true,
+          invoice: true,
+        },
+        orderBy,
+        skip,
+        take: pageSize,
+      }),
+      prisma.order.count({ where }),
+    ]);
+
+    return res.json({
+      items,
+      total,
+      page,
+      pageSize,
+    });
   } catch (error) {
     console.error("Erreur liste commandes admin", error);
     return res

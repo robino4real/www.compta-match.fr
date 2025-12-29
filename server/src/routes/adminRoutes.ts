@@ -34,6 +34,9 @@ import {
 } from "../controllers/invoiceController";
 import {
   adminGetOrder,
+  adminGetOrderInvoice,
+  adminCreateOrRegenerateInvoice,
+  adminDownloadOrderInvoice,
   adminListOrders,
   adminListRecentOrders,
   adminRegenerateDownloadLink,
@@ -84,9 +87,12 @@ import {
 } from "../controllers/homepageSettingsController";
 import { getAdminDbStatus } from "../controllers/adminDbStatusController";
 import {
-  adminGetCustomerDetail,
-  adminListCustomers,
+  adminGetClientDetail,
+  adminListClients,
   adminUpdateCustomer,
+  adminGetClientOrders,
+  adminGetClientInvoices,
+  adminGetClientDownloads,
 } from "../controllers/adminCustomerController";
 import {
   adminGetSeoSettings,
@@ -160,26 +166,17 @@ router.get("/users", attachUserToRequest, requireAdmin, listUsers);
 
 router.get("/db-status", attachUserToRequest, requireAdmin, getAdminDbStatus);
 
-router.get(
-  "/customers",
-  attachUserToRequest,
-  requireAdmin,
-  adminListCustomers
-);
+router.get("/clients", attachUserToRequest, requireAdmin, adminListClients);
+router.get("/clients/:clientId", attachUserToRequest, requireAdmin, adminGetClientDetail);
+router.get("/clients/:clientId/orders", attachUserToRequest, requireAdmin, adminGetClientOrders);
+router.get("/clients/:clientId/invoices", attachUserToRequest, requireAdmin, adminGetClientInvoices);
+router.get("/clients/:clientId/downloads", attachUserToRequest, requireAdmin, adminGetClientDownloads);
+router.put("/clients/:clientId", attachUserToRequest, requireAdmin, adminUpdateCustomer);
 
-router.get(
-  "/customers/:customerId",
-  attachUserToRequest,
-  requireAdmin,
-  adminGetCustomerDetail
-);
-
-router.put(
-  "/customers/:customerId",
-  attachUserToRequest,
-  requireAdmin,
-  adminUpdateCustomer
-);
+// Legacy aliases
+router.get("/customers", attachUserToRequest, requireAdmin, adminListClients);
+router.get("/customers/:clientId", attachUserToRequest, requireAdmin, adminGetClientDetail);
+router.put("/customers/:clientId", attachUserToRequest, requireAdmin, adminUpdateCustomer);
 
 router.post(
   "/downloads",
@@ -732,6 +729,24 @@ router.get(
   attachUserToRequest,
   requireAdmin,
   adminGetOrder
+);
+router.get(
+  "/orders/:orderId/invoice",
+  attachUserToRequest,
+  requireAdmin,
+  adminGetOrderInvoice
+);
+router.post(
+  "/orders/:orderId/invoice",
+  attachUserToRequest,
+  requireAdmin,
+  adminCreateOrRegenerateInvoice
+);
+router.get(
+  "/orders/:orderId/invoice/pdf",
+  attachUserToRequest,
+  requireAdmin,
+  adminDownloadOrderInvoice
 );
 router.post(
   "/orders/:id/refund",

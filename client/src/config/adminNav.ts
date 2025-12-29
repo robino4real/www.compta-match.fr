@@ -19,7 +19,6 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
       { label: "Produits téléchargeables", href: "/admin/telechargements" },
       { label: "Codes promo", href: "/admin/promo-codes" },
       { label: "Commandes", href: "/admin/orders" },
-      { label: "Factures", href: "/admin/invoices" },
       { label: "Services payants", href: "/admin/paid-services" },
       { label: "Services ComptAsso", href: "/admin/paid-services-comptasso" },
     ],
@@ -27,8 +26,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
   {
     title: "Clients",
     items: [
-      { label: "Portefeuille client", href: "/admin/customers" },
-      { label: "Base client", href: "/admin/clients" },
+      { label: "Clients", href: "/admin/clients" },
       { label: "Questions client", href: "/admin/client-questions" },
     ],
   },
