@@ -8,6 +8,8 @@ import {
 } from "../services/adminTwoFactorService";
 import { sendAdminLoginOtpEmail } from "../services/transactionalEmailService";
 import { ADMIN_BACKOFFICE_EMAIL } from "../services/adminAccountService";
+import { CustomerActivityEventType } from "@prisma/client";
+import { trackCustomerEvent } from "../services/customerActivityService";
 import { hashPassword, verifyPassword } from "../utils/password";
 import { signJwt } from "../utils/jwt";
 
@@ -188,6 +190,12 @@ export async function register(req: Request, res: Response) {
       include: { profile: true },
     });
 
+    await trackCustomerEvent(CustomerActivityEventType.USER_REGISTERED, {
+      userId: user.id,
+      email: user.email,
+      meta: { accountType: normalizedAccountType },
+    });
+
     const token = buildJwtForUser(user.id);
     setAuthCookie(res, token);
 
@@ -263,6 +271,11 @@ export async function login(req: Request, res: Response) {
 
     const jwt = buildJwtForUser(user.id);
     setAuthCookie(res, jwt);
+
+    await trackCustomerEvent(CustomerActivityEventType.USER_LOGIN, {
+      userId: user.id,
+      email: user.email,
+    });
 
     return res.json({ user: sanitizeUser(user), token: jwt });
   } catch (error) {

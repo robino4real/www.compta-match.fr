@@ -7,6 +7,7 @@ import {
   Prisma,
   PromoCode,
   WebhookEventStatus,
+  CustomerActivityEventType,
 } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { stripe } from "../config/stripeClient";
@@ -20,6 +21,8 @@ import {
   sendOrderConfirmationEmail,
 } from "../services/transactionalEmailService";
 import { env } from "../config/env";
+import { trackCustomerEvent } from "../services/customerActivityService";
+import { attributeRevenue } from "../services/newsletter/revenueService";
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -331,6 +334,20 @@ export async function createDownloadCheckoutSession(
         billingAddress,
       });
 
+      await trackCustomerEvent(CustomerActivityEventType.ORDER_CREATED, {
+        userId,
+        email: billingInfo.email,
+        meta: { amount: 0, currency },
+      });
+
+      await trackCustomerEvent(CustomerActivityEventType.ORDER_PAID, {
+        userId,
+        email: billingInfo.email,
+        meta: { amount: 0, currency, orderId: order.id },
+      });
+
+      await attributeRevenue(order.id, billingInfo.email, order.totalPaid);
+
       if (appliedPromo && promoDiscountCents > 0) {
         await prisma.promoCode.update({
           where: { id: appliedPromo.id },
@@ -374,6 +391,12 @@ export async function createDownloadCheckoutSession(
         items: { create: buildOrderItemsPayload(normalizedItems, productMap) },
       },
       include: { items: true },
+    });
+
+    await trackCustomerEvent(CustomerActivityEventType.ORDER_CREATED, {
+      userId,
+      email: billingInfo.email,
+      meta: { amount: payableCents, currency: currency.toUpperCase(), orderId: order.id },
     });
 
     const metadata: Stripe.MetadataParam = {
@@ -1022,6 +1045,15 @@ async function processCheckoutCompletedEvent(
     { orderId: order.id },
     correlationId
   );
+
+  if (!orderAlreadyPaid) {
+    await trackCustomerEvent(CustomerActivityEventType.ORDER_PAID, {
+      userId: order.userId,
+      email: orderOwner.email,
+      meta: { amount: payableCents, currency, orderId: order.id },
+    });
+    await attributeRevenue(order.id, orderOwner.email, payableCents);
+  }
 
   await generateDownloadLinksForOrder(order.id, order.userId);
 

@@ -1,10 +1,12 @@
 import crypto from "crypto";
 import { Request, Response } from "express";
-import { OrderType } from "@prisma/client";
+import { CustomerActivityEventType, OrderType } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { generateDownloadLinksForOrder } from "../services/downloadLinkService";
 import { generateOrderNumber } from "../services/orderNumberService";
 import { sendOrderConfirmationEmail } from "../services/transactionalEmailService";
+import { trackCustomerEvent } from "../services/customerActivityService";
+import { attributeRevenue } from "../services/newsletter/revenueService";
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -115,6 +117,20 @@ export async function createDownloadableOrder(req: Request, res: Response) {
         },
       },
     });
+
+    await trackCustomerEvent(CustomerActivityEventType.ORDER_CREATED, {
+      userId,
+      email: request.user?.email,
+      meta: { amount: totalCents, currency: "EUR", orderId: order.id },
+    });
+
+    await trackCustomerEvent(CustomerActivityEventType.ORDER_PAID, {
+      userId,
+      email: request.user?.email,
+      meta: { amount: totalCents, currency: "EUR", orderId: order.id },
+    });
+
+    await attributeRevenue(order.id, request.user?.email, totalCents);
 
     await generateDownloadLinksForOrder(order.id, userId);
 

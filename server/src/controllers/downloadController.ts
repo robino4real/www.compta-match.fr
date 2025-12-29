@@ -3,6 +3,8 @@ import { Request, Response } from "express";
 import path from "path";
 import fs from "fs";
 import { prisma } from "../config/prisma";
+import { CustomerActivityEventType } from "@prisma/client";
+import { trackCustomerEvent } from "../services/customerActivityService";
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -70,6 +72,16 @@ async function streamDownloadForLink(
     },
   });
 
+  await trackCustomerEvent(CustomerActivityEventType.DOWNLOAD_USED, {
+    userId,
+    email: link.orderItem.order.billingEmailSnapshot || link.orderItem.order.user?.email,
+    meta: {
+      orderId: link.orderItem.order.id,
+      orderItemId: link.orderItem.id,
+      productId: link.orderItem.productId,
+    },
+  });
+
   const product = link.orderItem.product;
   const selectedBinary = link.orderItem.binary || product?.binaries?.[0] || null;
 
@@ -129,7 +141,7 @@ export async function handleDownloadByToken(req: Request, res: Response) {
       include: {
         orderItem: {
           include: {
-            order: true,
+            order: { include: { user: true } },
             product: { include: { binaries: true } },
             binary: true,
           },
@@ -213,7 +225,7 @@ export async function handleOrderDownloadByToken(req: Request, res: Response) {
         include: {
           orderItem: {
             include: {
-              order: true,
+              order: { include: { user: true } },
               product: { include: { binaries: true } },
               binary: true,
             },
@@ -241,7 +253,7 @@ export async function handleOrderDownloadByToken(req: Request, res: Response) {
       include: {
         orderItem: {
           include: {
-            order: true,
+            order: { include: { user: true } },
             product: { include: { binaries: true } },
             binary: true,
           },

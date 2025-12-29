@@ -40,6 +40,10 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
     ],
   },
   {
+    title: "Marketing",
+    items: [{ label: "Newsletter", href: "/admin/newsletter" }],
+  },
+  {
     title: "Paramètres",
     items: [
       { label: "Paramètres entreprise", href: "/admin/company-settings" },

@@ -1,5 +1,7 @@
 import crypto from "crypto";
 import { prisma } from "../config/prisma";
+import { CustomerActivityEventType } from "@prisma/client";
+import { trackCustomerEvent } from "./customerActivityService";
 
 export async function generateDownloadLinksForOrder(orderId: string, userId: string) {
   const orderWithItems = await prisma.order.findUnique({
@@ -30,6 +32,11 @@ export async function generateDownloadLinksForOrder(orderId: string, userId: str
         maxDownloads: 1,
         downloadCount: 0,
       },
+    });
+
+    await trackCustomerEvent(CustomerActivityEventType.DOWNLOAD_CREATED, {
+      userId,
+      meta: { orderItemId: item.id, productId: item.productId },
     });
   }
 }

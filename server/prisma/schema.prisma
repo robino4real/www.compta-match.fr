@@ -33,6 +33,9 @@ model User {
   accountingEntries   AccountingEntry[]
   accountingDocuments AccountingDocument[]
   clientQuestions     ClientQuestion[]
+  newsletterSubscriptions NewsletterSubscriber[]
+  activityEvents          CustomerActivityEvent[]
+  customerMetrics         CustomerMetrics?
 }
 
 enum OrderStatus {
@@ -107,6 +110,7 @@ model Order {
 
   items   OrderItem[]
   invoice Invoice?
+  newsletterRevenueAttributions NewsletterRevenueAttribution[]
 }
 
 enum WebhookEventStatus {
@@ -921,4 +925,417 @@ model PaidServiceSection {
 enum PaidServiceType {
   COMPTAPRO
   COMPTASSO
+}
+
+enum NewsletterSubscriberStatus {
+  ACTIVE
+  UNSUBSCRIBED
+  BOUNCED
+  COMPLAINED
+  ANONYMIZED
+}
+
+enum NewsletterSubscriberSource {
+  CHECKOUT
+  POPUP
+  ACCOUNT
+  ADMIN_IMPORT
+  ADMIN_MANUAL
+}
+
+enum NewsletterConsentAction {
+  OPT_IN
+  OPT_OUT
+  DOUBLE_OPTIN_CONFIRMED
+}
+
+enum CustomerActivityEventType {
+  USER_REGISTERED
+  USER_LOGIN
+  ORDER_CREATED
+  ORDER_PAID
+  DOWNLOAD_CREATED
+  DOWNLOAD_USED
+  PAGE_VIEW
+}
+
+enum NewsletterCampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  PAUSED
+  CANCELLED
+  FAILED
+}
+
+enum NewsletterSendBatchStatus {
+  QUEUED
+  SENDING
+  DONE
+  FAILED
+}
+
+enum NewsletterSendLogStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  BOUNCED
+  COMPLAINED
+  UNSUBSCRIBED
+  FAILED
+}
+
+model NewsletterSubscriber {
+  id            String                     @id @default(cuid())
+  email         String                     @unique
+  firstName     String?
+  lastName      String?
+  status        NewsletterSubscriberStatus @default(ACTIVE)
+  source        NewsletterSubscriberSource @default(ADMIN_MANUAL)
+  consentAt     DateTime
+  consentSource String
+  consentProof  Json?
+  userId        String?
+  user          User?                      @relation(fields: [userId], references: [id])
+  tags          String[]                   @default([])
+  preferencesJson Json?
+  unsubscribedAt DateTime?
+  createdAt     DateTime                   @default(now())
+  updatedAt     DateTime                   @updatedAt
+
+  consentLogs NewsletterConsentLog[]
+  sendLogs    NewsletterSendLog[]
+  segmentCaches NewsletterSegmentCache[]
+  automationRuns NewsletterAutomationRun[]
+  preferenceLogs NewsletterPreferenceLog[]
+  score NewsletterScore?
+  rgpdLogs RGPDLog[]
+
+  @@index([email])
+}
+
+model NewsletterConsentLog {
+  id           String                  @id @default(cuid())
+  subscriberId String
+  action       NewsletterConsentAction
+  timestamp    DateTime                @default(now())
+  meta         Json?
+
+  subscriber NewsletterSubscriber @relation(fields: [subscriberId], references: [id])
+}
+
+model CustomerActivityEvent {
+  id        String                    @id @default(cuid())
+  userId    String?
+  email     String?
+  type      CustomerActivityEventType
+  createdAt DateTime                  @default(now())
+  meta      Json?
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([email])
+}
+
+model CustomerMetrics {
+  userId         String   @id
+  lastActivityAt DateTime?
+  lastLoginAt    DateTime?
+  ordersCount    Int      @default(0)
+  totalSpent     Int      @default(0)
+  lastOrderAt    DateTime?
+  downloadsCount Int      @default(0)
+  lastEmailOpenAt DateTime?
+  lastEmailClickAt DateTime?
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model NewsletterTemplate {
+  id                  String   @id @default(cuid())
+  name                String   @unique
+  subjectDefault      String
+  previewTextDefault  String?
+  html                String
+  designJson          Json?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  campaigns NewsletterCampaign[]
+  automationSteps NewsletterAutomationStep[]
+}
+
+model NewsletterCampaign {
+  id             String                   @id @default(cuid())
+  name           String
+  subject        String
+  previewText    String?
+  status         NewsletterCampaignStatus @default(DRAFT)
+  audienceJson   Json
+  templateId     String?
+  template       NewsletterTemplate?      @relation(fields: [templateId], references: [id])
+  htmlSnapshot   String?
+  scheduledAt    DateTime?
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  totalRecipients Int      @default(0)
+  sentCount       Int      @default(0)
+  deliveredCount  Int      @default(0)
+  openCount       Int      @default(0)
+  clickCount      Int      @default(0)
+  bounceCount     Int      @default(0)
+  complaintCount  Int      @default(0)
+  unsubCount      Int      @default(0)
+  createdByAdminId String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  batches NewsletterSendBatch[]
+  sendLogs NewsletterSendLog[]
+  links    NewsletterLink[]
+  revenueAttributions NewsletterRevenueAttribution[]
+}
+
+model NewsletterSendBatch {
+  id          String                     @id @default(cuid())
+  campaignId  String
+  campaign    NewsletterCampaign         @relation(fields: [campaignId], references: [id])
+  status      NewsletterSendBatchStatus  @default(QUEUED)
+  scheduledAt DateTime?
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  total       Int                        @default(0)
+  sent        Int                        @default(0)
+  failed      Int                        @default(0)
+  createdAt   DateTime                   @default(now())
+}
+
+model NewsletterSendLog {
+  id               String                  @id @default(cuid())
+  campaignId       String
+  subscriberId     String?
+  subscriber       NewsletterSubscriber?   @relation(fields: [subscriberId], references: [id])
+  email            String
+  status           NewsletterSendLogStatus @default(QUEUED)
+  error            String?
+  providerMessageId String?
+  sentAt           DateTime?
+  deliveredAt      DateTime?
+  openedAt         DateTime?
+  clickedAt        DateTime?
+  meta             Json?
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  campaign NewsletterCampaign @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+  @@index([email])
+  @@index([status])
+}
+
+model NewsletterLink {
+  id          String             @id @default(cuid())
+  campaignId  String
+  campaign    NewsletterCampaign @relation(fields: [campaignId], references: [id])
+  originalUrl String
+  token       String             @unique
+  clickCount  Int                @default(0)
+  createdAt   DateTime           @default(now())
+}
+
+enum NewsletterAutomationStatus {
+  ACTIVE
+  PAUSED
+}
+
+enum NewsletterAutomationTrigger {
+  USER_REGISTERED
+  ORDER_PAID
+  NO_LOGIN_X_DAYS
+  NO_ORDER_X_DAYS
+  DOWNLOAD_NOT_USED
+}
+
+enum NewsletterAutomationRunStatus {
+  RUNNING
+  COMPLETED
+  CANCELLED
+}
+
+model NewsletterSegment {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  description  String?
+  rulesJson    Json
+  previewCount Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  caches      NewsletterSegmentCache[]
+  automations NewsletterAutomation[]
+}
+
+model NewsletterSegmentCache {
+  id           String              @id @default(cuid())
+  segmentId    String
+  subscriberId String
+  computedAt   DateTime            @default(now())
+
+  segment    NewsletterSegment    @relation(fields: [segmentId], references: [id])
+  subscriber NewsletterSubscriber @relation(fields: [subscriberId], references: [id])
+
+  @@index([segmentId])
+  @@index([subscriberId])
+}
+
+model NewsletterAutomation {
+  id            String                       @id @default(cuid())
+  name          String
+  status        NewsletterAutomationStatus   @default(ACTIVE)
+  trigger       NewsletterAutomationTrigger
+  triggerConfig Json?
+  segmentId     String?
+  createdAt     DateTime                     @default(now())
+  updatedAt     DateTime                     @updatedAt
+
+  segment NewsletterSegment?     @relation(fields: [segmentId], references: [id])
+  steps   NewsletterAutomationStep[]
+  runs    NewsletterAutomationRun[]
+}
+
+model NewsletterAutomationStep {
+  id            String @id @default(cuid())
+  automationId  String
+  stepOrder     Int
+  type          String
+  templateId    String
+  delayMinutes  Int     @default(0)
+  conditionsJson Json?
+  exitOnEvent   Json?
+
+  automation NewsletterAutomation @relation(fields: [automationId], references: [id])
+  template   NewsletterTemplate   @relation(fields: [templateId], references: [id])
+
+  @@index([automationId])
+  @@index([templateId])
+}
+
+model NewsletterAutomationRun {
+  id            String                        @id @default(cuid())
+  automationId  String
+  subscriberId  String
+  status        NewsletterAutomationRunStatus @default(RUNNING)
+  currentStep   Int                           @default(0)
+  startedAt     DateTime                      @default(now())
+  stepStartedAt DateTime                      @default(now())
+  finishedAt    DateTime?
+  updatedAt     DateTime                      @updatedAt
+
+  automation NewsletterAutomation @relation(fields: [automationId], references: [id])
+  subscriber NewsletterSubscriber @relation(fields: [subscriberId], references: [id])
+
+  @@index([automationId])
+  @@index([subscriberId])
+}
+
+model NewsletterRevenueAttribution {
+  id           String   @id @default(cuid())
+  campaignId   String
+  orderId      String
+  revenue      Int      @default(0)
+  attributedAt DateTime @default(now())
+
+  campaign NewsletterCampaign @relation(fields: [campaignId], references: [id])
+  order    Order              @relation(fields: [orderId], references: [id])
+
+  @@index([campaignId])
+  @@index([orderId])
+}
+
+enum NewsletterPreferenceSource {
+  EMAIL
+  PUBLIC_PAGE
+  ADMIN
+}
+
+model NewsletterPreferenceLog {
+  id                  String   @id @default(cuid())
+  subscriberId        String
+  previousPreferences Json?
+  newPreferences      Json?
+  changedAt           DateTime @default(now())
+  source              NewsletterPreferenceSource
+
+  subscriber NewsletterSubscriber @relation(fields: [subscriberId], references: [id])
+
+  @@index([subscriberId])
+}
+
+enum RGPDAction {
+  EXPORT
+  ANONYMIZE
+  DELETE
+}
+
+model RGPDLog {
+  id                  String   @id @default(cuid())
+  subscriberId        String
+  action              RGPDAction
+  performedByAdminId  String?
+  performedAt         DateTime @default(now())
+  meta                Json?
+
+  subscriber NewsletterSubscriber @relation(fields: [subscriberId], references: [id])
+}
+
+model NewsletterScore {
+  subscriberId  String @id
+  score         Int
+  breakdownJson Json?
+  lastComputedAt DateTime @default(now())
+
+  subscriber NewsletterSubscriber @relation(fields: [subscriberId], references: [id])
+}
+
+enum DeliverabilityStatusEnum {
+  OK
+  NOK
+  UNKNOWN
+}
+
+model NewsletterDeliverabilityStatus {
+  id           String                  @id @default(cuid())
+  domain       String                  @unique
+  spfStatus    DeliverabilityStatusEnum @default(UNKNOWN)
+  dkimStatus   DeliverabilityStatusEnum @default(UNKNOWN)
+  dmarcStatus  DeliverabilityStatusEnum @default(UNKNOWN)
+  lastCheckedAt DateTime?
+}
+
+enum NewsletterAlertType {
+  BOUNCE_RATE
+  COMPLAINT_RATE
+  LOW_OPEN_RATE
+  SEND_FREQUENCY
+}
+
+enum NewsletterAlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model NewsletterAlert {
+  id                String                   @id @default(cuid())
+  type              NewsletterAlertType
+  severity          NewsletterAlertSeverity  @default(WARNING)
+  message           String
+  relatedCampaignId String?
+  createdAt         DateTime                 @default(now())
+  acknowledgedAt    DateTime?
 }
