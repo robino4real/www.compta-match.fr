@@ -121,6 +121,8 @@ import {
   adminRunSeoGeoDiagnostics,
   adminReorderGeoAnswers,
   adminReorderGeoFaq,
+  adminApplySeoGeoAutofill,
+  adminPreviewSeoGeoAutofill,
   adminSavePageSeo,
   adminSaveProductSeo,
   adminUpdateGeoAnswer,
@@ -509,6 +511,20 @@ router.get(
   attachUserToRequest,
   requireAdmin,
   adminRunSeoGeoDiagnostics
+);
+
+router.post(
+  "/seo-geo/autofill/preview",
+  attachUserToRequest,
+  requireAdmin,
+  adminPreviewSeoGeoAutofill
+);
+
+router.post(
+  "/seo-geo/autofill/apply",
+  attachUserToRequest,
+  requireAdmin,
+  adminApplySeoGeoAutofill
 );
 
 router.get("/page-seo/:pageId", attachUserToRequest, requireAdmin, adminGetPageSeo);
