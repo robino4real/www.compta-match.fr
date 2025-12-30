@@ -389,6 +389,7 @@ export async function generateOrderDownloadLink(req: Request, res: Response) {
             downloadLinks: true,
           },
         },
+        adjustments: { orderBy: { createdAt: "desc" } },
       },
     });
 
