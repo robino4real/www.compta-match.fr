@@ -47,10 +47,6 @@ export async function webAppFetch<T>(
       payload?.error?.message || payload?.message || "Une erreur est survenue lors de l'appel API.";
     const appError = new WebAppApiError(message, response.status, payload?.error?.code);
 
-    if (response.status === 401) {
-      window.location.href = "/auth/login";
-    }
-
     throw appError;
   }
 
