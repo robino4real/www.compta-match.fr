@@ -44,6 +44,19 @@ enum OrderStatus {
   FAILED
   REFUNDED
   CANCELLED
+  EN_ATTENTE_DE_PAIEMENT
+}
+
+enum OrderAdjustmentType {
+  PARTIAL_REFUND
+  EXTRA_PAYMENT
+}
+
+enum OrderAdjustmentStatus {
+  PENDING
+  SENT
+  PAID
+  CANCELLED
 }
 
 enum OrderType {
@@ -110,7 +123,27 @@ model Order {
 
   items   OrderItem[]
   invoice Invoice?
+  adjustments OrderAdjustment[]
   newsletterRevenueAttributions NewsletterRevenueAttribution[]
+}
+
+model OrderAdjustment {
+  id                     String                 @id @default(cuid())
+  orderId                String
+  order                  Order                  @relation(fields: [orderId], references: [id])
+  type                   OrderAdjustmentType
+  status                 OrderAdjustmentStatus  @default(PENDING)
+  amountCents            Int
+  currency               String                 @default("EUR")
+  clientNote             String?
+  adminNote              String?
+  stripePaymentLinkId    String?
+  stripeCheckoutSessionId String?
+  stripeRefundId         String?
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+
+  @@index([orderId, createdAt])
 }
 
 enum WebhookEventStatus {

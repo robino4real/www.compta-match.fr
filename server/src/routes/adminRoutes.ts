@@ -43,6 +43,8 @@ import {
   adminCancelOrder,
   adminRefundOrder,
   adminSoftDeleteOrder,
+  adminAdjustOrder,
+  adminSendOrderAdjustment,
 } from "../controllers/adminOrderController";
 import {
   listPromoCodes,
@@ -960,6 +962,18 @@ router.post(
   attachUserToRequest,
   requireAdmin,
   adminCancelOrder
+);
+router.post(
+  "/orders/:id/adjust",
+  attachUserToRequest,
+  requireAdmin,
+  adminAdjustOrder
+);
+router.post(
+  "/orders/:id/adjustments/:adjustmentId/send",
+  attachUserToRequest,
+  requireAdmin,
+  adminSendOrderAdjustment
 );
 router.delete(
   "/orders/:id",

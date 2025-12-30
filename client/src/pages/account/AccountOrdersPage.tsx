@@ -33,6 +33,7 @@ const statusColor: Record<string, string> = {
   FAILED: "bg-rose-50 text-rose-700",
   REFUNDED: "bg-sky-50 text-sky-700",
   CANCELLED: "bg-slate-100 text-slate-700",
+  EN_ATTENTE_DE_PAIEMENT: "bg-amber-50 text-amber-700",
 };
 
 const statusLabel: Record<string, string> = {
@@ -41,6 +42,7 @@ const statusLabel: Record<string, string> = {
   FAILED: "Échec",
   REFUNDED: "Remboursé",
   CANCELLED: "Annulée",
+  EN_ATTENTE_DE_PAIEMENT: "En attente de paiement",
 };
 
 const AccountOrdersPage: React.FC = () => {

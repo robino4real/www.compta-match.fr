@@ -1,7 +1,13 @@
-import { OrderStatus, Prisma } from "@prisma/client";
+import {
+  OrderAdjustmentStatus,
+  OrderAdjustmentType,
+  OrderStatus,
+  Prisma,
+} from "@prisma/client";
 import fs from "fs";
 import path from "path";
 import { Request, Response } from "express";
+import Stripe from "stripe";
 import { prisma } from "../config/prisma";
 import { stripe } from "../config/stripeClient";
 import { regenerateDownloadLinkForOrderItem } from "../services/downloadLinkService";
@@ -13,6 +19,7 @@ import {
 import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import { createInvoiceForOrder } from "../services/invoiceService";
 import { generateInvoicePdf } from "../services/pdfService";
+import { sendOrderPaymentRequestEmail } from "../services/transactionalEmailService";
 
 function resolveOrderId(req: Request): string | undefined {
   const params = req.params as { id?: string; orderId?: string };
@@ -36,6 +43,7 @@ const SORT_WHITELIST: Record<string, Prisma.OrderOrderByWithRelationInput> = {
 
 const DEFAULT_SORT = "createdAt_desc";
 const MAX_PAGE_SIZE = 100;
+type OrderWithUser = Prisma.OrderGetPayload<{ include: { user: true } }>;
 
 function parseDateParam(dateString?: string): string | null {
   if (!dateString) return null;
@@ -84,6 +92,138 @@ function getDefaultDateRange(): { from: string; to: string } {
     from: start.toISOString().slice(0, 10),
     to: today,
   };
+}
+
+function normalizeNote(value?: string | null): string | null {
+  const trimmed = (value || "").trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+async function sumRefundedCents(orderId: string): Promise<number> {
+  const aggregate = await prisma.orderAdjustment.aggregate({
+    where: {
+      orderId,
+      type: OrderAdjustmentType.PARTIAL_REFUND,
+      status: { not: OrderAdjustmentStatus.CANCELLED },
+    },
+    _sum: { amountCents: true },
+  });
+
+  return aggregate._sum.amountCents || 0;
+}
+
+function normalizeStripeRefundReason(
+  reason?: string
+): Stripe.RefundCreateParams.Reason | undefined {
+  const allowed: Stripe.RefundCreateParams.Reason[] = [
+    "duplicate",
+    "fraudulent",
+    "requested_by_customer",
+  ];
+
+  if (!reason) return undefined;
+  return allowed.includes(reason as Stripe.RefundCreateParams.Reason)
+    ? (reason as Stripe.RefundCreateParams.Reason)
+    : undefined;
+}
+
+async function performRefundAction({
+  order,
+  amountCents,
+  reason,
+  adminNote,
+  clientNote,
+  initiatedBy,
+}: {
+  order: OrderWithUser;
+  amountCents?: number;
+  reason?: string;
+  adminNote?: string | null;
+  clientNote?: string | null;
+  initiatedBy?: string;
+}) {
+  if (!order.stripePaymentIntentId) {
+    const error = new Error("Aucun paiement Stripe associé à cette commande.");
+    (error as any).status = 400;
+    throw error;
+  }
+
+  if (order.status === OrderStatus.REFUNDED) {
+    const error = new Error("Commande déjà remboursée.");
+    (error as any).status = 400;
+    throw error;
+  }
+
+  if (order.status === OrderStatus.CANCELLED || order.isDeleted) {
+    const error = new Error("Impossible de rembourser une commande annulée ou supprimée.");
+    (error as any).status = 400;
+    throw error;
+  }
+
+  const alreadyRefunded = await sumRefundedCents(order.id);
+  const refundable = Math.max(order.totalPaid - alreadyRefunded, 0);
+
+  if (refundable <= 0) {
+    const error = new Error("Aucun montant remboursable restant sur cette commande.");
+    (error as any).status = 400;
+    throw error;
+  }
+
+  const targetAmount = amountCents ?? refundable;
+  if (!Number.isFinite(targetAmount) || targetAmount <= 0) {
+    const error = new Error("Montant de remboursement invalide.");
+    (error as any).status = 400;
+    throw error;
+  }
+
+  if (targetAmount > refundable) {
+    const error = new Error("Le montant dépasse le montant remboursable restant.");
+    (error as any).status = 400;
+    throw error;
+  }
+
+  const refund = await stripe.refunds.create({
+    payment_intent: order.stripePaymentIntentId,
+    amount: Math.round(targetAmount),
+    reason: normalizeStripeRefundReason(reason),
+  });
+
+  const nextStatus =
+    Math.round(targetAmount) === refundable ? OrderStatus.REFUNDED : OrderStatus.PAID;
+
+  const [adjustment, updatedOrder] = await prisma.$transaction([
+    prisma.orderAdjustment.create({
+      data: {
+        orderId: order.id,
+        type: OrderAdjustmentType.PARTIAL_REFUND,
+        status: OrderAdjustmentStatus.PAID,
+        amountCents: Math.round(targetAmount),
+        currency: order.currency,
+        adminNote: normalizeNote(adminNote) || normalizeNote(reason),
+        clientNote: normalizeNote(clientNote),
+        stripeRefundId: refund.id,
+      },
+    }),
+    prisma.order.update({
+      where: { id: order.id },
+      data: { status: nextStatus },
+    }),
+  ]);
+
+  if (initiatedBy) {
+    await recordAuditLog(initiatedBy, "ADMIN_REFUND_ORDER", "ORDER", order.id, {
+      refundId: refund.id,
+      paymentIntent: order.stripePaymentIntentId,
+      refundedAmount: targetAmount,
+      previousStatus: order.status,
+    });
+  }
+
+  if (nextStatus === OrderStatus.REFUNDED && order.user) {
+    await sendRefundConfirmationEmail(order.user, updatedOrder, refund.id);
+  }
+
+  return { order: updatedOrder, refundId: refund.id, adjustment };
 }
 
 export async function adminGetOrderInvoice(req: Request, res: Response) {
@@ -326,6 +466,9 @@ export async function adminGetOrder(req: Request, res: Response) {
             downloadLinks: true,
           },
         },
+        adjustments: {
+          orderBy: { createdAt: "desc" },
+        },
       },
     });
 
@@ -402,7 +545,11 @@ export async function adminCancelOrder(req: AuthenticatedRequest, res: Response)
       return res.status(400).json({ message: "Cette commande est supprimée." });
     }
 
-    const cancellableStatuses: OrderStatus[] = [OrderStatus.PENDING, OrderStatus.PAID];
+    const cancellableStatuses: OrderStatus[] = [
+      OrderStatus.PENDING,
+      OrderStatus.PAID,
+      OrderStatus.EN_ATTENTE_DE_PAIEMENT,
+    ];
     if (!cancellableStatuses.includes(order.status)) {
       return res
         .status(400)
@@ -477,6 +624,14 @@ export async function adminRefundOrder(req: AuthenticatedRequest, res: Response)
 
   console.debug(`[adminRefundOrder] orderId=${orderId}`);
 
+  const { amountCents, reason } = req.body as { amountCents?: number; reason?: string };
+  const parsedAmount =
+    amountCents === undefined || amountCents === null ? undefined : Math.round(Number(amountCents));
+
+  if (parsedAmount !== undefined && (!Number.isFinite(parsedAmount) || parsedAmount <= 0)) {
+    return res.status(400).json({ message: "Montant de remboursement invalide." });
+  }
+
   try {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -487,41 +642,184 @@ export async function adminRefundOrder(req: AuthenticatedRequest, res: Response)
       return res.status(404).json({ message: "Commande introuvable." });
     }
 
-    if (!order.stripePaymentIntentId) {
+    const result = await performRefundAction({
+      order,
+      amountCents: parsedAmount,
+      reason,
+      adminNote: reason,
+      initiatedBy: req.user?.id,
+    });
+
+    return res.json({
+      order: result.order,
+      refundId: result.refundId,
+      adjustment: result.adjustment,
+      message: parsedAmount && parsedAmount < order.totalPaid
+        ? "Remboursement partiel effectué."
+        : "Remboursement déclenché.",
+    });
+  } catch (error: any) {
+    const status = error?.status || 500;
+    console.error("[admin] Erreur lors du remboursement", error);
+    return res.status(status).json({ message: error?.message || "Impossible de rembourser la commande." });
+  }
+}
+
+export async function adminAdjustOrder(req: AuthenticatedRequest, res: Response) {
+  const orderId = resolveOrderId(req);
+
+  if (!orderId) {
+    return res
+      .status(400)
+      .json({ ok: false, error: { code: "BAD_REQUEST", message: "Missing order id" } });
+  }
+
+  const { mode, amountCents, adminNote, clientNote } = req.body as {
+    mode?: string;
+    amountCents?: number;
+    adminNote?: string;
+    clientNote?: string;
+  };
+
+  const parsedAmount = Math.round(Number(amountCents));
+  if (!mode || !["PARTIAL_REFUND", "EXTRA_PAYMENT"].includes(mode)) {
+    return res.status(400).json({ message: "Mode d'ajustement invalide." });
+  }
+
+  if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+    return res.status(400).json({ message: "Montant d'ajustement invalide." });
+  }
+
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { user: true },
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: "Commande introuvable." });
+    }
+
+    if (order.isDeleted || order.status === OrderStatus.CANCELLED) {
       return res
         .status(400)
-        .json({ message: "Aucun paiement Stripe associé pour cette commande." });
+        .json({ message: "Impossible de modifier une commande annulée ou supprimée." });
+    }
+
+    if (mode === "PARTIAL_REFUND") {
+      const result = await performRefundAction({
+        order,
+        amountCents: parsedAmount,
+        adminNote,
+        clientNote,
+        initiatedBy: req.user?.id,
+      });
+
+      return res.json({
+        order: result.order,
+        adjustment: result.adjustment,
+        message: "Remboursement partiel effectué.",
+      });
     }
 
     if (order.status === OrderStatus.REFUNDED) {
       return res.status(400).json({ message: "Commande déjà remboursée." });
     }
 
-    const refund = await stripe.refunds.create({
-      payment_intent: order.stripePaymentIntentId,
-      amount: order.totalPaid,
+    const adjustment = await prisma.orderAdjustment.create({
+      data: {
+        orderId,
+        type: OrderAdjustmentType.EXTRA_PAYMENT,
+        amountCents: parsedAmount,
+        currency: order.currency,
+        adminNote: normalizeNote(adminNote),
+        clientNote: normalizeNote(clientNote),
+        status: OrderAdjustmentStatus.PENDING,
+      },
     });
 
-    const updated = await prisma.order.update({
+    const updatedOrder = await prisma.order.update({
       where: { id: orderId },
-      data: { status: OrderStatus.REFUNDED },
+      data: { status: OrderStatus.EN_ATTENTE_DE_PAIEMENT },
     });
 
     if (req.user?.id) {
-      await recordAuditLog(req.user.id, "ADMIN_REFUND_ORDER", "ORDER", orderId, {
-        refundId: refund.id,
-        paymentIntent: order.stripePaymentIntentId,
+      await recordAuditLog(req.user.id, "ADMIN_CREATE_ORDER_ADJUSTMENT", "ORDER", orderId, {
+        adjustmentId: adjustment.id,
+        amountCents: parsedAmount,
+        type: adjustment.type,
       });
     }
 
-    if (order.user) {
-      await sendRefundConfirmationEmail(order.user, updated, refund.id);
+    return res.json({
+      order: updatedOrder,
+      adjustment,
+      message: "Proposition de paiement créée.",
+    });
+  } catch (error) {
+    console.error("[admin] Erreur lors de l'ajustement de commande", error);
+    return res
+      .status(500)
+      .json({ message: "Impossible de modifier ou rembourser la commande." });
+  }
+}
+
+export async function adminSendOrderAdjustment(
+  req: AuthenticatedRequest,
+  res: Response
+) {
+  const { id: orderId, adjustmentId } = req.params as { id: string; adjustmentId: string };
+
+  if (!orderId || !adjustmentId) {
+    return res
+      .status(400)
+      .json({ ok: false, error: { code: "BAD_REQUEST", message: "Missing order or adjustment id" } });
+  }
+
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { user: true },
+    });
+    const adjustment = await prisma.orderAdjustment.findUnique({ where: { id: adjustmentId } });
+
+    if (!order || !adjustment || adjustment.orderId !== order.id) {
+      return res.status(404).json({ message: "Ajustement introuvable." });
     }
 
-    return res.json({ order: updated, refundId: refund.id, message: "Remboursement déclenché." });
+    if (adjustment.type !== OrderAdjustmentType.EXTRA_PAYMENT) {
+      return res.status(400).json({ message: "Seules les propositions de paiement peuvent être envoyées." });
+    }
+
+    if (!order.user) {
+      return res.status(400).json({ message: "Impossible d'envoyer l'email sans client associé." });
+    }
+
+    const updatedAdjustment = await prisma.orderAdjustment.update({
+      where: { id: adjustmentId },
+      data: { status: OrderAdjustmentStatus.SENT },
+    });
+
+    await sendOrderPaymentRequestEmail(order, updatedAdjustment);
+
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { status: OrderStatus.EN_ATTENTE_DE_PAIEMENT },
+    });
+
+    if (req.user?.id) {
+      await recordAuditLog(req.user.id, "ADMIN_SEND_ORDER_ADJUSTMENT", "ORDER", orderId, {
+        adjustmentId: updatedAdjustment.id,
+        amountCents: updatedAdjustment.amountCents,
+      });
+    }
+
+    return res.json({ adjustment: updatedAdjustment, message: "Proposition envoyée au client." });
   } catch (error) {
-    console.error("[admin] Erreur lors du remboursement", error);
-    return res.status(500).json({ message: "Impossible de rembourser la commande." });
+    console.error("[admin] Erreur lors de l'envoi de la proposition", error);
+    return res
+      .status(500)
+      .json({ message: "Impossible d'envoyer la proposition au client." });
   }
 }
 

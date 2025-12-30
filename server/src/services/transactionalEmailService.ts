@@ -1,4 +1,4 @@
-import { DownloadLink, Order, User } from "@prisma/client";
+import { DownloadLink, Order, OrderAdjustment, User } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { env } from "../config/env";
 import { sendEmail } from "./mailer";
@@ -263,6 +263,52 @@ export async function sendRefundConfirmationEmail(
     fromEmail: settings.ordersFromEmail || settings.fromEmailDefault,
     fromName: settings.fromNameDefault || "ComptaMatch",
     replyTo: settings.replyToEmailDefault || null,
+  });
+}
+
+export async function sendOrderPaymentRequestEmail(
+  order: Order & { user?: User | null },
+  adjustment: OrderAdjustment
+): Promise<boolean> {
+  if (!order.user?.email) {
+    console.warn("[transactionalEmails] Impossible d'envoyer la proposition: pas d'email client.");
+    return false;
+  }
+
+  const settings = await getOrCreateEmailSettings();
+  const subject = "Action requise sur votre commande ComptaMatch";
+  const customerName = buildUserDisplayName(order.user);
+  const orderNumber = order.orderNumber || order.id;
+  const amount = formatAmount(adjustment.amountCents, adjustment.currency || order.currency);
+  const accountOrdersUrl = `${env.frontendBaseUrl.replace(/\/$/, "")}/compte/commandes`;
+  const explanation =
+    adjustment.clientNote ||
+    "Un complément de paiement est nécessaire pour finaliser votre commande. Merci de vous connecter pour régler le montant indiqué.";
+
+  const html =
+    `Bonjour ${customerName},<br /><br />` +
+    `Nous avons apporté une modification à votre commande ${orderNumber}.` +
+    `<br />Montant à régler : <strong>${amount}</strong>.` +
+    `<br />${explanation}` +
+    `<br /><br /><a href="${accountOrdersUrl}">Accéder à vos commandes</a>` +
+    `<br /><br />L'équipe ComptaMatch.`;
+
+  const text =
+    `Bonjour ${customerName},\n\n` +
+    `Une action est requise sur votre commande ${orderNumber}.\n` +
+    `Montant à régler : ${amount}.\n` +
+    `${explanation}\n` +
+    `Rendez-vous dans votre espace client : ${accountOrdersUrl}\n\n` +
+    `L'équipe ComptaMatch.`;
+
+  return sendEmail({
+    to: order.user.email,
+    subject,
+    html,
+    text,
+    fromEmail: settings.ordersFromEmail || settings.fromEmailDefault,
+    fromName: settings.fromNameDefault || "ComptaMatch",
+    replyTo: settings.replyToEmailDefault || settings.supportEmail || null,
   });
 }
 
