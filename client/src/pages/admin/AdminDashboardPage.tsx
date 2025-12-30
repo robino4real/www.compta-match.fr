@@ -21,6 +21,18 @@ const currencyFormatter = new Intl.NumberFormat("fr-FR", {
 
 const formatCurrency = (value: number) => currencyFormatter.format(value / 100);
 
+const monthFormatter = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" });
+const shortDateFormatter = new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short" });
+
+const startOfWeek = (date: Date) => {
+  const copy = new Date(date);
+  const day = copy.getDay();
+  const diff = (day + 6) % 7;
+  copy.setDate(copy.getDate() - diff);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+};
+
 type SalesChartVariant = "bar" | "line";
 
 const SalesTimelineChart: React.FC<{
@@ -49,9 +61,38 @@ const SalesTimelineChart: React.FC<{
       return { x, y, label: point.label, revenue: point.revenue, orders: point.ordersCount };
     });
 
-    const path = points
-      .map((point, index) => `${index === 0 ? "M" : "L"}${point.x},${point.y}`)
-      .join(" ");
+    const smoothing = 0.2;
+    const controlPoint = (
+      current: { x: number; y: number },
+      previous: { x: number; y: number } | null,
+      next: { x: number; y: number } | null,
+      reverse = false
+    ) => {
+      const p = previous || current;
+      const n = next || current;
+      const o = {
+        length: Math.hypot(n.x - p.x, n.y - p.y),
+        angle: Math.atan2(n.y - p.y, n.x - p.x),
+      };
+      const angle = o.angle + (reverse ? Math.PI : 0);
+      const length = o.length * smoothing;
+      return {
+        x: current.x + Math.cos(angle) * length,
+        y: current.y + Math.sin(angle) * length,
+      };
+    };
+
+    const buildSmoothPath = () => {
+      if (points.length === 1) return `M${points[0].x},${points[0].y}`;
+      return points.reduce((path, point, index, array) => {
+        if (index === 0) return `M${point.x},${point.y}`;
+        const cps = controlPoint(array[index - 1], array[index - 2] ?? null, point);
+        const cpe = controlPoint(point, array[index - 1], array[index + 1] ?? null, true);
+        return `${path} C ${cps.x},${cps.y} ${cpe.x},${cpe.y} ${point.x},${point.y}`;
+      }, "");
+    };
+
+    const path = buildSmoothPath();
 
     return (
       <div className="space-y-3">
@@ -108,7 +149,7 @@ const SalesTimelineChart: React.FC<{
             <div key={point.date} className="flex flex-col items-center gap-2 text-xs">
               <div className="flex h-48 w-11 items-end justify-center rounded-lg bg-slate-50 p-1 shadow-inner">
                 <div
-                  className="w-full rounded-sm bg-emerald-500 transition hover:bg-emerald-600"
+                  className="w-full rounded-full bg-emerald-500 transition hover:bg-emerald-600"
                   style={{ height }}
                   title={`${point.label} — ${formatCurrency(point.revenue)} • ${point.ordersCount} commande(s)`}
                 />
@@ -162,6 +203,10 @@ const AdminDashboardPage: React.FC = () => {
   const [error, setError] = React.useState<string | null>(null);
   const [includeTestAccount, setIncludeTestAccount] = React.useState<boolean>(true);
   const [chartVariant, setChartVariant] = React.useState<SalesChartVariant>("bar");
+  const today = React.useMemo(() => new Date(), []);
+  const [selectedYear, setSelectedYear] = React.useState<number>(today.getFullYear());
+  const [selectedMonth, setSelectedMonth] = React.useState<number>(today.getMonth());
+  const [selectedWeekStart, setSelectedWeekStart] = React.useState<Date>(startOfWeek(today));
 
   const fetchStats = React.useCallback(async () => {
     try {
@@ -171,6 +216,18 @@ const AdminDashboardPage: React.FC = () => {
         range,
         includeTestAccount: includeTestAccount ? "true" : "false",
       });
+
+      if (range === "year") {
+        params.set("year", selectedYear.toString());
+      }
+      if (range === "month") {
+        params.set("year", selectedYear.toString());
+        params.set("month", (selectedMonth + 1).toString());
+      }
+      if (range === "week") {
+        params.set("weekStart", selectedWeekStart.toISOString());
+      }
+
       const response = await fetch(`${API_BASE_URL}/admin/dashboard?${params.toString()}`, {
         method: "GET",
         credentials: "include",
@@ -188,11 +245,55 @@ const AdminDashboardPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [range, includeTestAccount]);
+  }, [range, includeTestAccount, selectedMonth, selectedWeekStart, selectedYear]);
 
   React.useEffect(() => {
     fetchStats();
   }, [fetchStats]);
+
+  const goToPreviousYear = () => setSelectedYear((year) => year - 1);
+  const goToNextYear = () => setSelectedYear((year) => year + 1);
+
+  const goToPreviousMonth = () => {
+    const base = new Date(selectedYear, selectedMonth, 1);
+    base.setMonth(base.getMonth() - 1);
+    setSelectedYear(base.getFullYear());
+    setSelectedMonth(base.getMonth());
+  };
+
+  const goToNextMonth = () => {
+    const base = new Date(selectedYear, selectedMonth, 1);
+    base.setMonth(base.getMonth() + 1);
+    setSelectedYear(base.getFullYear());
+    setSelectedMonth(base.getMonth());
+  };
+
+  const goToPreviousWeek = () => {
+    setSelectedWeekStart((current) => {
+      const next = new Date(current);
+      next.setDate(current.getDate() - 7);
+      return startOfWeek(next);
+    });
+  };
+
+  const goToNextWeek = () => {
+    setSelectedWeekStart((current) => {
+      const next = new Date(current);
+      next.setDate(current.getDate() + 7);
+      return startOfWeek(next);
+    });
+  };
+
+  const selectedMonthDate = React.useMemo(() => new Date(selectedYear, selectedMonth, 1), [selectedMonth, selectedYear]);
+  const selectedWeekEnd = React.useMemo(() => {
+    const end = new Date(selectedWeekStart);
+    end.setDate(selectedWeekStart.getDate() + 6);
+    return end;
+  }, [selectedWeekStart]);
+  const weekLabel = React.useMemo(
+    () => `Semaine du ${shortDateFormatter.format(selectedWeekStart)} au ${shortDateFormatter.format(selectedWeekEnd)}`,
+    [selectedWeekEnd, selectedWeekStart]
+  );
 
   return (
     <div className="space-y-6">
@@ -240,6 +341,69 @@ const AdminDashboardPage: React.FC = () => {
                 ))}
               </select>
             </div>
+            {range === "year" && (
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-2 text-sm font-semibold text-slate-800 shadow-sm">
+                <button
+                  type="button"
+                  className="rounded-lg px-2 py-1 hover:bg-slate-100"
+                  onClick={goToPreviousYear}
+                  aria-label="Année précédente"
+                >
+                  ←
+                </button>
+                <span className="px-2">{selectedYear}</span>
+                <button
+                  type="button"
+                  className="rounded-lg px-2 py-1 hover:bg-slate-100"
+                  onClick={goToNextYear}
+                  aria-label="Année suivante"
+                >
+                  →
+                </button>
+              </div>
+            )}
+            {range === "month" && (
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-2 text-sm font-semibold text-slate-800 shadow-sm">
+                <button
+                  type="button"
+                  className="rounded-lg px-2 py-1 hover:bg-slate-100"
+                  onClick={goToPreviousMonth}
+                  aria-label="Mois précédent"
+                >
+                  ←
+                </button>
+                <span className="px-2 capitalize">{monthFormatter.format(selectedMonthDate)}</span>
+                <button
+                  type="button"
+                  className="rounded-lg px-2 py-1 hover:bg-slate-100"
+                  onClick={goToNextMonth}
+                  aria-label="Mois suivant"
+                >
+                  →
+                </button>
+              </div>
+            )}
+            {range === "week" && (
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-2 text-sm font-semibold text-slate-800 shadow-sm">
+                <button
+                  type="button"
+                  className="rounded-lg px-2 py-1 hover:bg-slate-100"
+                  onClick={goToPreviousWeek}
+                  aria-label="Semaine précédente"
+                >
+                  ←
+                </button>
+                <span className="px-2 whitespace-nowrap">{weekLabel}</span>
+                <button
+                  type="button"
+                  className="rounded-lg px-2 py-1 hover:bg-slate-100"
+                  onClick={goToNextWeek}
+                  aria-label="Semaine suivante"
+                >
+                  →
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>
