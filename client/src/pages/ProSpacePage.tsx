@@ -27,7 +27,7 @@ interface AppFicheSummary {
 }
 
 const ProSpacePage: React.FC = () => {
-  const { user, login, isLoading: isAuthLoading } = useAuth();
+  const { user, login, logout, isLoading: isAuthLoading } = useAuth();
 
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -269,6 +269,11 @@ const ProSpacePage: React.FC = () => {
     const hasSubscriptions = subscriptions.length > 0;
     const hasAnySpaces = hasSubscriptions || customSpaces.length > 0;
 
+    const connectedUserName =
+      [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
+      user?.email ||
+      "Profil connecté";
+
     return (
       <section className="mt-12 space-y-6">
         <div className="space-y-2 text-center">
@@ -367,25 +372,38 @@ const ProSpacePage: React.FC = () => {
               </article>
             ))}
 
-          {customSpaces.map((space) => (
-            <article
-              key={space.id}
-              className="flex min-h-[220px] flex-col justify-between rounded-3xl border border-emerald-100 bg-white px-6 py-5 shadow-sm"
-            >
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                  Nouvelle structure
-                </p>
-                <h3 className="text-lg font-semibold text-slate-900">{space.name}</h3>
-                <p className="text-sm text-slate-600">
-                  {space.type} ajoutée pour suivre vos documents dédiés.{" "}
-                  {space.identifier ? `Identifiant : ${space.identifier}. ` : ""}
-                  {space.contactEmail ? `Contact : ${space.contactEmail}` : ""}
-                </p>
-              </div>
-              <div className="text-xs text-slate-500">Créé depuis cette page</div>
-            </article>
-          ))}
+          {customSpaces.map((space) => {
+            const spaceAppLink = `/app/comptapro/${space.identifier || space.id}`;
+            return (
+              <article
+                key={space.id}
+                className="flex min-h-[220px] flex-col justify-between rounded-3xl border border-emerald-100 bg-white px-6 py-5 shadow-sm"
+              >
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                    Nouvelle structure
+                  </p>
+                  <h3 className="text-lg font-semibold text-slate-900">{space.name}</h3>
+                  <p className="text-sm text-slate-600">
+                    {space.type} ajoutée pour suivre vos documents dédiés.{" "}
+                    {space.identifier ? `Identifiant : ${space.identifier}. ` : ""}
+                    {space.contactEmail ? `Contact : ${space.contactEmail}` : ""}
+                  </p>
+                </div>
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <span className="text-xs text-slate-500">Créé depuis cette page</span>
+                  <a
+                    href={spaceAppLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+                  >
+                    Accéder
+                  </a>
+                </div>
+              </article>
+            );
+          })}
 
           <button
             type="button"
@@ -408,6 +426,20 @@ const ProSpacePage: React.FC = () => {
             Aucun abonnement actif pour le moment. Commencez par créer votre premier espace.
           </p>
         )}
+
+        <div className="mt-10 flex flex-col items-center gap-3 rounded-3xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
+          <div className="text-center">
+            <p className="text-sm font-semibold text-slate-900">{connectedUserName}</p>
+            <p className="text-xs font-medium text-emerald-600">Connecté</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => logout()}
+            className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-black hover:text-black"
+          >
+            Se déconnecter
+          </button>
+        </div>
       </section>
     );
   };
