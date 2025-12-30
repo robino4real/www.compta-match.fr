@@ -7,13 +7,19 @@ import {
   DashboardStatsResponse,
   RevenuePoint,
 } from "../types/dashboard";
-import { getRangeBounds, getTimelineBucket, TimelineBucket } from "../utils/dashboardRange";
+import {
+  getRangeBounds,
+  getTimelineBucket,
+  RangeSelection,
+  TimelineBucket,
+} from "../utils/dashboardRange";
 
 const ORDER_STATUS_PAID = "PAID";
 const TEST_ACCOUNT_EMAIL = "lesbazeilles@yahoo.fr";
 
 type DashboardStatsOptions = {
   includeTestAccount?: boolean;
+  selection?: RangeSelection;
 };
 
 function buildDateFilter(from: Date | null, to: Date | null) {
@@ -44,6 +50,8 @@ function formatBucketLabel(date: Date, bucket: TimelineBucket): string {
         day: "2-digit",
         month: "short",
       });
+    case "year":
+      return date.getFullYear().toString();
     case "month":
     default:
       return date.toLocaleDateString("fr-FR", {
@@ -55,7 +63,10 @@ function formatBucketLabel(date: Date, bucket: TimelineBucket): string {
 
 function bucketizeOrder(date: Date, bucket: TimelineBucket) {
   const bucketDate = new Date(date);
-  if (bucket === "month") {
+  if (bucket === "year") {
+    bucketDate.setMonth(0, 1);
+    bucketDate.setHours(0, 0, 0, 0);
+  } else if (bucket === "month") {
     bucketDate.setDate(1);
     bucketDate.setHours(0, 0, 0, 0);
   } else if (bucket === "day") {
@@ -70,6 +81,38 @@ function bucketizeOrder(date: Date, bucket: TimelineBucket) {
     date: bucketDate,
     label: formatBucketLabel(bucketDate, bucket),
   };
+}
+
+function alignToBucketStart(date: Date, bucket: TimelineBucket) {
+  return bucketizeOrder(date, bucket).date;
+}
+
+function getNextBucketStart(date: Date, bucket: TimelineBucket) {
+  const next = new Date(date);
+  if (bucket === "year") {
+    next.setFullYear(date.getFullYear() + 1);
+  } else if (bucket === "month") {
+    next.setMonth(date.getMonth() + 1, 1);
+  } else if (bucket === "day") {
+    next.setDate(date.getDate() + 1);
+  } else {
+    next.setHours(date.getHours() + 1, 0, 0, 0);
+  }
+
+  return alignToBucketStart(next, bucket);
+}
+
+function buildTimelineRange(from: Date, to: Date, bucket: TimelineBucket) {
+  const start = alignToBucketStart(from, bucket);
+  const end = alignToBucketStart(to, bucket);
+  const buckets: { key: string; date: Date; label: string }[] = [];
+
+  for (let cursor = start; cursor <= end; cursor = getNextBucketStart(cursor, bucket)) {
+    const { key, date, label } = bucketizeOrder(cursor, bucket);
+    buckets.push({ key, date, label });
+  }
+
+  return buckets;
 }
 
 function buildOrderUserFilter(includeTestAccount: boolean) {
@@ -88,8 +131,8 @@ function buildUserFilter(includeTestAccount: boolean) {
   return { email: { not: TEST_ACCOUNT_EMAIL } };
 }
 
-async function computeSales(range: DashboardRange, includeTestAccount: boolean) {
-  const { from, to } = getRangeBounds(range);
+async function computeSales(range: DashboardRange, includeTestAccount: boolean, selection: RangeSelection = {}) {
+  const { from, to } = getRangeBounds(range, selection);
   const dateFilter = buildDateFilter(from, to);
   const userFilter = buildOrderUserFilter(includeTestAccount);
 
@@ -127,14 +170,19 @@ async function computeSales(range: DashboardRange, includeTestAccount: boolean) 
     });
   });
 
-  const timeline: RevenuePoint[] = Array.from(timelineMap.entries())
-    .map(([, value]) => ({
-      label: value.label,
-      date: value.date,
-      revenue: value.revenue,
-      ordersCount: value.ordersCount,
-    }))
-    .sort((a, b) => a.date.localeCompare(b.date));
+  const sortedOrders = paidOrders.sort((a, b) => getOrderDate(a).getTime() - getOrderDate(b).getTime());
+  const timelineStart = alignToBucketStart(from ?? getOrderDate(sortedOrders[0] ?? new Date()), bucket);
+  const timelineEnd = alignToBucketStart(to ?? getOrderDate(sortedOrders[sortedOrders.length - 1] ?? new Date()), bucket);
+
+  const timeline: RevenuePoint[] = buildTimelineRange(timelineStart, timelineEnd, bucket).map(({ key, label, date }) => {
+    const current = timelineMap.get(key);
+    return {
+      label,
+      date: date.toISOString(),
+      revenue: current?.revenue ?? 0,
+      ordersCount: current?.ordersCount ?? 0,
+    };
+  });
 
   return {
     totalRevenue,
@@ -147,9 +195,10 @@ async function computeSales(range: DashboardRange, includeTestAccount: boolean) 
 
 async function computeCustomers(
   range: DashboardRange,
-  includeTestAccount: boolean
+  includeTestAccount: boolean,
+  selection: RangeSelection = {}
 ): Promise<DashboardCustomerStats> {
-  const { from, to } = getRangeBounds(range);
+  const { from, to } = getRangeBounds(range, selection);
   const dateFilter = buildDateFilter(from, to);
   const newUsersDateFilter = from || to ? { createdAt: { gte: from ?? undefined, lte: to ?? undefined } } : {};
   const orderUserFilter = buildOrderUserFilter(includeTestAccount);
@@ -179,9 +228,10 @@ async function computeCustomers(
 
 async function computeProductSales(
   range: DashboardRange,
-  includeTestAccount: boolean
+  includeTestAccount: boolean,
+  selection: RangeSelection = {}
 ): Promise<DashboardProductSales[]> {
-  const { from, to } = getRangeBounds(range);
+  const { from, to } = getRangeBounds(range, selection);
   const dateFilter = buildDateFilter(from, to);
   const products = await prisma.downloadableProduct.findMany({ select: { id: true, name: true } });
   const productMap = new Map(products.map((p) => [p.id, p.name]));
@@ -224,8 +274,11 @@ async function computeProductSales(
   }));
 }
 
-async function computeProductInteractions(range: DashboardRange): Promise<DashboardProductInteraction[]> {
-  const { from, to } = getRangeBounds(range);
+async function computeProductInteractions(
+  range: DashboardRange,
+  selection: RangeSelection = {}
+): Promise<DashboardProductInteraction[]> {
+  const { from, to } = getRangeBounds(range, selection);
   const products = await prisma.downloadableProduct.findMany({ select: { id: true, name: true } });
   const productMap = new Map(products.map((p) => [p.id, p.name]));
 
@@ -277,13 +330,13 @@ async function computeProductInteractions(range: DashboardRange): Promise<Dashbo
 
 export async function getDashboardStats(
   range: DashboardRange,
-  { includeTestAccount = true }: DashboardStatsOptions = {}
+  { includeTestAccount = true, selection = {} }: DashboardStatsOptions = {}
 ): Promise<DashboardStatsResponse> {
   const [sales, customers, productSales, productInteractions] = await Promise.all([
-    computeSales(range, includeTestAccount),
-    computeCustomers(range, includeTestAccount),
-    computeProductSales(range, includeTestAccount),
-    computeProductInteractions(range),
+    computeSales(range, includeTestAccount, selection),
+    computeCustomers(range, includeTestAccount, selection),
+    computeProductSales(range, includeTestAccount, selection),
+    computeProductInteractions(range, selection),
   ]);
 
   const products = productSales.sort((a, b) => b.salesCountInRange - a.salesCountInRange);
