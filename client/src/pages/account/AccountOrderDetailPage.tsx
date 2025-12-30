@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
 
 interface InvoiceDetail {
@@ -17,6 +17,17 @@ interface OrderItemDetail {
   platform?: string | null;
 }
 
+interface OrderAdjustment {
+  id: string;
+  type: string;
+  status: string;
+  amountCents: number;
+  currency: string;
+  clientNote?: string | null;
+  adminNote?: string | null;
+  createdAt: string;
+}
+
 interface OrderDetail {
   id: string;
   orderNumber?: string;
@@ -26,6 +37,7 @@ interface OrderDetail {
   currency: string;
   invoice?: InvoiceDetail | null;
   items: OrderItemDetail[];
+  adjustments?: OrderAdjustment[];
 }
 
 interface DownloadLinkState {
@@ -47,6 +59,7 @@ const statusLabel: Record<string, string> = {
   FAILED: "Échouée",
   REFUNDED: "Remboursée",
   CANCELLED: "Annulée",
+  EN_ATTENTE_DE_PAIEMENT: "En attente de paiement",
 };
 
 const statusColor: Record<string, string> = {
@@ -55,11 +68,13 @@ const statusColor: Record<string, string> = {
   FAILED: "bg-rose-50 text-rose-700",
   REFUNDED: "bg-sky-50 text-sky-700",
   CANCELLED: "bg-slate-100 text-slate-700",
+  EN_ATTENTE_DE_PAIEMENT: "bg-amber-50 text-amber-700",
 };
 
 const AccountOrderDetailPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [order, setOrder] = React.useState<OrderDetail | null>(null);
   const [download, setDownload] = React.useState<DownloadState | null>(null);
@@ -67,7 +82,10 @@ const AccountOrderDetailPage: React.FC = () => {
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [actionError, setActionError] = React.useState<string | null>(null);
+  const [paymentError, setPaymentError] = React.useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = React.useState<string | null>(null);
   const [isGenerating, setIsGenerating] = React.useState(false);
+  const [isRedirecting, setIsRedirecting] = React.useState(false);
 
   const fetchOrder = React.useCallback(async () => {
     if (!orderId) {
@@ -100,6 +118,17 @@ const AccountOrderDetailPage: React.FC = () => {
   React.useEffect(() => {
     fetchOrder();
   }, [fetchOrder]);
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const paidParam = params.get("paid");
+
+    if (paidParam === "1") {
+      setSuccessMessage("Paiement reçu. Votre commande est à jour.");
+      fetchOrder();
+      navigate(location.pathname, { replace: true });
+    }
+  }, [fetchOrder, location.pathname, location.search, navigate]);
 
   React.useEffect(() => {
     const expiresAt = download?.activeLink?.expiresAt;
@@ -147,6 +176,60 @@ const AccountOrderDetailPage: React.FC = () => {
       .toString()
       .padStart(2, "0");
     return `${minutes}:${seconds}`;
+  };
+
+  const activeExtraPayment = React.useMemo(() => {
+    if (!order?.adjustments?.length) return null;
+
+    return order.adjustments.find(
+      (adj) =>
+        adj.type === "EXTRA_PAYMENT" &&
+        (adj.status === "PENDING" || adj.status === "SENT")
+    );
+  }, [order]);
+
+  const isAwaitingExtraPayment =
+    order?.status === "EN_ATTENTE_DE_PAIEMENT" && Boolean(activeExtraPayment);
+
+  const handleExtraPayment = async () => {
+    if (!order || !activeExtraPayment) return;
+    setPaymentError(null);
+    setSuccessMessage(null);
+    setIsRedirecting(true);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/account/orders/${order.id}/extra-payment/session`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.message || "Impossible de démarrer le paiement.");
+      }
+
+      if (data.alreadyPaid) {
+        setSuccessMessage("Paiement déjà enregistré. Actualisation en cours...");
+        await fetchOrder();
+        return;
+      }
+
+      if (data?.url) {
+        setSuccessMessage("Redirection vers Stripe…");
+        window.location.href = data.url as string;
+        return;
+      }
+
+      throw new Error("Lien de paiement introuvable.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erreur lors de la redirection.";
+      setPaymentError(message);
+    } finally {
+      setIsRedirecting(false);
+    }
   };
 
   const handleGenerateLink = async () => {
@@ -241,6 +324,12 @@ const AccountOrderDetailPage: React.FC = () => {
           </p>
         </div>
 
+        {successMessage && (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-6 py-4 text-sm text-emerald-800 shadow-sm">
+            {successMessage}
+          </div>
+        )}
+
         {isLoading && renderSkeleton()}
 
         {error && (
@@ -251,6 +340,37 @@ const AccountOrderDetailPage: React.FC = () => {
 
         {!isLoading && !error && order && (
           <div className="space-y-6">
+            {isAwaitingExtraPayment && activeExtraPayment && (
+              <section className="rounded-3xl border border-amber-200 bg-amber-50 px-6 py-5 shadow-sm">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div className="space-y-1 text-amber-900">
+                    <p className="text-sm font-semibold uppercase tracking-wide">Paiement complémentaire requis</p>
+                    <p className="text-sm text-amber-800">
+                      {activeExtraPayment.clientNote ||
+                        "Un complément est nécessaire pour finaliser votre commande."}
+                    </p>
+                    <p className="text-sm font-semibold">
+                      Montant dû : {formatPrice(activeExtraPayment.amountCents, activeExtraPayment.currency)}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={handleExtraPayment}
+                    disabled={isRedirecting}
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-700 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-80"
+                  >
+                    {isRedirecting ? "Redirection..." : "Payer le complément"}
+                  </button>
+                </div>
+
+                {paymentError && (
+                  <div className="mt-3 rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm text-rose-700">
+                    {paymentError}
+                  </div>
+                )}
+              </section>
+            )}
+
             <section className="rounded-3xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
@@ -308,7 +428,7 @@ const AccountOrderDetailPage: React.FC = () => {
               </div>
             </section>
 
-            {download?.hasDownloadableProduct && (
+            {order.status === "PAID" && download?.hasDownloadableProduct && (
               <section className="rounded-3xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
                 <div className="flex items-start justify-between gap-4">
                   <div>

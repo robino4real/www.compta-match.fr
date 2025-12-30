@@ -3,6 +3,9 @@ import { Request, Response } from "express";
 import Stripe from "stripe";
 import {
   DownloadPlatform,
+  OrderAdjustmentStatus,
+  OrderAdjustmentType,
+  OrderStatus,
   OrderType,
   Prisma,
   PromoCode,
@@ -748,11 +751,99 @@ export async function getStripeSessionById(req: Request, res: Response) {
   }
 }
 
+async function processExtraPaymentAdjustment(
+  session: Stripe.Checkout.Session,
+  stripeEventId: string,
+  correlationId: string
+): Promise<{ orderId?: string; message: string; status: "PROCESSED" | "ERROR" } | null> {
+  const metadata = session?.metadata || {};
+  const adjustmentId =
+    (metadata.adjustmentId as string | undefined) ||
+    (metadata.orderAdjustmentId as string | undefined);
+
+  if (!adjustmentId) {
+    return null;
+  }
+
+  const adjustment = await prisma.orderAdjustment.findUnique({
+    where: { id: adjustmentId },
+    include: { order: true },
+  });
+
+  if (!adjustment || !adjustment.order) {
+    console.error("[Stripe webhook] Ajustement introuvable", { adjustmentId, stripeEventId }, correlationId);
+    return { message: "Ajustement introuvable", status: "ERROR" };
+  }
+
+  const order = adjustment.order;
+
+  if (metadata.orderId && metadata.orderId !== order.id) {
+    return { orderId: order.id, message: "Commande et ajustement incohérents", status: "ERROR" };
+  }
+
+  if (adjustment.type !== OrderAdjustmentType.EXTRA_PAYMENT) {
+    return { orderId: order.id, message: "Ajustement non compatible", status: "ERROR" };
+  }
+
+  if (adjustment.status === OrderAdjustmentStatus.PAID) {
+    return { orderId: order.id, message: "Paiement déjà appliqué", status: "PROCESSED" };
+  }
+
+  if (order.status === OrderStatus.CANCELLED || order.status === OrderStatus.REFUNDED) {
+    return { orderId: order.id, message: "Commande non payable", status: "ERROR" };
+  }
+
+  const amountPaidCents =
+    typeof session.amount_total === "number" && session.amount_total > 0
+      ? session.amount_total
+      : adjustment.amountCents;
+
+  const now = new Date();
+
+  await prisma.$transaction([
+    prisma.orderAdjustment.update({
+      where: { id: adjustment.id },
+      data: {
+        status: OrderAdjustmentStatus.PAID,
+        stripeCheckoutSessionId: session.id,
+      },
+    }),
+    prisma.order.update({
+      where: { id: order.id },
+      data: {
+        status: OrderStatus.PAID,
+        paidAt: order.paidAt || now,
+        totalPaid: Math.max(order.totalPaid, 0) + amountPaidCents,
+      },
+    }),
+  ]);
+
+  await generateDownloadLinksForOrder(order.id, order.userId);
+  await sendOrderConfirmationEmail(order.id);
+
+  console.log(
+    `[Stripe webhook] Paiement complémentaire validé orderId=${order.id} adjustmentId=${adjustment.id}`,
+    correlationId
+  );
+
+  return { orderId: order.id, message: "Paiement complémentaire validé", status: "PROCESSED" };
+}
+
 async function processCheckoutCompletedEvent(
   session: Stripe.Checkout.Session,
   stripeEventId: string,
   correlationId: string
 ) {
+  const adjustmentResult = await processExtraPaymentAdjustment(
+    session,
+    stripeEventId,
+    correlationId
+  );
+
+  if (adjustmentResult) {
+    return adjustmentResult;
+  }
+
   const metadata = session?.metadata || {};
   const metaOrderId = metadata.orderId as string | undefined;
   const clientReferenceId =

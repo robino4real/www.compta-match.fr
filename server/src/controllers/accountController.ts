@@ -1,10 +1,17 @@
 import crypto from "crypto";
 import { Request, Response } from "express";
-import { AccountType, Prisma } from "@prisma/client";
+import {
+  AccountType,
+  OrderAdjustmentStatus,
+  OrderAdjustmentType,
+  OrderStatus,
+  Prisma,
+} from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { env } from "../config/env";
 import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import { hashPassword, verifyPassword } from "../utils/password";
+import { stripe } from "../config/stripeClient";
 
 function getAuthenticatedUserId(req: Request): string | null {
   const request = req as AuthenticatedRequest;
@@ -55,6 +62,10 @@ export async function getAccountOrders(req: Request, res: Response) {
       include: {
         invoice: true,
         items: { include: { product: true } },
+        adjustments: {
+          where: { type: OrderAdjustmentType.EXTRA_PAYMENT },
+          orderBy: { createdAt: "desc" },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -88,6 +99,7 @@ type OrderWithRelations = Prisma.OrderGetPayload<{
         downloadLinks: true;
       };
     };
+    adjustments: true;
   };
 }>;
 
@@ -166,6 +178,17 @@ function serializeOrderDetail(order: OrderWithRelations) {
       lineTotal: item.lineTotal,
       platform: item.platform,
     })),
+    adjustments: order.adjustments.map((adjustment) => ({
+      id: adjustment.id,
+      type: adjustment.type,
+      status: adjustment.status,
+      amountCents: adjustment.amountCents,
+      currency: adjustment.currency,
+      clientNote: adjustment.clientNote,
+      adminNote: adjustment.adminNote,
+      stripeCheckoutSessionId: adjustment.stripeCheckoutSessionId,
+      createdAt: adjustment.createdAt,
+    })),
   };
 }
 
@@ -193,6 +216,7 @@ export async function getAccountOrderDetail(req: Request, res: Response) {
             downloadLinks: true,
           },
         },
+        adjustments: true,
       },
     });
 
@@ -208,6 +232,136 @@ export async function getAccountOrderDetail(req: Request, res: Response) {
     return res.status(500).json({
       message: "Impossible de récupérer le détail de cette commande pour le moment.",
     });
+  }
+}
+
+export async function createExtraPaymentCheckoutSession(req: Request, res: Response) {
+  const userId = getAuthenticatedUserId(req);
+  if (!userId) {
+    return sendUnauthenticated(res);
+  }
+
+  const { orderId } = req.params as { orderId?: string };
+
+  if (!orderId) {
+    return res.status(400).json({ message: "Identifiant de commande manquant." });
+  }
+
+  try {
+    const order = await prisma.order.findFirst({
+      where: { id: orderId, userId },
+      include: { adjustments: true },
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: "Commande introuvable." });
+    }
+
+    if (order.status === OrderStatus.CANCELLED || order.status === OrderStatus.REFUNDED) {
+      return res.status(400).json({ message: "Cette commande ne peut plus être réglée." });
+    }
+
+    const adjustment = order.adjustments.find(
+      (adj) =>
+        adj.type === OrderAdjustmentType.EXTRA_PAYMENT &&
+        (adj.status === OrderAdjustmentStatus.PENDING || adj.status === OrderAdjustmentStatus.SENT)
+    );
+
+    if (!adjustment) {
+      return res.status(400).json({ message: "Aucun paiement complémentaire en attente." });
+    }
+
+    if (order.status !== OrderStatus.EN_ATTENTE_DE_PAIEMENT) {
+      return res.status(400).json({ message: "Cette commande n'est pas en attente de paiement." });
+    }
+
+    if (!adjustment.amountCents || adjustment.amountCents <= 0) {
+      return res.status(400).json({ message: "Montant de paiement complémentaire invalide." });
+    }
+
+    const currency = order.currency || "EUR";
+    const successUrlBase = `${env.frontendBaseUrl.replace(/\/$/, "")}/compte/commandes/${order.id}`;
+    let sessionUrl: string | null = null;
+
+    if (adjustment.stripeCheckoutSessionId) {
+      try {
+        const existingSession = await stripe.checkout.sessions.retrieve(adjustment.stripeCheckoutSessionId);
+
+        if (existingSession?.payment_status === "paid") {
+          await prisma.$transaction([
+            prisma.orderAdjustment.update({
+              where: { id: adjustment.id },
+              data: { status: OrderAdjustmentStatus.PAID },
+            }),
+            prisma.order.update({
+              where: { id: order.id },
+              data: {
+                status: OrderStatus.PAID,
+                paidAt: order.paidAt || new Date(),
+                totalPaid: order.totalPaid + adjustment.amountCents,
+              },
+            }),
+          ]);
+
+          return res.status(200).json({ alreadyPaid: true, message: "Paiement déjà effectué." });
+        }
+
+        if (existingSession?.status === "open" && existingSession.url) {
+          sessionUrl = existingSession.url;
+        }
+      } catch (error) {
+        console.warn(
+          "[account] Impossible de récupérer la session Stripe existante pour l'ajustement",
+          adjustment.stripeCheckoutSessionId,
+          error
+        );
+      }
+    }
+
+    if (!sessionUrl) {
+      const session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        line_items: [
+          {
+            quantity: 1,
+            price_data: {
+              currency: currency.toLowerCase(),
+              unit_amount: adjustment.amountCents,
+              product_data: {
+                name: `Paiement complémentaire commande ${order.orderNumber || "ComptaMatch"}`,
+              },
+            },
+          },
+        ],
+        success_url: `${successUrlBase}?paid=1`,
+        cancel_url: successUrlBase,
+        customer_email: order.billingEmailSnapshot || undefined,
+        client_reference_id: order.id,
+        metadata: {
+          orderId: order.id,
+          adjustmentId: adjustment.id,
+          adjustmentType: adjustment.type,
+          userId,
+          environment: env.nodeEnv,
+        },
+      });
+
+      sessionUrl = session.url || null;
+
+      await prisma.orderAdjustment.update({
+        where: { id: adjustment.id },
+        data: { stripeCheckoutSessionId: session.id },
+      });
+    }
+
+    if (!sessionUrl) {
+      return res.status(500).json({ message: "Impossible de créer la session de paiement." });
+    }
+
+    return res.json({ url: sessionUrl });
+  } catch (error) {
+    console.error("[account] Erreur lors de la création de la session de paiement complémentaire", error);
+    return res.status(500).json({ message: "Impossible de créer la session de paiement." });
   }
 }
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
 
 type PeriodPreset =
@@ -21,9 +21,11 @@ interface AdminOrderItem {
   totalPaid: number;
   currency: string;
   status: string;
+  paymentMethod?: string | null;
   promoCode?: { code: string } | null;
   invoice?: { id: string; invoiceNumber: string; issueDate?: string | null } | null;
-  user?: { email: string } | null;
+  user?: { email: string; firstName?: string | null; lastName?: string | null } | null;
+  items?: { id: string; productNameSnapshot?: string; product?: { name?: string; sku?: string | null } }[];
 }
 
 interface FiltersState {
@@ -55,6 +57,7 @@ const STATUS_OPTIONS = [
   { value: "", label: "Tous" },
   { value: "PAID", label: "Payé" },
   { value: "PENDING", label: "En attente" },
+  { value: "EN_ATTENTE_DE_PAIEMENT", label: "En attente (complément)" },
   { value: "CANCELLED", label: "Annulée" },
   { value: "REFUNDED", label: "Remboursée" },
   { value: "FAILED", label: "Échouée" },
@@ -216,8 +219,7 @@ const AdminOrdersPage: React.FC = () => {
   const [total, setTotal] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [actionMessage, setActionMessage] = React.useState<string | null>(null);
-  const [invoiceActionId, setInvoiceActionId] = React.useState<string | null>(null);
+  const navigate = useNavigate();
 
   const activeRange = React.useMemo(
     () => getPresetRange(filters.period, filters.customFrom, filters.customTo),
@@ -246,7 +248,6 @@ const AdminOrdersPage: React.FC = () => {
       try {
         setIsLoading(true);
         setError(null);
-        setActionMessage(null);
 
         const response = await fetch(`${API_BASE_URL}/admin/orders?${params.toString()}`, {
           credentials: "include",
@@ -292,38 +293,6 @@ const AdminOrdersPage: React.FC = () => {
 
   const formatCurrency = (amount: number, currency: string) => `${(amount / 100).toFixed(2)} ${currency}`;
 
-  const handleDownloadInvoice = (orderId: string) => {
-    window.open(`${API_BASE_URL}/admin/orders/${orderId}/invoice/pdf`, "_blank");
-  };
-
-  const handleGenerateInvoice = async (orderId: string) => {
-    try {
-      setError(null);
-      setActionMessage(null);
-      setInvoiceActionId(orderId);
-      const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/invoice`, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(data.message || "Impossible de générer la facture.");
-      }
-
-      const newInvoice = data.invoice as AdminOrderItem["invoice"];
-      setOrders((prev) =>
-        prev.map((order) => (order.id === orderId ? { ...order, invoice: newInvoice || order.invoice } : order))
-      );
-      setActionMessage(data.message || "Facture générée.");
-    } catch (err: any) {
-      console.error("Erreur génération facture", err);
-      setError(err?.message || "Impossible de générer la facture.");
-    } finally {
-      setInvoiceActionId(null);
-    }
-  };
-
   const resetFilters = () => {
     const defaults = getDefaultRange();
     setSearchParams(
@@ -338,6 +307,50 @@ const AdminOrdersPage: React.FC = () => {
         customTo: defaults.to,
       })
     );
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "PAID":
+        return "Payée";
+      case "PENDING":
+      case "EN_ATTENTE_DE_PAIEMENT":
+        return "En attente de paiement";
+      case "CANCELLED":
+        return "Annulée";
+      case "REFUNDED":
+        return "Remboursée";
+      default:
+        return status || "—";
+    }
+  };
+
+  const getStatusTone = (status: string) => {
+    switch (status) {
+      case "PAID":
+        return "bg-emerald-100 text-emerald-800";
+      case "PENDING":
+      case "EN_ATTENTE_DE_PAIEMENT":
+        return "bg-amber-100 text-amber-800";
+      case "REFUNDED":
+        return "bg-blue-100 text-blue-800";
+      case "CANCELLED":
+      case "FAILED":
+        return "bg-rose-100 text-rose-800";
+      default:
+        return "bg-slate-100 text-slate-700";
+    }
+  };
+
+  const describeItems = (order: AdminOrderItem) => {
+    const primaryItem = order.items?.[0];
+    if (!primaryItem) return "—";
+    const label = primaryItem.productNameSnapshot || primaryItem.product?.name;
+    if (!label) return "—";
+    if ((order.items?.length || 0) > 1) {
+      return `${label} (+${(order.items?.length || 1) - 1} autre${(order.items?.length || 1) - 1 > 1 ? "s" : ""})`;
+    }
+    return label;
   };
 
   const totalPages = Math.max(Math.ceil(total / filters.pageSize), 1);
@@ -467,7 +480,6 @@ const AdminOrdersPage: React.FC = () => {
 
       {isLoading && <p className="text-[11px] text-slate-600">Chargement des commandes...</p>}
       {error && <p className="text-[11px] text-red-600">{error}</p>}
-      {actionMessage && <p className="text-[11px] text-green-600">{actionMessage}</p>}
 
       {!isLoading && orders.length === 0 && !error && (
         <p className="text-[11px] text-slate-600">Aucune commande pour le moment.</p>
@@ -475,7 +487,7 @@ const AdminOrdersPage: React.FC = () => {
 
       {!isLoading && orders.length > 0 && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between text-[11px] text-slate-600">
+          <div className="flex flex-col gap-3 text-[11px] text-slate-600 lg:flex-row lg:items-center lg:justify-between">
             <span>
               Page {filters.page} / {totalPages} — {total} commande{total > 1 ? "s" : ""}
             </span>
@@ -507,76 +519,59 @@ const AdminOrdersPage: React.FC = () => {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs">
+            <table className="w-full min-w-[960px] border-collapse text-xs">
               <thead className="bg-white">
                 <tr>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-500">N° commande</th>
                   <th className="px-3 py-2 text-left font-semibold text-slate-500">Date</th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">Commande</th>
                   <th className="px-3 py-2 text-left font-semibold text-slate-500">Client</th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">Montant TTC</th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-500">Article(s)</th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-500">Montant total</th>
                   <th className="px-3 py-2 text-left font-semibold text-slate-500">Statut</th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-500">Mode de paiement</th>
                   <th className="px-3 py-2 text-left font-semibold text-slate-500">Code promo</th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">Facture</th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-500">Actions</th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-500 text-right">&nbsp;</th>
                 </tr>
               </thead>
               <tbody>
                 {orders.map((order) => (
-                  <tr key={order.id} className="odd:bg-white even:bg-white">
-                    <td className="px-3 py-2 align-top text-slate-700">
-                      {new Date(order.paidAt || order.createdAt).toISOString().slice(0, 10)}
+                  <tr
+                    key={order.id}
+                    className="odd:bg-white even:bg-slate-50 cursor-pointer transition hover:bg-slate-100"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => navigate(`/admin/orders/${order.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        navigate(`/admin/orders/${order.id}`);
+                      }
+                    }}
+                  >
+                    <td className="px-3 py-3 align-top text-slate-800 font-semibold">{order.orderNumber || order.id}</td>
+                    <td className="px-3 py-3 align-top text-slate-700">
+                      {formatDate(new Date(order.paidAt || order.createdAt))}
                     </td>
-                    <td className="px-3 py-2 align-top text-slate-800">{order.orderNumber || order.id}</td>
-                    <td className="px-3 py-2 align-top text-slate-800">{order.user?.email || "—"}</td>
-                    <td className="px-3 py-2 align-top text-slate-800">
+                    <td className="px-3 py-3 align-top text-slate-800">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-sm font-medium">
+                          {`${order.user?.firstName || ""} ${order.user?.lastName || ""}`.trim() || "—"}
+                        </span>
+                        <span className="text-[11px] text-slate-600">{order.user?.email || "—"}</span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3 align-top text-slate-800">{describeItems(order)}</td>
+                    <td className="px-3 py-3 align-top text-slate-800">
                       {formatCurrency(order.totalPaid, order.currency)}
                     </td>
-                    <td className="px-3 py-2 align-top text-slate-800">{order.status}</td>
-                    <td className="px-3 py-2 align-top text-slate-800">{order.promoCode?.code || "—"}</td>
-                    <td className="px-3 py-2 align-top text-slate-800">
-                      {order.invoice ? (
-                        <div className="space-y-1">
-                          <div className="font-semibold text-slate-800">
-                            {order.invoice.invoiceNumber || "—"}
-                          </div>
-                          <div className="text-[11px] text-slate-600">
-                            Émise le {order.invoice.issueDate ? new Date(order.invoice.issueDate).toISOString().slice(0, 10) : "—"}
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <Link
-                              to={`/admin/orders/${order.id}/invoice`}
-                              className="rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:border-black hover:text-black"
-                            >
-                              Voir détails
-                            </Link>
-                            <button
-                              type="button"
-                              onClick={() => handleDownloadInvoice(order.id)}
-                              className="rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:border-black hover:text-black"
-                            >
-                              Télécharger PDF
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled={invoiceActionId === order.id}
-                          onClick={() => handleGenerateInvoice(order.id)}
-                          className="rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 disabled:opacity-50 hover:border-black hover:text-black"
-                        >
-                          {invoiceActionId === order.id ? "Génération..." : "Générer facture"}
-                        </button>
-                      )}
+                    <td className="px-3 py-3 align-top text-slate-800">
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${getStatusTone(order.status)}`}>
+                        {getStatusLabel(order.status)}
+                      </span>
                     </td>
-                    <td className="px-3 py-2 align-top text-slate-800 space-x-2">
-                      <Link
-                        to={`/admin/orders/${order.id}`}
-                        className="rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:border-black hover:text-black"
-                      >
-                        Détail commande
-                      </Link>
-                    </td>
+                    <td className="px-3 py-3 align-top text-slate-800">{order.paymentMethod || "—"}</td>
+                    <td className="px-3 py-3 align-top text-slate-800">{order.promoCode?.code || "—"}</td>
+                    <td className="px-3 py-3 align-top text-right text-slate-400">›</td>
                   </tr>
                 ))}
               </tbody>
