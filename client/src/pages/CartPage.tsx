@@ -46,7 +46,7 @@ const CartPage: React.FC = () => {
         </header>
 
         {!hasItems ? (
-          <div className="mt-10 rounded-3xl border border-dashed border-slate-200 bg-white px-6 py-10 text-center shadow-sm">
+          <div className="mt-10 px-6 py-10 text-center">
             <h2 className="text-xl font-semibold text-slate-900">
               Votre panier est vide
             </h2>
