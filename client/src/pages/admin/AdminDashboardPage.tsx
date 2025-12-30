@@ -40,6 +40,8 @@ const SalesTimelineChart: React.FC<{
   loading: boolean;
   variant: SalesChartVariant;
 }> = ({ data, loading, variant }) => {
+  const rawGradientId = React.useId();
+  const gradientId = React.useMemo(() => rawGradientId.replace(/:/g, "-"), [rawGradientId]);
   if (loading) {
     return <div className="h-52 animate-pulse rounded-xl bg-slate-100" />;
   }
@@ -49,12 +51,17 @@ const SalesTimelineChart: React.FC<{
   }
 
   const maxRevenue = Math.max(...data.map((point) => point.revenue), 1);
+  const ySteps = 4;
+  const yTicks = React.useMemo(
+    () => Array.from({ length: ySteps + 1 }, (_, index) => Math.round((maxRevenue / ySteps) * index)),
+    [maxRevenue]
+  );
 
   if (variant === "line") {
-    const chartHeight = 220;
-    const chartWidth = Math.max(260, data.length * 90);
-    const yPadding = 24;
-    const xPadding = 42;
+    const chartHeight = 240;
+    const chartWidth = Math.max(320, data.length * 100);
+    const yPadding = 36;
+    const xPadding = 64;
     const points = data.map((point, index) => {
       const x = xPadding + (index / Math.max(1, data.length - 1)) * (chartWidth - xPadding * 2);
       const y = chartHeight - yPadding - (point.revenue / maxRevenue) * (chartHeight - yPadding * 2);
@@ -93,33 +100,75 @@ const SalesTimelineChart: React.FC<{
     };
 
     const path = buildSmoothPath();
+    const areaPath = `${path} L ${points[points.length - 1].x},${chartHeight - yPadding} L ${points[0].x},${chartHeight - yPadding} Z`;
 
     return (
       <div className="space-y-3">
         <div className="overflow-x-auto">
           <svg
             viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-            className="h-64 w-full min-w-[320px] text-emerald-600"
+            className="h-72 w-full min-w-[340px] text-emerald-600"
             role="img"
             aria-label="Courbe du chiffre d'affaires"
           >
+            <defs>
+              <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stopColor="currentColor" stopOpacity={0.12} />
+                <stop offset="100%" stopColor="currentColor" stopOpacity={0} />
+              </linearGradient>
+            </defs>
             <rect
               x={0}
               y={0}
               width={chartWidth}
               height={chartHeight}
-              rx={16}
-              className="fill-slate-50"
+              rx={18}
+              className="fill-white"
             />
-            <path d={path} className="fill-none stroke-current" strokeWidth={3} strokeLinecap="round" />
+            {yTicks.map((tick) => {
+              const y = chartHeight - yPadding - (tick / Math.max(maxRevenue, 1)) * (chartHeight - yPadding * 2);
+              return (
+                <g key={tick}>
+                  <line
+                    x1={xPadding}
+                    x2={chartWidth - xPadding + 8}
+                    y1={y}
+                    y2={y}
+                    className="stroke-slate-200"
+                    strokeDasharray="3 3"
+                  />
+                  <text x={12} y={y + 4} className="fill-slate-500 text-[10px] font-medium">
+                    {formatCurrency(tick)}
+                  </text>
+                </g>
+              );
+            })}
+            <line
+              x1={xPadding}
+              x2={chartWidth - xPadding + 8}
+              y1={chartHeight - yPadding}
+              y2={chartHeight - yPadding}
+              className="stroke-slate-300"
+              strokeLinecap="round"
+            />
+            <path d={areaPath} fill={`url(#${gradientId})`} />
+            <path d={path} className="fill-none stroke-current drop-shadow-sm" strokeWidth={3} strokeLinecap="round" />
             {points.map((point) => (
               <g key={point.label}>
+                <text
+                  x={point.x}
+                  y={point.y - 10}
+                  textAnchor="middle"
+                  className="fill-slate-700 text-[10px] font-semibold"
+                >
+                  {formatCurrency(point.revenue)}
+                </text>
                 <circle
                   cx={point.x}
                   cy={point.y}
-                  r={6}
+                  r={7}
                   className="fill-white stroke-current"
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                 >
                   <title>{`${point.label} — ${formatCurrency(point.revenue)} • ${point.orders} commande(s)`}</title>
                 </circle>
@@ -142,24 +191,43 @@ const SalesTimelineChart: React.FC<{
 
   return (
     <div className="space-y-3">
-      <div className="flex h-56 items-end gap-3 overflow-x-auto pb-2">
-        {data.map((point) => {
-          const height = Math.max(8, Math.round((point.revenue / maxRevenue) * 200));
-          return (
-            <div key={point.date} className="flex flex-col items-center gap-2 text-xs">
-              <div className="flex h-48 w-11 items-end justify-center rounded-lg bg-slate-50 p-1 shadow-inner">
-                <div
-                  className="w-full rounded-full bg-emerald-500 transition hover:bg-emerald-600"
-                  style={{ height }}
-                  title={`${point.label} — ${formatCurrency(point.revenue)} • ${point.ordersCount} commande(s)`}
-                />
-              </div>
-              <span className="whitespace-nowrap text-[11px] font-medium text-slate-600">
-                {point.label}
+      <div className="relative">
+        <div className="absolute inset-y-5 left-0 flex flex-col justify-between text-[10px] font-medium text-slate-500">
+          {yTicks
+            .slice()
+            .reverse()
+            .map((tick) => (
+              <span key={tick} className="pr-3 text-right">
+                {formatCurrency(tick)}
               </span>
-            </div>
-          );
-        })}
+            ))}
+        </div>
+        <div className="overflow-x-auto pl-16">
+          <div
+            className="relative flex min-h-[230px] items-end gap-4 rounded-xl border border-slate-100 bg-white/80 p-4 shadow-inner"
+            style={{
+              backgroundImage: "linear-gradient(to top, rgba(148,163,184,0.16) 1px, transparent 1px)",
+              backgroundSize: "100% 25%",
+            }}
+          >
+            {data.map((point) => {
+              const height = Math.max(10, Math.round((point.revenue / maxRevenue) * 180));
+              return (
+                <div key={point.date} className="flex flex-col items-center gap-2 text-xs">
+                  <div className="text-[10px] font-semibold text-slate-700">{formatCurrency(point.revenue)}</div>
+                  <div className="flex h-44 w-12 items-end justify-center rounded-lg bg-emerald-50/60 p-1 shadow-inner">
+                    <div
+                      className="w-full rounded-md bg-emerald-500 transition hover:translate-y-[-2px] hover:scale-[1.02] hover:bg-emerald-600"
+                      style={{ height }}
+                      title={`${point.label} — ${formatCurrency(point.revenue)} • ${point.ordersCount} commande(s)`}
+                    />
+                  </div>
+                  <span className="whitespace-nowrap text-[11px] font-medium text-slate-600">{point.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
       <p className="text-[11px] text-slate-500">
         Survolez les barres pour consulter le chiffre d'affaires et le nombre de commandes par période.
