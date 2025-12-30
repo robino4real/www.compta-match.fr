@@ -170,7 +170,7 @@ const FaqPage: React.FC = () => {
   );
 
   const renderFaqTab = () => (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="space-y-6">
       <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="space-y-1">
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">FAQ publique</p>
