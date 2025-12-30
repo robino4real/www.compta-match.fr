@@ -72,9 +72,20 @@ void logCriticalSchemaStatus(CRITICAL_TABLES, CRITICAL_COLUMNS);
 app.use((req, res, next) => {
   const requestOrigin = req.headers.origin as string | undefined;
 
+  const isLocalhostOrigin = (origin?: string | null) => {
+    if (!origin) return false;
+    try {
+      const url = new URL(origin);
+      return url.hostname === "localhost" || url.hostname === "127.0.0.1";
+    } catch (error) {
+      return false;
+    }
+  };
+
   const isAllowedOrigin =
     !env.allowCorsOrigins.length ||
-    (requestOrigin && env.allowCorsOrigins.includes(requestOrigin));
+    (requestOrigin &&
+      (env.allowCorsOrigins.includes(requestOrigin) || isLocalhostOrigin(requestOrigin)));
 
   if (requestOrigin && isAllowedOrigin) {
     res.header("Access-Control-Allow-Origin", requestOrigin);
