@@ -135,6 +135,36 @@ const AssoSpacePage: React.FC = () => {
     setIsSubmitting(false);
   };
 
+  const storageKey = React.useMemo(
+    () => (user ? `compta:asso:customSpaces:${user.id}` : null),
+    [user]
+  );
+
+  React.useEffect(() => {
+    if (!storageKey) {
+      setCustomSpaces([]);
+      return;
+    }
+
+    try {
+      const storedSpaces = localStorage.getItem(storageKey);
+      setCustomSpaces(storedSpaces ? (JSON.parse(storedSpaces) as CustomSpace[]) : []);
+    } catch (error) {
+      console.error("Unable to load saved association spaces", error);
+      setCustomSpaces([]);
+    }
+  }, [storageKey]);
+
+  const persistCustomSpaces = (spaces: CustomSpace[]) => {
+    if (!storageKey) return;
+
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(spaces));
+    } catch (error) {
+      console.error("Unable to persist association spaces", error);
+    }
+  };
+
   const handleOpenSpaceModal = () => {
     setSpaceFormError(null);
     setIsSpaceModalOpen(true);
@@ -160,7 +190,11 @@ const AssoSpacePage: React.FC = () => {
       type: spaceForm.type || "Association",
     };
 
-    setCustomSpaces((previous) => [...previous, newSpace]);
+    setCustomSpaces((previous) => {
+      const updatedSpaces = [...previous, newSpace];
+      persistCustomSpaces(updatedSpaces);
+      return updatedSpaces;
+    });
     setIsSpaceModalOpen(false);
     setSpaceFormError(null);
     setSpaceForm({
@@ -267,26 +301,32 @@ const AssoSpacePage: React.FC = () => {
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {appFiches.map((fiche) => (
-              <a
+              <article
                 key={fiche.id}
-                href={`/app/comptasso/${fiche.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="group flex flex-col justify-between rounded-2xl border border-slate-200 px-5 py-4 shadow-sm transition hover:-translate-y-1 hover:border-black hover:shadow-lg"
               >
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="text-lg font-semibold text-slate-900">{fiche.name}</h3>
-                    <span className="text-base text-slate-400 transition group-hover:text-black">↗</span>
                   </div>
                   <p className="text-sm text-slate-600">
                     Accès direct à la WebApp ComptAsso pour cette fiche.
                   </p>
                 </div>
-                <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  ID fiche : {fiche.id}
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                    ID fiche : {fiche.id}
+                  </div>
+                  <a
+                    href={`/app/comptasso/${fiche.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+                  >
+                    Accéder
+                  </a>
                 </div>
-              </a>
+              </article>
             ))}
           </div>
 
