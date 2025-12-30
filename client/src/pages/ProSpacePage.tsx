@@ -135,17 +135,9 @@ const ProSpacePage: React.FC = () => {
     setIsSubmitting(false);
   };
 
-  const storageKey = React.useMemo(
-    () => (user ? `compta:pro:customSpaces:${user.id}` : null),
-    [user]
-  );
+  const storageKey = "compta:pro:customSpaces";
 
   React.useEffect(() => {
-    if (!storageKey) {
-      setCustomSpaces([]);
-      return;
-    }
-
     try {
       const storedSpaces = localStorage.getItem(storageKey);
       setCustomSpaces(storedSpaces ? (JSON.parse(storedSpaces) as CustomSpace[]) : []);
