@@ -49,7 +49,7 @@ const stripeActiveWebhookSecretSource =
     ? "STRIPE_WEBHOOK_SECRET"
     : null;
 const defaultFrontendBaseUrl =
-  appEnv === "production" ? "https://compta-match.fr" : "http://localhost:5173";
+  appEnv === "production" ? "https://www.compta-match.fr" : "http://localhost:5173";
 
 const rawFrontendBaseUrl =
   process.env.FRONTEND_URL || process.env.FRONTEND_BASE_URL || defaultFrontendBaseUrl;
@@ -83,9 +83,15 @@ const allowCorsOrigins = Array.from(
   )
 );
 
+const canonicalWebOrigin =
+  normalizeOrigin(process.env.CANONICAL_WEB_ORIGIN) || frontendOrigin || "https://www.compta-match.fr";
+const canonicalWebHost = canonicalWebOrigin ? new URL(canonicalWebOrigin).hostname : null;
+
 const isCrossSite = frontendOrigin && apiOrigin && frontendOrigin !== apiOrigin;
 const frontendUsesHttps = frontendOrigin?.startsWith("https://");
-const cookieSameSite: "lax" | "none" = isCrossSite ? "none" : "lax";
+const cookieSameSite: "lax" | "none" =
+  (process.env.COOKIE_SAMESITE as "lax" | "none" | undefined) ||
+  (appEnv === "production" ? "none" : isCrossSite ? "none" : "lax");
 const cookieSecure = process.env.NODE_ENV === "production" || Boolean(frontendUsesHttps);
 
 const extractCookieDomain = (origin?: string | null) => {
@@ -109,7 +115,10 @@ const extractCookieDomain = (origin?: string | null) => {
 };
 
 const cookieDomain =
-  process.env.COOKIE_DOMAIN || extractCookieDomain(frontendOrigin) || extractCookieDomain(apiOrigin);
+  process.env.COOKIE_DOMAIN ||
+  (appEnv === "production" ? ".compta-match.fr" : null) ||
+  extractCookieDomain(frontendOrigin) ||
+  extractCookieDomain(apiOrigin);
 
 export const env = {
   port: Number(process.env.PORT) || 4000,
@@ -121,6 +130,8 @@ export const env = {
   frontendOrigin,
   apiOrigin,
   allowCorsOrigins,
+  canonicalWebOrigin,
+  canonicalWebHost,
   cookieSameSite,
   cookieSecure,
   cookieDomain,

@@ -51,6 +51,27 @@ console.log(
   env.stripeActiveWebhookSecretSource || "none"
 );
 
+const canonicalHosts = Array.from(
+  new Set([env.canonicalWebHost, "compta-match.fr", "www.compta-match.fr"].filter(Boolean))
+);
+
+app.use((req, res, next) => {
+  const requestHost = req.hostname;
+
+  const isLocalLike = requestHost === "localhost" || requestHost === "127.0.0.1";
+
+  if (!requestHost || !env.canonicalWebHost || isLocalLike) {
+    return next();
+  }
+
+  if (requestHost !== env.canonicalWebHost && canonicalHosts.includes(requestHost)) {
+    const targetOrigin = env.canonicalWebOrigin || `${req.protocol}://${env.canonicalWebHost}`;
+    return res.redirect(308, `${targetOrigin}${req.originalUrl}`);
+  }
+
+  return next();
+});
+
 const CRITICAL_TABLES = [
   "SeoSettingsV2",
   "PageSeo",
