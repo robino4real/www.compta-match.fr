@@ -19,7 +19,7 @@ interface PromoCodePayload {
   sponsorIban?: string;
   sponsorBic?: string;
   referralRate?: number | null;
-  targetType?: "PRODUCT" | "SUBSCRIPTION" | string;
+  targetType?: "ALL" | "PRODUCT" | "CATEGORY" | string;
   productCategoryId?: string | null;
 }
 
@@ -132,26 +132,45 @@ export async function createPromoCode(req: Request, res: Response) {
     let parsedEndsAt: Date | null = null;
     const referralEnabled = Boolean(isReferral);
 
-    const finalTargetType =
-      targetType === "SUBSCRIPTION" || targetType === "PRODUCT"
-        ? targetType
-        : "PRODUCT";
+    const allowedTargetTypes = ["ALL", "PRODUCT", "CATEGORY"] as const;
+    const finalTargetType = allowedTargetTypes.includes(
+      targetType as (typeof allowedTargetTypes)[number]
+    )
+      ? (targetType as (typeof allowedTargetTypes)[number])
+      : "ALL";
 
     let finalProductCategoryId: string | null = null;
-    if (finalTargetType === "PRODUCT") {
-      if (productCategoryId) {
-        const category = await prisma.downloadableCategory.findUnique({
-          where: { id: productCategoryId },
+    if (finalTargetType === "CATEGORY") {
+      if (!productCategoryId) {
+        return res.status(400).json({
+          message:
+            "Une catégorie de produits est requise pour un code promo ciblant une catégorie.",
         });
-
-        if (!category) {
-          return res.status(400).json({
-            message: "La catégorie sélectionnée pour le code promo est introuvable.",
-          });
-        }
-
-        finalProductCategoryId = category.id;
       }
+
+      const category = await prisma.downloadableCategory.findUnique({
+        where: { id: productCategoryId },
+      });
+
+      if (!category) {
+        return res.status(400).json({
+          message: "La catégorie sélectionnée pour le code promo est introuvable.",
+        });
+      }
+
+      finalProductCategoryId = category.id;
+    } else if (finalTargetType === "PRODUCT" && productCategoryId) {
+      const category = await prisma.downloadableCategory.findUnique({
+        where: { id: productCategoryId },
+      });
+
+      if (!category) {
+        return res.status(400).json({
+          message: "La catégorie sélectionnée pour le code promo est introuvable.",
+        });
+      }
+
+      finalProductCategoryId = category.id;
     }
 
     let parsedReferralRate: number | null = null;
@@ -349,10 +368,12 @@ export async function updatePromoCode(req: Request, res: Response) {
 
     const data: any = {};
 
-    const finalTargetType =
-      targetType === "PRODUCT" || targetType === "SUBSCRIPTION"
-        ? targetType
-        : existing.targetType || "PRODUCT";
+    const allowedTargetTypes = ["ALL", "PRODUCT", "CATEGORY"] as const;
+    const finalTargetType = allowedTargetTypes.includes(
+      targetType as (typeof allowedTargetTypes)[number]
+    )
+      ? (targetType as (typeof allowedTargetTypes)[number])
+      : existing.targetType ?? "ALL";
 
     if (typeof description !== "undefined") {
       data.description = description ? description.trim() : null;
@@ -369,7 +390,7 @@ export async function updatePromoCode(req: Request, res: Response) {
     }
 
     if (typeof targetType !== "undefined") {
-      if (targetType !== "PRODUCT" && targetType !== "SUBSCRIPTION") {
+      if (!allowedTargetTypes.includes(targetType as any)) {
         return res
           .status(400)
           .json({ message: "La cible du code promo est invalide." });
@@ -378,8 +399,27 @@ export async function updatePromoCode(req: Request, res: Response) {
     }
 
     if (typeof productCategoryId !== "undefined") {
-      if (finalTargetType === "SUBSCRIPTION") {
+      if (finalTargetType === "ALL") {
         data.productCategoryId = null;
+      } else if (finalTargetType === "CATEGORY") {
+        if (!productCategoryId) {
+          return res.status(400).json({
+            message:
+              "Une catégorie de produits est requise pour un code promo ciblant une catégorie.",
+          });
+        }
+
+        const category = await prisma.downloadableCategory.findUnique({
+          where: { id: productCategoryId },
+        });
+
+        if (!category) {
+          return res.status(400).json({
+            message: "La catégorie sélectionnée pour le code promo est introuvable.",
+          });
+        }
+
+        data.productCategoryId = category.id;
       } else if (productCategoryId) {
         const category = await prisma.downloadableCategory.findUnique({
           where: { id: productCategoryId },
@@ -395,7 +435,7 @@ export async function updatePromoCode(req: Request, res: Response) {
       } else {
         data.productCategoryId = null;
       }
-    } else if (finalTargetType === "SUBSCRIPTION") {
+    } else if (finalTargetType === "ALL") {
       data.productCategoryId = null;
     }
 
