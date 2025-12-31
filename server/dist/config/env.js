@@ -48,7 +48,7 @@ const stripeActiveWebhookSecretSource = stripeMode === "live"
         : stripeWebhookSecretFallback
             ? "STRIPE_WEBHOOK_SECRET"
             : null;
-const defaultFrontendBaseUrl = appEnv === "production" ? "https://compta-match.fr" : "http://localhost:5173";
+const defaultFrontendBaseUrl = appEnv === "production" ? "https://www.compta-match.fr" : "http://localhost:5173";
 const rawFrontendBaseUrl = process.env.FRONTEND_URL || process.env.FRONTEND_BASE_URL || defaultFrontendBaseUrl;
 const rawApiBaseUrl = appendApiSuffix(process.env.API_BASE_URL ||
     process.env.FRONTEND_BASE_URL ||
@@ -70,9 +70,12 @@ const allowCorsOrigins = Array.from(new Set([
     apiOrigin,
     ...extraCorsOrigins.map(normalizeOrigin),
 ].filter((value) => Boolean(value))));
+const canonicalWebOrigin = normalizeOrigin(process.env.CANONICAL_WEB_ORIGIN) || frontendOrigin || "https://www.compta-match.fr";
+const canonicalWebHost = canonicalWebOrigin ? new URL(canonicalWebOrigin).hostname : null;
 const isCrossSite = frontendOrigin && apiOrigin && frontendOrigin !== apiOrigin;
 const frontendUsesHttps = frontendOrigin?.startsWith("https://");
-const cookieSameSite = isCrossSite ? "none" : "lax";
+const cookieSameSite = process.env.COOKIE_SAMESITE ||
+    (appEnv === "production" ? "none" : isCrossSite ? "none" : "lax");
 const cookieSecure = process.env.NODE_ENV === "production" || Boolean(frontendUsesHttps);
 const extractCookieDomain = (origin) => {
     if (!origin)
@@ -91,7 +94,10 @@ const extractCookieDomain = (origin) => {
         return null;
     }
 };
-const cookieDomain = process.env.COOKIE_DOMAIN || extractCookieDomain(frontendOrigin) || extractCookieDomain(apiOrigin);
+const cookieDomain = process.env.COOKIE_DOMAIN ||
+    (appEnv === "production" ? ".compta-match.fr" : null) ||
+    extractCookieDomain(frontendOrigin) ||
+    extractCookieDomain(apiOrigin);
 exports.env = {
     port: Number(process.env.PORT) || 4000,
     databaseUrl: process.env.DATABASE_URL ||
@@ -101,6 +107,8 @@ exports.env = {
     frontendOrigin,
     apiOrigin,
     allowCorsOrigins,
+    canonicalWebOrigin,
+    canonicalWebHost,
     cookieSameSite,
     cookieSecure,
     cookieDomain,

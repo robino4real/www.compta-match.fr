@@ -67,6 +67,7 @@ const seoRenderer_1 = require("./utils/seoRenderer");
 const prisma_1 = require("./config/prisma");
 const dbReadiness_1 = require("./utils/dbReadiness");
 const clientQuestionController_1 = require("./controllers/clientQuestionController");
+const dbSchemaDiag_1 = require("./utils/dbSchemaDiag");
 const app = (0, express_1.default)();
 const apiRouter = (0, express_1.Router)();
 app.set("trust proxy", 1);
@@ -74,6 +75,19 @@ console.log("[config] Frontend base URL:", env_1.env.frontendBaseUrl);
 console.log("[config] API base URL:", env_1.env.apiBaseUrl);
 console.log("[config] Stripe mode:", env_1.env.stripeMode);
 console.log("[config] Stripe webhook secret present:", Boolean(env_1.env.stripeActiveWebhookSecret), "source=", env_1.env.stripeActiveWebhookSecretSource || "none");
+const canonicalHosts = Array.from(new Set([env_1.env.canonicalWebHost, "compta-match.fr", "www.compta-match.fr"].filter(Boolean)));
+app.use((req, res, next) => {
+    const requestHost = req.hostname;
+    const isLocalLike = requestHost === "localhost" || requestHost === "127.0.0.1";
+    if (!requestHost || !env_1.env.canonicalWebHost || isLocalLike) {
+        return next();
+    }
+    if (requestHost !== env_1.env.canonicalWebHost && canonicalHosts.includes(requestHost)) {
+        const targetOrigin = env_1.env.canonicalWebOrigin || `${req.protocol}://${env_1.env.canonicalWebHost}`;
+        return res.redirect(308, `${targetOrigin}${req.originalUrl}`);
+    }
+    return next();
+});
 const CRITICAL_TABLES = [
     "SeoSettingsV2",
     "PageSeo",
@@ -90,6 +104,22 @@ const CRITICAL_COLUMNS = [
     { table: "AppFiche", column: "fiscalYearStartMonth" },
 ];
 void (0, dbReadiness_1.logCriticalSchemaStatus)(CRITICAL_TABLES, CRITICAL_COLUMNS);
+void (async () => {
+    try {
+        const diagnostics = await (0, dbSchemaDiag_1.runDbSchemaDiagnostics)(prisma_1.prisma);
+        const { dbIdentity, expectedColumnsCheck } = diagnostics;
+        console.log(`[db-identity] db=${dbIdentity.db || "unknown"}, schema=${dbIdentity.schema || "unknown"}, urlHost=${dbIdentity.urlHost || "unknown"}, urlDb=${dbIdentity.urlDb || "unknown"}`);
+        if (expectedColumnsCheck.ok) {
+            console.log("[db-schema] PromoCode columns OK");
+        }
+        else {
+            console.error(`[db-schema] Missing columns on PromoCode: ${expectedColumnsCheck.missing.join(", ") || "unknown"} (probable cause: Prisma client not regenerated / wrong DATABASE_URL)`);
+        }
+    }
+    catch (error) {
+        console.error("[db-schema] Diagnostic initial impossible", error);
+    }
+})();
 app.use((req, res, next) => {
     const requestOrigin = req.headers.origin;
     const isLocalhostOrigin = (origin) => {

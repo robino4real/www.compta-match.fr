@@ -35,6 +35,7 @@ import { prisma } from "./config/prisma";
 import { AuthenticatedRequest } from "./middleware/authMiddleware";
 import { logCriticalSchemaStatus } from "./utils/dbReadiness";
 import { clientCreateQuestion } from "./controllers/clientQuestionController";
+import { runDbSchemaDiagnostics } from "./utils/dbSchemaDiag";
 
 const app = express();
 const apiRouter = Router();
@@ -89,6 +90,29 @@ const CRITICAL_COLUMNS = [
 ];
 
 void logCriticalSchemaStatus(CRITICAL_TABLES, CRITICAL_COLUMNS);
+
+void (async () => {
+  try {
+    const diagnostics = await runDbSchemaDiagnostics(prisma);
+    const { dbIdentity, expectedColumnsCheck } = diagnostics;
+
+    console.log(
+      `[db-identity] db=${dbIdentity.db || "unknown"}, schema=${dbIdentity.schema || "unknown"}, urlHost=${dbIdentity.urlHost || "unknown"}, urlDb=${dbIdentity.urlDb || "unknown"}`
+    );
+
+    if (expectedColumnsCheck.ok) {
+      console.log("[db-schema] PromoCode columns OK");
+    } else {
+      console.error(
+        `[db-schema] Missing columns on PromoCode: ${
+          expectedColumnsCheck.missing.join(", ") || "unknown"
+        } (probable cause: Prisma client not regenerated / wrong DATABASE_URL)`
+      );
+    }
+  } catch (error) {
+    console.error("[db-schema] Diagnostic initial impossible", error);
+  }
+})();
 
 app.use((req, res, next) => {
   const requestOrigin = req.headers.origin as string | undefined;
