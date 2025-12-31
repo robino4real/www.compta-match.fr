@@ -171,8 +171,34 @@ async function computeSales(range: DashboardRange, includeTestAccount: boolean, 
   });
 
   const sortedOrders = paidOrders.sort((a, b) => getOrderDate(a).getTime() - getOrderDate(b).getTime());
-  const timelineStart = alignToBucketStart(from ?? getOrderDate(sortedOrders[0] ?? new Date()), bucket);
-  const timelineEnd = alignToBucketStart(to ?? getOrderDate(sortedOrders[sortedOrders.length - 1] ?? new Date()), bucket);
+  const firstOrderDate = sortedOrders[0] ? getOrderDate(sortedOrders[0]) : null;
+  const lastOrderDate = sortedOrders.length > 0 ? getOrderDate(sortedOrders[sortedOrders.length - 1]) : null;
+
+  const timelineStartSource = from ?? firstOrderDate;
+  const timelineEndSource = to ?? lastOrderDate;
+
+  if (!timelineStartSource || !timelineEndSource) {
+    return {
+      totalRevenue,
+      totalStripeFees,
+      netResult,
+      ordersCount,
+      timeline: [],
+    };
+  }
+
+  const timelineStart = alignToBucketStart(timelineStartSource, bucket);
+  const timelineEnd = alignToBucketStart(timelineEndSource, bucket);
+
+  if (timelineStart > timelineEnd) {
+    return {
+      totalRevenue,
+      totalStripeFees,
+      netResult,
+      ordersCount,
+      timeline: [],
+    };
+  }
 
   const timeline: RevenuePoint[] = buildTimelineRange(timelineStart, timelineEnd, bucket).map(({ key, label, date }) => {
     const current = timelineMap.get(key);
