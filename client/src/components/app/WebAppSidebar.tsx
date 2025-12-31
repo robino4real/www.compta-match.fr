@@ -12,6 +12,11 @@ const navItemClassName = ({ isActive }: { isActive: boolean }) =>
     isActive ? "bg-slate-100 text-slate-900" : "text-slate-700 hover:bg-slate-50"
   }`;
 
+const navSubItemClassName = ({ isActive }: { isActive: boolean }) =>
+  `flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition ${
+    isActive ? "bg-slate-50 text-slate-900" : "text-slate-600 hover:bg-slate-50"
+  }`;
+
 const WebAppSidebar: React.FC<WebAppSidebarProps> = ({ onNavigate, onQuit }) => {
   const { ficheId: routeFicheId } = useParams<{ ficheId: string }>();
   const { context } = useWebApp();
@@ -54,6 +59,28 @@ const WebAppSidebar: React.FC<WebAppSidebarProps> = ({ onNavigate, onQuit }) => 
 
       <nav className="flex-1 px-3 py-5">
         <div className="space-y-1">
+          <NavLink to={basePath} end className={navItemClassName} onClick={handleNavigate}>
+            <span aria-hidden className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-sm font-semibold text-slate-600">
+              H
+            </span>
+            Accueil
+          </NavLink>
+
+          <div className="ml-9 space-y-1" aria-label="Sous-menu Accueil">
+            <NavLink to={`${basePath}/comptabilite`} className={navSubItemClassName} onClick={handleNavigate}>
+              <span aria-hidden className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-indigo-50 text-xs font-semibold text-indigo-600">
+                C
+              </span>
+              Comptabilité
+            </NavLink>
+            <NavLink to={`${basePath}/documents`} className={navSubItemClassName} onClick={handleNavigate}>
+              <span aria-hidden className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-50 text-xs font-semibold text-sky-700">
+                D
+              </span>
+              Documents
+            </NavLink>
+          </div>
+
           <NavLink to={`${basePath}/abonnements`} className={navItemClassName} onClick={handleNavigate}>
             <span aria-hidden className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-sm font-semibold text-slate-600">
               A
