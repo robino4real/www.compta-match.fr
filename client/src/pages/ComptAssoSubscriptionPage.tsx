@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
 import { PaidServiceComparison, PaidServicePlan, PaidServiceSection } from "../types/paidServices";
 import { formatPaidServicePrice } from "../lib/formatPaidServicePrice";
+import { buildPublicAppUrl } from "../lib/publicAppUrl";
 
 const ComptAssoSubscriptionPage: React.FC = () => {
   const navigate = useNavigate();
@@ -61,7 +62,8 @@ const ComptAssoSubscriptionPage: React.FC = () => {
   };
 
   const handleAssoAccessClick = () => {
-    window.open("/mon-espace-asso", "_blank", "noopener,noreferrer");
+    const targetUrl = buildPublicAppUrl("/mon-espace-asso");
+    window.open(targetUrl, "_blank", "noopener,noreferrer");
   };
 
   const ctaButtonClasses =

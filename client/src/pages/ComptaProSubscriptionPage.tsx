@@ -9,6 +9,7 @@ import {
 } from "../types/paidServices";
 import { useAuth } from "../context/AuthContext";
 import { formatPaidServicePrice } from "../lib/formatPaidServicePrice";
+import { buildPublicAppUrl } from "../lib/publicAppUrl";
 
 const ComptaProSubscriptionPage: React.FC = () => {
   const { isLoading: isAuthLoading } = useAuth();
@@ -69,7 +70,8 @@ const ComptaProSubscriptionPage: React.FC = () => {
   const handleProAccessClick = () => {
     if (isAuthLoading) return;
 
-    window.open("/mon-espace-pro", "_blank", "noopener,noreferrer");
+    const targetUrl = buildPublicAppUrl("/mon-espace-pro");
+    window.open(targetUrl, "_blank", "noopener,noreferrer");
   };
 
   const ctaButtonClasses =
