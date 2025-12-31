@@ -42,6 +42,16 @@ const SalesTimelineChart: React.FC<{
 }> = ({ data, loading, variant }) => {
   const rawGradientId = React.useId();
   const gradientId = React.useMemo(() => rawGradientId.replace(/:/g, "-"), [rawGradientId]);
+  const maxRevenue = React.useMemo(
+    () => Math.max(...data.map((point) => point.revenue), 1),
+    [data]
+  );
+  const ySteps = 4;
+  const yTicks = React.useMemo(
+    () => Array.from({ length: ySteps + 1 }, (_, index) => Math.round((maxRevenue / ySteps) * index)),
+    [maxRevenue]
+  );
+
   if (loading) {
     return <div className="h-52 animate-pulse rounded-xl bg-slate-100" />;
   }
@@ -49,13 +59,6 @@ const SalesTimelineChart: React.FC<{
   if (!data.length) {
     return <p className="text-sm text-slate-500">Aucune commande sur cette période.</p>;
   }
-
-  const maxRevenue = Math.max(...data.map((point) => point.revenue), 1);
-  const ySteps = 4;
-  const yTicks = React.useMemo(
-    () => Array.from({ length: ySteps + 1 }, (_, index) => Math.round((maxRevenue / ySteps) * index)),
-    [maxRevenue]
-  );
 
   if (variant === "line") {
     const chartHeight = 240;
