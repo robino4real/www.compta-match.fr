@@ -19,6 +19,8 @@ const promoService_1 = require("../services/promoService");
 const cartService_1 = require("../services/cartService");
 const transactionalEmailService_1 = require("../services/transactionalEmailService");
 const env_1 = require("../config/env");
+const customerActivityService_1 = require("../services/customerActivityService");
+const revenueService_1 = require("../services/newsletter/revenueService");
 function sanitizeString(value) {
     if (typeof value !== "string")
         return "";
@@ -235,6 +237,17 @@ async function createDownloadCheckoutSession(req, res) {
                 billingName,
                 billingAddress,
             });
+            await (0, customerActivityService_1.trackCustomerEvent)(client_1.CustomerActivityEventType.ORDER_CREATED, {
+                userId,
+                email: billingInfo.email,
+                meta: { amount: 0, currency },
+            });
+            await (0, customerActivityService_1.trackCustomerEvent)(client_1.CustomerActivityEventType.ORDER_PAID, {
+                userId,
+                email: billingInfo.email,
+                meta: { amount: 0, currency, orderId: order.id },
+            });
+            await (0, revenueService_1.attributeRevenue)(order.id, billingInfo.email, order.totalPaid);
             if (appliedPromo && promoDiscountCents > 0) {
                 await prisma_1.prisma.promoCode.update({
                     where: { id: appliedPromo.id },
@@ -274,6 +287,11 @@ async function createDownloadCheckoutSession(req, res) {
                 items: { create: buildOrderItemsPayload(normalizedItems, productMap) },
             },
             include: { items: true },
+        });
+        await (0, customerActivityService_1.trackCustomerEvent)(client_1.CustomerActivityEventType.ORDER_CREATED, {
+            userId,
+            email: billingInfo.email,
+            meta: { amount: payableCents, currency: currency.toUpperCase(), orderId: order.id },
         });
         const metadata = {
             userId: String(userId),
@@ -514,7 +532,65 @@ async function getStripeSessionById(req, res) {
         return res.status(404).json({ message: "Session Stripe introuvable" });
     }
 }
+async function processExtraPaymentAdjustment(session, stripeEventId, correlationId) {
+    const metadata = session?.metadata || {};
+    const adjustmentId = metadata.adjustmentId ||
+        metadata.orderAdjustmentId;
+    if (!adjustmentId) {
+        return null;
+    }
+    const adjustment = await prisma_1.prisma.orderAdjustment.findUnique({
+        where: { id: adjustmentId },
+        include: { order: true },
+    });
+    if (!adjustment || !adjustment.order) {
+        console.error("[Stripe webhook] Ajustement introuvable", { adjustmentId, stripeEventId }, correlationId);
+        return { message: "Ajustement introuvable", status: "ERROR" };
+    }
+    const order = adjustment.order;
+    if (metadata.orderId && metadata.orderId !== order.id) {
+        return { orderId: order.id, message: "Commande et ajustement incohérents", status: "ERROR" };
+    }
+    if (adjustment.type !== client_1.OrderAdjustmentType.EXTRA_PAYMENT) {
+        return { orderId: order.id, message: "Ajustement non compatible", status: "ERROR" };
+    }
+    if (adjustment.status === client_1.OrderAdjustmentStatus.PAID) {
+        return { orderId: order.id, message: "Paiement déjà appliqué", status: "PROCESSED" };
+    }
+    if (order.status === client_1.OrderStatus.CANCELLED || order.status === client_1.OrderStatus.REFUNDED) {
+        return { orderId: order.id, message: "Commande non payable", status: "ERROR" };
+    }
+    const amountPaidCents = typeof session.amount_total === "number" && session.amount_total > 0
+        ? session.amount_total
+        : adjustment.amountCents;
+    const now = new Date();
+    await prisma_1.prisma.$transaction([
+        prisma_1.prisma.orderAdjustment.update({
+            where: { id: adjustment.id },
+            data: {
+                status: client_1.OrderAdjustmentStatus.PAID,
+                stripeCheckoutSessionId: session.id,
+            },
+        }),
+        prisma_1.prisma.order.update({
+            where: { id: order.id },
+            data: {
+                status: client_1.OrderStatus.PAID,
+                paidAt: order.paidAt || now,
+                totalPaid: Math.max(order.totalPaid, 0) + amountPaidCents,
+            },
+        }),
+    ]);
+    await (0, downloadLinkService_1.generateDownloadLinksForOrder)(order.id, order.userId);
+    await (0, transactionalEmailService_1.sendOrderConfirmationEmail)(order.id);
+    console.log(`[Stripe webhook] Paiement complémentaire validé orderId=${order.id} adjustmentId=${adjustment.id}`, correlationId);
+    return { orderId: order.id, message: "Paiement complémentaire validé", status: "PROCESSED" };
+}
 async function processCheckoutCompletedEvent(session, stripeEventId, correlationId) {
+    const adjustmentResult = await processExtraPaymentAdjustment(session, stripeEventId, correlationId);
+    if (adjustmentResult) {
+        return adjustmentResult;
+    }
     const metadata = session?.metadata || {};
     const metaOrderId = metadata.orderId;
     const clientReferenceId = typeof session.client_reference_id === "string"
@@ -710,6 +786,14 @@ async function processCheckoutCompletedEvent(session, stripeEventId, correlation
         data: orderUpdatePayload,
     });
     console.log("[Stripe webhook] Commande passée en PAID", { orderId: order.id }, correlationId);
+    if (!orderAlreadyPaid) {
+        await (0, customerActivityService_1.trackCustomerEvent)(client_1.CustomerActivityEventType.ORDER_PAID, {
+            userId: order.userId,
+            email: orderOwner.email,
+            meta: { amount: payableCents, currency, orderId: order.id },
+        });
+        await (0, revenueService_1.attributeRevenue)(order.id, orderOwner.email, payableCents);
+    }
     await (0, downloadLinkService_1.generateDownloadLinksForOrder)(order.id, order.userId);
     const orderWithRelations = await prisma_1.prisma.order.findUnique({
         where: { id: order.id },

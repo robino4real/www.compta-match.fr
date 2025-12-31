@@ -66,6 +66,7 @@ const paymentController_1 = require("./controllers/paymentController");
 const seoRenderer_1 = require("./utils/seoRenderer");
 const prisma_1 = require("./config/prisma");
 const dbReadiness_1 = require("./utils/dbReadiness");
+const clientQuestionController_1 = require("./controllers/clientQuestionController");
 const app = (0, express_1.default)();
 const apiRouter = (0, express_1.Router)();
 app.set("trust proxy", 1);
@@ -91,8 +92,20 @@ const CRITICAL_COLUMNS = [
 void (0, dbReadiness_1.logCriticalSchemaStatus)(CRITICAL_TABLES, CRITICAL_COLUMNS);
 app.use((req, res, next) => {
     const requestOrigin = req.headers.origin;
+    const isLocalhostOrigin = (origin) => {
+        if (!origin)
+            return false;
+        try {
+            const url = new URL(origin);
+            return url.hostname === "localhost" || url.hostname === "127.0.0.1";
+        }
+        catch (error) {
+            return false;
+        }
+    };
     const isAllowedOrigin = !env_1.env.allowCorsOrigins.length ||
-        (requestOrigin && env_1.env.allowCorsOrigins.includes(requestOrigin));
+        (requestOrigin &&
+            (env_1.env.allowCorsOrigins.includes(requestOrigin) || isLocalhostOrigin(requestOrigin)));
     if (requestOrigin && isAllowedOrigin) {
         res.header("Access-Control-Allow-Origin", requestOrigin);
         res.header("Vary", "Origin");
@@ -123,6 +136,7 @@ apiRouter.use("/catalog", catalogRoutes_1.default);
 apiRouter.use("/cart", cartRoutes_1.default);
 apiRouter.use("/legal-pages", legalPageRoutes_1.default);
 apiRouter.use("/articles", articleRoutes_1.default);
+apiRouter.post("/client/questions", authMiddleware_1.requireAuth, clientQuestionController_1.clientCreateQuestion);
 apiRouter.use("/downloads", downloadRoutes_1.default);
 apiRouter.use("/admin", authMiddleware_1.requireAdmin, adminRoutes_1.default);
 apiRouter.use("/orders", authMiddleware_1.requireAuth, orderRoutes_1.default);

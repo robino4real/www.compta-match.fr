@@ -90,6 +90,7 @@ function setAuthCookie(res: Response, token: string) {
     sameSite: env.cookieSameSite,
     secure: env.cookieSecure,
     maxAge: TOKEN_MAX_AGE_MS,
+    ...(env.cookieDomain ? { domain: env.cookieDomain } : {}),
     path: "/",
   });
 }
@@ -344,6 +345,7 @@ export async function logout(_req: Request, res: Response) {
     secure: env.cookieSecure,
     maxAge: 0,
     expires: new Date(0),
+    ...(env.cookieDomain ? { domain: env.cookieDomain } : {}),
     path: "/",
   });
 

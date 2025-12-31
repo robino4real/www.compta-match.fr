@@ -88,6 +88,29 @@ const frontendUsesHttps = frontendOrigin?.startsWith("https://");
 const cookieSameSite: "lax" | "none" = isCrossSite ? "none" : "lax";
 const cookieSecure = process.env.NODE_ENV === "production" || Boolean(frontendUsesHttps);
 
+const extractCookieDomain = (origin?: string | null) => {
+  if (!origin) return null;
+
+  try {
+    const url = new URL(origin);
+    const hostSegments = url.hostname.split(".");
+
+    if (hostSegments.length < 2) {
+      return null;
+    }
+
+    const topLevelDomain = hostSegments.slice(-2).join(".");
+
+    return `.${topLevelDomain}`;
+  } catch (error) {
+    console.warn(`[env] Impossible de déterminer le domaine de cookie pour ${origin}`, error);
+    return null;
+  }
+};
+
+const cookieDomain =
+  process.env.COOKIE_DOMAIN || extractCookieDomain(frontendOrigin) || extractCookieDomain(apiOrigin);
+
 export const env = {
   port: Number(process.env.PORT) || 4000,
   databaseUrl:
@@ -100,6 +123,7 @@ export const env = {
   allowCorsOrigins,
   cookieSameSite,
   cookieSecure,
+  cookieDomain,
   stripeMode,
   stripeSecretKey: process.env.STRIPE_SECRET_KEY,
   stripeWebhookSecret: stripeWebhookSecretFallback,
