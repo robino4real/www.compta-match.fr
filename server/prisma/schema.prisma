@@ -338,7 +338,7 @@ model PromoCode {
   discountValue Int
 
   /// Cible du code promo (produit ou abonnement)
-  targetType PromoTargetType @default(PRODUCT)
+  targetType PromoTargetType @default(ALL)
 
   /// Limite éventuelle à une catégorie de produits téléchargeables
   productCategoryId String?
@@ -372,8 +372,11 @@ model PromoCode {
 }
 
 enum PromoTargetType {
+  ALL
   PRODUCT
-  SUBSCRIPTION
+  CATEGORY
+
+  @@map("PromoTargetType")
 }
 
 model CompanySettings {

@@ -32,15 +32,16 @@ export async function validatePromoCodeForTotal(
   }
 
   const targetType =
-    promo.targetType === "SUBSCRIPTION" || promo.targetType === "PRODUCT"
+    promo.targetType === "ALL" ||
+    promo.targetType === "PRODUCT" ||
+    promo.targetType === "CATEGORY"
       ? promo.targetType
-      : "PRODUCT";
+      : "ALL";
 
-  if (targetType === "PRODUCT" && context !== "PRODUCT") {
-    return null;
-  }
-
-  if (targetType === "SUBSCRIPTION" && context !== "SUBSCRIPTION") {
+  if (
+    (targetType === "PRODUCT" || targetType === "CATEGORY") &&
+    context !== "PRODUCT"
+  ) {
     return null;
   }
 
@@ -66,7 +67,12 @@ export async function validatePromoCodeForTotal(
 
   let eligibleBase = totalCents;
 
-  if (targetType === "PRODUCT") {
+  if (targetType === "CATEGORY") {
+    const categoryTotals = options?.categoryTotals;
+    eligibleBase = promo.productCategoryId
+      ? categoryTotals?.[promo.productCategoryId] || 0
+      : 0;
+  } else if (targetType === "PRODUCT") {
     const categoryTotals = options?.categoryTotals;
     eligibleBase = promo.productCategoryId
       ? categoryTotals?.[promo.productCategoryId] || 0
