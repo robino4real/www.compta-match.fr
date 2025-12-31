@@ -31,6 +31,10 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
     ],
   },
   {
+    title: "Sauvegardes",
+    items: [{ label: "Sauvegardes de sûreté", href: "/admin/sauvegardes-surete" }],
+  },
+  {
     title: "Contenus",
     items: [
       { label: "Articles / blog", href: "/admin/articles" },

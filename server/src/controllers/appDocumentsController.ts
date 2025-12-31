@@ -3,7 +3,15 @@ import path from "path";
 import multer from "multer";
 import { randomUUID } from "crypto";
 import { Request, Response } from "express";
+import { AppFicheType } from "@prisma/client";
 import { prisma } from "../config/prisma";
+import { documentsStorageRoot } from "../config/storage";
+import {
+  buildSuretyBackupRelativePath,
+  ensureStorageRoots,
+  getSuretyBackupPath,
+  resolveDocumentStoragePath,
+} from "../utils/documentStorage";
 import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import { FicheRequest } from "../middleware/ficheAccessMiddleware";
 import { appErrors } from "../utils/appErrors";
@@ -17,7 +25,6 @@ interface DocumentRequest extends AuthenticatedRequest, FicheRequest {
 
 const DOCUMENT_MAX_SIZE = 20 * 1024 * 1024; // 20MB
 const ALLOWED_MIME_TYPES = ["application/pdf", "image/jpeg", "image/png"];
-const documentsStorageRoot = path.join(process.cwd(), "server/storage/documents");
 const DOCUMENT_TABLES = ["AppFiche", "AccountingDocument"];
 
 async function ensureDocumentTables() {
@@ -35,6 +42,32 @@ function ensureSafeContext(req: FicheRequest) {
   return { fiche, user };
 }
 
+function getBackupPaths(params: {
+  userId: string;
+  ficheType: AppFicheType;
+  ficheId: string;
+  documentId: string;
+  filename: string;
+}) {
+  const relative = buildSuretyBackupRelativePath({
+    userId: params.userId,
+    ficheType: params.ficheType,
+    ficheId: params.ficheId,
+    documentId: params.documentId,
+    filename: params.filename,
+  });
+
+  const absolute = getSuretyBackupPath({
+    userId: params.userId,
+    ficheType: params.ficheType,
+    ficheId: params.ficheId,
+    documentId: params.documentId,
+    filename: params.filename,
+  });
+
+  return { relative, absolute };
+}
+
 const storage = multer.diskStorage({
   destination(req: Request, file, cb) {
     try {
@@ -44,6 +77,7 @@ const storage = multer.diskStorage({
 
       documentReq.generatedDocId = docId;
 
+      ensureStorageRoots();
       const dir = path.join(documentsStorageRoot, user.id, fiche.id, docId);
       fs.mkdirSync(dir, { recursive: true });
       cb(null, dir);
@@ -69,10 +103,6 @@ export const documentsUpload = multer({
     cb(null, true);
   },
 });
-
-function resolveStoragePath(storagePath: string) {
-  return path.isAbsolute(storagePath) ? storagePath : path.join(process.cwd(), storagePath);
-}
 
 function toResponseItem(document: {
   id: string;
@@ -126,7 +156,14 @@ export async function uploadDocument(req: FicheRequest, res: Response) {
   }
 
   const docId = documentReq.generatedDocId || randomUUID();
-  const storagePath = path.relative(process.cwd(), documentReq.file.path);
+  const storagePath = path.relative(documentsStorageRoot, documentReq.file.path);
+  const { relative: backupRelativePath, absolute: backupAbsolutePath } = getBackupPaths({
+    userId: user.id,
+    ficheType: fiche.type,
+    ficheId: fiche.id,
+    documentId: docId,
+    filename: documentReq.file.filename,
+  });
 
   try {
     await ensureDocumentTables();
@@ -150,6 +187,20 @@ export async function uploadDocument(req: FicheRequest, res: Response) {
       },
     });
 
+    try {
+      fs.mkdirSync(path.dirname(backupAbsolutePath), { recursive: true });
+      fs.copyFileSync(documentReq.file.path, backupAbsolutePath);
+    } catch (backupError) {
+      console.error(
+        `[documents] Erreur lors de la sauvegarde de sûreté (${backupRelativePath})`,
+        backupError
+      );
+      return appErrors.internal(
+        res,
+        "Impossible de sauvegarder le document dans le dossier de sûreté."
+      );
+    }
+
     return res.status(201).json({ ok: true, data: { item: toResponseItem(created) } });
   } catch (error) {
     if (error instanceof HttpError) {
@@ -172,13 +223,14 @@ export async function downloadDocument(req: FicheRequest, res: Response) {
     await ensureDocumentTables();
     const document = await prisma.accountingDocument.findFirst({
       where: { id: docId, ficheId: fiche.id, ownerId: user.id },
+      include: { fiche: { select: { type: true } } },
     });
 
     if (!document) {
       return appErrors.notFound(res);
     }
 
-    const filePath = resolveStoragePath(document.storagePath);
+    const filePath = resolveDocumentStoragePath(document.storagePath);
 
     if (!fs.existsSync(filePath)) {
       return appErrors.notFound(res);
@@ -217,19 +269,37 @@ export async function deleteDocument(req: FicheRequest, res: Response) {
     await ensureDocumentTables();
     const document = await prisma.accountingDocument.findFirst({
       where: { id: docId, ficheId: fiche.id, ownerId: user.id },
+      include: { fiche: { select: { type: true } } },
     });
 
     if (!document) {
       return appErrors.notFound(res);
     }
 
-    const filePath = resolveStoragePath(document.storagePath);
+    const filePath = resolveDocumentStoragePath(document.storagePath);
     const directoryToDelete = path.dirname(filePath);
+    const backupPaths = getBackupPaths({
+      userId: user.id,
+      ficheType: document.fiche.type,
+      ficheId: fiche.id,
+      documentId: document.id,
+      filename: document.filename,
+    });
+    const backupDirToDelete = path.dirname(backupPaths.absolute);
 
     try {
       fs.rmSync(directoryToDelete, { recursive: true, force: true });
     } catch (fileError) {
       console.error("[documents] Erreur lors de la suppression du fichier", fileError);
+    }
+
+    try {
+      fs.rmSync(backupDirToDelete, { recursive: true, force: true });
+    } catch (backupError) {
+      console.error(
+        `[documents] Erreur lors de la suppression de la sauvegarde de sûreté (${backupPaths.relative})`,
+        backupError
+      );
     }
 
     await prisma.accountingDocument.delete({ where: { id: document.id } });
