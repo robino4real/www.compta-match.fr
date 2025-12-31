@@ -1,5 +1,6 @@
 import React from "react";
 import { buildApiUrl } from "../config/api";
+import { trackEvent } from "../lib/analytics";
 
 export interface AuthUser {
   id: string;
@@ -207,6 +208,9 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({
   }, [refreshUser]);
 
   const logout = React.useCallback(async (redirectTo?: string) => {
+    // Fire-and-forget : le tracking ne doit jamais bloquer la déconnexion
+    void trackEvent({ type: "LOGOUT" }).catch(() => undefined);
+
     try {
       const response = await fetch(buildApiUrl("/auth/logout"), {
         method: "POST",
