@@ -27,6 +27,7 @@ import {
   getCompanySettings,
   saveCompanySettings,
 } from "../controllers/companySettingsController";
+import { getDbSchemaDiagnostics } from "../controllers/dbSchemaDiagController";
 import {
   adminGetInvoice,
   adminListInvoices,
@@ -224,6 +225,7 @@ const upload = multer({ storage });
 router.get("/users", attachUserToRequest, requireAdmin, listUsers);
 
 router.get("/db-status", attachUserToRequest, requireAdmin, getAdminDbStatus);
+router.get("/diag/db-schema", attachUserToRequest, requireAdmin, getDbSchemaDiagnostics);
 router.get("/backups/surete", attachUserToRequest, requireAdmin, listSuretyBackups);
 router.get(
   "/backups/surete/:docId/download",

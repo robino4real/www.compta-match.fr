@@ -115,3 +115,8 @@ En résumé :
 2. Builder le back (`server`), générer Prisma et conserver `node_modules` avec `@prisma/client` généré.
 3. Créer l'archive `server-build.zip` contenant tout le dossier `server/` (dist, node_modules, prisma, frontend...).
 4. Uploader et extraire l'archive sur le serveur cPanel sans jamais exécuter `npm install` ni `prisma generate` en production.
+
+## Si P2022 "column does not exist" (PromoCode)
+1. Appeler l'endpoint admin `/api/admin/diag/db-schema` (protégé admin) pour récupérer l'identité DB et la liste des colonnes attendues sur `PromoCode`.
+2. Vérifier dans phpPgAdmin que la table `PromoCode` contient bien `sponsorPhone`, `sponsorAddress`, `sponsorBankName`, `sponsorIban`, `productCategoryId`.
+3. Si la colonne existe en base mais que P2022 persiste, régénérer Prisma en local (`npm run prisma:generate`), reconstruire le pack (`server/dist`, `node_modules/@prisma/client`, `node_modules/.prisma`) puis redéployer sur cPanel sans exécuter de migration SQL côté serveur.
