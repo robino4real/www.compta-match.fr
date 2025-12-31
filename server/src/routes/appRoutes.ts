@@ -13,13 +13,14 @@ import {
   uploadDocument,
 } from "../controllers/appDocumentsController";
 import { getFicheSettings, updateFicheSettings } from "../controllers/appSettingsController";
-import { requireAuth } from "../middleware/authMiddleware";
+import { attachUserToRequest, requireAuth } from "../middleware/authMiddleware";
 import { withFicheAccess } from "../middleware/ficheAccessMiddleware";
 import { AppFicheType } from "@prisma/client";
 
 const router = Router();
 
 // SECURITY REQUIRED: toutes les routes WebApp doivent être protégées par authentification + contrôle de fiche.
+router.use(attachUserToRequest);
 router.use(requireAuth);
 
 router.get("/fiches", listUserFiches);

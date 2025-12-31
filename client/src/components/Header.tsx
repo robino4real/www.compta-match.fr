@@ -21,8 +21,13 @@ const Header: React.FC = () => {
   );
 
   const handleLogout = async () => {
-    await logout("/");
-    setIsNavOpen(false);
+    try {
+      await logout("/");
+    } catch (error) {
+      console.error("Logout failed", error);
+    } finally {
+      setIsNavOpen(false);
+    }
   };
 
   return (
