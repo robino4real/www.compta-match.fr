@@ -30,6 +30,7 @@ import AdminSeoPage from "./pages/admin/AdminSeoPage";
 import AdminPagesPage from "./pages/admin/AdminPagesPage";
 import AdminPageDetailPage from "./pages/admin/AdminPageDetailPage";
 import AdminNewsletterPage from "./pages/admin/AdminNewsletterPage";
+import AdminSuretyBackupsPage from "./pages/admin/AdminSuretyBackupsPage";
 import AnalyticsTracker from "./components/AnalyticsTracker";
 import DownloadableProductsPage from "./pages/DownloadableProductsPage";
 import ComptaProSubscriptionPage from "./pages/ComptaProSubscriptionPage";
@@ -265,6 +266,7 @@ const App: React.FC = () => {
           <Route path="pages/:id" element={<AdminPageDetailPage />} />
           <Route path="homepage" element={<AdminHomepagePage />} />
           <Route path="seo" element={<AdminSeoPage />} />
+          <Route path="sauvegardes-surete" element={<AdminSuretyBackupsPage />} />
           <Route path="paid-services" element={<AdminPaidServicesPage />} />
           <Route path="paid-services-comptasso" element={<AdminPaidServicesPage serviceType="COMPTASSO" />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />

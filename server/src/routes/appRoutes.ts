@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getFicheContext, listUserFiches } from "../controllers/appController";
+import { createFiche, getFicheContext, listUserFiches } from "../controllers/appController";
 import {
   createAccountingEntry,
   getAccountingSummary,
@@ -23,6 +23,7 @@ const router = Router();
 router.use(requireAuth);
 
 router.get("/fiches", listUserFiches);
+router.post("/fiches", createFiche);
 
 const registerFicheRoutes = (prefix: string, expectedType: AppFicheType) => {
   router.get(

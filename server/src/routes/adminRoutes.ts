@@ -4,6 +4,7 @@ import fs from "fs";
 import { env } from "../config/env";
 import { attachUserToRequest, requireAdmin } from "../middleware/authMiddleware";
 import { adminUploadAsset, listUsers } from "../controllers/adminController";
+import { downloadSuretyBackup, listSuretyBackups } from "../controllers/adminBackupController";
 import {
   createDownloadableProduct,
   getDownloadableProductById,
@@ -223,6 +224,13 @@ const upload = multer({ storage });
 router.get("/users", attachUserToRequest, requireAdmin, listUsers);
 
 router.get("/db-status", attachUserToRequest, requireAdmin, getAdminDbStatus);
+router.get("/backups/surete", attachUserToRequest, requireAdmin, listSuretyBackups);
+router.get(
+  "/backups/surete/:docId/download",
+  attachUserToRequest,
+  requireAdmin,
+  downloadSuretyBackup
+);
 
 router.get("/clients", attachUserToRequest, requireAdmin, adminListClients);
 router.get("/clients/:clientId", attachUserToRequest, requireAdmin, adminGetClientDetail);

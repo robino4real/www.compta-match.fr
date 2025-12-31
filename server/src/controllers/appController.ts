@@ -49,3 +49,42 @@ export async function listUserFiches(req: Request, res: Response) {
     return appErrors.internal(res, "Impossible de récupérer vos fiches pour le moment.");
   }
 }
+
+export async function createFiche(req: Request, res: Response) {
+  const { user } = req as AuthenticatedRequest;
+
+  if (!user) {
+    return appErrors.unauthorized(res);
+  }
+
+  const { name, type } = req.body as { name?: string; type?: AppFicheType };
+  const trimmedName = name?.trim();
+
+  if (!trimmedName) {
+    return appErrors.badRequest(res, "Le nom de la fiche est requis.");
+  }
+
+  const allowedTypes: AppFicheType[] = ["COMPTAPRO", "COMPTASSO"];
+
+  if (!type || !allowedTypes.includes(type)) {
+    return appErrors.badRequest(res, "Type de fiche invalide.");
+  }
+
+  try {
+    const fiche = await prisma.appFiche.create({
+      data: {
+        name: trimmedName,
+        type,
+        ownerId: user.id,
+      },
+    });
+
+    return res.status(201).json({
+      ok: true,
+      fiche: { id: fiche.id, name: fiche.name, type: fiche.type },
+    });
+  } catch (error) {
+    console.error("[fiche] Erreur lors de la création d'une fiche", error);
+    return appErrors.internal(res, "Impossible de créer la fiche pour le moment.");
+  }
+}

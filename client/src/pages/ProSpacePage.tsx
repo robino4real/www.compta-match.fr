@@ -12,14 +12,6 @@ interface UserSubscription {
   plan?: SubscriptionPlan | null;
 }
 
-interface CustomSpace {
-  id: string;
-  name: string;
-  type: string;
-  identifier?: string;
-  contactEmail?: string;
-}
-
 interface AppFicheSummary {
   id: string;
   name: string;
@@ -42,9 +34,9 @@ const ProSpacePage: React.FC = () => {
   const [isFetchingFiches, setIsFetchingFiches] = React.useState(false);
   const [ficheError, setFicheError] = React.useState<string | null>(null);
 
-  const [customSpaces, setCustomSpaces] = React.useState<CustomSpace[]>([]);
   const [isSpaceModalOpen, setIsSpaceModalOpen] = React.useState(false);
   const [spaceFormError, setSpaceFormError] = React.useState<string | null>(null);
+  const [isSavingSpace, setIsSavingSpace] = React.useState(false);
   const [spaceForm, setSpaceForm] = React.useState({
     name: "",
     identifier: "",
@@ -135,28 +127,6 @@ const ProSpacePage: React.FC = () => {
     setIsSubmitting(false);
   };
 
-  const storageKey = "compta:pro:customSpaces";
-
-  React.useEffect(() => {
-    try {
-      const storedSpaces = localStorage.getItem(storageKey);
-      setCustomSpaces(storedSpaces ? (JSON.parse(storedSpaces) as CustomSpace[]) : []);
-    } catch (error) {
-      console.error("Unable to load saved professional spaces", error);
-      setCustomSpaces([]);
-    }
-  }, [storageKey]);
-
-  const persistCustomSpaces = (spaces: CustomSpace[]) => {
-    if (!storageKey) return;
-
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(spaces));
-    } catch (error) {
-      console.error("Unable to persist professional spaces", error);
-    }
-  };
-
   const handleOpenSpaceModal = () => {
     setSpaceFormError(null);
     setIsSpaceModalOpen(true);
@@ -166,7 +136,7 @@ const ProSpacePage: React.FC = () => {
     setSpaceForm((previous) => ({ ...previous, [field]: value }));
   };
 
-  const handleCustomSpaceSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleCustomSpaceSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!spaceForm.name.trim()) {
@@ -174,27 +144,38 @@ const ProSpacePage: React.FC = () => {
       return;
     }
 
-    const newSpace: CustomSpace = {
-      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      name: spaceForm.name.trim(),
-      identifier: spaceForm.identifier.trim(),
-      contactEmail: spaceForm.contactEmail.trim(),
-      type: spaceForm.type || "Entreprise",
-    };
-
-    setCustomSpaces((previous) => {
-      const updatedSpaces = [...previous, newSpace];
-      persistCustomSpaces(updatedSpaces);
-      return updatedSpaces;
-    });
-    setIsSpaceModalOpen(false);
+    setIsSavingSpace(true);
     setSpaceFormError(null);
-    setSpaceForm({
-      name: "",
-      identifier: "",
-      contactEmail: "",
-      type: "Entreprise",
-    });
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/app/fiches`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: spaceForm.name.trim(), type: "COMPTAPRO" }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data?.fiche) {
+        throw new Error(data?.message || "Impossible de créer la fiche.");
+      }
+
+      setAppFiches((previous) => [data.fiche as AppFicheSummary, ...previous]);
+      setIsSpaceModalOpen(false);
+      setSpaceForm({
+        name: "",
+        identifier: "",
+        contactEmail: "",
+        type: "Entreprise",
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Impossible de créer la fiche pour le moment.";
+      setSpaceFormError(message);
+    } finally {
+      setIsSavingSpace(false);
+    }
   };
 
   const renderLoginForm = () => (
@@ -259,7 +240,7 @@ const ProSpacePage: React.FC = () => {
 
   const renderSpaces = () => {
     const hasSubscriptions = subscriptions.length > 0;
-    const hasAnySpaces = hasSubscriptions || customSpaces.length > 0;
+    const hasAnySpaces = hasSubscriptions || appFiches.length > 0;
 
     const connectedUserName =
       [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
@@ -363,39 +344,6 @@ const ProSpacePage: React.FC = () => {
                 <div className="text-xs text-slate-500">ID abonnement : {subscription.id}</div>
               </article>
             ))}
-
-          {customSpaces.map((space) => {
-            const spaceAppLink = `/app/comptapro/${space.identifier || space.id}`;
-            return (
-              <article
-                key={space.id}
-                className="flex min-h-[220px] flex-col justify-between rounded-3xl border border-emerald-100 bg-white px-6 py-5 shadow-sm"
-              >
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                    Nouvelle structure
-                  </p>
-                  <h3 className="text-lg font-semibold text-slate-900">{space.name}</h3>
-                  <p className="text-sm text-slate-600">
-                    {space.type} ajoutée pour suivre vos documents dédiés.{" "}
-                    {space.identifier ? `Identifiant : ${space.identifier}. ` : ""}
-                    {space.contactEmail ? `Contact : ${space.contactEmail}` : ""}
-                  </p>
-                </div>
-                <div className="mt-4 flex items-center justify-between gap-3">
-                  <span className="text-xs text-slate-500">Créé depuis cette page</span>
-                  <a
-                    href={spaceAppLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
-                  >
-                    Accéder
-                  </a>
-                </div>
-              </article>
-            );
-          })}
 
           <button
             type="button"
@@ -548,9 +496,10 @@ const ProSpacePage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-900"
+                  disabled={isSavingSpace}
+                  className="rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Créer le cadre
+                  {isSavingSpace ? "Création en cours..." : "Créer le cadre"}
                 </button>
               </div>
             </form>
