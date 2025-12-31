@@ -103,7 +103,13 @@ const MonProfilPage: React.FC = () => {
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    await logout("/");
+    try {
+      await logout("/");
+    } catch (error) {
+      console.error("Logout failed", error);
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -131,6 +137,7 @@ const MonProfilPage: React.FC = () => {
               <button
                 onClick={() => navigate(card.href)}
                 className="mt-6 inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-medium text-white hover:bg-slate-900"
+                type="button"
               >
                 {card.actionLabel}
               </button>
@@ -143,6 +150,7 @@ const MonProfilPage: React.FC = () => {
             onClick={handleLogout}
             className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition hover:border-black hover:text-black"
             disabled={isLoggingOut}
+            type="button"
           >
             {isLoggingOut ? "Déconnexion..." : "Se déconnecter"}
           </button>

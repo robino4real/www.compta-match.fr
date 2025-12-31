@@ -51,15 +51,15 @@ export async function attachUserToRequest(
   _res: Response,
   next: NextFunction
 ) {
-  if (!req.cookies) {
-    req.cookies = parseCookies(req.headers.cookie);
-  }
+  const headerCookies = parseCookies(req.headers.cookie);
+  const existingCookies = req.cookies || {};
+  req.cookies = { ...headerCookies, ...existingCookies };
 
   const authorization = req.headers.authorization;
   const bearerToken = authorization?.startsWith("Bearer ")
     ? authorization.slice("Bearer ".length).trim()
     : undefined;
-  const token = bearerToken || req.cookies?.token;
+  const token = bearerToken || req.cookies?.token || req.cookies?.Token;
 
   if (!token) {
     return next();

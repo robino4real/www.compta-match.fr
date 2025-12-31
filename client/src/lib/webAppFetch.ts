@@ -43,6 +43,11 @@ export async function webAppFetch<T>(
   }
 
   if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      // Session expirée ou invalide : on force la reconnexion plutôt que d'afficher une erreur 403.
+      window.location.href = "/auth/login";
+    }
+
     const message =
       payload?.error?.message || payload?.message || "Une erreur est survenue lors de l'appel API.";
     const appError = new WebAppApiError(message, response.status, payload?.error?.code);
