@@ -38,7 +38,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     () =>
       location.pathname.startsWith("/comptapro") ||
       location.pathname.startsWith("/comptasso") ||
-      isLogicielsPage,
+      isLogicielsPage ||
+      location.pathname === "/découverte",
     [isLogicielsPage, location.pathname]
   );
 

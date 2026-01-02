@@ -10,9 +10,10 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { formatPaidServicePrice } from "../lib/formatPaidServicePrice";
 import { buildPublicAppUrl } from "../lib/publicAppUrl";
+import { fetchUserAccessEligibility } from "../lib/userAccessEligibility";
 
 const ComptaProSubscriptionPage: React.FC = () => {
-  const { isLoading: isAuthLoading } = useAuth();
+  const { isLoading: isAuthLoading, user } = useAuth();
   const navigate = useNavigate();
   const [plans, setPlans] = React.useState<PaidServicePlan[]>([]);
   const [comparison, setComparison] = React.useState<PaidServiceComparison | null>(null);
@@ -67,8 +68,20 @@ const ComptaProSubscriptionPage: React.FC = () => {
     navigate("/nouvelle-page");
   };
 
-  const handleProAccessClick = () => {
+  const handleProAccessClick = async () => {
     if (isAuthLoading) return;
+
+    if (user) {
+      try {
+        const eligibility = await fetchUserAccessEligibility();
+        if (!eligibility.hasActiveSubscription && !eligibility.hasAnyFiche) {
+          navigate("/découverte");
+          return;
+        }
+      } catch (error) {
+        console.error("Erreur lors de la vérification de l'accès ComptaPro", error);
+      }
+    }
 
     const targetUrl = buildPublicAppUrl("/mon-espace-pro");
     window.open(targetUrl, "_blank", "noopener,noreferrer");
