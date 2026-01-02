@@ -4,6 +4,7 @@ import { useHomepageSettings } from "../hooks/useHomepageSettings";
 import Footer from "../components/Footer";
 import { useLocation } from "react-router-dom";
 import { resolveAssetUrl } from "../lib/resolveAssetUrl";
+import CartAdditionToast from "../components/cart/CartAdditionToast";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -63,6 +64,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         .filter(Boolean)
         .join(" ")}
     >
+      <CartAdditionToast />
       {!isSubscriptionLanding && <MainNavbar />}
       <main className={["flex-1", showGradientSeparator ? "hero-wrapper" : ""].filter(Boolean).join(" ")}>{children}</main>
       {!isSubscriptionLanding && <Footer />}

@@ -299,11 +299,7 @@ export const DownloadableProductsSection: React.FC = () => {
     addDownloadableProduct({
       id: product.id,
       name: product.name,
-      price: product.priceTtc,
-      priceDisplayMode: product.priceDisplayMode || "TTC",
-      badge: product.badge,
-      imageUrl: product.cardImageUrl,
-      shortDescription: product.shortDescription,
+      priceCents: Math.round(product.priceTtc * 100),
       binaryId: binary?.id,
       platform: binary?.platform,
     });
