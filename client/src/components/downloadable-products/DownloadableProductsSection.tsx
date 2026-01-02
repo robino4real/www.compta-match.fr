@@ -329,7 +329,9 @@ export const DownloadableProductsSection: React.FC = () => {
   const viewportWidth = isMobile
     ? "100%"
     : `${CARD_WIDTH * VISIBLE_CARDS + CARD_GAP * (VISIBLE_CARDS - 1)}px`;
-  const translateValue = `translateX(-${cardIndex * (CARD_WIDTH + CARD_GAP)}px)`;
+  const translateValue = isMobile
+    ? `translateX(-${cardIndex * 100}%)`
+    : `translateX(-${cardIndex * (CARD_WIDTH + CARD_GAP)}px)`;
   const showNavigation = filteredProducts.length > visibleCards;
 
   const isAddToCartDisabled =
