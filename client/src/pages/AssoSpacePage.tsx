@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
 import { useAuth } from "../context/AuthContext";
 import { buildPublicAppUrl } from "../lib/publicAppUrl";
@@ -234,6 +235,13 @@ const AssoSpacePage: React.FC = () => {
           {isSubmitting ? "Connexion en cours..." : "Se connecter"}
         </button>
       </form>
+
+      <p className="mt-6 text-center text-sm text-slate-600">
+        <span>Vous n'avez pas de compte ? </span>
+        <Link to="/auth/register" className="font-semibold text-black hover:underline">
+          Créez-en un ici
+        </Link>
+      </p>
     </div>
   );
 
