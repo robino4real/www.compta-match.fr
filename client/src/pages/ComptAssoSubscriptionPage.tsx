@@ -5,9 +5,12 @@ import { API_BASE_URL } from "../config/api";
 import { PaidServiceComparison, PaidServicePlan, PaidServiceSection } from "../types/paidServices";
 import { formatPaidServicePrice } from "../lib/formatPaidServicePrice";
 import { buildPublicAppUrl } from "../lib/publicAppUrl";
+import { fetchUserAccessEligibility } from "../lib/userAccessEligibility";
+import { useAuth } from "../context/AuthContext";
 
 const ComptAssoSubscriptionPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isLoading: isAuthLoading, user } = useAuth();
   const [plans, setPlans] = React.useState<PaidServicePlan[]>([]);
   const [comparison, setComparison] = React.useState<PaidServiceComparison | null>(null);
   const [sections, setSections] = React.useState<PaidServiceSection[]>([]);
@@ -61,7 +64,21 @@ const ComptAssoSubscriptionPage: React.FC = () => {
     navigate("/nouvelle-page");
   };
 
-  const handleAssoAccessClick = () => {
+  const handleAssoAccessClick = async () => {
+    if (isAuthLoading) return;
+
+    if (user) {
+      try {
+        const eligibility = await fetchUserAccessEligibility();
+        if (!eligibility.hasActiveSubscription && !eligibility.hasAnyFiche) {
+          navigate("/découverte");
+          return;
+        }
+      } catch (error) {
+        console.error("Erreur lors de la vérification de l'accès ComptAsso", error);
+      }
+    }
+
     const targetUrl = buildPublicAppUrl("/mon-espace-asso");
     window.open(targetUrl, "_blank", "noopener,noreferrer");
   };
