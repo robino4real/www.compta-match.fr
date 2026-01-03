@@ -37,7 +37,7 @@ const cards: DiscoveryCard[] = [
 ];
 
 const backButtonClasses =
-  "hero-back-button inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/15 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-200 sm:h-auto sm:w-auto sm:gap-2 sm:px-5 sm:py-2.5";
+  "hero-back-button inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/15 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-300 sm:h-auto sm:w-auto sm:gap-2 sm:px-5 sm:py-2.5";
 
 const cardClasses =
   "relative flex h-full flex-col overflow-hidden rounded-3xl border border-white/30 bg-white/10 p-6 shadow-xl backdrop-blur-lg transition hover:-translate-y-1 hover:border-white/60 hover:bg-white/20";
@@ -115,22 +115,22 @@ const DiscoveryPage: React.FC = () => {
                 <p className="text-sm leading-relaxed text-blue-50/90">{card.description}</p>
               </div>
 
-              <div className="relative mt-8 flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={() => handlePrimaryCta(card.primaryCta.href)}
-                  className="inline-flex flex-1 items-center justify-center rounded-full bg-white/80 px-4 py-3 text-sm font-semibold text-[#0a1430] shadow-sm transition hover:-translate-y-0.5 hover:bg-white"
-                >
-                  {card.primaryCta.label}
-                </button>
+              <div className="relative mt-8 flex flex-col gap-3">
                 {card.secondaryCta && (
                   <Link
                     to={card.secondaryCta.href}
-                    className="inline-flex flex-1 items-center justify-center rounded-full border border-white/40 bg-white/10 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/20"
+                    className="inline-flex w-full items-center justify-center rounded-full border border-white/40 bg-white/10 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/20"
                   >
                     {card.secondaryCta.label}
                   </Link>
                 )}
+                <button
+                  type="button"
+                  onClick={() => handlePrimaryCta(card.primaryCta.href)}
+                  className="inline-flex w-full items-center justify-center rounded-full bg-white/80 px-4 py-3 text-sm font-semibold text-[#0a1430] shadow-sm transition hover:-translate-y-0.5 hover:bg-white"
+                >
+                  {card.primaryCta.label}
+                </button>
               </div>
             </article>
           ))}
