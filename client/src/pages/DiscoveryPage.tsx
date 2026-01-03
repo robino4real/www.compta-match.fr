@@ -40,7 +40,7 @@ const backButtonClasses =
   "hero-back-button inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/15 text-base font-semibold text-white shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-300 sm:h-auto sm:w-auto sm:gap-2 sm:px-5 sm:py-2.5";
 
 const cardClasses =
-  "group relative flex h-full transform-gpu flex-col overflow-hidden rounded-3xl border border-white/30 bg-white/10 p-6 shadow-xl backdrop-blur-lg transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/15 hover:shadow-2xl";
+  "relative flex h-full flex-col overflow-hidden rounded-3xl border border-white/30 bg-white/10 p-6 shadow-xl backdrop-blur-lg";
 
 const DiscoveryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -104,14 +104,10 @@ const DiscoveryPage: React.FC = () => {
         <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {cards.map((card) => (
             <article key={card.title} className={cardClasses}>
-              <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/5 to-transparent transition-opacity duration-500 group-hover:opacity-0" aria-hidden />
               <div
-                className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/5 to-transparent"
                 aria-hidden
-              >
-                <div className="absolute inset-0 bg-gradient-to-tr from-white/20 via-white/5 to-transparent" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.22),transparent_40%),radial-gradient(circle_at_80%_0%,rgba(165,180,252,0.18),transparent_35%)]" />
-              </div>
+              />
               <div className="relative flex flex-col gap-4">
                 {card.highlight && (
                   <span className="inline-flex w-fit items-center rounded-full border border-white/30 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/80">
