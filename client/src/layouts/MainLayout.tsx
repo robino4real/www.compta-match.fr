@@ -14,33 +14,43 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const location = useLocation();
   const { data } = useHomepageSettings();
 
+  const normalizedPathname = React.useMemo(() => {
+    try {
+      return decodeURIComponent(location.pathname);
+    } catch (error) {
+      return location.pathname;
+    }
+  }, [location.pathname]);
+
   const isLogicielsPage = React.useMemo(
-    () => location.pathname.startsWith("/logiciels"),
-    [location.pathname]
+    () => normalizedPathname.startsWith("/logiciels"),
+    [normalizedPathname]
   );
 
   const pageClassName = React.useMemo(() => {
-    if (location.pathname === "/comptapro") return "page-comptapro";
-    if (location.pathname === "/comptasso") return "page-comptasso";
+    if (normalizedPathname === "/comptapro") return "page-comptapro";
+    if (normalizedPathname === "/comptasso") return "page-comptasso";
     if (isLogicielsPage) return "page-logiciels";
     return "";
-  }, [isLogicielsPage, location.pathname]);
+  }, [isLogicielsPage, normalizedPathname]);
 
   const showGradientSeparator = React.useMemo(
     () =>
-      location.pathname === "/comptapro" ||
-      location.pathname === "/comptasso" ||
+      normalizedPathname === "/comptapro" ||
+      normalizedPathname === "/comptasso" ||
       isLogicielsPage,
-    [isLogicielsPage, location.pathname]
+    [isLogicielsPage, normalizedPathname]
   );
 
   const isSubscriptionLanding = React.useMemo(
     () =>
-      location.pathname.startsWith("/comptapro") ||
-      location.pathname.startsWith("/comptasso") ||
+      normalizedPathname.startsWith("/comptapro") ||
+      normalizedPathname.startsWith("/comptasso") ||
       isLogicielsPage ||
-      location.pathname === "/découverte",
-    [isLogicielsPage, location.pathname]
+      normalizedPathname.startsWith("/découverte") ||
+      normalizedPathname.startsWith("/decouverte") ||
+      normalizedPathname.startsWith("/d%C3%A9couverte"),
+    [isLogicielsPage, normalizedPathname]
   );
 
   React.useEffect(() => {
